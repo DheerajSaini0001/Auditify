@@ -134,7 +134,10 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <Icon size={24} className={darkMode ? "text-blue-400" : "text-accent"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
+              <h3 className={`font-semibold text-lg ${textColor}`}>
+                {title}
+                {(data?.infoOnly || meta?.informational) && status !== "not_applicable" && <span className={`font-medium ${subTextColor}`} title="Informational — not counted in the section score"> (Info-only)</span>}
+              </h3>
               <div className="flex items-center gap-1.5 mt-1">
                 <span className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
                   {statusText}
@@ -597,15 +600,15 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className="space-y-3">
               {(analysis?.cause || reasons.length > 0) && (
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-rose-500`}>Root Cause</h5>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1.5 text-rose-500`}>Root Cause</h5>
                   {analysis?.cause ? (
-                    <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                    <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                       {analysis.cause}
                     </p>
                   ) : (
-                    <ul className="space-y-1">
+                    <ul className="space-y-1.5">
                       {reasons.map((reason, idx) => (
-                        <li key={idx} className={`text-xs leading-relaxed flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                        <li key={idx} className={`text-sm leading-relaxed flex items-start gap-2 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                           <span className="w-1.5 h-1.5 mt-1.5 bg-rose-500 rounded-full flex-shrink-0"></span>
                           <span>{reason}</span>
                         </li>
@@ -616,15 +619,15 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               )}
               {(analysis?.recommendation || recommendations.length > 0) && (
                 <div>
-                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1 text-accent`}>Recommendation</h5>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-1.5 text-accent`}>Recommendation</h5>
                   {analysis?.recommendation ? (
-                    <p className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                    <p className={`text-sm leading-relaxed ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                       {analysis.recommendation}
                     </p>
                   ) : (
-                    <ul className="space-y-1">
+                    <ul className="space-y-1.5">
                       {recommendations.map((rec, idx) => (
-                        <li key={idx} className={`text-xs leading-relaxed flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
+                        <li key={idx} className={`text-sm leading-relaxed flex items-start gap-2 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
                           <span className="w-1.5 h-1.5 mt-1.5 bg-accent rounded-full flex-shrink-0"></span>
                           <span>{rec}</span>
                         </li>
@@ -1089,7 +1092,7 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
               const networkKeys = visible(["HTTPS", "SSL", "SSL_Expiry", "TLS_Version", "HSTS"]);
               const vulnKeys = visible(["Reputation", "SQLi_Exposure", "XSS"]);
               const accessKeys = visible(["Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"]);
-              const headerKeys = visible(["CSP", "X_Frame_Options", "X_Content_Type_Options", "Cookie_Flags", "Third_Party_Cookies"]);
+              const headerKeys = visible(["Header_Security", "CSP", "X_Frame_Options", "X_Content_Type_Options", "Referrer_Policy", "Permissions_Policy", "Cookie_Flags", "Third_Party_Cookies"]);
               const complianceKeys = visible(["Cookie_Consent", "Privacy_Compliance", "Privacy_Policy"]);
               const financeKeys = visible(["Finance_Form_Security", "Legal_Disclaimers"]);
               const card = (key) => <MetricCard key={key} metricKey={key} data={metric[key]} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />;

@@ -112,7 +112,9 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const content = educationalContent[metricKey] || { desc: "Accessibility check.", why: "Ensures inclusivity." };
   const reasons = content.actualReasonsForFailure || [];
   const recommendations = content.howToOvercomeFailure || [];
-  const title = metricKey.replaceAll("_", " ");
+  // Named params derive a title from the key; dynamically-surfaced axe issues
+  // (Other_Issues) carry a human-readable `title` from axe's `help` text.
+  const title = data?.title || metricKey.replaceAll("_", " ");
 
   const colors = {
     emerald: { light: "text-emerald-600", dark: "text-emerald-400", border: "border-l-emerald-500", bg: "bg-emerald-50 text-emerald-700 border-emerald-100" },
@@ -140,6 +142,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             <div className="space-y-1.5 flex-1 min-w-0">
               <h3 className={`font-semibold text-lg tracking-tight ${darkMode ? "text-white" : "text-ink"} truncate`}>
                 {title}
+                {isInfo && !isNA && <span className={`font-medium ${darkMode ? "text-slate-400" : "text-muted"}`} title="Informational — not counted in the section score"> (Info-only)</span>}
               </h3>
               <div className="flex items-center gap-3">
                 <div className={`px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${darkMode ? `bg-${statusType}-500/10 text-${statusType}-400` : themeColors.bg}`}>
@@ -203,7 +206,7 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         </div>
 
         {/* WCAG 2.1 AA Compliance summary */}
-        {metricKey === "WCAG_AA_Compliance" && meta && (
+        {metricKey === "WCAG_AA_Compliance" && meta?.grade && (
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-2">
               <div className={`p-3 rounded-xl border ${darkMode ? "bg-slate-900/40 border-slate-700/50" : "bg-cardsoft border-line"}`}>
@@ -347,40 +350,34 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               </div>
             )}
 
-            {/* Cause & Recommendation */}
-            <div className={`p-4 rounded-xl space-y-4 border ${darkMode ? "bg-blue-500/5 border-blue-500/20" : "bg-accentsoft border-accentsoft"}`}>
+            {/* Causes & Recommendations — identical layout to Technical/SEO
+                (MetricAnalysisDetails): a rose "Causes" list and an emerald
+                "Recommendations" list with dot bullets. */}
+            <div className="space-y-4">
               {(analysis?.cause || reasons.length > 0) && (
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Root Cause:</span>
-                  {analysis?.cause ? (
-                    <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{analysis.cause}</p>
-                  ) : (
-                    <ul className="space-y-1.5 list-disc list-inside">
-                      {reasons.map((reason, idx) => (
-                        <li key={idx} className={`text-xs leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{reason}</li>
-                      ))}
-                    </ul>
-                  )}
+                <div>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-rose-400" : "text-rose-600"}`}>Causes</h5>
+                  <ul className="space-y-2">
+                    {(analysis?.cause ? [analysis.cause] : reasons).map((cause, idx) => (
+                      <li key={idx} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
+                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+                        <span>{cause}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
               {(analysis?.recommendation || recommendations.length > 0) && (
-                <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-500">Fix Action Plan:</span>
-                  {analysis?.recommendation ? (
-                    <div className="flex gap-2 items-start">
-                      <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
-                      <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-200" : "text-ink"}`}>{analysis.recommendation}</p>
-                    </div>
-                  ) : (
-                    <ul className="space-y-2">
-                      {recommendations.map((rec, idx) => (
-                        <li key={idx} className="flex gap-2 items-start">
-                          <ShieldCheck size={14} className="mt-0.5 text-blue-500 shrink-0" />
-                          <p className={`text-xs font-semibold leading-relaxed ${darkMode ? "text-slate-200" : "text-ink"}`}>{rec}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                <div>
+                  <h5 className={`text-xs font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-emerald-400" : "text-emerald-600"}`}>Recommendations</h5>
+                  <ul className="space-y-2">
+                    {(analysis?.recommendation ? [analysis.recommendation] : recommendations).map((rec, idx) => (
+                      <li key={idx} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-200" : "text-inksoft"}`}>
+                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
@@ -540,9 +537,13 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
   // Keyboard sub-checks are folded into Keyboard_Navigation and not rendered as
   // their own cards, so exclude them from the header tally to avoid double-counting.
   const HIDDEN_FROM_TALLY = new Set(["Focus_Order", "Focusable_Content", "Tab_Index", "Aria_Hidden_Focus"]);
-  const allMetrics = Object.entries(metric)
-    .filter(([k, val]) => typeof val === 'object' && val !== null && 'score' in val && !HIDDEN_FROM_TALLY.has(k))
-    .map(([, val]) => val);
+  const allMetrics = [
+    ...Object.entries(metric)
+      .filter(([k, val]) => typeof val === 'object' && val !== null && 'score' in val && !HIDDEN_FROM_TALLY.has(k))
+      .map(([, val]) => val),
+    // Failing axe rules surfaced as their own cards count toward the tally too.
+    ...(Array.isArray(metric.Other_Issues) ? metric.Other_Issues : []),
+  ];
   // Graded scores → tally by status, not exact score values.
   const passedCount = allMetrics.filter(m => m.status === "pass").length;
   const warningCount = allMetrics.filter(m => m.status === "warning").length;
@@ -616,7 +617,12 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                         {metric?.Coverage && (
                           <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
                             <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>{metric.Coverage} Automated checks ≈ 30–40% of WCAG, so the score is capped below 100 (confidence: {metric?.Confidence || "heuristic"}). Manual review still required.</span>
+                            <span>
+                              {metric.Coverage} Score deducts per failing element, scaled by impact and capped per rule — matching how AccessibilityChecker.org counts issues (same WCAG A/AA + best-practice + experimental rule set, excluding AAA) — from an automated ceiling of 90; the last 10 points require manual review (confidence: {metric?.Confidence || "heuristic"}).
+                              {typeof metric?.Graded_Percentage === "number" && (
+                                <> Page-level element pass rate: {metric.Graded_Percentage}%.</>
+                              )}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -694,6 +700,17 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
 
                   {rolesKeys.length > 0 && (
                     <Section title="Semantics & Roles" icon={Code} darkMode={darkMode}>{rolesKeys.map(card)}</Section>
+                  )}
+
+                  {/* Additional WCAG issues detected by the scan that aren't one of the
+                      named parameters above — each with its own cause + fix, so the
+                      section explains everything that drove the score. */}
+                  {Array.isArray(metric.Other_Issues) && metric.Other_Issues.length > 0 && (
+                    <Section title="Additional WCAG Issues" icon={AlertTriangle} darkMode={darkMode}>
+                      {metric.Other_Issues.map((iss) => (
+                        <MetricCard key={iss.key} metricKey={iss.key} data={iss} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+                      ))}
+                    </Section>
                   )}
                 </>
               );

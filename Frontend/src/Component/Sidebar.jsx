@@ -11,6 +11,7 @@ import {
   FileText,
   Loader2,
   ChevronRight,
+  ArrowLeft,
   BarChart2,
   Plus,
   NotebookPen,
@@ -61,6 +62,18 @@ export default function Sidebar({ darkMode }) {
     { key: "aioReadiness", label: "AIO Readiness", path: "/aio", icon: Brain },
     { key: "aeo", label: "AEO", path: "/aeo", icon: MessageSquareText },
   ];
+
+  // Which section page is currently open? (-1 = Overview / non-section route.)
+  const activeIdx = menuItems.findIndex((item) => location.pathname.startsWith(item.path));
+
+  // When a section from Technical → AIO Readiness is open, "Next" walks to the next
+  // section present in this report. On Overview or AEO (the last section) there is no
+  // next section, so we fall back to the next audited page in the batch (nextPage).
+  const nextSection = React.useMemo(() => {
+    if (activeIdx < 0) return null;
+    return menuItems.slice(activeIdx + 1).find((s) => data?.[s.key]) || null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeIdx, data]);
 
   // Styles
   const sidebarClass = darkMode
@@ -115,50 +128,107 @@ export default function Sidebar({ darkMode }) {
               Sorry, this site doesn’t belong to a car dealership, so no audit sections are available.
             </p>
           </div>
-        ) : menuItems.map((item) => {
-          const isAvailable = data?.[item.key];
-          const isActive = location.pathname.startsWith(item.path);
-          const Icon = item.icon;
-          const targetPath = data?._id ? `${item.path}/${data._id}` : item.path;
+        ) : (
+          <>
+            {menuItems.map((item) => {
+              const isAvailable = data?.[item.key];
+              const isActive = location.pathname.startsWith(item.path);
+              const Icon = item.icon;
+              const targetPath = data?._id ? `${item.path}/${data._id}` : item.path;
 
-          return (
-            <Link
-              key={item.key}
-              to={targetPath}
-              replace
-              className={`
-                group flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all duration-200
-                ${getItemClass(isActive, false)}
-              `}
-            >
-              <div className="flex items-center gap-3">
-                <Icon className={`w-5 h-5 ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />
-                <span>{item.label}</span>
+              return (
+                <Link
+                  key={item.key}
+                  to={targetPath}
+                  replace
+                  className={`
+                    group flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-all duration-200
+                    ${getItemClass(isActive, false)}
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 ${isActive ? "" : "opacity-70 group-hover:opacity-100"}`} />
+                    <span>{item.label}</span>
+                  </div>
+
+                  {!isAvailable ? (
+                    <Loader2 className="w-4 h-4 animate-spin opacity-40 block" />
+                  ) : isActive ? (
+                    <ChevronRight className="w-4 h-4 opacity-50 block" />
+                  ) : null}
+                </Link>
+              );
+            })}
+
+            {/* Stage 2 Discovered & Analyzed Pages List */}
+            {(data?.crawledPagesSummary?.length > 0 || data?.stage2Progress || data?.crawledPagesCount > 0) && (
+              <div className={`mt-4 pt-3 border-t ${darkMode ? "border-slate-800" : "border-linesoft"}`}>
+                <div className="flex items-center justify-between px-2 mb-2">
+                  <span className={`text-[10px] font-bold uppercase tracking-wider ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                    Analyzed Pages ({data?.crawledPagesCount || data?.crawledPagesSummary?.length || 0})
+                  </span>
+                  {data?.stage2Completed ? (
+                    <span className="text-[10px] font-bold text-emerald-500">✓ Complete</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400">
+                      <Loader2 className="w-3 h-3 animate-spin" /> 3-Puppeteer
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-1.5 max-h-52 overflow-y-auto custom-scrollbar px-1">
+                  {(data?.crawledPagesSummary || []).map((pg, idx) => (
+                    <div key={idx} className={`p-2 rounded-lg text-xs ${darkMode ? "bg-slate-800/60 text-slate-300 border border-slate-700/50" : "bg-cardsoft text-inksoft border border-line"}`}>
+                      <div className="flex items-center justify-between gap-1 mb-0.5">
+                        <span className="font-semibold truncate text-[11px] opacity-90">{pg.label || "Key Page"}</span>
+                        {pg.isProcessing ? (
+                          <span className="text-[10px] font-bold text-amber-400 shrink-0">Auditing…</span>
+                        ) : typeof pg.score === "number" ? (
+                          <span className={`text-[10px] font-bold shrink-0 ${pg.score >= 80 ? "text-emerald-500" : pg.score >= 60 ? "text-amber-400" : "text-rose-400"}`}>
+                            {pg.score}{pg.grade ? ` · ${pg.grade}` : ""}
+                          </span>
+                        ) : pg.success ? (
+                          <span className="text-[10px] font-bold text-emerald-500 shrink-0">✓</span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-rose-400 shrink-0">Failed</span>
+                        )}
+                      </div>
+                      <span className="truncate block text-[10px] font-mono opacity-60" title={pg.url}>
+                        {pg.url.replace(/^https?:\/\/[^\/]+/, "") || "/"}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-
-              {!isAvailable ? (
-                <Loader2 className="w-4 h-4 animate-spin opacity-40 block" />
-              ) : isActive ? (
-                <ChevronRight className="w-4 h-4 opacity-50 block" />
-              ) : null}
-            </Link>
-          );
-        })}
+            )}
+          </>
+        )}
       </aside>
 
       {/* Footer / Actions */}
       <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-linesoft bg-surface"}`}>
-        {/* Next audited page in the batch (when this report came from an Audit Summary). */}
-        {nextPage && (
+        {/* Back to Audit Summary */}
+        <Link
+          to="/audit-summary"
+          title="Back to multi-page audit summary"
+          className={`group flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-emerald-50 hover:text-emerald-700"}`}
+        >
+          <ArrowLeft className="w-4 h-4 shrink-0 opacity-60 group-hover:-translate-x-0.5 transition-transform" />
+          <span className="truncate">Back to Summary</span>
+        </Link>
+
+        {/* "Next" walks the report: next section while a section page (Technical → AIO
+            Readiness) is open, else the next audited page in the batch (on Overview / AEO). */}
+        {(nextSection || nextPage) && (
           <Link
-            to={`/report/${nextPage.id}`}
+            to={nextSection ? `${nextSection.path}/${data._id}` : `/report/${nextPage.id}`}
             replace
-            title={`Next page: ${nextPage.label}`}
+            title={nextSection ? `Next section: ${nextSection.label}` : `Next page: ${nextPage.label}`}
             className={`group flex items-center justify-between gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-emerald-50 hover:text-emerald-700"}`}
           >
             <span className="flex items-center gap-2 min-w-0">
               <span className={`text-[10px] font-bold uppercase tracking-wider shrink-0 ${darkMode ? "text-slate-500" : "text-faint"}`}>Next</span>
-              <span className="truncate">{nextPage.label}</span>
+              <span className="truncate">{nextSection ? nextSection.label : nextPage.label}</span>
             </span>
             <ChevronRight className="w-4 h-4 shrink-0 opacity-60 group-hover:translate-x-0.5 transition-transform" />
           </Link>
@@ -171,32 +241,32 @@ export default function Sidebar({ darkMode }) {
                 const reportId = data._id;
                 if (!reportId) return toast.error("Report ID not found");
 
-                  const toastId = toast.loading('Preparing professional PDF report...');
-                  try {
-                    const token = localStorage.getItem('dealerpulse_token');
-                    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                    const response = await fetch(`${API_URL}/single-audit/${reportId}/export/pdf`, {
-                      headers: {
-                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                      }
-                    });
+                const toastId = toast.loading('Preparing professional PDF report...');
+                try {
+                  const token = localStorage.getItem('dealerpulse_token');
+                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+                  const response = await fetch(`${API_URL}/single-audit/${reportId}/export/pdf`, {
+                    headers: {
+                      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    }
+                  });
 
                   if (!response.ok) throw new Error('Failed to generate PDF');
 
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `DealerPulse-Report-${data.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    window.URL.revokeObjectURL(url);
-                    toast.success('Report downloaded!', { id: toastId });
-                  } catch (error) {
-                    toast.error('Failed to generate PDF', { id: toastId });
-                  }
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = `Site Audit-Report-${data.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                  document.body.appendChild(link);
+                  link.click();
+                  link.remove();
+                  window.URL.revokeObjectURL(url);
+                  toast.success('Report downloaded!', { id: toastId });
+                } catch (error) {
+                  toast.error('Failed to generate PDF', { id: toastId });
                 }
+              }
               }
               className={`group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white shadow-md shadow-black/10 transition-all hover:shadow-black/20 active:scale-[0.98] ${darkMode ? "bg-slate-700 hover:bg-slate-600" : "bg-[#16213E] hover:bg-[#2A3656]"}`}
             >

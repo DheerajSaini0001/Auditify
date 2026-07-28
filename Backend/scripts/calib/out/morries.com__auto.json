@@ -1,0 +1,3699 @@
+{
+  "url": "https://www.morries.com",
+  "requestedPageType": null,
+  "isDealership": true,
+  "dealershipDetection": null,
+  "status": "completed",
+  "screenshotUrl": "/api/screenshot/view/morries.com__auto",
+  "isBotProtected": false,
+  "aioReadiness": {
+    "Percentage": 9,
+    "AIO_Compatibility_Badge": "No",
+    "Confidence": "heuristic",
+    "parametersScored": 8,
+    "Structured_Data": {
+      "score": 0,
+      "status": "fail",
+      "details": "No valid structured data found.",
+      "qanda": {
+        "question": "Does the page use Structured Data (JSON-LD)?",
+        "answer": "No, valid structured data is missing or contains errors that prevent AI from identifying your brand."
+      },
+      "meta": {
+        "count": 0
+      },
+      "analysis": {
+        "cause": "No valid JSON-LD structured data detected.",
+        "recommendation": "Implement Schema.org structured data using JSON-LD to help AI models understand your entities and content relationships."
+      }
+    },
+    "Content_NLP_Friendly": {
+      "score": 50,
+      "status": "warning",
+      "details": "Content structure needs improvement for NLP.",
+      "qanda": {
+        "question": "Is the content structure optimized for Natural Language Processing?",
+        "answer": "No, the absence of semantic tags and clear headings may confuse AI crawlers."
+      },
+      "meta": {
+        "missingTags": [
+          "article",
+          "section",
+          "header",
+          "footer"
+        ],
+        "foundHeadings": []
+      },
+      "analysis": {
+        "cause": "No hierarchical headings (h1, h2, h3) detected.",
+        "recommendation": "Implement a clear heading hierarchy to define content sections for NLP processing."
+      }
+    },
+    "Answer_Oriented_Structure": {
+      "score": 0,
+      "status": "fail",
+      "details": "No question-and-answer structure found on the page.",
+      "qanda": {
+        "question": "Is the content structured to directly answer user questions?",
+        "answer": "No, the content does not offer direct query-answer pairs, making it harder for 'Answer Engines' to cite you."
+      },
+      "meta": {
+        "hasFAQ": false,
+        "questionHeadingsCount": 0,
+        "pairs": []
+      },
+      "analysis": {
+        "cause": "No question-and-answer structure was found on the page — no question-based headings and no FAQ schema.",
+        "recommendation": "Structure your content to directly answer user queries using natural language questions in H2/H3 tags, each followed by a concise answer."
+      }
+    },
+    "Keywords_Entities_Annotated": {
+      "score": 0,
+      "status": "fail",
+      "details": "No keyword/entity annotations found.",
+      "qanda": {
+        "question": "Are key entities and keywords properly annotated?",
+        "answer": "No, the lack of meta keywords or image alt texts makes it harder for AI to verify your entities."
+      },
+      "meta": {
+        "headingsCount": 0,
+        "imagesWithAlt": 0,
+        "totalImages": 0
+      },
+      "analysis": {
+        "cause": "Missing meta keywords tag.",
+        "recommendation": "Add essential keywords to the meta keywords tag for better entity association by AI crawlers."
+      }
+    },
+    "Content_Updated_Regularly": {
+      "score": 0,
+      "status": "fail",
+      "details": "No freshness signal found on the page.",
+      "qanda": {
+        "question": "Has the content been updated recently to maintain freshness?",
+        "answer": "No, the content appears outdated or lacks a clear update signal, which may reduce its priority in AI results."
+      },
+      "meta": {
+        "checked": "meta tags (last-modified, modified_time, etc.), JSON-LD (dateModified), time tags"
+      },
+      "analysis": {
+        "cause": "No content update timestamp found anywhere on the page (meta tags, time tags, or structured data).",
+        "recommendation": "Add <meta name='last-modified'>, <time datetime='...'>, or dateModified structured data to signal content freshness."
+      }
+    },
+    "Internal_Linking_AI_Friendly": {
+      "score": 0,
+      "status": "fail",
+      "details": "No internal links found.",
+      "qanda": {
+        "question": "Is the internal linking structure helpful for AI discovery?",
+        "answer": "No, links are either missing or use generic text that provides no context for the destination."
+      },
+      "meta": {
+        "internalLinks": 0,
+        "descriptiveLinks": 0,
+        "examples": []
+      },
+      "analysis": {
+        "cause": "No internal links found on the page.",
+        "recommendation": "Add internal links to help AI models navigate and understand page relationships."
+      }
+    },
+    "Topical_Focus_Clarity": {
+      "score": 0,
+      "status": "fail",
+      "details": "No topical focus detected between title and H1.",
+      "qanda": {
+        "question": "Does the page maintain a clear and consistent topical focus?",
+        "answer": "No, there is a mismatch between your title and headings, which confuses AI about your primary focus."
+      },
+      "meta": {
+        "overlap": [],
+        "title": "client challenge",
+        "h1": ""
+      },
+      "analysis": {
+        "cause": "No topical focus detected — the title and H1 heading share no primary keywords at all.",
+        "recommendation": "Rewrite your H1 heading to use the same primary entities as your page title so AI can identify a clear topical focus."
+      }
+    },
+    "AI_Agentic_Browsing": {
+      "score": 0,
+      "status": "fail",
+      "experimental": true,
+      "confidence": "lab",
+      "details": "No WebMCP agent tooling found — an emerging, early-mover signal most sites don't have yet.",
+      "meta": {
+        "value": "0%",
+        "experimental": true,
+        "registeredTools": 0,
+        "apiPresent": false,
+        "totalForms": 1,
+        "annotatedForms": 0,
+        "schemaValid": null,
+        "agentAccessibility": 100,
+        "llmsTxt": false,
+        "landmarks": 1,
+        "thresholds": {
+          "Good": "≥75%",
+          "Warning": "25–74%",
+          "Poor": "<25%"
+        }
+      },
+      "analysis": {
+        "cause": "The site exposes no machine-callable tools (WebMCP) for AI agents to search inventory, value a trade, or book service.",
+        "recommendation": "Adopt WebMCP — annotate key forms/actions declaratively and register agent tools. Early adoption is a competitive moat while the standard is new."
+      },
+      "present": true
+    },
+    "Duplicate_Content_Detection_Ready": {
+      "score": 0,
+      "status": "fail",
+      "details": "No duplicate content protection found.",
+      "qanda": {
+        "question": "Is the site protected against duplicate content issues?",
+        "answer": "No, missing canonical signals could lead to AI indexing redundant versions of your content."
+      },
+      "meta": {
+        "hasNoindex": false
+      },
+      "analysis": {
+        "cause": "",
+        "recommendation": ""
+      },
+      "infoOnly": true
+    },
+    "Structured_Content": {
+      "score": 75,
+      "status": "warning",
+      "infoOnly": true,
+      "details": "Content structure could be more machine-parseable (chunks, lists, tables).",
+      "qanda": {
+        "question": "Is content broken into machine-parseable chunks, lists, and tables?",
+        "answer": "Partially — dense paragraphs or missing lists/tables make extraction harder for AI."
+      },
+      "meta": {
+        "listCount": 0,
+        "tableCount": 0,
+        "blockquoteCount": 0,
+        "longParagraphs": 0,
+        "totalParagraphs": 0,
+        "headingDensity": "0.0"
+      },
+      "analysis": {
+        "cause": "No lists, tables, or callout blocks detected.",
+        "recommendation": "Incorporate bulleted lists and tables to present data points, which are easily extracted by AI snippets."
+      }
+    },
+    "Terminology_Consistency": {
+      "score": 100,
+      "status": "pass",
+      "details": "Terminology is consistent across headings and body.",
+      "qanda": {
+        "question": "Is your industry terminology used consistently?",
+        "answer": "Yes, consistent language is used throughout the page, helping AI build a stable knowledge graph of your brand."
+      },
+      "meta": {
+        "keyTerms": []
+      },
+      "analysis": null,
+      "infoOnly": true
+    }
+  },
+  "aioCompatibilityBadge": "No",
+  "aeo": {
+    "url": "https://www.morries.com",
+    "overallScore": 29,
+    "Percentage": 35,
+    "Confidence": "heuristic",
+    "pageType": "home",
+    "parametersScored": 11,
+    "params": {
+      "Schema_Markup": {
+        "score": 50,
+        "weight": 0.2,
+        "applicable": true,
+        "status": "warning"
+      },
+      "Answer_First_Structure": {
+        "score": 30,
+        "weight": 0.15,
+        "applicable": true,
+        "status": "warning"
+      },
+      "Bot_Access": {
+        "score": 100,
+        "weight": 0.11,
+        "applicable": true,
+        "status": "pass"
+      },
+      "Structured_Content": {
+        "score": 0,
+        "weight": 0.09,
+        "applicable": true,
+        "status": "fail"
+      },
+      "FAQ_QA_Blocks": {
+        "score": 0,
+        "weight": 0.07,
+        "applicable": false,
+        "status": "fail",
+        "infoOnly": true
+      },
+      "Entity_Recognition": {
+        "score": 40,
+        "weight": 0.07,
+        "applicable": true,
+        "status": "warning"
+      },
+      "Citation_NAP_Consistency": {
+        "score": 15,
+        "weight": 0.06,
+        "applicable": true,
+        "status": "fail"
+      },
+      "Citations_Attribution": {
+        "score": 6,
+        "weight": 0.05,
+        "applicable": true,
+        "status": "fail"
+      },
+      "Topical_Authority": {
+        "score": 16,
+        "weight": 0.05,
+        "applicable": true,
+        "status": "fail"
+      },
+      "Index_Coverage": {
+        "score": 0,
+        "weight": 0.04,
+        "applicable": true,
+        "status": "fail"
+      },
+      "SameAs_Validation": {
+        "score": 0,
+        "weight": 0.04,
+        "applicable": true,
+        "status": "fail"
+      },
+      "EEAT_Composite": {
+        "score": 0,
+        "weight": 0.1,
+        "applicable": false,
+        "status": "fail",
+        "infoOnly": true
+      },
+      "Llms_Txt": {
+        "score": 10,
+        "weight": 0.02,
+        "applicable": true,
+        "status": "fail"
+      },
+      "Brand_Entity_Strength": {
+        "score": 15,
+        "weight": 0,
+        "applicable": false,
+        "infoOnly": true,
+        "status": "fail"
+      },
+      "Markdown_Structure": {
+        "score": 0,
+        "weight": 0,
+        "applicable": false,
+        "infoOnly": true,
+        "status": "fail"
+      },
+      "Page_Speed": {
+        "score": 100,
+        "weight": 0,
+        "applicable": false,
+        "infoOnly": true,
+        "status": "pass"
+      }
+    },
+    "platforms": {
+      "gemini": {
+        "score": 47,
+        "breakdown": {
+          "schema": 15,
+          "pageSpeed": 20,
+          "botAccess": 5,
+          "answerFirst": 2,
+          "structuredContent": 0,
+          "indexCoverage": 0,
+          "entityRecognition": 4,
+          "citationConsistency": 1,
+          "topicalAuthority": 1,
+          "llmsTxt": 0,
+          "citations": 0
+        },
+        "parameters": [
+          {
+            "key": "schema",
+            "label": "Page Data Labels (Schema)",
+            "weight": 30,
+            "score": 50,
+            "passed": false,
+            "requirement": "Add hidden data labels (schema) so AI can clearly tell what your page is about.",
+            "cause": "Your page has no FAQ or how-to content for AI to label. Add a short FAQ section with schema."
+          },
+          {
+            "key": "pageSpeed",
+            "label": "Page Loading Speed",
+            "weight": 20,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make the page load fast — under about 2 seconds.",
+            "cause": null
+          },
+          {
+            "key": "botAccess",
+            "label": "Lets AI Bots In",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Allow this AI’s bot in your robots.txt file so it can read the page.",
+            "cause": null
+          },
+          {
+            "key": "answerFirst",
+            "label": "Quick Answer at the Top",
+            "weight": 5,
+            "score": 30,
+            "passed": false,
+            "requirement": "Put a short, direct answer in the first few lines so AI can grab it fast.",
+            "cause": "The opening is too long-winded. Start with a 1–2 sentence direct answer."
+          },
+          {
+            "key": "structuredContent",
+            "label": "Tables & Lists",
+            "weight": 10,
+            "score": 0,
+            "passed": false,
+            "requirement": "Show key data in real tables and lists, not inside pictures.",
+            "cause": "Your page has no tables or lists. Put key facts into simple tables and bullet lists."
+          },
+          {
+            "key": "indexCoverage",
+            "label": "Findable in Search",
+            "weight": 10,
+            "score": 0,
+            "passed": false,
+            "requirement": "Make sure your main pages can be found and are listed in your sitemap.",
+            "cause": "No sitemap found, so engines have no map of your pages. Add an XML sitemap."
+          },
+          {
+            "key": "entityRecognition",
+            "label": "Business Identity",
+            "weight": 10,
+            "score": 40,
+            "passed": false,
+            "requirement": "Add your business details (name and type) so AI knows who you are.",
+            "cause": "Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are."
+          },
+          {
+            "key": "citationConsistency",
+            "label": "Matching Contact Info",
+            "weight": 5,
+            "score": 15,
+            "passed": false,
+            "requirement": "Use the same name, address, and phone everywhere.",
+            "cause": "No clear phone number AI can read. Add one in your business details."
+          },
+          {
+            "key": "topicalAuthority",
+            "label": "Depth of Content",
+            "weight": 5,
+            "score": 16,
+            "passed": false,
+            "requirement": "Cover your main topics in depth so AI sees you as an expert.",
+            "cause": "This page is thin on content. Add more depth on your main topics."
+          }
+        ],
+        "reason": "Your page has no FAQ or how-to content for AI to label. Add a short FAQ section with schema. The opening is too long-winded. Start with a 1–2 sentence direct answer. Your page has no tables or lists. Put key facts into simple tables and bullet lists. No sitemap found, so engines have no map of your pages. Add an XML sitemap. Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are. No clear phone number AI can read. Add one in your business details. This page is thin on content. Add more depth on your main topics."
+      },
+      "chatgpt": {
+        "score": 20,
+        "breakdown": {
+          "llmsTxt": 4,
+          "answerFirst": 5,
+          "markdownHeaders": 0,
+          "botAccess": 5,
+          "schema": 3,
+          "indexCoverage": 0,
+          "entityRecognition": 2,
+          "citationConsistency": 0,
+          "topicalAuthority": 1,
+          "structuredContent": 0,
+          "citations": 0,
+          "pageSpeed": 0
+        },
+        "parameters": [
+          {
+            "key": "llmsTxt",
+            "label": "llms.txt File",
+            "weight": 40,
+            "score": 10,
+            "passed": false,
+            "requirement": "Add an llms.txt file on your site that tells AI what to read.",
+            "cause": "Your llms.txt link opens a normal web page, not a real text file. Add a plain llms.txt file."
+          },
+          {
+            "key": "answerFirst",
+            "label": "Quick Answer at the Top",
+            "weight": 17,
+            "score": 30,
+            "passed": false,
+            "requirement": "Put a short, direct answer in the first few lines so AI can grab it fast.",
+            "cause": "The opening is too long-winded. Start with a 1–2 sentence direct answer."
+          },
+          {
+            "key": "markdownHeaders",
+            "label": "Clear Headings",
+            "weight": 10,
+            "score": 0,
+            "passed": false,
+            "requirement": "Use clear headings and sub-headings so AI can follow the page.",
+            "cause": "Your page is missing a main heading (H1). Add one clear title at the top."
+          },
+          {
+            "key": "botAccess",
+            "label": "Lets AI Bots In",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Allow this AI’s bot in your robots.txt file so it can read the page.",
+            "cause": null
+          },
+          {
+            "key": "schema",
+            "label": "Page Data Labels (Schema)",
+            "weight": 5,
+            "score": 50,
+            "passed": false,
+            "requirement": "Add hidden data labels (schema) so AI can clearly tell what your page is about.",
+            "cause": "Your page has no FAQ or how-to content for AI to label. Add a short FAQ section with schema."
+          },
+          {
+            "key": "indexCoverage",
+            "label": "Findable in Search",
+            "weight": 10,
+            "score": 0,
+            "passed": false,
+            "requirement": "Make sure your main pages can be found and are listed in your sitemap.",
+            "cause": "No sitemap found, so engines have no map of your pages. Add an XML sitemap."
+          },
+          {
+            "key": "entityRecognition",
+            "label": "Business Identity",
+            "weight": 5,
+            "score": 40,
+            "passed": false,
+            "requirement": "Add your business details (name and type) so AI knows who you are.",
+            "cause": "Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are."
+          },
+          {
+            "key": "citationConsistency",
+            "label": "Matching Contact Info",
+            "weight": 3,
+            "score": 15,
+            "passed": false,
+            "requirement": "Use the same name, address, and phone everywhere.",
+            "cause": "No clear phone number AI can read. Add one in your business details."
+          },
+          {
+            "key": "topicalAuthority",
+            "label": "Depth of Content",
+            "weight": 5,
+            "score": 16,
+            "passed": false,
+            "requirement": "Cover your main topics in depth so AI sees you as an expert.",
+            "cause": "This page is thin on content. Add more depth on your main topics."
+          }
+        ],
+        "reason": "Your llms.txt link opens a normal web page, not a real text file. Add a plain llms.txt file. The opening is too long-winded. Start with a 1–2 sentence direct answer. Your page is missing a main heading (H1). Add one clear title at the top. Your page has no FAQ or how-to content for AI to label. Add a short FAQ section with schema. No sitemap found, so engines have no map of your pages. Add an XML sitemap. Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are. No clear phone number AI can read. Add one in your business details. This page is thin on content. Add more depth on your main topics."
+      },
+      "perplexity": {
+        "score": 20,
+        "breakdown": {
+          "structuredContent": 0,
+          "citations": 1,
+          "pageSpeed": 10,
+          "botAccess": 5,
+          "indexCoverage": 0,
+          "entityRecognition": 2,
+          "citationConsistency": 0,
+          "topicalAuthority": 1,
+          "answerFirst": 0,
+          "schema": 0,
+          "llmsTxt": 0,
+          "markdownHeaders": 0
+        },
+        "parameters": [
+          {
+            "key": "structuredContent",
+            "label": "Tables & Lists",
+            "weight": 40,
+            "score": 0,
+            "passed": false,
+            "requirement": "Show key data in real tables and lists, not inside pictures.",
+            "cause": "Your page has no tables or lists. Put key facts into simple tables and bullet lists."
+          },
+          {
+            "key": "citations",
+            "label": "Links to Sources",
+            "weight": 20,
+            "score": 6,
+            "passed": false,
+            "requirement": "Link to trusted outside sources so AI can check your facts.",
+            "cause": "Your page doesn’t link to any trusted outside sources. Add links to back up your facts."
+          },
+          {
+            "key": "pageSpeed",
+            "label": "Page Loading Speed",
+            "weight": 10,
+            "score": 100,
+            "passed": true,
+            "requirement": "Make the page load fast — under about 2 seconds.",
+            "cause": null
+          },
+          {
+            "key": "botAccess",
+            "label": "Lets AI Bots In",
+            "weight": 5,
+            "score": 100,
+            "passed": true,
+            "requirement": "Allow this AI’s bot in your robots.txt file so it can read the page.",
+            "cause": null
+          },
+          {
+            "key": "indexCoverage",
+            "label": "Findable in Search",
+            "weight": 10,
+            "score": 0,
+            "passed": false,
+            "requirement": "Make sure your main pages can be found and are listed in your sitemap.",
+            "cause": "No sitemap found, so engines have no map of your pages. Add an XML sitemap."
+          },
+          {
+            "key": "entityRecognition",
+            "label": "Business Identity",
+            "weight": 5,
+            "score": 40,
+            "passed": false,
+            "requirement": "Add your business details (name and type) so AI knows who you are.",
+            "cause": "Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are."
+          },
+          {
+            "key": "citationConsistency",
+            "label": "Matching Contact Info",
+            "weight": 3,
+            "score": 15,
+            "passed": false,
+            "requirement": "Use the same name, address, and phone everywhere.",
+            "cause": "No clear phone number AI can read. Add one in your business details."
+          },
+          {
+            "key": "topicalAuthority",
+            "label": "Depth of Content",
+            "weight": 7,
+            "score": 16,
+            "passed": false,
+            "requirement": "Cover your main topics in depth so AI sees you as an expert.",
+            "cause": "This page is thin on content. Add more depth on your main topics."
+          }
+        ],
+        "reason": "Your page has no tables or lists. Put key facts into simple tables and bullet lists. Your page doesn’t link to any trusted outside sources. Add links to back up your facts. No sitemap found, so engines have no map of your pages. Add an XML sitemap. Your site has no business details AI can read. Add Organization info (name, address, logo) so AI knows who you are. No clear phone number AI can read. Add one in your business details. This page is thin on content. Add more depth on your main topics."
+      }
+    },
+    "signals": {
+      "answerFirst": {
+        "signal": "answerFirst",
+        "score": 30,
+        "sentenceCount": 6,
+        "found": true,
+        "sentences": [
+          "<div class=\"noscript-container\"> <div class=\"noscript-content\"> <img src=\"/_fs-ch-1T1wmsGaOgGaSxcX/assets/errorIcon.",
+          "svg\" alt=\"\" role=\"presentation\" class=\"error-icon\" /> <span class=\"noscript-span\" >JavaScript is disabled in your browser.",
+          "</span > <p>Please enable JavaScript to proceed.",
+          "</p> </div> </div> A required part of this site couldn’t load.",
+          "This may be due to a browser extension, network issues, or browser settings.",
+          "Please check your connection, disable any ad blockers, or try using a different browser."
+        ],
+        "openingText": "<div class=\"noscript-container\"> <div class=\"noscript-content\"> <img src=\"/_fs-ch-1T1wmsGaOgGaSxcX/assets/errorIcon.svg\" alt=\"\" role=\"presentation\" class=\"error-icon\" /> <span class=\"noscript-span\" >JavaScript is disabled in your browser.</span > <p>Please enable JavaScript to proceed.</p> </div> </div> A required part of this site couldn’t load. This may be due to a browser extension, network issues, or browser settings. Please check your connection, disable any ad blockers, or try using a different browser."
+      },
+      "llmsTxt": {
+        "signal": "llmsTxt",
+        "score": 10,
+        "exists": false,
+        "url": "https://www.morries.com/llms.txt",
+        "statusCode": 200,
+        "invalidFormat": "html",
+        "breakdown": {
+          "present": 10,
+          "h1": 0,
+          "sections": 0,
+          "links": 0,
+          "summary": 0,
+          "sameDomain": 0
+        },
+        "issues": [
+          "/llms.txt returns an HTML page (likely your SPA or 404 fallback), not a Markdown text file. Serve a real plain-text Markdown llms.txt."
+        ],
+        "reason": "⚠️ Why no: /llms.txt responds 200 but returns HTML, not Markdown — engines will ignore it."
+      },
+      "schema": {
+        "signal": "schema",
+        "score": 50,
+        "status": "warning",
+        "message": "No FAQ or HowTo content detected.",
+        "recommendation": "Consider adding an FAQ section to improve AEO score.",
+        "details": {
+          "hasFAQSchema": false,
+          "hasHowToSchema": false,
+          "hasFAQContent": false,
+          "hasHowToContent": false,
+          "isProductOrServicePage": false,
+          "isListingPage": false,
+          "faqNeeded": false,
+          "howToNeeded": false,
+          "reason": "",
+          "schemaTypes": [],
+          "rawSchemas": []
+        }
+      },
+      "structuredContent": {
+        "signal": "structuredContent",
+        "score": 0,
+        "tables": 0,
+        "lists": 0,
+        "images": 0,
+        "dataStuckInImages": false
+      },
+      "botAccess": {
+        "signal": "botAccess",
+        "score": 100,
+        "bots": {
+          "GPTBot": "allowed",
+          "Google-Extended": "allowed",
+          "PerplexityBot": "allowed"
+        },
+        "extraBots": {
+          "ClaudeBot": "allowed",
+          "anthropic-ai": "allowed",
+          "CCBot": "allowed",
+          "Bytespider": "allowed",
+          "Amazonbot": "allowed",
+          "Applebot-Extended": "allowed",
+          "Meta-ExternalAgent": "allowed",
+          "cohere-ai": "allowed",
+          "Google-CloudVertexBot": "allowed"
+        },
+        "isNoindexed": false,
+        "metaNoindex": false,
+        "xRobotsNoindex": false,
+        "robotsScore": 100,
+        "metaScore": 100,
+        "robotsFound": true,
+        "sitemapDeclared": false,
+        "crawlDelay": null,
+        "urlPath": "/",
+        "issues": [
+          "No Sitemap: directive in robots.txt — add \"Sitemap: https://…/sitemap.xml\" so crawlers find your full URL list."
+        ],
+        "reason": "✅ Why: All AI crawlers are allowed and the page is indexable (no noindex via meta or X-Robots-Tag)."
+      },
+      "markdownHeaders": {
+        "signal": "markdownHeaders",
+        "score": 0,
+        "counts": {
+          "h1": 0,
+          "h2": 0,
+          "h3": 0
+        },
+        "reasons": [
+          "Missing H1 tag.",
+          "Missing H2 tags."
+        ],
+        "reason": "Missing H1 tag."
+      },
+      "citations": {
+        "signal": "citations",
+        "score": 6,
+        "externalSources": 0,
+        "citationMarkers": 0,
+        "hasReferenceSection": false,
+        "breakdown": {
+          "citations": 0,
+          "policies": 0,
+          "contactTransparency": 0,
+          "trustBasics": 6
+        },
+        "transparency": {
+          "hasPrivacy": false,
+          "hasTerms": false,
+          "hasContact": false,
+          "hasAbout": false,
+          "hasTel": false,
+          "hasAddress": false,
+          "hasAuthor": false,
+          "isHttps": true,
+          "hasDisclosure": false,
+          "hasUpdated": false
+        },
+        "issues": [
+          "Cite reputable sources — 3+ outbound links, citation markers like [1], and a References/Sources section.",
+          "Add clear policy/info pages: Privacy, Terms, Contact, About.",
+          "Show transparent contact/authorship: a click-to-call phone, a physical address, author bylines.",
+          "Trust basics: add a disclosure/editorial statement; show last-updated/copyright dates."
+        ],
+        "reason": "⚠️ Why no: Trust signals incomplete (6/100). Cite reputable sources — 3+ outbound links, citation markers like [1], and a References/Sources section. Add clear policy/info pages: Privacy, Terms, Contact, About."
+      },
+      "indexCoverage": {
+        "signal": "indexCoverage",
+        "score": 0,
+        "source": "sitemap-estimate",
+        "sitemapFound": false,
+        "submitted": 0,
+        "sampled": 0,
+        "indexable": 0,
+        "estimatedCoverage": 0,
+        "estimatedIndexed": 0,
+        "issues": [
+          "No XML sitemap found via robots.txt, /sitemap.xml, or /sitemap_index.xml."
+        ],
+        "reason": "⚠️ Why no: No XML sitemap detected. Without one, Google has no reliable list of pages to index — coverage is likely incomplete."
+      },
+      "entityRecognition": {
+        "signal": "entityRecognition",
+        "score": 40,
+        "source": "on-page+kg",
+        "orgSchema": {
+          "found": false
+        },
+        "knowledgeGraph": {
+          "checked": true,
+          "found": false,
+          "resultScore": 0,
+          "name": null
+        },
+        "issues": [
+          "No Organization/LocalBusiness JSON-LD found.",
+          "Not found as a distinct entity in the Knowledge Graph."
+        ],
+        "reason": "⚠️ Why no: No machine-readable identity (Organization/LocalBusiness JSON-LD). Engines can't confidently recognize this business as an entity."
+      },
+      "brandEntityStrength": {
+        "signal": "brandEntityStrength",
+        "score": 15,
+        "source": "on-page+kg",
+        "tier": "Weak",
+        "breakdown": {
+          "sameAs": 0,
+          "authoritative": 0,
+          "reviews": 0,
+          "completeness": 0
+        },
+        "detected": {
+          "socialProfiles": [
+            {
+              "platform": "Facebook",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "Instagram",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "X (Twitter)",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "LinkedIn",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "YouTube",
+              "found": false,
+              "url": null
+            },
+            {
+              "platform": "Yelp",
+              "found": false,
+              "url": null
+            }
+          ],
+          "otherProfiles": [],
+          "sameAsCount": 0,
+          "hasWikipedia": false,
+          "hasWikidata": false,
+          "hasRating": false,
+          "reviewCount": 0,
+          "schema": {
+            "name": false,
+            "logo": false,
+            "address": false,
+            "foundingDate": false,
+            "description": false,
+            "award": false
+          }
+        },
+        "knowledgeGraph": {
+          "checked": true,
+          "found": false,
+          "resultScore": 0,
+          "hasWikipedia": false
+        },
+        "issues": [
+          "No Organization/LocalBusiness schema — no on-page brand signals to measure."
+        ],
+        "reason": "⚠️ Weak brand entity: no Organization schema, so there are no on-page brand-strength signals (sameAs, reviews, awards) to measure."
+      },
+      "citationConsistency": {
+        "signal": "citationConsistency",
+        "score": 15,
+        "source": "on-page",
+        "breakdown": {
+          "completeness": 0,
+          "phoneConsistency": 0,
+          "nameConsistency": 15,
+          "addressCompleteness": 0
+        },
+        "distinctPhoneCount": 0,
+        "schemaName": null,
+        "hasSchemaAddress": false,
+        "hasSchemaPhone": false,
+        "phoneDisplay": null,
+        "addressDisplay": null,
+        "issues": [
+          "No phone number found in schema or tel: links.",
+          "No Organization/LocalBusiness schema — NAP is not machine-readable."
+        ],
+        "reason": "⚠️ Why no: NAP/brand consistency is incomplete (15/100). No phone number found in schema or tel: links. No Organization/LocalBusiness schema — NAP is not machine-readable."
+      },
+      "topicalAuthority": {
+        "signal": "topicalAuthority",
+        "score": 16,
+        "source": "on-page+crawl",
+        "breakdown": {
+          "depth": 4,
+          "headings": 2,
+          "internalLinks": 2,
+          "verifiedCluster": 0,
+          "industry": 8,
+          "local": 0
+        },
+        "wordCount": 35,
+        "headingCount": 0,
+        "internalLinkCount": 0,
+        "verifiedClusterPages": 0,
+        "industryTopicCount": 2,
+        "localSignals": 0,
+        "issues": [
+          "Thin content (~35 words) — add depth on your core topics.",
+          "Few subtopic headings (H2/H3) — structure the page into topic sections.",
+          "Only 0 internal topic links — build out a topic cluster with related-page links.",
+          "Limited industry topic coverage (financing, service, trade-in, CPO, etc.).",
+          "Weak local-authority signals (city/region terms, \"near me\", service area, map/directions)."
+        ],
+        "reason": "⚠️ Why no: Topical authority is incomplete (16/100). Thin content (~35 words) — add depth on your core topics. Few subtopic headings (H2/H3) — structure the page into topic sections. Only 0 internal topic links — build out a topic cluster with related-page links. Limited industry topic coverage (financing, service, trade-in, CPO, etc.). Weak local-authority signals (city/region terms, \"near me\", service area, map/directions)."
+      },
+      "experienceSignals": {
+        "signal": "experienceSignals",
+        "score": 0,
+        "source": "on-page",
+        "breakdown": {
+          "reviews": 0,
+          "media": 0,
+          "firstPerson": 0,
+          "people": 0
+        },
+        "imageCount": 0,
+        "altCoverage": 0,
+        "hasVideo": false,
+        "issues": [
+          "Add genuine customer testimonials with Review/aggregateRating schema to prove real customer experience.",
+          "Add original photos of your actual inventory, staff, and lot (with descriptive alt text), plus a walkaround video — not stock imagery.",
+          "Write in a first-person, experiential voice ('we test every trade-in', 'our team') instead of generic copy.",
+          "Add a \"Meet our team\" section with real staff photos/bios (and Person schema) to show the humans behind the dealership."
+        ],
+        "reason": "⚠️ Experience signals are limited (0/100). Add genuine customer testimonials with Review/aggregateRating schema to prove real customer experience. Add original photos of your actual inventory, staff, and lot (with descriptive alt text), plus a walkaround video — not stock imagery."
+      },
+      "expertiseSignals": {
+        "signal": "expertiseSignals",
+        "score": 0,
+        "source": "on-page",
+        "breakdown": {
+          "credentials": 0,
+          "awards": 0,
+          "tenure": 0,
+          "authorExpertise": 0
+        },
+        "certificationCount": 0,
+        "issues": [
+          "Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page.",
+          "Showcase any awards or recognition (\"Dealer of the Year\", \"Top-Rated\", customer-satisfaction awards).",
+          "State your track record — years in business (\"Serving the area since 1995\", \"30+ years\").",
+          "Attribute content to credentialed people — author bylines with titles and Person/jobTitle schema."
+        ],
+        "reason": "⚠️ Expertise/credentials are thin (0/100). Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page. Showcase any awards or recognition (\"Dealer of the Year\", \"Top-Rated\", customer-satisfaction awards)."
+      },
+      "authoritySignals": {
+        "signal": "authoritySignals",
+        "score": 0,
+        "source": "on-page",
+        "breakdown": {
+          "pressMentions": 0,
+          "externalAuthority": 0,
+          "trustBadges": 0,
+          "socialProof": 0
+        },
+        "externalAuthLinks": 0,
+        "socialProfiles": 0,
+        "note": "On-page mention proxies — real backlinks/Domain Authority require a paid SEO API.",
+        "issues": [
+          "Add a press/\"as seen in\" section linking to any media coverage or local news mentions.",
+          "Cite/link authoritative sources (NHTSA, KBB, manufacturer, .gov/.edu) to associate with trusted entities.",
+          "Display third-party trust badges (BBB, Google Reviews, DealerRater, Carfax) with links to your profiles.",
+          "Link all your social profiles (Facebook, Instagram, YouTube, LinkedIn) to broaden your verified footprint."
+        ],
+        "reason": "⚠️ Authority signals are limited (0/100). Add a press/\"as seen in\" section linking to any media coverage or local news mentions. Cite/link authoritative sources (NHTSA, KBB, manufacturer, .gov/.edu) to associate with trusted entities."
+      },
+      "pageSpeed": {
+        "score": 100
+      }
+    },
+    "recommendations": [
+      {
+        "priority": "Critical",
+        "title": "Publish an XML Sitemap",
+        "action": "No XML sitemap was found at robots.txt, /sitemap.xml, or /sitemap_index.xml. Publish a sitemap and reference it in robots.txt so Google and AI crawlers have a reliable map of your pages to index.",
+        "platform": "All",
+        "impact": 35
+      },
+      {
+        "priority": "Medium",
+        "title": "Add Direct Answer Block",
+        "action": "Add a 1-2 sentence direct answer (TL;DR) within the first 100 words of your content. AI models prioritize these 'Instant Answer' blocks for search snippets.",
+        "platform": "All",
+        "impact": 30
+      },
+      {
+        "priority": "High",
+        "title": "Create /llms.txt File",
+        "action": "Create a plain text file at the root of your domain at /llms.txt. Include: title, description, and links to key pages. See llmstxt.org for format.",
+        "platform": "ChatGPT",
+        "impact": 25
+      },
+      {
+        "priority": "High",
+        "title": "Convert Prose to Tables or Lists",
+        "action": "Replace comparison paragraphs with <table> elements. Use <ul>/<ol> for feature lists, steps, and comparisons. AI models parse tables 3× more accurately than prose.",
+        "platform": "Perplexity",
+        "impact": 25
+      },
+      {
+        "priority": "High",
+        "title": "Add Organization/LocalBusiness Schema",
+        "action": "Add Organization (or LocalBusiness/AutoDealer) JSON-LD with name, address, logo, telephone, and sameAs links to your social/Wikipedia profiles. This is the strongest signal for entity recognition and Knowledge Graph eligibility.",
+        "platform": "Gemini",
+        "impact": 25
+      },
+      {
+        "priority": "Medium",
+        "title": "Improve Header Hierarchy",
+        "action": "Ensure your page uses a single H1 and follow-up H2, H3 tags in sequence. This creates a clean Markdown representation that ChatGPT and LLMs use to map your page.",
+        "platform": "ChatGPT",
+        "impact": 20
+      },
+      {
+        "priority": "Medium",
+        "title": "Add External Factual Sources",
+        "action": "Link to reputable 3rd party research or data sources. Use superscript style markers [1] or reference lists. Perplexity and factual AIs prioritize cited data.",
+        "platform": "Perplexity",
+        "impact": 20
+      },
+      {
+        "priority": "High",
+        "title": "Build Topical Authority",
+        "action": "Topical authority is 16/100. Deepen coverage of your core topics and tie them together: add comprehensive content, more subtopic headings, internal links to related pages (topic clusters), and clear local signals (city/region, service area). Thin content (~35 words) — add depth on your core topics. Few subtopic headings (H2/H3) — structure the page into topic sections.",
+        "platform": "All",
+        "impact": 20
+      },
+      {
+        "priority": "Medium",
+        "title": "Upgrade Schema to FAQPage or HowTo",
+        "action": "Your page has schema but not the highest-value types. Add FAQPage schema for your most common questions. This is the single biggest Gemini signal.",
+        "platform": "Gemini",
+        "impact": 15
+      },
+      {
+        "priority": "Medium",
+        "title": "Complete & Align Your NAP",
+        "action": "Citation consistency is 15/100. Ensure one canonical Name, Address, and Phone across your LocalBusiness schema, tel: links, and brand tags so search/AI engines can state your details confidently. No phone number found in schema or tel: links. No Organization/LocalBusiness schema — NAP is not machine-readable.",
+        "platform": "Gemini",
+        "impact": 12
+      },
+      {
+        "priority": "Low",
+        "title": "Switch to Active Voice",
+        "action": "Ensure your primary answers use active voice and objective facts rather than marketing prose. AI models prefer direct, factual statements.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Medium",
+        "title": "Strengthen Your Brand Entity",
+        "action": "Brand entity strength is weak (15/100). Broaden your verified footprint and authority signals: add more sameAs profile links, pursue a Wikipedia/Wikidata presence, and expose aggregateRating (review counts) in schema. No Organization/LocalBusiness schema — no on-page brand signals to measure.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Medium",
+        "title": "Show First-Hand Experience",
+        "action": "Experience signals are 0/100. Demonstrate real, hands-on experience: original photos of your actual inventory/staff/lot with alt text, genuine customer testimonials, a walkaround video, and a first-person voice. Add genuine customer testimonials with Review/aggregateRating schema to prove real customer experience. Add original photos of your actual inventory, staff, and lot (with descriptive alt text), plus a walkaround video — not stock imagery.",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Medium",
+        "title": "Surface Your Credentials",
+        "action": "Expertise signals are 0/100. Make your qualifications visible: certifications (ASE, manufacturer-certified, BBB accredited), awards/recognition, years in business, and credentialed author bylines. Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page. Showcase any awards or recognition (\"Dealer of the Year\", \"Top-Rated\", customer-satisfaction awards).",
+        "platform": "All",
+        "impact": 10
+      },
+      {
+        "priority": "Medium",
+        "title": "Build Authority Signals",
+        "action": "Authority signals are 0/100. Add press/\"as seen in\" mentions, link to authoritative sources (NHTSA, KBB, .gov/.edu), display third-party trust badges (BBB, Google, DealerRater), and link all social profiles. (Real backlink growth needs off-site work / a paid SEO tool.) Add a press/\"as seen in\" section linking to any media coverage or local news mentions. Cite/link authoritative sources (NHTSA, KBB, manufacturer, .gov/.edu) to associate with trusted entities.",
+        "platform": "All",
+        "impact": 10
+      }
+    ],
+    "auditedAt": "2026-07-06T21:42:49.618Z"
+  },
+  "conversionAndLeadFlow": {
+    "Percentage": 46,
+    "Confidence": "heuristic",
+    "pageType": "home",
+    "parametersScored": 25,
+    "CTA_Presence": {
+      "score": 0,
+      "status": "fail",
+      "details": "No prominent Call-to-Action buttons found.",
+      "meta": {
+        "count": 0,
+        "selectors": [
+          "button",
+          "input[type=\"button\"]",
+          "input[type=\"submit\"]",
+          ".cta",
+          ".cta-button",
+          ".cta-btn",
+          ".btn-primary",
+          ".btn-cta",
+          ".btn",
+          ".button"
+        ]
+      },
+      "analysis": {
+        "cause": "No elements matching common CTA patterns (buttons, primary links) were detected.",
+        "recommendation": "Add at least one clear Call-to-Action button like 'Get Started' or 'Contact Us' in a prominent position."
+      }
+    },
+    "CTA_Clarity": {
+      "score": 0,
+      "status": "fail",
+      "details": "CTA text is vague or generic.",
+      "meta": {
+        "count": 0,
+        "examples": [],
+        "totalChecked": 0
+      },
+      "analysis": {
+        "cause": "Buttons or links use passive or ambiguous labels (e.g., 'Click Here', 'More Info').",
+        "recommendation": "Use action-oriented verbs like 'Buy Now', 'Download', or 'Register' to drive higher engagement."
+      }
+    },
+    "CTA_Crowding": {
+      "score": 100,
+      "status": "pass",
+      "details": "CTA count is optimal.",
+      "meta": {
+        "count": 2,
+        "limit": 3
+      },
+      "analysis": null
+    },
+    "CTA_Flow_Alignment": {
+      "score": 100,
+      "status": "pass",
+      "details": "CTAs are well-placed across the user's journey (above the fold and through the page).",
+      "meta": {
+        "compositeScore": 100,
+        "ctaCount": 1,
+        "aboveFoldCTA": true,
+        "distribution": {
+          "top": 0,
+          "middle": 1,
+          "bottom": 0
+        },
+        "isLongPage": false,
+        "endCTA": false,
+        "documentHeight": 1080,
+        "viewportHeight": 1080,
+        "examples": [
+          "Download audio CAPTCHA"
+        ]
+      },
+      "analysis": null
+    },
+    "Form_Length": {
+      "score": 100,
+      "status": "pass",
+      "details": "No forms to analyze.",
+      "meta": {
+        "count": 0
+      },
+      "analysis": null
+    },
+    "Required_vs_Optional_Fields": {
+      "score": 100,
+      "status": "pass",
+      "details": "Required or optional fields are clearly distinguished.",
+      "meta": {
+        "count": 1,
+        "checkedInputs": [
+          "input[name=\"answer\"]"
+        ]
+      },
+      "analysis": null
+    },
+    "Inline_Validation": {
+      "score": 100,
+      "status": "pass",
+      "details": "No form inputs found to analyze.",
+      "meta": {
+        "count": 0,
+        "checkedInputs": [],
+        "hasValidation": true
+      },
+      "analysis": null
+    },
+    "Submit_Button_Clarity": {
+      "score": 100,
+      "status": "pass",
+      "details": "Submit buttons use clear, conversion-oriented text.",
+      "meta": {
+        "totalCount": 2,
+        "clearCount": 1,
+        "examples": [
+          "submit"
+        ]
+      },
+      "analysis": null
+    },
+    "MultiStep_Form_Progress": {
+      "score": 100,
+      "status": "pass",
+      "details": "No multi-step forms detected.",
+      "meta": {
+        "hasProgress": false,
+        "count": 0
+      },
+      "analysis": null
+    },
+    "Friendly_Error_Handling": {
+      "score": 50,
+      "status": "warning",
+      "details": "No explicit error handling or validation cues found.",
+      "meta": {
+        "count": 0,
+        "checkedSelectors": [
+          "input[required]",
+          "input[pattern]",
+          ".error-message",
+          ".invalid-feedback",
+          "[aria-invalid]"
+        ]
+      },
+      "analysis": {
+        "cause": "No clear error message containers or validation attributes were identified on form elements.",
+        "recommendation": "Design and implement clear, helpful error messages that guide users to fix input mistakes in real-time."
+      }
+    },
+    "Microcopy_Clarity": {
+      "score": 50,
+      "status": "warning",
+      "details": "Limited or no microcopy found for form inputs.",
+      "meta": {
+        "count": 0,
+        "checkedSelectors": [
+          "input[placeholder]",
+          "textarea[placeholder]",
+          ".helper-text",
+          ".form-text",
+          "small.text-muted"
+        ]
+      },
+      "analysis": {
+        "cause": "Form inputs lack placeholders or descriptive helper text to guide the completion process.",
+        "recommendation": "Add descriptive microcopy and meaningful placeholders to simplify the user experience and reduce friction."
+      }
+    },
+    "Thank_You_Pages": {
+      "score": 50,
+      "status": "warning",
+      "details": "Lead forms exist but no thank-you / confirmation page was detected.",
+      "meta": {
+        "detectionType": "forms-without-thankyou",
+        "formCount": 1,
+        "references": []
+      },
+      "analysis": {
+        "cause": "Forms are present but no thank-you or confirmation page/redirect was found, so successful submissions may not be confirmed to the user or tracked as conversions.",
+        "recommendation": "Redirect form submissions to a dedicated thank-you page. It reassures the user, sets next steps, and provides a clean conversion event for analytics and retargeting."
+      }
+    },
+    "Trust_Badges": {
+      "score": 100,
+      "status": "pass",
+      "category": "ux",
+      "details": "No payment functionality detected, trust badges not required.",
+      "meta": {
+        "count": 0,
+        "checkedKeywords": [
+          "secure",
+          "ssl",
+          "verified",
+          "payment",
+          "badge",
+          "trust",
+          "guarantee"
+        ]
+      },
+      "analysis": {
+        "impact": "Trust badges are primarily relevant for transaction-based websites."
+      }
+    },
+    "Testimonials": {
+      "score": 0,
+      "status": "fail",
+      "details": "No testimonials found.",
+      "meta": {
+        "count": 0,
+        "checkedKeywords": [
+          "testimonial",
+          "review",
+          "client-say",
+          "feedback",
+          "what people say"
+        ]
+      },
+      "analysis": {
+        "cause": "No section or elements were found that indicate client testimonials or success stories.",
+        "recommendation": "Add at least 2-3 customer testimonials to build credibility and social proof."
+      }
+    },
+    "Reviews": {
+      "score": 0,
+      "status": "fail",
+      "details": "No reviews found.",
+      "meta": {
+        "count": 0,
+        "checkedKeywords": [
+          "review",
+          "rating",
+          "stars",
+          "customer-review"
+        ]
+      },
+      "analysis": {
+        "cause": "No aggregate ratings or specific user review elements were detected on the page.",
+        "recommendation": "Display star ratings or numerical scores if applicable to increase trust."
+      }
+    },
+    "Client_Logos": {
+      "score": 50,
+      "status": "warning",
+      "details": "No client logos detected.",
+      "meta": {
+        "count": 0,
+        "checkedSelectors": [
+          ".client-logo",
+          ".partner-logo",
+          ".logos img",
+          ".clients img",
+          ".trusted-by img"
+        ]
+      },
+      "analysis": {
+        "cause": "The page does not prominently feature logos of partners or previous clients.",
+        "recommendation": "Display a 'Logos' or 'Trusted By' section with well-known brands you've worked with to boost authority."
+      }
+    },
+    "Case_Studies_Accessibility": {
+      "score": 50,
+      "status": "warning",
+      "details": "No references to case studies or success stories found.",
+      "meta": {
+        "count": 0,
+        "checkedKeywords": [
+          "case study",
+          "case studies",
+          "success story",
+          "success stories",
+          "client success"
+        ]
+      },
+      "analysis": {
+        "cause": "No textual references to 'case studies' or 'success stories' were found in the page content.",
+        "recommendation": "Showcase real-world examples of your work through detailed case studies or success stories to build deep trust."
+      }
+    },
+    "Certifications_Awards": {
+      "score": 20,
+      "status": "fail",
+      "details": "No certifications, accreditations or awards detected on this page.",
+      "analysis": {
+        "cause": "Few or no third-party credibility signals (certifications, BBB, awards, ratings) are visible.",
+        "recommendation": "Display manufacturer certifications, BBB accreditation, award badges (Dealer of the Year, DealerRater) and star ratings prominently near the top of key pages."
+      },
+      "meta": {
+        "found": [],
+        "badgeImgs": 0
+      }
+    },
+    "Click_To_Call": {
+      "score": 0,
+      "status": "fail",
+      "details": "No phone number or click-to-call link detected.",
+      "meta": {
+        "detectionType": "none",
+        "telCount": 0,
+        "telExamples": []
+      },
+      "analysis": {
+        "cause": "No tel: link or visible phone number was found on the page.",
+        "recommendation": "Display your dealership phone number prominently and make it a click-to-call (tel:) link so shoppers can reach you instantly."
+      }
+    },
+    "Chat_Experience": {
+      "score": 0,
+      "status": "fail",
+      "details": "No live chat or chatbot experience detected.",
+      "meta": {
+        "detectionType": "none",
+        "foundWidgets": [],
+        "ctaExamples": [],
+        "formFieldsDetected": [],
+        "matchedKeywords": []
+      },
+      "analysis": {
+        "cause": "No chat widget, chatbot, or chat launcher was found on the page.",
+        "recommendation": "Add a live chat or chatbot (Gubagoo, Podium, CarNow, Intercom) to answer shopper questions in real time and capture leads outside business hours."
+      }
+    },
+    "Lead_Magnets": {
+      "score": 50,
+      "status": "warning",
+      "details": "No clear lead magnets detected.",
+      "meta": {
+        "count": 0,
+        "checkedKeywords": [
+          "free ebook",
+          "guide",
+          "whitepaper",
+          "cheatsheet",
+          "download now",
+          "get my copy",
+          "resource library"
+        ]
+      },
+      "analysis": {
+        "cause": "No high-value offers like ebooks, guides, or whitepapers were detected on the page.",
+        "recommendation": "Offer a relevant lead magnet (e.g., a PDF guide or checklist) to exchange value for visitor contact information."
+      }
+    },
+    "GA4_Installed": {
+      "score": 0,
+      "status": "fail",
+      "details": "No GA4 (Google Analytics 4) tag detected",
+      "meta": {
+        "measurementIds": []
+      },
+      "analysis": {
+        "cause": "No GA4 measurement ID (G-XXXXXXX) or gtag.js loader was found on the page.",
+        "recommendation": "Install Google Analytics 4 (directly via gtag.js or through Google Tag Manager) so you can measure traffic, engagement, and conversions."
+      }
+    },
+    "GTM_Configuration": {
+      "score": 0,
+      "status": "fail",
+      "details": "No Google Tag Manager container detected",
+      "meta": {
+        "containerIds": [],
+        "hasDataLayer": false
+      },
+      "analysis": {
+        "cause": "No GTM container ID (GTM-XXXX) or gtm.js loader was found on the page.",
+        "recommendation": "Install Google Tag Manager to manage analytics and marketing tags without code changes, and to centralize conversion tracking."
+      }
+    },
+    "Conversion_Tracking": {
+      "score": 0,
+      "status": "fail",
+      "details": "No form or call conversion tracking events detected",
+      "meta": {
+        "formTracking": false,
+        "callTracking": false,
+        "signals": [],
+        "telLinks": 0
+      },
+      "analysis": {
+        "cause": "No conversion-tracking events (GA4 generate_lead, Google Ads conversion, Meta Pixel Lead, or a call-tracking provider) were detected on the page.",
+        "recommendation": "Fire a conversion event on form submissions and add phone-call tracking, so you can measure how many leads each channel produces."
+      }
+    },
+    "CRM_Integration": {
+      "score": 0,
+      "status": "fail",
+      "details": "No CRM integration (vendor script or wired form action) detected.",
+      "meta": {
+        "detectedCRMs": [],
+        "formActions": []
+      },
+      "analysis": {
+        "cause": "No recognized CRM vendor script (VinSolutions, DealerSocket, eLead, HubSpot, etc.) or CRM-wired form action was found on the page.",
+        "recommendation": "Connect your lead forms to a CRM so inquiries flow straight into your sales process. Add the CRM's official form embed/SDK and point form submissions at it."
+      }
+    }
+  },
+  "UXOrContentStructure": {
+    "Percentage": 70,
+    "Confidence": "heuristic",
+    "Text_Readability": {
+      "score": 43.963076923076954,
+      "status": "pass",
+      "details": "This Product Page has a readability score of 44 out of 100, which is perfect for your readers.",
+      "analysis": {
+        "cause": "The content readability matches the target for this page type.",
+        "recommendation": "Maintain this level of clarity. Continue using simple, direct language."
+      },
+      "meta": {
+        "pageType": "Product Page",
+        "targetMin": 40,
+        "targetMax": 60,
+        "problematicContent": [
+          {
+            "text": "Audio is currently unavailable. Please try again later.",
+            "score": 23.00000000000003,
+            "reason": "Complex vocabulary (avg 2.1 syllables/word). Words like: unavailable",
+            "stats": {
+              "ASL": 4,
+              "ASW": 2.125
+            }
+          }
+        ],
+        "overallStats": {
+          "score": 43.963076923076954,
+          "ASL": 13,
+          "ASW": 1.7692307692307692,
+          "sentenceCount": 1,
+          "wordCount": 13,
+          "syllableCount": 23
+        }
+      }
+    },
+    "Intrusive_Interstitials": {
+      "score": 100,
+      "status": "pass",
+      "details": "No annoying pop-ups or full-screen overlays were found.",
+      "analysis": {
+        "cause": "No intrusive interstitials found.",
+        "recommendation": "Continue to avoid full-screen pop-ups that block the user's primary task."
+      },
+      "meta": {
+        "hasOverlay": true,
+        "hasScrollBlock": false,
+        "hasModal": false
+      }
+    },
+    "Navigation_Discoverability": {
+      "score": 0,
+      "status": "fail",
+      "details": "Found: No Menu, No Icon, No Search.",
+      "analysis": {
+        "cause": "Multiple essential navigation controls are missing or hidden — no search box was detected, forcing visitors to hunt through menus.",
+        "recommendation": "Ensure a primary navigation menu and a working, header-level search bar are easily discoverable for all users."
+      },
+      "meta": {
+        "hasHamburger": false,
+        "hasSearch": false,
+        "hasNavMenu": false,
+        "search": {
+          "present": false,
+          "type": "none",
+          "discoverable": false,
+          "functional": false,
+          "inHeader": false,
+          "topOffset": null,
+          "score": 0
+        }
+      }
+    },
+    "Above_the_Fold_Content": {
+      "score": 100,
+      "status": "pass",
+      "details": "About 100% of your most important content (titles, images, and buttons) is visible before any scrolling is needed.",
+      "analysis": {
+        "cause": "Primary content and actions are well-positioned above the fold.",
+        "recommendation": "Keep critical information near the top to reduce the need for immediate scrolling."
+      },
+      "meta": {
+        "viewportHeight": 1080,
+        "importantVisible": 6,
+        "totalImportant": 6,
+        "atfScore": 100,
+        "elements": [
+          {
+            "tag": "DIV",
+            "text": "Enter the characters seen in the image below:\n\nDow",
+            "top": 0,
+            "weight": 1
+          },
+          {
+            "tag": "IMG",
+            "text": "logo",
+            "top": 269,
+            "weight": 5
+          },
+          {
+            "tag": "P",
+            "text": "Enter the characters seen in the image below:",
+            "top": 368,
+            "weight": 2
+          },
+          {
+            "tag": "IMG",
+            "text": "Z",
+            "top": 410,
+            "weight": 5
+          },
+          {
+            "tag": "A",
+            "text": "Download audio CAPTCHA",
+            "top": 662,
+            "weight": 3
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Submit",
+            "top": 776,
+            "weight": 7
+          }
+        ]
+      }
+    },
+    "Broken_Links": {
+      "score": 100,
+      "status": "pass",
+      "details": "Every link on your page works perfectly.",
+      "analysis": {
+        "cause": "All links on the page are valid and accessible.",
+        "recommendation": "Periodic link audits are recommended to ensure external links remain active."
+      },
+      "meta": {
+        "brokenCount": 0,
+        "brokenLinks": [],
+        "totalChecked": 0,
+        "totalInternal": 0,
+        "totalExternal": 0
+      }
+    },
+    "Mobile_Experience": {
+      "score": 80,
+      "status": "pass",
+      "details": "The layout adapts to the screen: responsive viewport, no horizontal overflow, and responsive techniques in use.",
+      "analysis": null,
+      "meta": {
+        "hasViewportMeta": true,
+        "viewportContent": "width=device-width, initial-scale=1",
+        "hasDeviceWidth": true,
+        "horizontalOverflow": false,
+        "overflowBy": 0,
+        "offenders": [],
+        "imagesTotal": 4,
+        "responsiveImages": 0,
+        "responsiveImageRatio": 0,
+        "mediaQueryCount": 1,
+        "score": 80,
+        "touchTargetPct": 0,
+        "adequateTargets": 0,
+        "totalTargets": 4,
+        "tooSmallTargets": 4,
+        "smallExamples": [
+          "IMG (24x24)",
+          "Answer (455x20)",
+          "INPUT (455x42)",
+          "Submit (455x36)"
+        ],
+        "legibleTextPct": 100,
+        "legibleText": 4,
+        "textTotal": 4,
+        "tinyText": 0,
+        "thumbReachOk": true,
+        "hasMobileNav": false,
+        "hasStickyBar": true,
+        "responsiveScore": 80,
+        "usabilityScore": 45,
+        "usabilityWeighted": false
+      }
+    },
+    "Interactive_Click_Feedback": {
+      "score": 100,
+      "status": "pass",
+      "details": "We tested 6 interactive items, and 6 of them responded clearly to touch or clicks.",
+      "analysis": {
+        "cause": "Most interactive elements provide clear visual feedback on interaction.",
+        "recommendation": "Continue using hover and active states to make the UI feel responsive."
+      },
+      "meta": {
+        "missingPointerCursor": 0,
+        "totalInteractive": 6,
+        "withFeedback": 6,
+        "withHover": 6,
+        "withActive": 6,
+        "elements": [
+          {
+            "tag": "IMG",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "A",
+            "text": "Download audio CAPTCHA",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "SPAN",
+            "text": "Download audio CAPTCHA",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "INPUT",
+            "text": "",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Submit",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          },
+          {
+            "tag": "BUTTON",
+            "text": "Close",
+            "feedback": {
+              "hoverChanged": true,
+              "activeChanged": true,
+              "focusChanged": true,
+              "hasFeedback": true
+            }
+          }
+        ]
+      }
+    },
+    "Loading_Feedback": {
+      "score": 50,
+      "status": "warning",
+      "details": "We found 0 visual signals (like icons and shimmers) that show the page is loading.",
+      "analysis": {
+        "cause": "Only simple text indicators were found, which can be easily missed.",
+        "recommendation": "Upgrade text-based loading messages to more prominent visual indicators like spinners or shimmer effects."
+      },
+      "meta": {
+        "hasLoadingFeedback": true,
+        "summary": {
+          "spinners": 0,
+          "skeletons": 0,
+          "loadingText": 1
+        },
+        "textIndicators": [
+          {
+            "text": "\n      function loadScript(src) {\n        return n",
+            "tag": "SCRIPT"
+          }
+        ]
+      }
+    },
+    "Hierarchy_Flow_Clarity": {
+      "score": 42,
+      "status": "fail",
+      "details": "0 H1 / 0 headings, 0/0 sections labeled, 2 next-step links.",
+      "analysis": {
+        "cause": "Structure & flow gaps: no headings to scan by; no footer.",
+        "recommendation": "Break content into scannable sections with headings, give every major section a visible heading, and add a footer plus a clear 'what's next' action so users never hit a dead end."
+      },
+      "meta": {
+        "h1Count": 0,
+        "totalHeadings": 0,
+        "isSequential": true,
+        "totalSections": 0,
+        "labeledCount": 0,
+        "hasFooter": false,
+        "internalLinks": 0,
+        "nextStepCTAs": 2,
+        "breakdown": {
+          "headingScore": 0,
+          "labelingScore": 100,
+          "flowScore": 33
+        }
+      }
+    },
+    "Content_Density_Balance": {
+      "score": 60,
+      "status": "warning",
+      "details": "The balance of text and 'breathing room' on your page is rated as dense.",
+      "analysis": {
+        "cause": "Content is too dense, making it overwhelming for users.",
+        "recommendation": "Use more whitespace, shorter paragraphs, and images to break up text blocks."
+      },
+      "meta": {
+        "densityScore": null,
+        "scrollFactor": 0
+      }
+    },
+    "Layout_Consistency": {
+      "score": 70,
+      "status": "warning",
+      "details": "Your page layout appears a bit unstructured and could use more consistent spacing.",
+      "analysis": {
+        "cause": "Layout structure appears ad-hoc, which may lead to spacing inconsistencies.",
+        "recommendation": "Utilize a standard CSS Grid or Flexbox-based layout system to ensure visual alignment."
+      },
+      "meta": {
+        "hasFlexOrGrid": false
+      }
+    },
+    "Sticky_Header_Usage": {
+      "score": 100,
+      "status": "pass",
+      "details": "Your top menu takes up 0 pixels of screen space, while the recommended limit is undefined pixels.",
+      "analysis": {
+        "cause": "The sticky header height is within optimal limits.",
+        "recommendation": "Keep the header compact to ensure maximum content visibility."
+      },
+      "meta": {
+        "height": 0
+      }
+    },
+    "In_Page_Navigation": {
+      "infoOnly": true,
+      "status": "pass",
+      "details": "This page is short enough that in-page jump links / back-to-top aren't needed.",
+      "analysis": {
+        "cause": "In-page navigation aids are evaluated on long pages (vehicle detail, blog, spec-heavy articles).",
+        "recommendation": "On long-form pages, add a table of contents / anchor links and a 'Back to Top' button."
+      },
+      "meta": {
+        "anchorLinks": 0,
+        "backToTop": false,
+        "hasLongPage": false,
+        "notApplicable": true,
+        "infoOnly": true
+      }
+    },
+    "Breadcrumbs": {
+      "infoOnly": true,
+      "status": "pass",
+      "details": "Breadcrumbs are not applicable on the homepage.",
+      "analysis": {
+        "cause": "The page is a root-level homepage.",
+        "recommendation": "Breadcrumbs are evaluated on inner pages (inventory, vehicle, service, blog). Maintain clearly visible primary navigation here."
+      },
+      "meta": {
+        "isHomepage": true,
+        "notApplicable": true,
+        "infoOnly": true
+      }
+    },
+    "Inventory_Filtering": {
+      "score": 30,
+      "status": "fail",
+      "details": "No homepage inventory finder widget detected. Full faceted filtering is graded on inventory pages.",
+      "analysis": {
+        "cause": "Shoppers have no homepage shortcut to start narrowing inventory by make/model/price.",
+        "recommendation": "Add a prominent 'Find Your Vehicle' finder with at least Make, Model and Price so visitors can begin filtering from the homepage."
+      },
+      "meta": {
+        "context": "homepage",
+        "homepageFinder": false,
+        "finderFacets": [],
+        "counts": {
+          "selects": 0,
+          "checkboxes": 0,
+          "radios": 0,
+          "ranges": 0,
+          "containers": 0
+        },
+        "infoOnly": true
+      },
+      "infoOnly": true
+    },
+    "No_Results_UX": {
+      "score": 40,
+      "status": "warning",
+      "details": "No zero-result state on this page; graded available fallback infrastructure (recommendations / search suggestions).",
+      "analysis": {
+        "cause": "A no-results page couldn't be observed during this single-page audit, so this is informational only.",
+        "recommendation": "Ensure that when a search returns nothing, users see suggestions, a clear-filters option, alternative vehicles and a contact CTA instead of a blank page."
+      },
+      "meta": {
+        "observed": false,
+        "isSrp": false,
+        "hasSuggestions": false,
+        "hasReset": false,
+        "hasAlternatives": false,
+        "hasCTA": false,
+        "hasSearchSuggest": false,
+        "infoOnly": true
+      },
+      "infoOnly": true
+    },
+    "Vehicle_Image_Gallery": {
+      "infoOnly": true,
+      "status": "pass",
+      "details": "Vehicle image gallery quality is graded on vehicle-detail (VDP) pages.",
+      "analysis": {
+        "cause": "This isn't a single-vehicle detail page.",
+        "recommendation": "Audit a VDP to grade gallery photo count, alt text, lazy-loading and real-vs-stock imagery."
+      },
+      "meta": {
+        "notApplicable": true,
+        "infoOnly": true
+      }
+    }
+  },
+  "accessibility": {
+    "Percentage": 86,
+    "Graded_Percentage": 96,
+    "Score_Breakdown": {
+      "model": "severity-weighted deductions (rule-binary, AccessibilityChecker.org-aligned)",
+      "base": 90,
+      "totalDeduction": 3.8,
+      "effectiveDeduction": 3.8,
+      "perImpact": {
+        "critical": 12,
+        "serious": 6,
+        "moderate": 2.5,
+        "minor": 1
+      },
+      "widespreadMultiplier": {
+        "threshold": 10,
+        "factor": 1.5
+      },
+      "items": [
+        {
+          "rule": "Landmarks",
+          "impact": "moderate",
+          "nodes": 1,
+          "deduction": 2.5
+        },
+        {
+          "rule": "Skip_Links",
+          "impact": "moderate",
+          "nodes": 0,
+          "deduction": 1.3
+        }
+      ]
+    },
+    "Confidence": "heuristic",
+    "Coverage": "Automated WCAG 2.2 AA coverage (~30–40% of success criteria).",
+    "Note": "Automated checks (axe-core + DOM probes) cover roughly 30–40% of WCAG 2.2 success criteria. A clean result is necessary but not sufficient for full Level AA conformance — manual review is still required. The headline score uses a severity-weighted deduction model (a rule with ANY failing node deducts in full, scaled by impact), aligned with industry checkers such as Lighthouse and AccessibilityChecker.org. The automated ceiling is 90 — the remaining 10 points require a passing manual review.",
+    "WCAG_AA_Compliance": {
+      "score": 100,
+      "status": "pass",
+      "infoOnly": true,
+      "details": "Passes all 23 axe-testable WCAG A/AA rules.",
+      "meta": {
+        "grade": "Conformant (automated checks)",
+        "score": 100,
+        "confidence": "heuristic",
+        "conformanceRatio": 100,
+        "passedRules": 23,
+        "violatedRuleCount": 0,
+        "byImpact": {
+          "critical": 0,
+          "serious": 0,
+          "moderate": 0,
+          "minor": 0
+        },
+        "violatedRules": [],
+        "note": "Automated checks (axe-core + DOM probes) cover roughly 30–40% of WCAG 2.2 success criteria. A clean result is necessary but not sufficient for full Level AA conformance — manual review is still required. The headline score uses a severity-weighted deduction model (a rule with ANY failing node deducts in full, scaled by impact), aligned with industry checkers such as Lighthouse and AccessibilityChecker.org. The automated ceiling is 90 — the remaining 10 points require a passing manual review."
+      },
+      "analysis": null
+    },
+    "Color_Contrast": {
+      "score": 100,
+      "status": "pass",
+      "details": "Text elements meet minimum contrast ratios (4.5:1 / 3:1).",
+      "meta": {
+        "threshold": "Body text ≥ 4.5:1, large text ≥ 3:1, UI/icons ≥ 3:1.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Label": {
+      "score": 100,
+      "status": "pass",
+      "details": "All 1 form input(s) are programmatically labeled.",
+      "meta": {
+        "threshold": "Every form input must have a programmatic label.",
+        "confidence": "heuristic",
+        "inputCount": 1,
+        "pii": false,
+        "piiFields": []
+      },
+      "analysis": null
+    },
+    "Html_Has_Lang": {
+      "score": 100,
+      "status": "pass",
+      "details": "The <html> element has a valid lang attribute.",
+      "meta": {
+        "threshold": "Document language must be defined and valid (e.g., lang='en').",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Keyboard_Navigation": {
+      "score": 100,
+      "status": "pass",
+      "details": "Page is fully operable by keyboard (logical focus order, reachable content, natural tab order, no focus traps).",
+      "meta": {
+        "threshold": "All interactive content must be operable with a keyboard alone.",
+        "confidence": "heuristic",
+        "components": [
+          "Focus_Order",
+          "Focusable_Content",
+          "Tab_Index",
+          "Aria_Hidden_Focus"
+        ],
+        "breakdown": {
+          "Focus_Order": {
+            "score": 100,
+            "status": "pass",
+            "details": "Focus order follows a logical, sequential path."
+          },
+          "Focusable_Content": {
+            "score": 100,
+            "status": "pass",
+            "details": "All interactive elements are reachable via keyboard."
+          },
+          "Tab_Index": {
+            "score": 100,
+            "status": "pass",
+            "details": "No elements use positive tabindex."
+          },
+          "Aria_Hidden_Focus": {
+            "score": 100,
+            "status": "pass",
+            "details": "Hidden content (aria-hidden) contains no focusable elements."
+          }
+        }
+      },
+      "analysis": null
+    },
+    "Focus_Order": {
+      "score": 100,
+      "status": "pass",
+      "details": "Focus order follows a logical, sequential path.",
+      "meta": {
+        "threshold": "Tab order must match the visual layout.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Focusable_Content": {
+      "score": 100,
+      "status": "pass",
+      "details": "All interactive elements are reachable via keyboard.",
+      "meta": {
+        "threshold": "All clickable items must be keyboard accessible.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Tab_Index": {
+      "score": 100,
+      "status": "pass",
+      "details": "No elements use positive tabindex.",
+      "meta": {
+        "threshold": "Avoid custom tab orders for natural navigation.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Aria_Hidden_Focus": {
+      "score": 100,
+      "status": "pass",
+      "details": "Hidden content (aria-hidden) contains no focusable elements.",
+      "meta": {
+        "threshold": "Hidden content must not trap keyboard focus.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Image_Alt": {
+      "score": 100,
+      "status": "pass",
+      "details": "All images have valid alt text.",
+      "meta": {
+        "threshold": "All images must have text descriptions or be marked decorative.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Link_Name": {
+      "score": 100,
+      "status": "pass",
+      "details": "All links have discernible text.",
+      "meta": {
+        "threshold": "All links must have clear, descriptive text.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Button_Name": {
+      "score": 100,
+      "status": "pass",
+      "details": "All buttons have discernible text.",
+      "meta": {
+        "threshold": "All buttons must have clear, descriptive labels.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Aria_Roles": {
+      "score": 100,
+      "status": "pass",
+      "details": "All ARIA roles are valid.",
+      "meta": {
+        "threshold": "Elements must be correctly identified (e.g., 'button').",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Aria_Allowed_Attr": {
+      "score": 100,
+      "status": "pass",
+      "details": "ARIA attributes are valid for their roles.",
+      "meta": {
+        "threshold": "Accessibility tags must match their intended use.",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Document_Title": {
+      "score": 100,
+      "status": "pass",
+      "details": "Page has a valid, non-empty <title> (uniqueness not verified — no comparable pages sampled).",
+      "meta": {
+        "threshold": "Every page should have a unique, descriptive <title>.",
+        "confidence": "heuristic",
+        "currentTitle": "Client Challenge",
+        "sampledPages": [],
+        "duplicates": [],
+        "checkedCount": 0,
+        "unique": null
+      },
+      "analysis": null
+    },
+    "Meta_Viewport": {
+      "score": 100,
+      "status": "pass",
+      "details": "Viewport allows user scaling.",
+      "meta": {
+        "threshold": "Users must be allowed to zoom in for readability (no user-scalable=no).",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Target_Size": {
+      "score": 100,
+      "status": "pass",
+      "details": "All 3 measured targets meet the 24×24px minimum.",
+      "meta": {
+        "threshold": "Tap/click targets should be at least 24×24 CSS px (WCAG 2.5.8).",
+        "confidence": "heuristic",
+        "total": 3
+      },
+      "analysis": null
+    },
+    "Reflow": {
+      "score": 100,
+      "status": "pass",
+      "details": "Content reflows cleanly at 320px with no horizontal scroll.",
+      "meta": {
+        "threshold": "Content must reflow without horizontal scrolling at 320 CSS px (WCAG 1.4.10).",
+        "confidence": "heuristic",
+        "scrollWidth": 320,
+        "viewport": 320
+      },
+      "analysis": null
+    },
+    "Heading_Order": {
+      "score": 100,
+      "status": "pass",
+      "details": "Headings follow a logical hierarchy (h1 → h2).",
+      "meta": {
+        "threshold": "Headings must follow a logical hierarchy (H1 → H2 → H3).",
+        "confidence": "heuristic"
+      },
+      "analysis": null
+    },
+    "Landmarks": {
+      "score": 25,
+      "status": "fail",
+      "details": "Missing landmark region(s): Navigation, Banner (Header), Content Info (Footer), Complementary (Aside).",
+      "meta": {
+        "threshold": "Primary regions (Main, Nav, Header, Footer) must be present.",
+        "confidence": "heuristic",
+        "present": [
+          "Main Content"
+        ],
+        "missing": [
+          "Navigation",
+          "Banner (Header)",
+          "Content Info (Footer)",
+          "Complementary (Aside)"
+        ],
+        "count": 1
+      },
+      "analysis": {
+        "cause": "Page structure is hard for screen readers to navigate without semantic landmark regions.",
+        "recommendation": "Use HTML5 semantic elements (main, nav, header, footer) or ARIA landmark roles."
+      }
+    },
+    "List": {
+      "score": null,
+      "status": null,
+      "details": "No <ul>/<ol> lists on this page, so list structure does not apply.",
+      "analysis": {
+        "recommendation": "When you add lists, ensure <ul>/<ol> contain only <li> elements directly."
+      },
+      "meta": {
+        "value": "Not applicable",
+        "notScored": true,
+        "reason": "No <ul>/<ol> lists on this page, so list structure does not apply.",
+        "informational": true,
+        "confidence": "heuristic"
+      }
+    },
+    "Skip_Links": {
+      "score": 40,
+      "status": "warning",
+      "details": "No 'Skip to content' link found.",
+      "meta": {
+        "threshold": "A 'Skip to content' link helps keyboard users bypass nav.",
+        "confidence": "heuristic"
+      },
+      "analysis": {
+        "cause": "Keyboard users cannot bypass repetitive navigation to reach the main content.",
+        "recommendation": "Add a link with text 'Skip to content' pointing to <main id='content'>."
+      }
+    },
+    "Interactive_Element_Affordance": {
+      "score": null,
+      "status": null,
+      "details": "No non-semantic clickable elements detected to assess affordance.",
+      "analysis": {
+        "recommendation": "Continue using native <button>/<a> for interactive controls."
+      },
+      "meta": {
+        "value": "Not applicable",
+        "notScored": true,
+        "reason": "No non-semantic clickable elements detected to assess affordance.",
+        "informational": true,
+        "confidence": "heuristic"
+      }
+    },
+    "Text_Spacing": {
+      "score": 50,
+      "status": "warning",
+      "infoOnly": true,
+      "details": "1 element(s) clip their content under text-spacing overrides — verify manually.",
+      "meta": {
+        "threshold": "Text must not be clipped when users override line/letter/word spacing (WCAG 1.4.12).",
+        "confidence": "heuristic",
+        "informational": true,
+        "clipped": 1,
+        "offenders": [
+          {
+            "tag": "span",
+            "cls": "sr-only"
+          }
+        ]
+      },
+      "analysis": {
+        "cause": "Containers with fixed heights and overflow:hidden cut off text when users increase spacing for readability.",
+        "recommendation": "Avoid fixed heights on text containers; allow them to grow, and avoid overflow:hidden on body copy."
+      }
+    },
+    "Focus_Not_Obscured": {
+      "score": 100,
+      "status": "pass",
+      "infoOnly": true,
+      "details": "No sticky/fixed header that could obscure focused elements.",
+      "meta": {
+        "threshold": "A focused element must not be fully hidden behind sticky headers (WCAG 2.4.11).",
+        "confidence": "heuristic",
+        "informational": true,
+        "stickyHeader": false
+      },
+      "analysis": null
+    },
+    "Reduced_Motion": {
+      "score": 50,
+      "status": "warning",
+      "infoOnly": true,
+      "details": "Animation/motion present but no prefers-reduced-motion media query found — users who request reduced motion may not be accommodated.",
+      "meta": {
+        "threshold": "Sites with animation should honor the prefers-reduced-motion setting.",
+        "confidence": "heuristic",
+        "informational": true,
+        "motion": true,
+        "reducedMotionRule": false,
+        "autoplay": 0
+      },
+      "analysis": {
+        "cause": "Motion (animations, autoplay carousels) can trigger nausea/migraines for users with vestibular disorders.",
+        "recommendation": "Add a @media (prefers-reduced-motion: reduce) block that disables or reduces non-essential animation."
+      }
+    }
+  },
+  "onPageSEO": {
+    "Title": {
+      "score": 50,
+      "status": "warning",
+      "details": "Title tag requires attention",
+      "meta": {
+        "title": "Client Challenge",
+        "exists": true,
+        "length": 16,
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "The title is 16 characters — shorter than the optimal 50–60 range, leaving SERP space unused.",
+        "recommendation": "Expand toward 50–60 characters, e.g. \"{Year} {Make} {Model} for Sale in {City} | {Dealer}\"."
+      }
+    },
+    "Title_Uniqueness": {
+      "score": 50,
+      "status": "warning",
+      "details": "Not enough eligible pages to compare titles",
+      "meta": {
+        "pagesChecked": 0,
+        "found": 0,
+        "uniqueCount": 0,
+        "duplicateCount": 0,
+        "missingCount": 0,
+        "values": [],
+        "results": [],
+        "statusLabel": "Inconclusive",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "No eligible content pages were found (after excluding inventory, vehicle detail, about, contact and legal pages) to compare across the site.",
+        "recommendation": "Expose crawlable content pages through a valid sitemap.xml or homepage navigation so titles can be compared."
+      }
+    },
+    "Title_Keyword_Optimization": {
+      "score": 50,
+      "status": "warning",
+      "details": "Not enough eligible pages to check keyword optimization",
+      "meta": {
+        "pagesChecked": 0,
+        "optimizedCount": 0,
+        "results": [],
+        "statusLabel": "Inconclusive",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "No eligible content pages were found (after excluding inventory, vehicle detail, about, contact and legal pages) to compare across the site.",
+        "recommendation": "Expose crawlable content pages through a valid sitemap.xml or homepage navigation so titles can be evaluated."
+      }
+    },
+    "Title_Location_Optimization": {
+      "score": 50,
+      "status": "warning",
+      "details": "Dealership location could not be determined",
+      "meta": {
+        "title": "Client Challenge",
+        "locationFound": false,
+        "statusLabel": "Inconclusive",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "Could not determine the dealership's city/state from LocalBusiness schema, the footer, or a contact page.",
+        "recommendation": "Add a LocalBusiness schema with a complete postal address and display your city & state in the site footer."
+      }
+    },
+    "Meta_Description": {
+      "score": 0,
+      "status": "fail",
+      "details": "Meta description requires attention",
+      "meta": {
+        "description": "",
+        "length": 0,
+        "exists": false,
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "The document is missing a meta description tag.",
+        "recommendation": "Add a unique 120–160 character <meta name=\"description\"> that summarizes the page and includes a primary keyword and call to action."
+      }
+    },
+    "Meta_Description_Uniqueness": {
+      "score": 50,
+      "status": "warning",
+      "details": "Not enough eligible pages to compare meta descriptions",
+      "meta": {
+        "pagesChecked": 0,
+        "found": 0,
+        "uniqueCount": 0,
+        "duplicateCount": 0,
+        "missingCount": 0,
+        "values": [],
+        "results": [],
+        "statusLabel": "Inconclusive",
+        "value": "50%"
+      },
+      "analysis": {
+        "cause": "No eligible content pages were found (after excluding inventory, vehicle detail, about, contact and legal pages) to compare across the site.",
+        "recommendation": "Expose crawlable content pages through a valid sitemap.xml or homepage navigation so meta descriptions can be compared."
+      }
+    },
+    "URL_Structure": {
+      "score": 100,
+      "status": "pass",
+      "details": "Clean root URL",
+      "meta": {
+        "url": "https://www.morries.com",
+        "path": "/",
+        "depth": 0,
+        "segments": [],
+        "length": 23,
+        "hierarchy": "root",
+        "hasFileExtension": false,
+        "hasDateInPath": false,
+        "nonDescriptiveSegments": [],
+        "issues": [],
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Canonical": {
+      "score": 0,
+      "status": "fail",
+      "details": "Canonical tag missing",
+      "meta": {
+        "canonical": "",
+        "exists": 0,
+        "isSelfReferencing": false,
+        "inHead": false,
+        "hasNoindex": false,
+        "noindexConflict": false,
+        "isPaginated": false,
+        "isDeepPage": false,
+        "pageNum": null,
+        "hasRelNext": false,
+        "hasRelPrev": false,
+        "canonicalizesParams": false,
+        "paginationIssue": false,
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "No canonical tag was found in the <head> of the page.",
+        "recommendation": "Add a <link rel=\"canonical\" href=\"...\" /> pointing to the authoritative URL for this page to prevent duplicate-content issues."
+      }
+    },
+    "H1": {
+      "score": 0,
+      "status": "fail",
+      "details": "Missing H1 tag",
+      "meta": {
+        "count": 0,
+        "content": [],
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "No <h1> tag was found on the page.",
+        "recommendation": "Add exactly one <h1> tag that describes the main topic of the page. It's crucial for SEO and accessibility."
+      }
+    },
+    "Image": {
+      "score": 100,
+      "status": "pass",
+      "details": "No images found",
+      "meta": {
+        "total": 0,
+        "present": false,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Heading_Hierarchy": {
+      "score": 0,
+      "status": "fail",
+      "details": "No headings at all",
+      "meta": {
+        "counts": {
+          "h1": 0,
+          "h2": 0,
+          "h3": 0,
+          "h4": 0,
+          "h5": 0,
+          "h6": 0
+        },
+        "headings": [],
+        "issues": [
+          {
+            "finding": "Missing H1 tag"
+          }
+        ],
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "Issue detected with this metric.",
+        "recommendation": "Follow SEO best practices to improve this score."
+      }
+    },
+    "Semantic_Tags": {
+      "score": 60,
+      "status": "warning",
+      "details": "Semantic structure could improve: No <header>/banner, No <nav>, No <footer>/contentinfo",
+      "meta": {
+        "main": 1,
+        "nav": 0,
+        "article": 0,
+        "section": 0,
+        "header": 0,
+        "footer": 0,
+        "aside": 0,
+        "found": [
+          "main"
+        ],
+        "missing": [
+          "nav",
+          "article",
+          "section",
+          "header",
+          "footer",
+          "aside"
+        ],
+        "potentialReplacements": [],
+        "ariaLandmarks": {
+          "main": 0,
+          "navigation": 0,
+          "banner": 0,
+          "contentinfo": 0
+        },
+        "sectioningCount": 0,
+        "sectioningWithHeadings": 0,
+        "sectionsWithoutHeadings": [],
+        "semanticCount": 1,
+        "divCount": 2,
+        "semanticRatio": 0.33,
+        "semanticScore": 0.6,
+        "issues": [
+          "No <header>/banner",
+          "No <nav>",
+          "No <footer>/contentinfo",
+          "No <section>/<article> sectioning content"
+        ],
+        "value": "60%"
+      },
+      "analysis": {
+        "cause": "Semantic issues: No <header>/banner, No <nav>, No <footer>/contentinfo, No <section>/<article> sectioning content.",
+        "recommendation": "Use a single <main> plus <header>/<nav>/<footer>; wrap content in <section>/<article> each with a heading; replace generic <div>s with semantic elements."
+      }
+    },
+    "Contextual_Linking": {
+      "score": 0,
+      "status": "fail",
+      "details": "No contextual links in main content",
+      "meta": {
+        "totalContextual": 0,
+        "totalMenu": 0,
+        "contextual_ratio": "1.00",
+        "related_ratio": "1.00",
+        "related_count": 0,
+        "related_examples": [],
+        "unrelated_examples": [],
+        "topic_terms": [
+          "client",
+          "challenge"
+        ],
+        "foundLinks": [],
+        "missingLinks": [],
+        "broken_links_count": 0,
+        "broken_links": [],
+        "issues": [
+          "No contextual links found in main content."
+        ],
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "No links found inside the main content area.",
+        "recommendation": "Add internal links within content."
+      }
+    },
+    "Links": {
+      "score": 100,
+      "status": "pass",
+      "details": "Good link profile",
+      "meta": {
+        "total": 0,
+        "internal": 0,
+        "external": 0,
+        "unique": 0,
+        "bad_links_count": 0,
+        "bad_links": [],
+        "internalLinks": [],
+        "externalLinks": [],
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Content_Relevance": {
+      "score": "LOW",
+      "percentage": 0,
+      "matchedKeywords": [],
+      "missingKeywords": [
+        "client",
+        "challenge"
+      ],
+      "reason": "Match Status: 0% Match (0/2).",
+      "status": "fail",
+      "details": "Topic Alignment: 0/2 keywords found."
+    },
+    "URL_Slugs": {
+      "score": 100,
+      "status": "pass",
+      "details": "Root URL",
+      "meta": {
+        "slug": "/",
+        "valid": true,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Robots_Txt": {
+      "score": 100,
+      "status": "pass",
+      "details": "Proper robots.txt",
+      "meta": {
+        "content": "<!DOCTYPE html>\n<html lang=\"en\">\n  <head>\n    <meta\n      http-equiv=\"Content-Security-Policy\"\n      content=\"default-src 'self'; img-src 'self' data:; media-src 'self' data:; object-src 'none'; style-src 'self' 'sha256-o4vzfmmUENEg4chMjjRP9EuW9ucGnGIGVdbl8d0SHQQ='; script-src 'self' 'sha256-a9bHdQGvRzDwDVzx8m+Rzw+0FHZad8L0zjtBwkxOIz4=';\"\n    />\n    <link\n      href=\"/_fs-ch-1T1wmsGaOgGaSxcX/assets/inter-var.woff2\"\n      rel=\"preload\"\n      as=\"font\"\n      type=\"font/woff2\"\n      crossorigin\n    />\n    <link href=\"/_fs-ch-1T1wmsGaOgGaSxcX/assets/styles.css\" rel=\"stylesheet\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>Client Challenge</title>\n    <style>\n      #loading-error {\n        font-size: 16px;\n        font-family: 'Inter', sans-serif;\n        margin-top: 10px;\n        margin-left: 10px;\n        display: none;\n      }\n    </style>\n  </head>\n  <body>\n    <noscript>\n      <div class=\"noscript-container\">\n        <div class=\"noscript-content\">\n          <img\n            src=\"/_fs-ch-1T1wmsGaOgGaSxcX/assets/errorIcon.svg\"\n            alt=\"\"\n            role=\"presentation\"\n            class=\"error-icon\"\n          />\n          <span class=\"noscript-span\"\n            >JavaScript is disabled in your browser.</span\n          >\n          <p>Please enable JavaScript to proceed.</p>\n        </div>\n      </div>\n    </noscript>\n    <div id=\"loading-error\" role=\"alert\" aria-live=\"polite\">\n      A required part of this site couldn’t load. This may be due to a browser\n      extension, network issues, or browser settings. Please check your\n      connection, disable any ad blockers, or try using a different browser.\n    </div>\n    <script>\n      function loadScript(src) {\n        return new Promise((resolve, reject) => {\n          const script = document.createElement('script');\n          script.onload = resolve;\n          script.onerror = (event) => {\n            console.error('Script load error event:', event);\n            document.getElementById('loading-error').style.display = 'block';\n            reject(\n              new Error(\n                `Failed to load script: ${src}, Please contact the service administrator.`\n              )\n            );\n          };\n          script.src = src;\n          document.body.appendChild(script);\n        });\n      }\n\n      loadScript('/_fs-ch-1T1wmsGaOgGaSxcX/errors.js')\n        .then(() => {\n          const script = document.createElement('script');\n          script.src = '/_fs-ch-1T1wmsGaOgGaSxcX/script.js?reload=true';\n          script.onerror = (event) => {\n            console.error('Script load error event:', event);\n            const errorMsg = new Error(\n              `Failed to load script: ${script.src}. Please contact the service administrator.`\n            );\n            console.error(errorMsg);\n            handleScriptError();\n          };\n          document.body.appendChild(script);\n        })\n        .catch((error) => {\n          console.error(error);\n        });\n    </script>\n  </body>\n</html>\n",
+        "exists": 1,
+        "metaRobots": null,
+        "googlebot": null,
+        "hasNoindex": false,
+        "hasNofollow": false,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Open_Graph": {
+      "score": 0,
+      "status": "fail",
+      "details": "No Open Graph tags found",
+      "meta": {
+        "tags": {},
+        "missing": [
+          "og:title",
+          "og:image",
+          "og:url"
+        ],
+        "parameter": "1 if og:title, og:image, og:url exist",
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "Issue detected with this metric.",
+        "recommendation": "Follow SEO best practices to improve this score."
+      }
+    },
+    "Twitter_Card": {
+      "score": 0,
+      "status": "fail",
+      "details": "No Twitter Card tags found",
+      "meta": {
+        "tags": {},
+        "missing": [
+          "twitter:card",
+          "twitter:title"
+        ],
+        "parameter": "1 if twitter:card and twitter:title exist",
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "Issue detected with this metric.",
+        "recommendation": "Follow SEO best practices to improve this score."
+      }
+    },
+    "Social_Links": {
+      "score": 0,
+      "status": "fail",
+      "details": "No social profiles found",
+      "meta": {
+        "links": [],
+        "count": 0,
+        "profiles": [],
+        "platforms": [],
+        "platformCount": 0,
+        "sameAs": [],
+        "sameAsCount": 0,
+        "sameAsPlatforms": [],
+        "missingFromSameAs": [],
+        "sameAsOnly": [],
+        "conflicts": [],
+        "value": "0%"
+      },
+      "analysis": {
+        "cause": "No social-media links or sameAs entries were found.",
+        "recommendation": "Link your social profiles (footer) and declare them in Organization/LocalBusiness sameAs."
+      }
+    },
+    "Viewport": {
+      "score": 100,
+      "status": "pass",
+      "details": "Responsive viewport configured",
+      "meta": {
+        "exists": true,
+        "content": "width=device-width, initial-scale=1",
+        "hasDeviceWidth": true,
+        "hasInitialScale1": true,
+        "zoomDisabled": false,
+        "value": "100%"
+      },
+      "analysis": null
+    },
+    "Percentage": 38,
+    "Confidence": "heuristic"
+  },
+  "securityOrCompliance": {
+    "Percentage": 71,
+    "Graded_Percentage": 68,
+    "Score_Breakdown": {
+      "model": "deduction from 100 in spec points (SCORING_FORMAT.md §8.4); gates preserved",
+      "base": 100,
+      "totalDeduction": 29,
+      "gates": {
+        "noHttpsCap30": false,
+        "reputationCap25": false
+      },
+      "items": [
+        {
+          "control": "CSP",
+          "score": 0,
+          "deduction": 9
+        },
+        {
+          "control": "X_Frame_Options",
+          "score": 0,
+          "deduction": 4
+        },
+        {
+          "control": "X_Content_Type_Options",
+          "score": 0,
+          "deduction": 3
+        },
+        {
+          "control": "Referrer_Policy",
+          "score": 0,
+          "deduction": 2
+        },
+        {
+          "control": "Permissions_Policy",
+          "score": 0,
+          "deduction": 2
+        },
+        {
+          "control": "Cookie_Flags",
+          "score": 60,
+          "deduction": 2
+        },
+        {
+          "control": "Privacy_Policy",
+          "score": 0,
+          "deduction": 3
+        },
+        {
+          "control": "Privacy_Compliance",
+          "score": 0,
+          "deduction": 4
+        }
+      ]
+    },
+    "Header_Security": {
+      "score": 30,
+      "status": "fail",
+      "infoOnly": true,
+      "confidence": "measured",
+      "details": "Header security grade D (30/100): CSP missing; X-Frame-Options missing (no frame-ancestors fallback); X-Content-Type-Options missing; Referrer-Policy missing; Permissions-Policy missing; Cookies missing Secure/HttpOnly/SameSite flags.",
+      "meta": {
+        "informational": true,
+        "grade": "D",
+        "baseline": 100,
+        "deductions": [
+          {
+            "test": "CSP missing",
+            "deduction": 25
+          },
+          {
+            "test": "X-Frame-Options missing (no frame-ancestors fallback)",
+            "deduction": 20
+          },
+          {
+            "test": "X-Content-Type-Options missing",
+            "deduction": 5
+          },
+          {
+            "test": "Referrer-Policy missing",
+            "deduction": 5
+          },
+          {
+            "test": "Permissions-Policy missing",
+            "deduction": 5
+          },
+          {
+            "test": "Cookies missing Secure/HttpOnly/SameSite flags",
+            "deduction": 10
+          }
+        ],
+        "note": "Observatory-style deduction sub-grade over the tests external checkers (SecurityHeaders.com, Mozilla HTTP Observatory) also run. Compare THIS grade — not the section headline — against those tools. Bonuses (scores above 100) are not modeled, so A+ requires a perfect base score."
+      },
+      "analysis": {
+        "cause": "One or more transport/header hardening tests that external security checkers grade on are failing.",
+        "recommendation": "Fix in order of deduction size: enforce CSP, HSTS, anti-framing (XFO or frame-ancestors), then Referrer-Policy, Permissions-Policy, X-Content-Type-Options and cookie flags."
+      }
+    },
+    "Confidence": "heuristic",
+    "Coverage": "Transport, headers, cookies, reputation, app-exposure and privacy/legal. Injection and credential checks are non-invasive surface indicators, not proof of vulnerability.",
+    "Note": "Reputation requires API keys (Safe Browsing / VirusTotal); transport, header and certificate checks are measured; injection, admin and privacy checks are heuristic. Page-specific finance/disclaimer checks are renormalized out when no such page exists.",
+    "HTTPS": {
+      "score": 100,
+      "status": "pass",
+      "details": "Served over HTTPS with no mixed content",
+      "meta": {
+        "protocol": "https:",
+        "finalUrl": "https://www.morries.com/",
+        "mixedContent": {
+          "active": [],
+          "passive": []
+        },
+        "activeCount": 0,
+        "passiveCount": 0
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "SSL": {
+      "score": 100,
+      "status": "pass",
+      "confidence": "measured",
+      "details": "Valid SSL certificate (trusted chain, host match)",
+      "meta": {
+        "validTo": "2026-09-27T14:37:56.000Z",
+        "validFrom": "2026-06-29T14:37:57.000Z",
+        "issuer": "YR1",
+        "subjectName": "morries.com"
+      },
+      "analysis": null
+    },
+    "SSL_Expiry": {
+      "score": 100,
+      "status": "pass",
+      "confidence": "measured",
+      "details": "SSL certificate valid for 82 more day(s)",
+      "meta": {
+        "validTo": "2026-09-27T14:37:56.000Z",
+        "daysUntilExpiry": 82
+      },
+      "analysis": null
+    },
+    "TLS_Version": {
+      "score": 100,
+      "status": "pass",
+      "details": "Strong TLS version: TLS 1.3",
+      "meta": {
+        "version": "TLS 1.3"
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "HSTS": {
+      "score": 100,
+      "status": "pass",
+      "details": "HSTS header is present",
+      "meta": {
+        "value": "max-age=31557600"
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "CSP": {
+      "score": 0,
+      "status": "fail",
+      "confidence": "measured",
+      "details": "CSP header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The Content-Security-Policy (CSP) header is missing.",
+        "recommendation": "Implement a CSP with a restrictive default-src/script-src, object-src 'none', and frame-ancestors to mitigate XSS and clickjacking."
+      }
+    },
+    "X_Frame_Options": {
+      "score": 0,
+      "status": "fail",
+      "details": "X-Frame-Options header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The X-Frame-Options header is missing, making the site vulnerable to clickjacking.",
+        "recommendation": "Set the 'X-Frame-Options' header to 'DENY' or 'SAMEORIGIN'."
+      },
+      "confidence": "measured"
+    },
+    "X_Content_Type_Options": {
+      "score": 0,
+      "status": "fail",
+      "details": "X-Content-Type-Options header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "The X-Content-Type-Options header is missing.",
+        "recommendation": "Add the 'X-Content-Type-Options: nosniff' header to prevent MIME type sniffing."
+      },
+      "confidence": "measured"
+    },
+    "Referrer_Policy": {
+      "score": 0,
+      "status": "fail",
+      "details": "Referrer-Policy header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "Without a Referrer-Policy, browsers may send full page URLs (including query strings) to third-party sites users navigate to.",
+        "recommendation": "Add 'Referrer-Policy: strict-origin-when-cross-origin' (or stricter, e.g. 'same-origin')."
+      },
+      "confidence": "measured"
+    },
+    "Permissions_Policy": {
+      "score": 0,
+      "status": "fail",
+      "details": "Permissions-Policy header is missing",
+      "meta": {},
+      "analysis": {
+        "cause": "Without a Permissions-Policy, embedded third-party content can request powerful features (camera, geolocation, payment) by default.",
+        "recommendation": "Add a Permissions-Policy that disables features you don't use, e.g. 'camera=(), microphone=(), geolocation=()'."
+      },
+      "confidence": "measured"
+    },
+    "Cookie_Flags": {
+      "score": 60,
+      "status": "warning",
+      "confidence": "measured",
+      "details": "Cookie flag gaps: 1 missing Secure (of 1)",
+      "meta": {
+        "cookies": [
+          {
+            "name": "_fs_ch_st_FSBmUei20MqUiJb9",
+            "value": "ATa5fN9Jh3J7LXViKUptSMxxALoNAuHewSmVOv0IBzP5ln940qfhh-ktyJOo-I5WStUGI5EE4eiV-QIsBQaSd-Cx_Pkw9pmb6EEVV3uVOQfFn3B5gnxQ5Bo9NbDocxr2h20n_DTf_RgBxcJBlH_NwqaFlkmfqmAj0Oy2vZIfG7aEH8vDgqaEAVmmHvlW7A7M6umJsR3ocupqFa6TXVf2mrSqbOgJrNHYiXNsgOa2lQl58vSNY3iN9EdAshyvdbuLYJtYaFd44aZgwoOJVLHR9u8AOBLVmpf7kH7Mwt597r6Fg9aRKoeh7eJQwbRgQYug4INVcMLCbDTwTjtpGCRfGqI07MrXxtyrCK8T8c_xUZ4Sfp9MHEvz1oq7nXXXFOKGKJ4K7A6dCsEsrTqpkTATXg==",
+            "domain": "www.morries.com",
+            "path": "/",
+            "expires": 1783374174.980119,
+            "httpOnly": true,
+            "secure": false,
+            "sameSite": "Lax"
+          }
+        ],
+        "total": 1,
+        "insecureCookies": [
+          "_fs_ch_st_FSBmUei20MqUiJb9"
+        ],
+        "scriptAccessibleCookies": [],
+        "noSameSiteCookies": [],
+        "secureRatio": 0,
+        "httpOnlyRatio": 1,
+        "sameSiteRatio": 1
+      },
+      "analysis": {
+        "cause": "Some cookies are missing protective flags (Secure prevents transmission over HTTP; HttpOnly blocks script/XSS theft; SameSite mitigates CSRF).",
+        "recommendation": "Set Secure, HttpOnly, and SameSite=Lax/Strict on every cookie that does not require third-party cross-site access."
+      }
+    },
+    "Third_Party_Cookies": {
+      "score": 100,
+      "status": "pass",
+      "details": "No third-party cookies detected",
+      "meta": {
+        "thirdPartyCookies": [],
+        "uniqueDomains": [],
+        "disclosed": null
+      },
+      "analysis": null,
+      "confidence": "measured"
+    },
+    "Reputation": {
+      "score": 100,
+      "status": "pass",
+      "confidence": "field",
+      "details": "Not flagged by Safe Browsing or VirusTotal",
+      "meta": {
+        "googleSafeBrowsing": {
+          "score": 100,
+          "status": "pass",
+          "details": "URL not flagged by Google Safe Browsing",
+          "meta": {
+            "matches": []
+          },
+          "analysis": null
+        },
+        "virusTotal": {
+          "score": 100,
+          "status": "pass",
+          "details": "No malicious or suspicious detections",
+          "meta": {
+            "stats": {
+              "malicious": 0,
+              "suspicious": 0,
+              "undetected": 33,
+              "harmless": 58,
+              "timeout": 0
+            }
+          },
+          "analysis": null
+        },
+        "flagged": false
+      },
+      "analysis": null
+    },
+    "SQLi_Exposure": {
+      "score": 100,
+      "status": "pass",
+      "details": "No SQL injection vulnerabilities detected (Basic Scan)",
+      "meta": {
+        "testedParams": [
+          "q",
+          "id",
+          "search"
+        ],
+        "payloadCount": 6
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "XSS": {
+      "score": 100,
+      "status": "pass",
+      "details": "XSS payload not reflected or executed",
+      "meta": {
+        "payload": "<script>alert('XSS')</script>",
+        "triggered": false,
+        "reflected": false
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Forms_Use_HTTPS": {
+      "score": 100,
+      "status": "pass",
+      "details": "All forms use HTTPS",
+      "meta": {
+        "formsCount": 1,
+        "insecureForms": []
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Weak_Default_Credentials": {
+      "score": 100,
+      "status": "pass",
+      "details": "No login form detected",
+      "meta": {
+        "scanType": "active",
+        "formDetected": false
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "Admin_Panel_Public": {
+      "score": 100,
+      "status": "pass",
+      "details": "No public admin panels found",
+      "meta": {
+        "pathsChecked": 13
+      },
+      "analysis": null,
+      "confidence": "heuristic"
+    },
+    "MFA_Enabled": {
+      "score": 100,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "details": "No customer login / authentication surface found — MFA not applicable.",
+      "meta": {
+        "hasAuthSurface": false
+      },
+      "analysis": null
+    },
+    "Cookie_Consent": {
+      "score": 100,
+      "status": "not_applicable",
+      "details": "No tracking or cookies detected, consent banner not required.",
+      "meta": {
+        "trackingData": {
+          "hasTracking": "",
+          "detectedTrackers": [],
+          "cookiesUsed": "",
+          "cookieString": ""
+        }
+      },
+      "analysis": null
+    },
+    "Privacy_Policy": {
+      "score": 0,
+      "status": "fail",
+      "details": "No visible privacy policy link found",
+      "meta": {},
+      "analysis": {
+        "cause": "No visible link matching 'Privacy Policy' patterns was found in the page links.",
+        "recommendation": "Ensure a clearly visible 'Privacy Policy' link is present in the footer or navigation menu."
+      },
+      "confidence": "heuristic"
+    },
+    "Privacy_Compliance": {
+      "score": 0,
+      "status": "fail",
+      "confidence": "heuristic",
+      "details": "No GDPR/CCPA or data-collection disclosure found",
+      "meta": {
+        "gdpr": {},
+        "dataCollection": {},
+        "gdprPass": false,
+        "dcPass": false,
+        "foundKeyword": null,
+        "foundSelector": null
+      },
+      "analysis": {
+        "cause": "No GDPR/CCPA rights notice or data-collection disclosure was found.",
+        "recommendation": "Add explicit privacy-rights language (GDPR/CCPA) and a data-collection disclosure, typically in the privacy policy and footer."
+      }
+    },
+    "Finance_Form_Security": {
+      "score": null,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "confidence": "heuristic",
+      "details": "Not applicable on this page type",
+      "meta": {
+        "checkedUrl": null,
+        "financePageFound": false,
+        "httpsSecure": false,
+        "sensitiveFields": [],
+        "sensitiveDataHandledSecurely": false,
+        "detectedProviders": [],
+        "secureEndpoint": false,
+        "securitySignals": [],
+        "rawScore": 0,
+        "maxScore": 10
+      },
+      "analysis": null
+    },
+    "Legal_Disclaimers": {
+      "score": 100,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "confidence": "heuristic",
+      "details": "No finance / offers / lease / VDP page found to assess legal disclaimers",
+      "meta": {
+        "checkedUrl": null,
+        "pageType": null,
+        "groupsFound": [],
+        "groupsRequired": [],
+        "details": {}
+      },
+      "analysis": null
+    }
+  },
+  "technicalPerformance": {
+    "Percentage": 11,
+    "Graded_Percentage": 65,
+    "Score_Breakdown": {
+      "model": "exact Lighthouse Performance formula (SCORING_FORMAT.md §8.1)",
+      "source": "Lighthouse categories.performance.score (PSI, audited device)",
+      "weights": {
+        "FCP": 10,
+        "Speed_Index": 10,
+        "LCP": 25,
+        "TBT": 30,
+        "CLS": 25
+      },
+      "device": "desktop"
+    },
+    "Confidence": "lab",
+    "PageSpeed_Score": {
+      "score": 38,
+      "status": "fail",
+      "details": "Official Lighthouse Performance score needs work (Mobile 38/100, Desktop 11/100).",
+      "meta": {
+        "value": "38/100",
+        "mobileScore": "38/100",
+        "desktopScore": "11/100",
+        "mobileStatus": "fail",
+        "desktopStatus": "fail",
+        "source": "Lighthouse categories.performance.score",
+        "informational": true,
+        "thresholds": {
+          "Good": "90-100",
+          "Warning": "50-89",
+          "Poor": "0-49"
+        }
+      },
+      "analysis": {
+        "cause": "The Lighthouse Performance score is pulled down by the Core Web Vitals (LCP/CLS/TBT) and Speed Index measured below.",
+        "recommendation": "Fix the failing Core Web Vitals and asset checks below — they directly determine this score."
+      }
+    },
+    "Delivery_Hygiene": {
+      "score": 60,
+      "status": "warning",
+      "infoOnly": true,
+      "confidence": "lab",
+      "details": "Delivery hygiene needs work: Render Blocking, Resource Optimization, Compression, Caching.",
+      "meta": {
+        "informational": true,
+        "breakdown": {
+          "TTFB": {
+            "score": 99,
+            "status": "pass"
+          },
+          "Render_Blocking": {
+            "score": 90,
+            "status": "warning"
+          },
+          "Resource_Optimization": {
+            "score": 38,
+            "status": "fail"
+          },
+          "Compression": {
+            "score": 0,
+            "status": "fail"
+          },
+          "Caching": {
+            "score": 0,
+            "status": "fail"
+          },
+          "Redirect_Chains": {
+            "score": 100,
+            "status": "pass"
+          }
+        },
+        "note": "Composite of the delivery checks (TTFB, render-blocking, asset optimization, compression, caching, redirects) that PageSpeed Insights reports as diagnostics but does not score. Shown separately so the headline stays comparable to PSI."
+      },
+      "analysis": {
+        "cause": "One or more delivery checks outside Lighthouse's scored metrics are failing.",
+        "recommendation": "Fix the failing checks below — they improve real-world speed even though they don't move the Lighthouse score directly."
+      }
+    },
+    "LCP": {
+      "lab": {
+        "score": 24,
+        "status": "fail",
+        "details": "LCP is delayed (5.16s).",
+        "meta": {
+          "value": "5.16s",
+          "lcpElement": "Unknown element",
+          "thresholds": {
+            "Good": "0-2.5s",
+            "Warning": "2.5-4s",
+            "Poor": "4s+"
+          }
+        },
+        "analysis": {
+          "cause": "General main-thread blocking or large resources",
+          "recommendation": "Review network waterfall and reduce main-thread work."
+        }
+      },
+      "crux": {
+        "score": 97,
+        "status": "pass",
+        "details": "LCP (Real Users) is within optimal range.",
+        "meta": {
+          "value": "2.04s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-2.5s",
+            "Warning": "2.5-4s",
+            "Poor": "4s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "CLS": {
+      "lab": {
+        "score": 1,
+        "status": "fail",
+        "details": "Layout shifts detected (1.181).",
+        "meta": {
+          "value": 1.181,
+          "thresholds": {
+            "Good": "0-0.1",
+            "Warning": "0.1-0.25",
+            "Poor": "0.25+"
+          }
+        },
+        "analysis": {
+          "cause": "Images missing width/height attributes causing reflow",
+          "recommendation": "Add explicit `width` and `height` attributes to all images."
+        }
+      },
+      "crux": {
+        "score": 2,
+        "status": "fail",
+        "details": "Real users experience layout shifts (1.06).",
+        "meta": {
+          "value": 1.06,
+          "p75": true,
+          "thresholds": {
+            "Good": "0-0.1",
+            "Warning": "0.1-0.25",
+            "Poor": "0.25+"
+          }
+        },
+        "analysis": {
+          "cause": "Layout shifts detected during load (font loading, late-injected ads)",
+          "recommendation": "Reserve space for images/ads and use `font-display: swap`."
+        }
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "FCP": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "First Paint timing is good.",
+        "meta": {
+          "value": "0.89s",
+          "thresholds": {
+            "Good": "0-1.8s",
+            "Warning": "1.8-3s",
+            "Poor": "3s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": {
+        "score": 100,
+        "status": "pass",
+        "details": "Real-world First Paint is optimal.",
+        "meta": {
+          "value": "0.87s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-1.8s",
+            "Warning": "1.8-3s",
+            "Poor": "3s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "TTFB": {
+      "lab": {
+        "score": 100,
+        "status": "pass",
+        "details": "Server response time is excellent.",
+        "meta": {
+          "value": "0.15s",
+          "thresholds": {
+            "Good": "0-0.8s",
+            "Warning": "0.8-1.8s",
+            "Poor": "1.8s+"
+          }
+        },
+        "analysis": null
+      },
+      "crux": {
+        "score": 99,
+        "status": "pass",
+        "details": "Real-world server response is good.",
+        "meta": {
+          "value": "0.45s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-0.8s",
+            "Warning": "0.8-1.8s",
+            "Poor": "1.8s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "INP": {
+      "lab": {
+        "score": 9,
+        "status": "fail",
+        "details": "Estimated responsiveness is low (lab proxy from Total Blocking Time: 1.88s).",
+        "meta": {
+          "value": "1.88s (lab est.)",
+          "labProxy": "TBT",
+          "thresholds": {
+            "Good": "0-0.2s",
+            "Warning": "0.2-0.6s",
+            "Poor": "0.6s+"
+          }
+        },
+        "analysis": {
+          "cause": "20 long tasks blocking the main thread",
+          "recommendation": "Break up long JavaScript tasks so the page can respond to interactions."
+        }
+      },
+      "crux": {
+        "score": 96,
+        "status": "pass",
+        "details": "Real-world interaction feedback is fast.",
+        "meta": {
+          "value": "0.14s",
+          "p75": true,
+          "thresholds": {
+            "Good": "0-0.2s",
+            "Warning": "0.2-0.5s",
+            "Poor": "0.5s+"
+          }
+        },
+        "analysis": null
+      },
+      "source": "field",
+      "confidence": "field"
+    },
+    "TBT": {
+      "lab": {
+        "score": 9,
+        "status": "fail",
+        "details": "Main thread is blocked (1.88s).",
+        "meta": {
+          "value": "1.88s",
+          "thresholds": {
+            "Good": "0-0.2s",
+            "Warning": "0.2-0.6s",
+            "Poor": "0.6s+"
+          }
+        },
+        "analysis": {
+          "cause": "20 long tasks blocking the main thread",
+          "recommendation": "Break up Long Tasks and defer non-critical JS."
+        }
+      },
+      "crux": null,
+      "confidence": "lab"
+    },
+    "SI": {
+      "lab": {
+        "score": 16,
+        "status": "fail",
+        "details": "Visual page load is slow (8.79s).",
+        "meta": {
+          "value": "8.79s",
+          "thresholds": {
+            "Good": "0-3.4s",
+            "Warning": "3.4-5.8s",
+            "Poor": "5.8s+"
+          }
+        },
+        "analysis": {
+          "cause": "Main thread busy parsing/executing JS/CSS",
+          "recommendation": "Minimize main thread work and reduce JS execution time."
+        }
+      },
+      "crux": null,
+      "confidence": "lab"
+    },
+    "Compression": {
+      "score": 0,
+      "status": "fail",
+      "details": "Uncompressed assets found (3).",
+      "meta": {
+        "value": "0%",
+        "total": 3,
+        "compressedCount": 0,
+        "uncompressedCount": 3,
+        "target": "Use gzip or brotli compression",
+        "uncompressedResources": [
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/assets/styles.css",
+            "fileName": "styles.css",
+            "currentEncoding": "None"
+          },
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/errors.js",
+            "fileName": "errors.js",
+            "currentEncoding": "None"
+          },
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/script.js?reload=true",
+            "fileName": "script.js",
+            "currentEncoding": "None"
+          }
+        ],
+        "thresholds": {
+          "Good": "100%",
+          "Warning": "70-99%",
+          "Poor": "<70%"
+        }
+      },
+      "analysis": {
+        "cause": "3 uncompressed text resources found",
+        "recommendation": "Enable Gzip or Brotli compression on your web server."
+      }
+    },
+    "Caching": {
+      "score": 0,
+      "status": "fail",
+      "details": "Caching issues found in 4 resources.",
+      "meta": {
+        "value": "0%",
+        "total": 4,
+        "cachedCount": 0,
+        "uncachedCount": 4,
+        "target": "≥ 7 days",
+        "uncachedResources": [
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/assets/styles.css",
+            "fileName": "styles.css",
+            "cachePolicy": "max-age=86400, stale-while-revalidate=86400"
+          },
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/errors.js",
+            "fileName": "errors.js",
+            "cachePolicy": "max-age=86400, stale-while-revalidate=86400"
+          },
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/script.js?reload=true",
+            "fileName": "script.js",
+            "cachePolicy": "None"
+          },
+          {
+            "url": "https://www.morries.com/fastly/logo",
+            "fileName": "logo",
+            "cachePolicy": "public, max-age=600, s-maxage=31536000"
+          }
+        ],
+        "thresholds": {
+          "Good": "≥90%",
+          "Warning": "50-89%",
+          "Poor": "<50%"
+        }
+      },
+      "analysis": {
+        "cause": "4 resources with short or missing cache policy",
+        "recommendation": "Set a long `max-age` (e.g. 1 year) for static assets."
+      }
+    },
+    "Resource_Optimization": {
+      "score": 38,
+      "status": "fail",
+      "details": "Asset optimization opportunities found.",
+      "meta": {
+        "value": "38%",
+        "totalImages": 4,
+        "optimizedImagesCount": 3,
+        "unoptimizedImagesCount": 1,
+        "totalScripts": 2,
+        "minifiedScriptsCount": 0,
+        "unminifiedScriptsCount": 2,
+        "target": "Optimized Assets",
+        "unoptimizedImages": [
+          {
+            "url": "data:image/svg+xml,<svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" xmlns=\"http://www.w3.org/2000/svg\">%0A    <path%0A        d=\"M8 12C8.208 12 8.385 11.927 8.531 11.781C8.677 11.635 8.75 11.458 8.75 11.25C8.75 11.042 8.677 10.865 8.531 10.719C8.385 10.573 8.208 10.5 8 10.5C7.792 10.5 7.615 10.573 7.469 10.719C7.323 10.865 7.25 11.042 7.25 11.25C7.25 11.458 7.323 11.635 7.469 11.781C7.615 11.927 7.792 12 8 12ZM7.25 9H8.75V4H7.25V9ZM8 16C6.90267 16 5.868 15.7917 4.896 15.375C3.924 14.9583 3.07333 14.3853 2.344 13.656C1.61467 12.9267 1.04167 12.076 0.625 11.104C0.208333 10.132 0 9.09733 0 8C0 6.88867 0.208333 5.85033 0.625 4.885C1.04167 3.92033 1.61467 3.07333 2.344 2.344C3.07333 1.61467 3.924 1.04167 4.896 0.625C5.868 0.208333 6.90267 0 8 0C9.11133 0 10.1497 0.208333 11.115 0.625C12.0797 1.04167 12.9267 1.61467 13.656 2.344C14.3853 3.07333 14.9583 3.92033 15.375 4.885C15.7917 5.85033 16 6.88867 16 8C16 9.09733 15.7917 10.132 15.375 11.104C14.9583 12.076 14.3853 12.9267 13.656 13.656C12.9267 14.3853 12.0797 14.9583 11.115 15.375C10.1497 15.7917 9.11133 16 8 16Z\"%0A        fill=\"%23BD140A\" />%0A</svg>",
+            "type": "Image",
+            "details": "Displayed: 0x0px, Natural: 16x16px"
+          }
+        ],
+        "unminifiedScripts": [
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/errors.js",
+            "type": "Script",
+            "details": "Status: Unminified, Loading: async"
+          },
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/script.js?reload=true",
+            "type": "Script",
+            "details": "Status: Unminified, Loading: async"
+          }
+        ],
+        "thresholds": {
+          "Good": "≥90%",
+          "Warning": "50-89%",
+          "Poor": "<50%"
+        }
+      },
+      "analysis": {
+        "cause": "1 images are larger than their display size",
+        "recommendation": "Resize images to match their specific display dimensions."
+      }
+    },
+    "Render_Blocking": {
+      "score": 90,
+      "status": "warning",
+      "details": "1 render-blocking resources detected.",
+      "meta": {
+        "value": "90%",
+        "target": "0 Blocking Resources",
+        "blockingCount": 1,
+        "blockingResources": [
+          {
+            "url": "https://www.morries.com/_fs-ch-1T1wmsGaOgGaSxcX/assets/styles.css",
+            "details": "Blocks rendering (missing media attribute defaults to 'all')"
+          }
+        ],
+        "thresholds": {
+          "Good": "100%",
+          "Warning": "50-99%",
+          "Poor": "<50%"
+        }
+      },
+      "analysis": {
+        "cause": "1 render-blocking resources found",
+        "recommendation": "Defer non-critical JavaScript and inline critical CSS."
+      }
+    },
+    "Redirect_Chains": {
+      "score": 100,
+      "status": "pass",
+      "details": "URL redirect structure is efficient.",
+      "meta": {
+        "value": "100%",
+        "hops": 0,
+        "redirectDetails": [
+          "https://www.morries.com/"
+        ],
+        "target": "≤ 1 hop",
+        "thresholds": {
+          "Good": "≤ 1 hop",
+          "Poor": "> 1 hop"
+        }
+      },
+      "analysis": null
+    },
+    "Sold_Vehicle": {
+      "score": null,
+      "status": "not_applicable",
+      "infoOnly": true,
+      "confidence": "heuristic",
+      "details": "Not applicable on this page type",
+      "meta": {
+        "checkedUrl": null,
+        "finalUrl": null,
+        "status": null,
+        "redirected": false,
+        "detectedKeywords": []
+      },
+      "analysis": null
+    }
+  },
+  "timeTaken": "85s",
+  "score": 44.3,
+  "grade": "F",
+  "sectionScore": [
+    {
+      "name": "Technical Performance",
+      "score": 11
+    },
+    {
+      "name": "On-Page SEO",
+      "score": 38
+    },
+    {
+      "name": "Accessibility",
+      "score": 86
+    },
+    {
+      "name": "Security/Compliance",
+      "score": 71
+    },
+    {
+      "name": "UX & Content Structure",
+      "score": 70
+    },
+    {
+      "name": "Conversion & Lead Flow",
+      "score": 46
+    },
+    {
+      "name": "AIO Readiness",
+      "score": 9
+    },
+    {
+      "name": "AEO",
+      "score": 35
+    }
+  ],
+  "batchStatus": "completed",
+  "elapsedSec": 88
+}

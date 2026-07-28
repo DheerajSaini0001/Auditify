@@ -27,7 +27,7 @@ const AEO_PARAM_CARDS = [
     { paramKey: 'Bot_Access',               signal: 'botAccess',           sig: 'botAccess',           title: 'Bot Access (Search Index Status)',              description: 'robots.txt / meta / X-Robots allow GPTBot, Google-Extended, PerplexityBot — scored per engine and averaged.' },
     { paramKey: 'Structured_Content',       signal: 'structuredContent',   sig: 'structuredContent',   title: 'Structured Content',                            description: 'Machine-parseable spec/comparison tables and lists (not data trapped inside images).' },
     { paramKey: 'FAQ_QA_Blocks',            signal: 'faqQa',               sig: null,                  title: 'FAQ / Q&A Blocks',                              description: 'Question-headed sections with concise answers plus FAQPage schema (FAQ / Finance / Service / VDP pages).' },
-    { paramKey: 'Entity_Recognition',       signal: 'entityRecognition',   sig: 'entityRecognition',   title: 'Entity Recognition',                            description: 'Organization/LocalBusiness schema + Knowledge Graph presence — how confidently engines identify the business.' },
+    { paramKey: 'Entity_Recognition',       signal: 'entityRecognition',   sig: 'entityRecognition',   title: 'Entity Recognition',                            description: 'Organization/LocalBusiness schema — how confidently engines identify the business.' },
     { paramKey: 'Citation_NAP_Consistency', signal: 'citationConsistency', sig: 'citationConsistency', title: 'Citation / NAP Consistency',                    description: 'Name / address / phone identical on-page (and vs Google Business Profile).' },
     { paramKey: 'Citations_Attribution',    signal: 'citations',           sig: 'citations',           title: 'Citations & Attribution',                       description: 'Links to authoritative sources (OEM, NHTSA, IIHS) and transparent attribution that RAG engines value.' },
     { paramKey: 'Topical_Authority',        signal: 'topicalAuthority',    sig: 'topicalAuthority',    title: 'Topical Authority',                             description: 'Content depth and topic-cluster coverage around dealership topics.' },
@@ -222,26 +222,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     </div>
                 )}
 
-                {/* Right Column: AEO Score Section */}
-                <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
-                    <h2 className={`text-[1.35rem] font-semibold mb-7 tracking-tight ${darkMode ? "text-slate-100" : "text-ink"}`}>
-                        AI Engine Visibility
-                    </h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-3xl">
-                        {isComplete ? (
-                            <>
-                                <AEOScoreGauge score={aeo.platforms?.gemini?.score || 0} title="GOOGLE" subtitle="GEMINI" color="#4285F4" size={160} darkMode={darkMode} />
-                                <AEOScoreGauge score={aeo.platforms?.chatgpt?.score || 0} title="OPENAI" subtitle="CHATGPT" color="#10A37F" size={160} darkMode={darkMode} />
-                                <AEOScoreGauge score={aeo.platforms?.perplexity?.score || 0} title="PERPLEXITY" subtitle="AI" color="#A259FF" size={160} darkMode={darkMode} />
-                            </>
-                        ) : (
-                            <div className="col-span-3 flex flex-col items-center justify-center py-8">
-                                <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                                <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{streamStatus}</h3>
-                            </div>
-                        )}
-                    </div>
-                </div>
+            
             </div> 
             {/* Header Section (Middle Row) */}
             <header className={`flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4 border-b border-transparent`}>
@@ -253,6 +234,13 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                         </h1>
                     </div>
                     <p className="text-[1.1rem] font-medium text-muted">Measuring your site's readiness for the next generation of AI search.</p>
+                    <span
+                        title="This score is Auditify's own composite index for answer-engine readiness. No industry-standard external tool produces a comparable AEO score to cross-check against."
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                    >
+                        <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                        Auditify Index · no external equivalent
+                    </span>
                 </div>
 
                 <div className="flex items-center gap-6">
@@ -344,7 +332,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                         signal={c.signal}
                                         score={score}
                                         data={data}
-                                        title={c.title}
+                                        title={c.info ? `${c.title} (Info-only)` : c.title}
                                         description={c.description}
                                         darkMode={darkMode}
                                         onInfo={onInfo}
@@ -356,12 +344,7 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     </div>
                     )}
 
-                    {/* Actionable Recommendations */}
-                    {isComplete && (
-                        <div className={`pt-8 border-t ${darkMode ? "border-slate-800" : "border-line"}`}>
-                            <AEORecommendations recommendations={aeo.recommendations} darkMode={darkMode} />
-                        </div>
-                    )}
+
                 </>
             )}
         </div>

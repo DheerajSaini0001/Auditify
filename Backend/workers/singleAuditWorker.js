@@ -1,4 +1,5 @@
 import { workerData, parentPort } from "worker_threads";
+import mongoose from "mongoose";
 
 import technicalMetrics from "../metricServices/technicalMetrics.js";
 import seoMetrics from "../metricServices/seoMetrics.js";
@@ -8,14 +9,26 @@ import uxContentStructure from "../metricServices/uxContentStructure.js";
 import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
-import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
+import Puppeteer_Cheerio, { ensureDomainClearance } from "../utils/puppeteer_cheerio.js";
+import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
-import { classifyPageType } from "../utils/pageClassifier.js";
+import { classifyPageType, classifyCorporatePageType } from "../utils/pageClassifier.js";
 
-const { url, device, report, auditId, pageType: initialPageType } = workerData;
-const pageType = initialPageType || classifyPageType(url);
+const { url, device, report, auditId, pageType: initialPageType, siteType, pageScopes } = workerData;
+
+// Which page types the user ticked in the home-page picker. `null` = no restriction
+// (audit whatever discovery finds, the original behaviour). A non-empty list means
+// Stage 2 may only audit those types; "home" is the URL the user typed, so a
+// selection of just ["home"] skips Stage 2 entirely — exactly one page is audited.
+const scopeSet = Array.isArray(pageScopes) && pageScopes.length ? new Set(pageScopes) : null;
+const scopedExtraTypes = scopeSet ? [...scopeSet].filter((k) => k !== "home") : null;
+// Corporate/OEM sites have no VDP/SRP/trade/lease/finance/service of their own —
+// classify against the corporate taxonomy instead. "unknown"/unset siteType
+// falls back to the dealer classifier, matching the app's original behavior.
+const classify = siteType === "corporate" ? classifyCorporatePageType : classifyPageType;
+const pageType = initialPageType || classify(url);
 
 // `report` is one of: "All" (full audit), a single section name, or a comma-joined
 // list of section names — a custom subset chosen via the report-scope checklist.
@@ -101,9 +114,27 @@ function isDetachedFrameError(error) {
   );
 }
 
+// [NEW] — Page-ENVIRONMENT error detector: the page is alive, but its document
+// denies an API to injected scripts — e.g. document.cookie throwing SecurityError
+// ("Access is denied for this document") on an opaque-origin/sandboxed document,
+// which WAF/bot-protection interstitials (Imperva/Incapsula CSP `sandbox`) serve.
+// Confirmed in production on lexusofnorthmiami.com: ONE pillar hitting this killed
+// the whole audit even though 6/8 sections had already completed.
+function isPageEnvironmentError(error) {
+  if (!error || !error.message) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    msg.includes('securityerror') ||
+    msg.includes('access is denied for this document') ||
+    msg.includes('permission denied to access property')
+  );
+}
+
 // [NEW] — Safe metric wrapper
-// Runs a metric service function. If a detached frame error occurs mid-metric,
-// logs a warning and returns null instead of crashing the entire audit.
+// Runs a metric service function. If a detached-frame error OR a page-environment
+// denial (sandboxed/opaque document) occurs mid-metric, logs a warning and returns
+// null for THAT section only — the audit continues and the section is excluded &
+// renormalized ("Not Run") instead of the entire audit failing.
 async function safeMetric(name, fn) {
   try {
     return await fn();
@@ -112,46 +143,442 @@ async function safeMetric(name, fn) {
       logger.warn(`[Worker] ${name} skipped due to detached frame during page evaluation — continuing audit with partial data.`);
       return null;
     }
+    if (isPageEnvironmentError(err)) {
+      logger.warn(`[Worker] ${name} skipped — the document denied a script API (${err.message.split('\n')[0]}). Likely a sandboxed WAF/bot-protection document; continuing audit with partial data.`);
+      return null;
+    }
     // Unexpected error — re-throw so the outer catch can handle it
     throw err;
   }
 }
 
+function logWorkerMetrics(contextName) {
+  const mem = process.memoryUsage();
+  const rssMB = (mem.rss / 1024 / 1024).toFixed(1);
+  const heapUsedMB = (mem.heapUsed / 1024 / 1024).toFixed(1);
+  const cpu = process.cpuUsage();
+  logger.info(`📊 [Worker Metrics - ${contextName}] Memory: RSS ${rssMB}MB, Heap ${heapUsedMB}MB | CPU: User ${(cpu.user/1000).toFixed(0)}ms, Sys ${(cpu.system/1000).toFixed(0)}ms`);
+}
+
+function withTimeout(promise, timeoutMs = 30000, pillarName = "Metric") {
+  let timer;
+  const timeoutPromise = new Promise((resolve) => {
+    timer = setTimeout(() => {
+      logger.warn(`⏱️ [Worker] Pillar "${pillarName}" timed out after ${timeoutMs}ms — returning partial result.`);
+      resolve(null);
+    }, timeoutMs);
+  });
+
+  return Promise.race([
+    Promise.resolve(promise).then((res) => {
+      clearTimeout(timer);
+      return res;
+    }).catch((err) => {
+      clearTimeout(timer);
+      throw err;
+    }),
+    timeoutPromise
+  ]);
+}
+
+// Per-pillar timeouts (all env-tunable). Three pillars need their own, larger caps
+// or they get killed mid-run and the section comes back null (an empty column):
+//   • Technical Performance runs Google PageSpeed (~50-75s/page, more with a retry).
+//   • On-Page SEO's scan on a heavy home page can run past the fast budget.
+//   • Security/Compliance does ACTIVE probing (opens tabs to test XSS / weak creds /
+//     finance forms, reputation-API calls, admin-path checks) — ~37s solo, and more
+//     under the 8-pillar concurrent load, so 45s was clipping it on every page.
+// The browser is held until the SLOWEST pillar (Technical, 150s) finishes anyway,
+// so a bigger Security/SEO cap costs no extra browser-hold time. The remaining
+// pillars are quick on-page checks and share PILLAR_TIMEOUT_MS.
+const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || "150000", 10);
+const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || "75000", 10);
+const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || "90000", 10);
+const PILLAR_TIMEOUT_MS = parseInt(process.env.PILLAR_TIMEOUT_MS || "60000", 10);
+
+// AI-forward weighting (July 2026 product decision, mirrors utils/sectionWeights.js):
+// AIO+AEO ≈ 20 combined on customer-facing pages (AEO leads), funded by A11y/UX;
+// transactional pages (trade/finance) stay ~16. Keep BOTH tables in sync.
 const SECTION_WEIGHTS_BY_PAGE_TYPE = {
-  home:    { tech: 18, seo: 18, a11y: 10, sec: 12, ux: 12, conv: 14, aio: 8, aeo: 8 },
-  srp:     { tech: 20, seo: 20, a11y: 9,  sec: 8,  ux: 13, conv: 14, aio: 8, aeo: 8 },
-  vdp:     { tech: 18, seo: 18, a11y: 9,  sec: 8,  ux: 13, conv: 18, aio: 7, aeo: 9 },
-  specials:{ tech: 15, seo: 16, a11y: 9,  sec: 13, ux: 12, conv: 17, aio: 6, aeo: 12 },
-  lease:   { tech: 15, seo: 16, a11y: 9,  sec: 14, ux: 12, conv: 16, aio: 6, aeo: 12 },
-  trade:   { tech: 14, seo: 12, a11y: 11, sec: 16, ux: 13, conv: 22, aio: 6, aeo: 6 },
-  finance: { tech: 14, seo: 12, a11y: 11, sec: 22, ux: 11, conv: 18, aio: 6, aeo: 6 },
-  service: { tech: 16, seo: 16, a11y: 10, sec: 10, ux: 13, conv: 19, aio: 8, aeo: 8 },
+  home:    { tech: 18, seo: 18, a11y: 8,  sec: 12, ux: 10, conv: 14, aio: 8, aeo: 12 },
+  srp:     { tech: 20, seo: 20, a11y: 7,  sec: 8,  ux: 11, conv: 14, aio: 8, aeo: 12 },
+  vdp:     { tech: 18, seo: 18, a11y: 8,  sec: 8,  ux: 11, conv: 18, aio: 7, aeo: 12 },
+  specials:{ tech: 15, seo: 16, a11y: 8,  sec: 13, ux: 11, conv: 17, aio: 8, aeo: 12 },
+  lease:   { tech: 15, seo: 16, a11y: 8,  sec: 14, ux: 11, conv: 16, aio: 8, aeo: 12 },
+  trade:   { tech: 14, seo: 12, a11y: 9,  sec: 16, ux: 11, conv: 22, aio: 7, aeo: 9 },
+  finance: { tech: 14, seo: 12, a11y: 9,  sec: 22, ux: 9,  conv: 18, aio: 7, aeo: 9 },
+  service: { tech: 16, seo: 16, a11y: 8,  sec: 10, ux: 11, conv: 19, aio: 8, aeo: 12 },
   about:   { tech: 14, seo: 16, a11y: 11, sec: 10, ux: 15, conv: 12, aio: 10,aeo: 12 },
-  content: { tech: 14, seo: 22, a11y: 11, sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 12 },
-  generic: { tech: 18, seo: 17, a11y: 10, sec: 12, ux: 13, conv: 15, aio: 8, aeo: 7 }
+  content: { tech: 14, seo: 22, a11y: 9,  sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 14 },
+  generic: { tech: 18, seo: 17, a11y: 8,  sec: 12, ux: 11, conv: 14, aio: 8, aeo: 12 },
+  // Corporate/OEM page types (siteType "corporate" — no per-vehicle lead flow of
+  // its own, so Conversion weight drops and SEO/AEO — brand & answer-engine
+  // visibility — rise). `locator`'s "conversion" is successfully finding a
+  // dealer, so it keeps real Conversion weight tied to UX (map/store-finder
+  // usability). `about`/`content` reuse the existing dealer rows above.
+  models:  { tech: 18, seo: 20, a11y: 10, sec: 8,  ux: 14, conv: 10, aio: 9, aeo: 11 },
+  locator: { tech: 16, seo: 14, a11y: 8,  sec: 8,  ux: 14, conv: 20, aio: 8, aeo: 12 },
+  press:   { tech: 14, seo: 18, a11y: 10, sec: 8,  ux: 14, conv: 6,  aio: 10,aeo: 20 },
 };
 
 const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
-  A ||= 0; B ||= 0; C ||= 0; D ||= 0; E ||= 0; F ||= 0; G ||= 0; H ||= 0;
-  
   const w = SECTION_WEIGHTS_BY_PAGE_TYPE[pageType] || SECTION_WEIGHTS_BY_PAGE_TYPE.generic;
-  const total = (A * w.tech + B * w.seo + C * w.a11y + D * w.sec + E * w.ux + F * w.conv + G * w.aio + H * w.aeo) / 100;
+
+  // A section score of null = "Not Run" (e.g. PageSpeed unavailable → Technical). It is
+  // EXCLUDED from the overall and the remaining section weights are renormalized, rather
+  // than counted as 0 — a measurement gap shouldn't be scored as a real failure.
+  const parts = [
+    { name: "Technical Performance", score: A, weight: w.tech },
+    { name: "On-Page SEO", score: B, weight: w.seo },
+    { name: "Accessibility", score: C, weight: w.a11y },
+    { name: "Security/Compliance", score: D, weight: w.sec },
+    { name: "UX & Content Structure", score: E, weight: w.ux },
+    { name: "Conversion & Lead Flow", score: F, weight: w.conv },
+    { name: "AIO Readiness", score: G, weight: w.aio },
+    { name: "AEO", score: H, weight: w.aeo },
+  ];
+
+  let sum = 0, wsum = 0;
+  for (const p of parts) {
+    if (p.score === null || p.score === undefined) continue; // Not Run — renormalize out
+    sum += p.score * p.weight;
+    wsum += p.weight;
+  }
+  const total = wsum > 0 ? sum / wsum : 0;
 
   return {
     totalScore: Number(total.toFixed(1)),
     grade: gradeFor(total),
-    sectionScores: [
-      { name: "Technical Performance", score: A },
-      { name: "On-Page SEO", score: B },
-      { name: "Accessibility", score: C },
-      { name: "Security/Compliance", score: D },
-      { name: "UX & Content Structure", score: E },
-      { name: "Conversion & Lead Flow", score: F },
-      { name: "AIO Readiness", score: G },
-      { name: "AEO", score: H },
-    ],
+    sectionScores: parts.map((p) => ({ name: p.name, score: p.score ?? null })),
   };
 };
+
+// ── Reusable full-page audit ────────────────────────────────────────────────
+// Runs ONE page's complete 8-pillar audit inside ONE freshly-launched browser.
+// Puppeteer_Cheerio takes a global browser-pool permit, so however many of these
+// run in parallel, the number of live browsers is hard-capped at
+// MAX_CONCURRENT_BROWSERS (default 3). Every status update and section result is
+// streamed through `emit(patch)`; the caller wires that to whichever report id
+// this page belongs to (the parent for Stage 1, a per-page child report for
+// Stage 2). Never throws — a dead/blocked page yields a graceful partial so one
+// bad key page can't sink the batch.
+async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, auditId: pageAuditId, emit }) {
+  const startedAt = performance.now();
+  const send = typeof emit === "function" ? emit : () => {};
+  let pageBrowser;
+  try {
+    const { browser: b, page, response, $, screenshot, isBotProtected } =
+      await Puppeteer_Cheerio(pageUrl, dev, { auditId: pageAuditId, onProgress: send });
+    pageBrowser = b;
+
+    const screenshotUrl = screenshot ? `/api/screenshot/view/${pageAuditId}` : null;
+    send({ screenshot, screenshotUrl, isBotProtected });
+
+    // Page context lost (detached frame) or a hard bot-wall → graceful partial.
+    if (!page || isBotProtected) {
+      return {
+        status: "completed",
+        error: isBotProtected
+          ? "Bot Protected: advanced bot detection (CAPTCHA/Cloudflare) blocked a full analysis."
+          : "Audit completed with partial data — the page context was lost during the crawl.",
+        score: 0,
+        grade: "F",
+        isBotProtected: !!isBotProtected,
+        timeTaken: `${((performance.now() - startedAt) / 1000).toFixed(0)}s`,
+      };
+    }
+
+    // Classify by where the browser actually landed (post-redirect), unless forced.
+    let landed = pageUrl;
+    try { const u = typeof page?.url === "function" ? page.url() : null; if (u) landed = u; } catch { /* keep */ }
+    const pt = forcedType || classify(landed);
+
+    // The 8 pillars, in parallel against this single page — same set + timeouts
+    // as Stage 1. Each streams its own section the moment it lands.
+    const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
+      (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })(),
+      (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
+      (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt), PILLAR_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
+      (async () => { const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(pageUrl, page, response, pageBrowser, pt), SEC_TIMEOUT_MS, "Security/Compliance")); send({ securityOrCompliance: r }); return r; })(),
+      (async () => { const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(dev, page, pt), PILLAR_TIMEOUT_MS, "UX & Content Structure")); send({ UXOrContentStructure: r }); return r; })(),
+      (async () => { const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pt), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow")); send({ conversionAndLeadFlow: r }); return r; })(),
+      (async () => { const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(pageUrl, page, $, pt), PILLAR_TIMEOUT_MS, "AIO Readiness")); send({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge }); return r; })(),
+      (async () => { const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(pageUrl, $, null, 100, { pageType: pt }), PILLAR_TIMEOUT_MS, "AEO")); send({ aeo: r }); return r; })(),
+    ]);
+
+    const overall = OverAll(
+      A_Res?.Percentage ?? null, B_Res?.Percentage ?? null, C_Res?.Percentage ?? null, D_Res?.Percentage ?? null,
+      E_Res?.Percentage ?? null, F_Res?.Percentage ?? null, G_Res?.Percentage ?? null, aeoRes?.Percentage ?? null,
+      pt
+    );
+
+    return {
+      status: "completed",
+      pageType: pt,
+      score: overall.totalScore,
+      grade: overall.grade,
+      sectionScore: overall.sectionScores,
+      timeTaken: `${((performance.now() - startedAt) / 1000).toFixed(0)}s`,
+    };
+  } catch (err) {
+    logger.warn(`[Worker] auditOnePage failed for ${pageUrl}: ${err?.message || err}`);
+    return {
+      status: "failed",
+      error: err?.message || "Audit failed",
+      score: 0,
+      grade: "F",
+      timeTaken: `${((performance.now() - startedAt) / 1000).toFixed(0)}s`,
+    };
+  } finally {
+    if (pageBrowser) { try { await pageBrowser.close(); } catch { /* already closed */ } }
+  }
+}
+
+// Set when Stage 1 fails. Discovery now runs in the background alongside Stage 1, so
+// it can still be in flight when the audit dies — this stops it from registering child
+// pages (which would sit "auditing…" forever) against an audit that already errored.
+let auditAborted = false;
+
+// 🔎 STAGE 2a — DISCOVERY. Find the site's key pages and register each one as an
+// in-progress child report (childInit), so the audit-summary matrix can list every
+// page as "auditing…" right away.
+//
+// This runs CONCURRENTLY with Stage 1 (see the main flow below): discovery is
+// sitemap/link crawling and doesn't need Stage 1's result, so making the user wait
+// for the first page's 8 pillars before even *finding* the key pages was dead time.
+// It takes its own browser-pool permit, so Stage 1 (1 permit) + discovery (1 permit)
+// stay inside MAX_CONCURRENT_BROWSERS.
+//
+// Returns the job list for Stage 2b; [] when nothing worth auditing was found.
+async function discoverKeyPages(baseUrl, currentAuditId, device) {
+  try {
+    // The user narrowed the audit to the page they typed → nothing to discover.
+    if (scopedExtraTypes && scopedExtraTypes.length === 0) {
+      logger.info(`📍 [Stage 2a] Skipped — only the entered page was selected for ${baseUrl}`);
+      return [];
+    }
+
+    logger.info(`🔎 [Stage 2a] Discovering key pages of ${baseUrl} (in parallel with Stage 1)...`);
+    const discovered = await discoverPages(baseUrl, 40);
+
+    const PAGE_LABELS = {
+      vdp: "Vehicle Detail Page (VDP)",
+      srp: "Inventory / SRP",
+      service: "Service & Parts",
+      trade: "Trade-In Tool",
+      finance: "Financing / Credit App",
+      specials: "Lease Specials / Offers",
+      about: "About / Contact Us",
+      content: "Content / Blog",
+      home: "Home Page",
+      generic: "Key Domain Page",
+    };
+
+    // Classify all discovered URLs
+    const classified = (discovered || [])
+      .filter((u) => u !== baseUrl)
+      .map((u) => ({ url: u, type: classifyPageType(u) }));
+
+    // Filter out excluded/generic pages (/login, /signup, /privacy), and anything
+    // the user unticked in the page picker.
+    const inScope = (type) => !scopeSet || scopeSet.has(type);
+    const wantedPages = classified.filter((item) => item.type !== "generic" && inScope(item.type));
+
+    // Select 1 representative URL per wanted category
+    const categoryMap = {};
+    for (const item of wantedPages) {
+      if (!categoryMap[item.type]) {
+        categoryMap[item.type] = item.url;
+      }
+    }
+
+    // Ensure key automotive categories (VDP, Service, Trade, Specials) are present
+    const missingKeys = ["vdp", "service", "trade", "specials"].filter((k) => !categoryMap[k] && inScope(k));
+
+    if (missingKeys.length > 0) {
+      try {
+        const targetSearchUrl = categoryMap["srp"] || baseUrl;
+        const { browser: mkBrowser, $ } = await Puppeteer_Cheerio(targetSearchUrl, device, { auditId: currentAuditId });
+        try {
+          const allHrefs = $("a[href]")
+            .toArray()
+            .map((a) => $(a).attr("href"))
+            .filter(Boolean);
+
+          for (const href of allHrefs) {
+            try {
+              const full = href.startsWith("http") ? href : new URL(href, baseUrl).href;
+              const t = classifyPageType(full);
+              if (missingKeys.includes(t) && !categoryMap[t]) {
+                categoryMap[t] = full;
+                logger.info(`🚗 Discovered missing key page (${t}): ${full}`);
+              }
+            } catch {}
+          }
+        } finally {
+          // [FIX] this browser was previously never closed — it leaked a Chromium
+          // process and held a global browser-pool permit until the watchdog reclaimed it.
+          if (mkBrowser) await mkBrowser.close().catch(() => {});
+        }
+      } catch (e) {
+        logger.warn(`Could not extract missing key pages: ${e.message}`);
+      }
+    }
+
+    // Combine selected wanted key page URLs
+    const selectedList = Object.entries(categoryMap).map(([type, url]) => ({
+      url,
+      type,
+      label: PAGE_LABELS[type] || "Key Page",
+    }));
+
+    // If still under 6 pages, backfill from remaining non-generic discovered pages.
+    // Skipped once the user restricted the page types — backfilling would quietly
+    // pull back in the very pages they unticked.
+    if (selectedList.length < 6 && !scopeSet) {
+      for (const item of classified) {
+        if (!selectedList.some((s) => s.url === item.url)) {
+          selectedList.push({
+            url: item.url,
+            type: item.type,
+            label: PAGE_LABELS[item.type] || "Key Page",
+          });
+          if (selectedList.length >= 6) break;
+        }
+      }
+    }
+
+    const urlsToCrawl = selectedList.slice(0, 6);
+
+    if (!urlsToCrawl || urlsToCrawl.length === 0) {
+      logger.info(`📍 [Stage 2a] No additional internal URLs found for ${baseUrl}`);
+      return [];
+    }
+
+    // Give every key page a child report id up front and ask the main thread to
+    // create an in-progress child report + a parent summary row for each — so the
+    // audit-summary matrix shows ALL pages (as "auditing…") while Stage 1 is still
+    // running, instead of appearing only once the first page's report lands.
+    const jobs = urlsToCrawl.map((item) => ({
+      childId: new mongoose.Types.ObjectId().toString(),
+      url: item.url,
+      type: item.type,
+      label: item.label,
+    }));
+
+    // Stage 1 died while we were discovering → don't register pages for a dead audit.
+    if (auditAborted) {
+      logger.info(`🔎 [Stage 2a] Discovery finished after Stage 1 failed — dropping ${jobs.length} key pages.`);
+      return [];
+    }
+
+    for (const j of jobs) {
+      parentPort.postMessage({
+        type: "childInit",
+        parentAuditId: currentAuditId,
+        child: { childId: j.childId, url: j.url, pageType: j.type, label: j.label, device },
+      });
+    }
+
+    postProgress({
+      stage2Progress: `Found ${jobs.length} key pages — queued for full audit`,
+      crawledPagesCount: jobs.length,
+    });
+
+    logger.info(`🔎 [Stage 2a] Discovered ${jobs.length} key pages for ${baseUrl} — queued, will audit once Stage 1 frees its browser.`);
+    return jobs;
+  } catch (err) {
+    logger.warn(`⚠️ [Stage 2a] Key-page discovery warning (non-fatal):`, err);
+    return [];
+  }
+}
+
+// 🚀 STAGE 2b — AUDIT. Run a FULL 8-pillar audit of each key page discovered above:
+// one browser per page, 3 in flight (hard-capped by the global browser pool). Each
+// key page fills in its OWN child report (created from the childInit above and
+// finalized by childDone) so the summary page can list every page, roll them into a
+// site score, and open each page's full report independently.
+//
+// Starts only after Stage 1 has closed its browser, so the 3 pool permits are free.
+async function auditKeyPages(jobs, currentAuditId, device) {
+  try {
+    if (!jobs || jobs.length === 0) return [];
+
+    logger.info(`📍 [Stage 2b] Full-auditing ${jobs.length} key pages — one browser per page, 3 in parallel (global cap ${process.env.MAX_CONCURRENT_BROWSERS || 3})...`);
+    postProgress({ stage2Progress: `Full-auditing ${jobs.length} key pages (3 in parallel)` });
+
+    // One browser per page, CONCURRENCY pages IN FLIGHT at all times (rolling pool).
+    // The global browser pool caps live browsers at MAX_CONCURRENT_BROWSERS regardless,
+    // so this is the intended parallelism, not a second cap.
+    //
+    // This used to run in fixed chunks of 3 (`Promise.all` per chunk), which meant the
+    // whole group waited for its SLOWEST page: two browsers sat idle — and two pool
+    // permits stayed free — while the third finished. Now each slot pulls the next
+    // queued page the instant its current page closes, so 3 audits are always running
+    // until the queue drains.
+    const CONCURRENCY = 3;
+    let completed = 0;
+    let nextJob = 0;              // shared cursor; safe — no await between read & bump
+    const results = new Array(jobs.length);
+
+    const runJob = async (j, index) => {
+      // Stream this page's every status/section update straight to its own child report.
+      const emit = (patch) => parentPort.postMessage({ type: "childProgress", childId: j.childId, patch });
+      const res = await auditOnePage({ url: j.url, device, pageType: j.type, auditId: j.childId, emit });
+
+      // Finalize the child report + fill in the parent's summary row for this page.
+      parentPort.postMessage({
+        type: "childDone",
+        parentAuditId: currentAuditId,
+        childId: j.childId,
+        patch: res,
+        summary: {
+          url: j.url,
+          pageType: res.pageType || j.type,
+          label: j.label,
+          reportId: j.childId,
+          score: res.score ?? null,
+          grade: res.grade ?? null,
+          success: res.status === "completed",
+          isBotProtected: !!res.isBotProtected,
+          isProcessing: false,
+          status: 200,
+          title: j.label,
+        },
+      });
+
+      completed++;
+      postProgress({ stage2Progress: `Full-audited ${completed}/${jobs.length} key pages` });
+      results[index] = { url: j.url, pageType: j.type, score: res.score ?? null, status: res.status };
+    };
+
+    // One pool slot: take the next page, audit it, repeat until the queue is empty.
+    // auditOnePage never throws, but the guard keeps a messaging failure from killing
+    // a slot (which would silently shrink the pool for the rest of the run).
+    const poolSlot = async () => {
+      for (let index = nextJob++; index < jobs.length; index = nextJob++) {
+        try {
+          await runJob(jobs[index], index);
+        } catch (e) {
+          logger.warn(`⚠️ [Stage 2b] Key page failed outright (${jobs[index]?.url}): ${e?.message || e}`);
+        }
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, () => poolSlot())
+    );
+
+    // Drop any slot that died before recording a result, so the caller only sees pages
+    // that actually reported.
+    const finalResults = results.filter(Boolean);
+    logger.info(`✅ [Stage 2b] Completed full 8-pillar audits of ${finalResults.length} key pages.`);
+    return finalResults;
+  } catch (err) {
+    logger.warn(`⚠️ [Stage 2b] Full-audit crawl warning (non-fatal):`, err);
+    return [];
+  }
+}
 
 (async () => {
   let browser;
@@ -186,9 +613,19 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
       dealershipDetection: null,
     });
 
+    // [ADD] — Pre-solve any bot challenge on the landing page BEFORE the main render, so
+    // even Stage 1 injects a cached clearance and passes reliably. The full render path's
+    // resource-blocking + reload solve loop is timing-flaky and sometimes marks the
+    // homepage itself "Bot Protected" (which aborts the whole audit — nothing crawls). A
+    // clean navigate + quiet wait clears the challenge reliably and caches the domain
+    // clearance for every page that follows. No-op (one ~200ms fetch) on unprotected sites.
+    try { await ensureDomainClearance(url, device); }
+    catch (e) { logger.warn(`⚠️ [WAF] Pre-Stage-1 clearance warm-up skipped: ${e?.message || e}`); }
+
     const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device, { auditId: currentAuditId, onProgress: postProgress });
     browser = b;
-    postProgress({ screenshot, isBotProtected });
+    const screenshotUrl = screenshot ? `/api/screenshot/view/${currentAuditId}` : null;
+    postProgress({ screenshot, screenshotUrl, isBotProtected });
 
     // [NEW] — Guard: if page is null (Puppeteer_Cheerio returned a partial result due to
     // a top-level detached frame), complete audit gracefully with zero scores
@@ -223,7 +660,7 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
     // is classified by where the browser actually landed.
     let finalUrl = url;
     try { const u = typeof page?.url === "function" ? page.url() : null; if (u) finalUrl = u; } catch { /* keep url */ }
-    const pageType = classifyPageType(finalUrl);
+    const pageType = classify(finalUrl);
 
     // ── Custom subset (2–6 sections chosen via the checklist) ──
     // Run only the selected metrics in parallel — each streams its own section the
@@ -236,43 +673,43 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
         "Technical Performance": async () => {
           const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
           postProgress({ technicalPerformance: r });
-          return { field: "technicalPerformance", value: r, pct: r?.Percentage || 0 };
+          return { field: "technicalPerformance", value: r, pct: r?.Percentage ?? null };
         },
         "On Page SEO": async () => {
           const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
           postProgress({ onPageSEO: r, siteSchema: r?.Schema });
-          return { field: "onPageSEO", value: r, pct: r?.Percentage || 0, extra: { siteSchema: r?.Schema } };
+          return { field: "onPageSEO", value: r, pct: r?.Percentage ?? null, extra: { siteSchema: r?.Schema } };
         },
         "Accessibility": async () => {
           const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
           postProgress({ accessibility: r });
-          return { field: "accessibility", value: r, pct: r?.Percentage || 0 };
+          return { field: "accessibility", value: r, pct: r?.Percentage ?? null };
         },
         "Security/Compliance": async () => {
           const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
           postProgress({ securityOrCompliance: r });
-          return { field: "securityOrCompliance", value: r, pct: r?.Percentage || 0 };
+          return { field: "securityOrCompliance", value: r, pct: r?.Percentage ?? null };
         },
         "UX & Content Structure": async () => {
           const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
           postProgress({ UXOrContentStructure: r });
-          return { field: "UXOrContentStructure", value: r, pct: r?.Percentage || 0 };
+          return { field: "UXOrContentStructure", value: r, pct: r?.Percentage ?? null };
         },
         "Conversion & Lead Flow": async () => {
           const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
           postProgress({ conversionAndLeadFlow: r });
-          return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage || 0 };
+          return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage ?? null };
         },
         "AIO (AI-Optimization) Readiness": async () => {
           const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
           postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
-          return { field: "aioReadiness", value: r, pct: r?.Percentage || 0, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
+          return { field: "aioReadiness", value: r, pct: r?.Percentage ?? null, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
         },
         "AEO (Answer Engine Optimization)": async () => {
           // AEO is a TOP-LEVEL `aeo` section field; headline is the spec-weighted Percentage.
           const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType }));
           postProgress({ aeo: r });
-          return { field: "aeo", value: r, pct: r?.Percentage || 0 };
+          return { field: "aeo", value: r, pct: r?.Percentage ?? null };
         },
       };
 
@@ -307,15 +744,26 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
         
         const weightKey = keyMap[selected[i]];
         const weightVal = w[weightKey] || 0;
+        const name = SECTION_DISPLAY_NAMES[selected[i]] || selected[i];
+        // null pct = "Not Run" (e.g. PageSpeed unavailable) — excluded from the weighted
+        // average and renormalized, not counted as 0.
+        if (res.pct === null || res.pct === undefined) {
+          sectionScores.push({ name, score: null });
+          continue;
+        }
         sumOfScoresTimesWeights += res.pct * weightVal;
         sumOfWeights += weightVal;
-        
-        sectionScores.push({ name: SECTION_DISPLAY_NAMES[selected[i]] || selected[i], score: res.pct });
+        sectionScores.push({ name, score: res.pct });
       }
       const avg = sumOfWeights > 0 ? sumOfScoresTimesWeights / sumOfWeights : 0;
       updateData.score = Number(avg.toFixed(1));
       updateData.grade = gradeFor(avg);
       updateData.sectionScore = sectionScores;
+
+      const notRunSections = sectionScores.filter((s) => s.score === null).map((s) => s.name);
+      if (notRunSections.length) {
+        logger.warn(`[Overall] ${notRunSections.length} section(s) Not Run — excluded & renormalized: ${notRunSections.join(", ")} | overall=${updateData.score} (${url})`);
+      }
 
       finish(updateData);
       logger.info(`🧠 Worker Completed (subset: ${selected.join(", ")}) for URL: ${url}`);
@@ -393,78 +841,151 @@ const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
       return;
     }
 
-    // [NEW] — Run AIO & AEO FIRST so guests get results instantly
-    const G_Res = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
-    const aeoRes = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType })); // Using 100 as placeholder for fast AEO return
-    postProgress({
-      aioReadiness: G_Res,
-      aioCompatibilityBadge: G_Res?.AIO_Compatibility_Badge,
-      aeo: aeoRes
-    });
+    // 🔎 Kick off key-page DISCOVERY now, so it overlaps with Stage 1's 8 pillars
+    // instead of starting only after they finish. Discovery is sitemap/link crawling
+    // — it never needs Stage 1's scores — so the key pages land in the audit-summary
+    // matrix (as "auditing…") while the first page is still being scored. Deliberately
+    // NOT awaited here; Stage 2b awaits it below once Stage 1 frees its browser.
+    // `.catch` keeps a discovery failure from surfacing as an unhandled rejection —
+    // discoverKeyPages already swallows its own errors and returns [].
+    const keyPagesPromise = discoverKeyPages(url, currentAuditId, device)
+      .catch((e) => { logger.warn(`⚠️ [Stage 2a] Discovery rejected: ${e?.message || e}`); return []; });
 
-    // [CHANGE] — Full audit ("All"): run ALL metrics in PARALLEL.
-    // Each is still wrapped in safeMetric() (a detached frame in one is non-fatal)
-    // and still streams its own section to the main thread as soon as it finishes,
-    // so the in-memory store fills in progressively and the polling UI updates live.
-    // Promise.all runs them concurrently instead of one-by-one.
-    const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res] = await Promise.all([
+    logger.info(`⚡ [Stage 1] Running all 8 audit pillars concurrently in parallel against single browser instance for: ${url}`);
+    logWorkerMetrics("Stage 1 Start");
+
+    const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => {
-        const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
+        const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType), TECH_TIMEOUT_MS, "Technical Performance"));
         postProgress({ technicalPerformance: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
+        const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(url, $, page, pageType), SEO_TIMEOUT_MS, "On Page SEO"));
         postProgress({ onPageSEO: r, siteSchema: r?.Schema });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
+        const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pageType), PILLAR_TIMEOUT_MS, "Accessibility"));
         postProgress({ accessibility: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
+        const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(url, page, response, browser, pageType), SEC_TIMEOUT_MS, "Security/Compliance"));
         postProgress({ securityOrCompliance: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
+        const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(device, page, pageType), PILLAR_TIMEOUT_MS, "UX & Content Structure"));
         postProgress({ UXOrContentStructure: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
+        const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pageType), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow"));
         postProgress({ conversionAndLeadFlow: r });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(url, page, $, pageType), PILLAR_TIMEOUT_MS, "AIO Readiness"));
+        postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
+        return r;
+      })(),
+      (async () => {
+        const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(url, $, null, 100, { pageType }), PILLAR_TIMEOUT_MS, "AEO"));
+        postProgress({ aeo: r });
         return r;
       })(),
     ]);
 
+    logWorkerMetrics("Stage 1 Complete");
+
     // Extract percentages for overall score calculation
-    const A = A_Res?.Percentage || 0;
-    const B = B_Res?.Percentage || 0;
-    const C = C_Res?.Percentage || 0;
-    const D = D_Res?.Percentage || 0;
-    const E = E_Res?.Percentage || 0;
-    const F = F_Res?.Percentage || 0;
-    const G = G_Res?.Percentage || 0;
-    const H = aeoRes?.Percentage || 0;
+    // `?? null` (not `|| 0`) so a "Not Run" section (null Percentage) is excluded and
+    // renormalized in OverAll rather than counted as a real 0. A legit 0 is preserved.
+    const A = A_Res?.Percentage ?? null;
+    const B = B_Res?.Percentage ?? null;
+    const C = C_Res?.Percentage ?? null;
+    const D = D_Res?.Percentage ?? null;
+    const E = E_Res?.Percentage ?? null;
+    const F = F_Res?.Percentage ?? null;
+    const G = G_Res?.Percentage ?? null;
+    const H = aeoRes?.Percentage ?? null;
 
     const overall = OverAll(A, B, C, D, E, F, G, H, pageType);
 
+    // Surface any "Not Run" sections so the overall-score math is auditable — these were
+    // renormalized out (not counted as 0). Pairs with the [PageSpeed]/[Technical] trail.
+    const notRunSections = overall.sectionScores.filter((s) => s.score === null).map((s) => s.name);
+    if (notRunSections.length) {
+      logger.warn(`[Overall] ${notRunSections.length} section(s) Not Run — excluded & renormalized: ${notRunSections.join(", ")} | overall=${overall.totalScore} (${url})`);
+    }
+
     const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
 
-    finish({
-      status: "completed",
-      timeTaken: `${timeTaken}s`,
+    // Emit Stage 1 completion progress update so initial single-page scores populate on screen immediately
+    postProgress({
+      stage1Completed: true,
       score: overall.totalScore,
       grade: overall.grade,
       sectionScore: overall.sectionScores,
+      message: "Stage 1 initial page complete — launching Stage 2 3-Puppeteer crawl of remaining pages...",
     });
 
-    logger.info(`🧠 Worker Completed for URL: ${url}`);
+    // Close Stage 1 single page browser before spawning Stage 2 parallel workers
+    if (browser) {
+      try { await browser.close(); } catch { }
+      browser = null;
+    }
+
+    logger.info(`🧠 [Stage 1] Completed for URL: ${url}. Triggering Stage 2 3-Puppeteer Parallel Crawl...`);
+
+    // 🚀 Stage 2b: full audits of the key pages. Discovery (Stage 2a) has been running
+    // alongside Stage 1, so this usually resolves instantly — the pages are already
+    // discovered and sitting in the summary. Only a site whose discovery is slower than
+    // the whole of Stage 1 waits here at all.
+    const jobs = await keyPagesPromise;
+
+    // [ADD] — If this domain is behind a bot challenge (Cloudflare/Imperva/etc.), solve
+    // it ONCE now and cache the clearance cookie, so all the Stage-2 key pages inject it
+    // and skip their own challenge. Without this, each key page re-runs the timing-flaky
+    // solve independently and some come back "Bot Protected" even though the homepage
+    // passed — leaving the site only partially crawled. No-op (one ~200ms fetch) when the
+    // site isn't protected, or instant when Stage 1 already cached the clearance.
+    //
+    // Probe a DEEP key page, not the homepage: Cloudflare commonly serves a cached
+    // homepage at HTTP 200 while challenging deep paths (SRP/VDP/finance). Gating the
+    // warm-up on the homepage would see 200, conclude "not protected", and skip — leaving
+    // the deep pages to fail. cf_clearance is domain-scoped, so clearing ONE deep page
+    // covers the whole domain (homepage included). Prefer an SRP/VDP/finance/trade job.
+    if (jobs && jobs.length) {
+      const deepFirst = ["srp", "vdp", "finance", "trade", "specials", "service"];
+      const probeJob = jobs.find((j) => deepFirst.includes(j.type)) || jobs[0];
+      try { await ensureDomainClearance(probeJob.url, device); }
+      catch (e) { logger.warn(`⚠️ [WAF] Clearance warm-up skipped: ${e?.message || e}`); }
+    }
+
+    const stage2Results = await auditKeyPages(jobs, currentAuditId, device);
+
+    const finalTimeTaken = ((performance.now() - start) / 1000).toFixed(0);
+
+    finish({
+      status: "completed",
+      timeTaken: `${finalTimeTaken}s`,
+      score: overall.totalScore,
+      grade: overall.grade,
+      sectionScore: overall.sectionScores,
+      stage1Completed: true,
+      stage2Completed: true,
+      crawledPagesCount: stage2Results ? stage2Results.length : 0,
+      // crawledPagesSummary is owned by the main thread (assembled from each key
+      // page's child report via childInit/childDone) — do NOT send it here or it
+      // would clobber the per-page reportId/score rows the controller built.
+    });
 
   } catch (err) {
+    // Tell any still-running background discovery to drop its findings before it
+    // registers key pages against an audit that just failed.
+    auditAborted = true;
     // Report the failure to the main thread; it owns persistence.
     parentPort.postMessage({ type: "error", auditId: currentAuditId, error: err.message });
 

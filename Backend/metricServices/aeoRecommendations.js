@@ -3,8 +3,16 @@
  * Maps failed or partial signal scores to actionable recommendations.
  */
 
-const getAEORecommendations = (signals) => {
+const getAEORecommendations = (rawSignals) => {
     const recommendations = [];
+
+    // Not-calculated signals (crashed/timed-out probes, score null) must not
+    // generate "fix this" advice — in JS `null < 100` is true, so normalize the
+    // score to NaN, which fails every comparison below and skips the signal.
+    const signals = {};
+    Object.entries(rawSignals || {}).forEach(([key, sig]) => {
+        signals[key] = sig && typeof sig.score !== 'number' ? { ...sig, score: NaN } : sig;
+    });
 
     // 1. Answer-First Recommendation
     if (signals.answerFirst.score < 100) {

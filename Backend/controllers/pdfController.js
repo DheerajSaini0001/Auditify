@@ -3,6 +3,7 @@ import ActivityLog from "../models/ActivityLog.js";
 import { chromium } from "playwright";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
+import { acquireBrowserSlot, releaseBrowserSlot } from "../utils/browserManager.js";
 
 export const generatePDFReport = async (req, res) => {
     try {
@@ -31,10 +32,14 @@ export const generatePDFReport = async (req, res) => {
             return res.status(400).json({ error: "Audit is not completed yet" });
         }
 
-        const browser = await chromium.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
+        let slotId = null;
+        let browser = null;
+        try {
+          slotId = await acquireBrowserSlot({ label: 'pdf-export' });
+          browser = await chromium.launch({
+              headless: true,
+              args: ["--no-sandbox", "--disable-setuid-sandbox"],
+          });
 
         const context = await browser.newContext();
         const page = await context.newPage();
@@ -53,7 +58,7 @@ export const generatePDFReport = async (req, res) => {
         let sectionNum = 0;
 
         // Skip top-level non-metric keys; every parameter is included in the report.
-        const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade'];
+        const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade', 'Graded_Percentage', 'Score_Breakdown'];
         const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey);
 
         // Escape any value that ends up in the PDF HTML. Report fields derive from
@@ -499,8 +504,6 @@ export const generatePDFReport = async (req, res) => {
             },
         });
 
-        await browser.close();
-
         res.contentType("application/pdf");
         res.setHeader(
             "Content-Disposition",
@@ -527,6 +530,11 @@ export const generatePDFReport = async (req, res) => {
         }
 
         res.send(Buffer.from(pdfBuffer));
+
+        } finally {
+            if (browser) await browser.close().catch(() => {});
+            if (slotId) await releaseBrowserSlot(slotId);
+        }
 
     } catch (error) {
         logger.error("PDF generation error", error);

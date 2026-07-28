@@ -43,7 +43,7 @@ function getTransporter() {
 const sendEmail = async ({ to, subject, html }) => {
   const transporter = getTransporter();
   await transporter.sendMail({
-    from: configService.getConfig('EMAIL_FROM', 'Dealerpulse <noreply@dealerpulse.app>'),
+    from: configService.getConfig('EMAIL_FROM', 'Site Audit <noreply@Site Audit.app>'),
     to,
     subject,
     html

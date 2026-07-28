@@ -68,13 +68,13 @@ function checkStructuredData($) {
 
   if (uniqueTypes.length === 0) {
     cause = "No valid JSON-LD structured data detected.";
-    recommendation = "Implement Schema.org structured data using JSON-LD to help AI models understand your entities and content relationships.";
+    recommendation = 'Add Schema.org structured data as a <script type="application/ld+json"> block inside the <head> section of your page HTML (it can also go just before the closing </body> tag). Describe your key entities — e.g. AutoDealer, Organization, or Product — so AI models understand your content relationships.';
   } else if (syntaxErrors > 0) {
     cause = `${syntaxErrors} script tag(s) contain invalid JSON syntax.`;
-    recommendation = "Fix the JSON syntax errors in your LD+JSON scripts to ensure they are fully readable by AI crawlers.";
+    recommendation = 'Fix the JSON syntax errors inside your <script type="application/ld+json"> blocks (validate them at schema.org/validator or search.google.com/test/rich-results) so AI crawlers can read them fully.';
   } else if (uniqueTypes.length < 2) {
     cause = "Limited variety of structured data types found.";
-    recommendation = "Increase the depth of your markup by adding more Schema.org types (e.g., BreadcrumbList, Organization, or FAQPage).";
+    recommendation = 'Add more Schema.org types to your existing <script type="application/ld+json"> block in the <head> (e.g., BreadcrumbList, Organization, or FAQPage) to deepen your markup.';
   }
 
   if (uniqueTypes.length > 0) {
@@ -122,13 +122,13 @@ function checkContentNLPFriendly($) {
 
   if (foundTags.length === 0) {
     cause = "No semantic HTML5 tags (article, section, etc.) found.";
-    recommendation = "Use semantic elements like <article> and <section> to help AI models understand the document structure.";
+    recommendation = "Wrap the main content in the <body> with semantic elements like <main>, <article>, and <section> (replacing generic <div> wrappers) so AI models can understand the document structure.";
   } else if (foundHeadings.length === 0) {
     cause = "No hierarchical headings (h1, h2, h3) detected.";
-    recommendation = "Implement a clear heading hierarchy to define content sections for NLP processing.";
+    recommendation = "Add a clear heading hierarchy within the <body> content — a single <h1> near the top, then <h2>/<h3> above each subsection — to define content sections for NLP processing.";
   } else if (!hasParagraphs && !hasLists) {
     cause = "Lack of standard text blocks (p, ul, ol).";
-    recommendation = "Organize body text into paragraphs and lists for better readability and data extraction.";
+    recommendation = "Organize the body text into <p> paragraphs and <ul>/<ol> lists inside your content sections for better readability and data extraction.";
   }
 
   if (foundTags.length > 0 && foundHeadings.length > 0 && (hasParagraphs || hasLists)) {
@@ -176,13 +176,13 @@ function checkKeywordsEntitiesAnnotated($) {
 
   if (!hasKeywords) {
     cause = "Missing meta keywords tag.";
-    recommendation = "Add essential keywords to the meta keywords tag for better entity association by AI crawlers.";
+    recommendation = 'Add the keywords tag inside the <head> section of your page HTML (alongside your <title> and <meta name="description"> tags): <meta name="keywords" content="keyword1, keyword2, ...">. List your primary keywords/entities so AI crawlers can associate the page with your topics.';
   } else if (headingsCount === 0) {
     cause = "Lack of descriptive h1/h2 headings.";
-    recommendation = "Add descriptive headings that contain key entities related to your page content.";
+    recommendation = "Add descriptive <h1> and <h2> headings within the <body> content of the page (an <h1> near the top, <h2> tags above each main section), each containing key entities related to your page content.";
   } else if (totalImages > 0 && imagesWithAlt < totalImages) {
     cause = `${totalImages - imagesWithAlt} images are missing descriptive ALT text.`;
-    recommendation = "Ensure all images have ALT attributes to provide visual context for AI models.";
+    recommendation = 'Add an alt attribute to each <img> tag in the page body, e.g. <img src="car.jpg" alt="2024 Toyota Camry front view">. Every image should have descriptive ALT text to give AI models visual context.';
   }
 
   if (hasKeywords && headingsCount > 0 && (totalImages === 0 || imagesWithAlt === totalImages)) {
@@ -323,17 +323,18 @@ function checkContentUpdatedRegularly($) {
       }
     }
   } else {
-    score = 50;
-    status = "warning";
-    cause = "Could not find content update timestamp (meta tags, time tags, or structured data).";
-    recommendation = "Add <meta name='last-modified'>, <time datetime='...'>, or dateModified structured data to signal content freshness.";
+    // Freshness signal is entirely absent → 0, not 50 (warnings are reserved for present-but-flawed).
+    score = 0;
+    status = "fail";
+    cause = "No content update timestamp found anywhere on the page (meta tags, time tags, or structured data).";
+    recommendation = 'Signal freshness by adding <meta name="last-modified" content="2026-01-01"> inside the <head> section, a <time datetime="2026-01-01">…</time> tag next to the content in the <body>, or a dateModified field in your JSON-LD structured data.';
     meta.checked = "meta tags (last-modified, modified_time, etc.), JSON-LD (dateModified), time tags";
   }
 
   return {
     score,
     status,
-    details: status === "pass" ? "Content updated recently." : (score === 50 && dateFound ? "Content might be outdated." : "Could not determine last update time."),
+    details: status === "pass" ? "Content updated recently." : (score === 50 && dateFound ? "Content might be outdated." : "No freshness signal found on the page."),
     qanda: {
       question: "Has the content been updated recently to maintain freshness?",
       answer: status === "pass" ? "Yes, the content has been updated recently, ensuring relevance for AI users." : "No, the content appears outdated or lacks a clear update signal, which may reduce its priority in AI results."
@@ -417,8 +418,8 @@ function checkDuplicateContentDetectionReady($) {
 
   let score = 0;
   let status = "fail";
-  let cause = "";
-  let recommendation = "";
+  let cause = "No canonical tag or noindex directive was found, so AI crawlers may index duplicate versions of this page.";
+  let recommendation = 'Add a canonical tag inside the <head> section of your page HTML: <link rel="canonical" href="https://yourdomain.com/this-page">, pointing to the preferred URL. For pages that should not be indexed at all, add <meta name="robots" content="noindex"> in the <head> instead.';
   let details = "No duplicate content protection found.";
 
   if (canonical) {
@@ -474,20 +475,23 @@ function checkTopicalFocusClarity($, url) {
   const overlap = titleWords.filter(w => h1Words.includes(w));
   const firstWordMatch = titleWords.length > 0 && h1.includes(titleWords[0]);
 
-  // Graded: strong (≥2 shared entities) → moderate (1 shared / first-word match) → weak.
+  // Graded: strong (≥2 shared entities) → moderate (1 shared / first-word match) → absent (0, not 50).
   let score, status;
   if (overlap.length >= 2) {
     score = 100; status = "pass";
   } else if (overlap.length === 1 || firstWordMatch) {
     score = 75; status = "warning";
   } else {
-    score = 50; status = "warning";
+    score = 0; status = "fail";
   }
   const hasStrongFocus = status === "pass";
 
   let cause = "";
   let recommendation = "";
-  if (!hasStrongFocus) {
+  if (status === "fail") {
+    cause = "No topical focus detected — the title and H1 heading share no primary keywords at all.";
+    recommendation = "Rewrite your H1 heading to use the same primary entities as your page title so AI can identify a clear topical focus.";
+  } else if (!hasStrongFocus) {
     cause = "Title and H1 heading lack alignment on primary keywords.";
     recommendation = "Ensure your H1 heading uses the same primary entities as your page title to signal clear topical focus to AI.";
   }
@@ -495,7 +499,7 @@ function checkTopicalFocusClarity($, url) {
   return {
     score,
     status,
-    details: hasStrongFocus ? "Strong topical focus detected." : "Title and H1 alignment could be stronger.",
+    details: hasStrongFocus ? "Strong topical focus detected." : (status === "fail" ? "No topical focus detected between title and H1." : "Title and H1 alignment could be stronger."),
     qanda: {
       question: "Does the page maintain a clear and consistent topical focus?",
       answer: hasStrongFocus ? "Yes, your title and main headings are perfectly aligned around your primary topic." : "No, there is a mismatch between your title and headings, which confuses AI about your primary focus."
@@ -506,22 +510,36 @@ function checkTopicalFocusClarity($, url) {
 }
 
 // Answer-Oriented Structure
-function checkAnswerOrientedStructure($) {
-  const questionWords = ["how", "what", "why", "when", "where", "who", "which"];
+// A Q&A / answer-first layout is genuinely EXPECTED on content pages (blog, guides,
+// FAQ). On other page types (home, VDP, SRP, about…) it is OPTIONAL — a dealership
+// may keep its Q&A on a dedicated FAQ page instead of on every page — so those pages
+// are not penalized for lacking it. `pageType` drives whether a missing Q&A layout is
+// a fail (content page), a partial (some Q&A present), or Not Applicable (dropped from
+// the weighted score via `present:false`, Rule 6 renormalization).
+function checkAnswerOrientedStructure($, pageType = null) {
+  const questionWords = ["how", "what", "why", "when", "where", "who", "which", "can", "does", "is", "are", "should"];
   let foundPairs = [];
 
   // 1. Extract from Question-based Headings (H2/H3)
   $("h2, h3").each((i, el) => {
     const text = $(el).text().trim();
-    if (questionWords.some(word => text.toLowerCase().startsWith(word)) || text.includes("?")) {
-      // Find the next paragraph or text block as the "Answer"
-      const nextText = $(el).nextUntil('h1, h2, h3, h4, h5, h6').filter('p').first().text().trim();
-      foundPairs.push({
-        type: "heading",
-        question: text,
-        answer: nextText ? nextText.substring(0, 150) + (nextText.length > 150 ? "..." : "") : "Answer not found in immediate text."
-      });
-    }
+    const isInterrogative = text.includes("?");
+    const startsWithQuestionWord = questionWords.some(word => text.toLowerCase().startsWith(word + " "));
+    if (!isInterrogative && !startsWithQuestionWord) return;
+
+    // Find the next answer block (paragraph, list, table, or generic block).
+    const nextText = $(el).nextUntil('h1, h2, h3, h4, h5, h6').filter('p, ul, ol, table, div').first().text().trim();
+
+    // A statement heading that merely starts with a question word (e.g. "What Our
+    // Customers Say") but has no "?" and no answer block underneath is NOT a real
+    // Q&A pair — skip it so section headings don't pollute the results.
+    if (!isInterrogative && !nextText) return;
+
+    foundPairs.push({
+      type: "heading",
+      question: text,
+      answer: nextText ? nextText.substring(0, 150) + (nextText.length > 150 ? "..." : "") : "Answer not found in immediate text."
+    });
   });
 
   // 2. Extract from JSON-LD FAQPage
@@ -562,42 +580,73 @@ function checkAnswerOrientedStructure($) {
   });
 
   const hasSchema = foundPairs.some(p => p.type === 'schema');
-  const isAnswerOriented = foundPairs.length > 0;
 
-  // Graded: FAQ schema or ≥3 self-contained Q→A pairs → strong; 1–2 → partial; none → weak.
-  let score, status;
+  // Does this page point to a dedicated FAQ destination? (nav/footer link anywhere).
+  const hasDedicatedFaqPage = $('a[href]').toArray().some(el => {
+    const href = ($(el).attr('href') || '').toLowerCase();
+    return /(^|\/)(faqs?|frequently-asked|frequently_asked)([/.?#]|$)/.test(href);
+  });
+
+  const meta = {
+    hasFAQ: hasSchema,
+    questionHeadingsCount: foundPairs.filter(p => p.type === 'heading').length,
+    hasDedicatedFaqPage,
+    pairs: foundPairs.slice(0, 6) // Return top 6 discovered pairs
+  };
+
+  // Strong Q&A anywhere (FAQ schema or ≥3 self-contained pairs) → full credit,
+  // regardless of page type.
   if (hasSchema || foundPairs.length >= 3) {
-    score = 100; status = "pass";
-  } else if (foundPairs.length >= 1) {
-    score = 75; status = "warning";
-  } else {
-    score = 50; status = "warning";
+    return {
+      score: 100,
+      status: "pass",
+      details: "Content is structured to answer specific queries.",
+      meta,
+      analysis: null
+    };
   }
 
-  let cause = "";
-  let recommendation = "";
-  if (!isAnswerOriented) {
-    cause = "No question-based headings or FAQ schema detected.";
-    recommendation = "Structure your content to directly answer user queries using natural language questions in H2/H3 tags.";
-  } else if (status === "warning") {
-    cause = "Only a few question→answer blocks were found.";
-    recommendation = "Add more question-style H2/H3 headings each followed by a concise, self-contained answer (and FAQPage schema).";
+  // Some Q&A present but thin → partial credit; never a hard fail for trying.
+  if (foundPairs.length >= 1) {
+    return {
+      score: 75,
+      status: "warning",
+      details: "Content layout is not fully query-optimized.",
+      meta,
+      analysis: {
+        cause: "Only a few question→answer blocks were found.",
+        recommendation: 'Add more question-style <h2>/<h3> headings in the <body>, each followed by a concise, self-contained answer, and mark them up with FAQPage schema in a <script type="application/ld+json"> block in the <head>.'
+      }
+    };
   }
 
+  // No Q&A on this page. Answer-first structure is genuinely expected on CONTENT
+  // pages (blog / guides / FAQ), so a miss there is a real gap.
+  if (pageType === "content") {
+    return {
+      score: 0,
+      status: "fail",
+      details: "No question-and-answer structure found on this content page.",
+      meta,
+      analysis: {
+        cause: "No question-and-answer structure was found on this content page — no question-based headings and no FAQ schema.",
+        recommendation: 'Structure the content to answer real user queries: add question-style <h2>/<h3> headings in the <body>, each followed by a concise self-contained answer, and add FAQPage schema in a <script type="application/ld+json"> block in the <head>.'
+      }
+    };
+  }
+
+  // Any other page type (home, VDP, SRP, about…): a Q&A / FAQ layout is optional
+  // here — the site may keep it on a dedicated FAQ page — so this page is NOT
+  // penalized. Marked Not Applicable and dropped from the weighted score.
   return {
-    score,
-    status,
-    details: status === "pass" ? "Content is structured to answer specific queries." : "Content layout is not fully query-optimized.",
-    qanda: {
-      question: "Is the content structured to directly answer user questions?",
-      answer: isAnswerOriented ? "Yes, the content follows an answer-oriented structure with clear questions and concise responses." : "No, the content does not offer direct query-answer pairs, making it harder for 'Answer Engines' to cite you."
-    },
-    meta: {
-      hasFAQ: hasSchema,
-      questionHeadingsCount: foundPairs.filter(p => p.type === 'heading').length,
-      pairs: foundPairs.slice(0, 6) // Return top 6 discovered pairs
-    },
-    analysis: status === "pass" ? null : { cause, recommendation }
+    score: null,
+    status: "not_applicable",
+    present: false,
+    details: hasDedicatedFaqPage
+      ? "Not required on this page — the site keeps Q&A on a dedicated FAQ page."
+      : "Not required on this page type — a Q&A/FAQ layout is optional here.",
+    meta,
+    analysis: null
   };
 }
 
@@ -708,7 +757,7 @@ function checkAuthorSourceAttribution($) {
   let recommendation = "";
   if (!attributed) {
     cause = "No clear author or source attribution identified.";
-    recommendation = "Add an author byline and Author structured data to satisfy EEAT (Experience, Expertise, Authoritativeness, and Trustworthiness).";
+    recommendation = 'Add a visible author byline near the top of the content in the <body> (e.g. <p class="byline">By Jane Doe</p>) and declare the author in your JSON-LD structured data with an "author" field. This satisfies EEAT (Experience, Expertise, Authoritativeness, and Trustworthiness).';
   }
 
   return {
@@ -938,7 +987,7 @@ export default async function aioReadiness(url, page, $, pageType = null) {
   // ── Weighted parameters (spec §2.7) ──
   const structuredData = checkStructuredData($);                       // validity / matches content
   const contentNLPFriendly = checkContentNLPFriendly($);
-  const answerOrientedStructure = checkAnswerOrientedStructure($);
+  const answerOrientedStructure = checkAnswerOrientedStructure($, pageType);
   const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($);
   const contentUpdatedRegularly = checkContentUpdatedRegularly($);
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);

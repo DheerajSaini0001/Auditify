@@ -67,7 +67,8 @@ const analyzeAuthoritySignals = (url, $) => {
 
         return { signal: 'authoritySignals', score, source: 'on-page', breakdown, externalAuthLinks: authLinkCount, socialProfiles: socialCount, note: 'On-page mention proxies — real backlinks/Domain Authority require a paid SEO API.', issues, reason };
     } catch (error) {
-        return { signal: 'authoritySignals', score: 50, source: 'on-page', breakdown: { pressMentions: 0, externalAuthority: 0, trustBadges: 0, socialProof: 0 }, issues: [`Authority signals check failed: ${error.message}`], error: error.message };
+        // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+        return { signal: 'authoritySignals', score: null, notCalculated: true, source: 'on-page', breakdown: { pressMentions: 0, externalAuthority: 0, trustBadges: 0, socialProof: 0 }, issues: [`Authority signals check failed: ${error.message}`], error: error.message };
     }
 };
 

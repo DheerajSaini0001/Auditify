@@ -17,29 +17,55 @@ export default async function googleAPI(url, device) {
     + `&strategy=${encodeURIComponent(device || 'mobile')}`
     + `&key=${API_KEY}`;
 
-  try {
-    const response = await fetch(endpoint);
-    const data = await response.json();
+  // PageSpeed failures are often transient — a rate-limit blip (429), a Lighthouse
+  // timeout on a slow site, or a momentary 5xx. Retry a couple of times with a short
+  // backoff before giving up so we don't mark the whole Technical section "Not Run"
+  // over a hiccup. A 400 (bad URL) is permanent, so we don't burn retries on it.
+  const MAX_ATTEMPTS = 3;
+  const RETRY_DELAY_MS = 1500;
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-    // PageSpeed returns HTTP 200 + lighthouseResult on success, or a non-2xx with
-    // { error: { code, message } } on failure. The most common failure is that
-    // Lighthouse simply couldn't analyze THIS url (slow/blocked site, NO_FCP, quota).
-    // Surface it — otherwise it shows up as a silently blank Technical section.
-    if (!response.ok || data?.error) {
-      logger.warn(
-        `[PageSpeed] No lab/field data for ${url} (strategy=${device}) — ` +
-        `HTTP ${response.status}: ${data?.error?.message || 'unknown error'}`
-      );
-    } else if (!data?.lighthouseResult) {
-      logger.warn(`[PageSpeed] Response for ${url} contained no lighthouseResult.`);
+  // Consistent [PageSpeed] tag on every line so the whole retry→outcome trail is one
+  // `grep "\[PageSpeed\]"`. `attempt N/M` lets you see retries firing; the ✓/✗ prefix
+  // makes the final outcome scannable at a glance.
+  const tag = `[PageSpeed] ${device}`;
+  let lastData = {};
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    try {
+      const response = await fetch(endpoint);
+      const data = await response.json();
+      lastData = data;
+
+      // Success: a usable Lighthouse result.
+      if (response.ok && !data?.error && data?.lighthouseResult) {
+        // Only log when a retry actually saved us — a clean first-try success stays quiet.
+        if (attempt > 1) logger.info(`${tag} ✓ recovered on attempt ${attempt}/${MAX_ATTEMPTS} — ${url}`);
+        return data;
+      }
+
+      const status = response.status;
+      const nonRetryable = status === 400 || data?.error?.code === 400;
+      const canRetry = attempt < MAX_ATTEMPTS && !nonRetryable;
+      const reason = `HTTP ${status}: ${data?.error?.message || 'no lighthouseResult'}`;
+      if (canRetry) {
+        logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} failed (${reason}) — retrying in ${RETRY_DELAY_MS}ms — ${url}`);
+      } else {
+        logger.error(`${tag} ✗ giving up after ${attempt} attempt(s) (${reason}) — Technical will be "Not Run" — ${url}`);
+        return data;
+      }
+    } catch (error) {
+      // Network/transport error — retryable.
+      const canRetry = attempt < MAX_ATTEMPTS;
+      if (canRetry) {
+        logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} network error (${error.message}) — retrying in ${RETRY_DELAY_MS}ms — ${url}`);
+      } else {
+        logger.error(`${tag} ✗ giving up after ${attempt} attempt(s) (network: ${error.message}) — Technical will be "Not Run" — ${url}`);
+        return {};
+      }
     }
-
-    return data;
-  } catch (error) {
-    // Network/transport error. Return {} so technicalMetrics degrades gracefully
-    // (the asset-level checks — compression, caching, render-blocking, redirects —
-    // still run on the live page) instead of throwing and failing the whole audit.
-    logger.error(`[PageSpeed] Request failed for ${url}: ${error.message}`);
-    return {};
+    await sleep(RETRY_DELAY_MS);
   }
+  // Return {} so technicalMetrics degrades gracefully (asset-level checks still run
+  // on the live page) instead of throwing and failing the whole audit.
+  return lastData || {};
 }

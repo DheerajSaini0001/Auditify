@@ -7,6 +7,7 @@ const SiteReportSchema = new mongoose.Schema(
     device: { type: String, required: true },
     status: { type: String, default: 'inprogress' },
     pageType: { type: String, default: null },
+    siteType: { type: String, default: null },
     siteSchema: { type: Array, default: null },
     timeTaken: { type: String, default: null },
     score: { type: Number, default: null },
@@ -21,6 +22,16 @@ const SiteReportSchema = new mongoose.Schema(
     conversionAndLeadFlow: { type: Object, default: null },
     aioReadiness: { type: Object, default: null },
     aeo: { type: Object, default: null },
+    // Set only on merged (multi-sample averaged) reports: how many sample
+    // reports were averaged in. Lets a repeat audit reuse the merged report
+    // and still show the "avg of N" badge.
+    // Stage 2 Multi-Page Crawl fields
+    stage1Completed: { type: Boolean, default: false },
+    stage2Completed: { type: Boolean, default: false },
+    stage2Progress: { type: String, default: null },
+    crawledPagesCount: { type: Number, default: 0 },
+    crawledPagesSummary: { type: Array, default: [] },
+    mergedFrom: { type: Number, default: null },
     isBotProtected: { type: Boolean, default: false },
     isDealership: { type: Boolean, default: null },
     dealershipDetection: { type: Object, default: null },

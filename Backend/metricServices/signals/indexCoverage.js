@@ -24,7 +24,7 @@ const gunzip = promisify(zlib.gunzip);
  * actually indexed the page — that requires authenticated Search Console access.
  */
 
-const UA = 'Mozilla/5.0 (compatible; DealerPulseAudit/1.0; +https://dealerpulse.app)';
+const UA = 'Mozilla/5.0 (compatible; Site AuditAudit/1.0; +https://Site Audit.app)';
 
 // Adaptive sampling: scale with sitemap size so the check is meaningful on large
 // sites without being wasteful on small ones, but never so big it slows the audit.
@@ -214,7 +214,8 @@ const analyzeIndexCoverage = async (url) => {
         if (!acc.foundSitemap || submitted === 0) {
             return {
                 signal: 'indexCoverage',
-                score: 20,
+                // Absent feature scores 0, not a floor (SCORING_FORMAT.md §7 rule 3).
+                score: 0,
                 source: 'sitemap-estimate',
                 sitemapFound: acc.foundSitemap,
                 submitted,
@@ -309,7 +310,9 @@ const analyzeIndexCoverage = async (url) => {
         // Neutral score on failure so a flaky network doesn't unfairly tank the audit.
         return {
             signal: 'indexCoverage',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'sitemap-estimate',
             sitemapFound: false,
             submitted: 0,

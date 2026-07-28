@@ -19,7 +19,7 @@ import configService from '../../services/configService.js';
  */
 
 const KG_TIMEOUT = 6000;
-const UA = 'Mozilla/5.0 (compatible; DealerPulseAudit/1.0; +https://dealerpulse.app)';
+const UA = 'Mozilla/5.0 (compatible; Site AuditAudit/1.0; +https://Site Audit.app)';
 
 const ORG_TYPE = (t) => {
     const s = String(t).toLowerCase();
@@ -287,9 +287,11 @@ const analyzeBrandEntityStrength = async (url, $, useKnowledgeGraph = true) => {
     } catch (error) {
         return {
             signal: 'brandEntityStrength',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'on-page',
-            tier: 'Moderate',
+            tier: 'Unknown',
             breakdown: { sameAs: 0, authoritative: 0, reviews: 0, completeness: 0 },
             knowledgeGraph: null,
             issues: [`Brand entity strength check failed: ${error.message}`],

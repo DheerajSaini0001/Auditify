@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
     Brain, Info, ChevronDown, ChevronUp,
     MessageCircle, Database, ShieldCheck, FileText, Layout,
-    Table, Link, Activity, Award, MapPin, Network, Camera, GraduationCap, Megaphone
+    Table, Link, Activity, Award, MapPin, Network, Camera, GraduationCap, Megaphone,
+    AlertTriangle, CheckCircle
 } from 'lucide-react';
 import { InfoDetails } from './InfoDetails';
 import { isActionableParam } from '../config/parameterAudience';
@@ -66,10 +67,69 @@ const labelForSameAs = (u) => SAMEAS_PLATFORMS.find((p) => p.re.test(String(u)))
 // The profiles engines most want for entity disambiguation (NAP/sameAs cross-verification).
 const SAMEAS_EXPECTED = ['Google Business Profile', 'Facebook', 'LinkedIn', 'Yelp', 'DealerRater'];
 
+// The 3 core keys now represent a GROUP of user-agents per engine (allowed if any one
+// is), so label them by engine — otherwise "GPTBot: allowed" (group) contradicts the
+// per-bot "GPTBot: Missing" shown in the GPT Bot Access box below.
+const CORE_BOT_DISPLAY = {
+    'GPTBot': 'ChatGPT (OpenAI)',
+    'Google-Extended': 'Gemini (Google)',
+    'PerplexityBot': 'Perplexity',
+};
+
+// GPT Bot Access — OpenAI's three crawlers scored individually as X/3, with an
+// expandable Found / Missing breakdown. Fed by botAccess.gptBotAccess from the backend.
+const GptBotAccessBox = ({ gpt, darkMode }) => {
+    const [open, setOpen] = useState(false);
+    const found = Array.isArray(gpt?.found) ? gpt.found : [];
+    const missing = Array.isArray(gpt?.missing) ? gpt.missing : [];
+    const max = gpt?.max ?? 3;
+    const score = gpt?.score ?? found.length;
+    const scoreColor = score >= max ? 'text-emerald-500' : score === 0 ? 'text-rose-500' : 'text-amber-500';
+
+    return (
+        <div className={`rounded-xl border overflow-hidden ${darkMode ? 'bg-slate-900/40 border-slate-800' : 'bg-cardsoft border-line'}`}>
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className={`w-full flex items-center justify-between gap-3 p-3.5 transition-colors ${darkMode ? 'hover:bg-slate-900/60' : 'hover:bg-slate-100/50'}`}
+            >
+                <span className="flex items-center gap-2">
+                    <ShieldCheck size={14} className="text-indigo-500" />
+                    <span className={`text-xs font-bold uppercase tracking-wider ${darkMode ? 'text-slate-200' : 'text-inksoft'}`}>GPT Bot Access</span>
+                </span>
+                <span className="flex items-center gap-2.5">
+                    <span className={`text-sm font-bold ${scoreColor}`}>{score}/{max}</span>
+                    <ChevronDown size={14} className={`transform transition-transform duration-300 ${open ? 'rotate-180' : ''} ${darkMode ? 'text-slate-500' : 'text-faint'}`} />
+                </span>
+            </button>
+            {open && (
+                <div className={`px-3.5 pb-3.5 pt-3 border-t border-dashed ${darkMode ? 'border-slate-800/80' : 'border-line'} animate-in fade-in slide-in-from-top-1 duration-200 space-y-3`}>
+                    <div>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600 dark:text-emerald-400 mb-1.5">Found</p>
+                        {found.length ? found.map((b) => (
+                            <div key={b} className={`flex items-center gap-2 text-[11px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                                <span className="text-emerald-500">✓</span><span>{b}</span>
+                            </div>
+                        )) : <p className={`text-[11px] italic ${darkMode ? 'text-slate-500' : 'text-faint'}`}>None</p>}
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-rose-600 dark:text-rose-400 mb-1.5">Missing</p>
+                        {missing.length ? missing.map((b) => (
+                            <div key={b} className={`flex items-center gap-2 text-[11px] leading-relaxed ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                                <span className="text-rose-500">✕</span><span>{b}</span>
+                            </div>
+                        )) : <p className={`text-[11px] italic ${darkMode ? 'text-slate-500' : 'text-faint'}`}>None</p>}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // The actual current data for each parameter — shown in a neutral box (like the
 // "Current Description" box on the Meta Description card), instead of a status sentence.
 // Returns { label, value, mono?, headerInfo? }. value may be a string or JSX.
-const getCurrentData = (signal, data) => {
+const getCurrentData = (signal, data, darkMode) => {
     switch (signal) {
         case 'aeoSchema': {
             const d = data?.details || {};
@@ -107,22 +167,25 @@ const getCurrentData = (signal, data) => {
         case 'botAccess': {
             const bots = data?.bots || {};
             const entries = Object.entries(bots);
-            if (!entries.length) {
+            const gpt = data?.gptBotAccess;
+            if (!entries.length && !gpt) {
                 return { label: 'AI Bot Access', value: 'No AI-bot rules found in robots.txt' };
             }
-            // One row per AI bot — green when allowed, red when blocked.
+            // GPT Bot Access (X/3) on top, then one row per AI bot (green allowed / red blocked).
             return {
                 label: 'AI Bot Access',
                 plain: true,
                 value: (
-                    <div className="flex flex-col gap-2.5">
+                    <div className="flex flex-col gap-4">
+                        {gpt && <GptBotAccessBox gpt={gpt} darkMode={darkMode} />}
+                        <div className="flex flex-col gap-2.5">
                         {entries.map(([bot, state]) => {
                             const blocked = String(state).toLowerCase() === 'blocked';
                             return (
                                 <div key={bot} className="flex items-center justify-between gap-4">
                                     <span className="text-sm font-semibold flex items-center gap-2">
                                         <span className={`w-2 h-2 rounded-full ${blocked ? 'bg-rose-400' : 'bg-emerald-500'}`} />
-                                        {bot}
+                                        {CORE_BOT_DISPLAY[bot] || bot}
                                     </span>
                                     <span className={`text-sm text-right capitalize ${blocked ? 'text-rose-500 font-semibold' : ''}`}>
                                         {state}
@@ -130,6 +193,7 @@ const getCurrentData = (signal, data) => {
                                 </div>
                             );
                         })}
+                        </div>
                     </div>
                 ),
             };
@@ -193,12 +257,7 @@ const getCurrentData = (signal, data) => {
             };
         }
         case 'citations': {
-            const b = data?.breakdown || {};
-            return {
-                label: 'Trust & Citations',
-                mono: true,
-                value: `Citations ${b.citations ?? 0}/45   •   Policies ${b.policies ?? 0}/20   •   Contact ${b.contactTransparency ?? 0}/20`,
-            };
+            return null;
         }
         case 'indexCoverage': {
             const notIndexed = Array.isArray(data?.notIndexed) ? data.notIndexed.filter((p) => p && p.url) : [];
@@ -432,10 +491,10 @@ const SUB_WANTS = {
         relevance: 'Describe your real brand and pages — no placeholder / off-topic text.',
     },
     citations: {
-        citations: 'Cite 3+ reputable sources, add [1]-style markers and a References / Sources section.',
-        policies: 'Add clear policy pages (privacy, terms, contact, about).',
-        contactTransparency: 'Show author bylines and transparent contact info.',
-        trustBasics: 'Cover trust basics — HTTPS, disclosures, and visible dates.',
+        citations: 'Link to at least 3 outside sources, use number markers like [1] in your text, and add a References list at the bottom.',
+        policies: 'Add clear policy pages (Privacy, Terms, Contact, and About).',
+        contactTransparency: 'Show clickable phone number, physical address, and author names.',
+        trustBasics: 'Ensure HTTPS (secure link), add a disclosure statement, and show copyright or update dates.',
     },
     brandEntityStrength: {
         sameAs: 'Add more verified social / brand profile links (sameAs).',
@@ -493,33 +552,40 @@ const getGotText = (signal, key, data) => {
                 const ext = data?.externalSources ?? 0;
                 const markers = data?.citationMarkers ?? 0;
                 const refs = data?.hasReferenceSection;
+                const needsVer = data?.needsVerification !== false;
+                if (!needsVer) {
+                    return {
+                        found: ['Self-sourced business content (no third-party claims found)'],
+                        missing: [],
+                    };
+                }
                 return {
                     found: [
-                        ext > 0 && `${ext} external source link(s)`,
-                        markers > 0 && `${markers} citation marker(s) ([1] / superscript)`,
-                        refs && 'References / Sources section',
+                        ext > 0 && `${ext} link(s) to outside sources`,
+                        markers > 0 && `${markers} source number marker(s) (like [1])`,
+                        refs && 'Sources/References list at the bottom',
                     ].filter(Boolean),
                     missing: [
-                        ext < 3 && 'cited sources (3+ outbound links)',
-                        markers === 0 && 'citation markers ([1] / superscript)',
-                        !refs && 'References / Sources section',
+                        ext < 3 && '3 or more links to outside sources',
+                        markers === 0 && 'Source number markers (like [1])',
+                        !refs && 'Sources/References list at the bottom',
                     ].filter(Boolean),
                 };
             }
             case 'policies':
                 return {
-                    found: [t.hasPrivacy && 'Privacy', t.hasTerms && 'Terms', t.hasContact && 'Contact', t.hasAbout && 'About'].filter(Boolean),
-                    missing: [!t.hasPrivacy && 'Privacy', !t.hasTerms && 'Terms', !t.hasContact && 'Contact', !t.hasAbout && 'About'].filter(Boolean),
+                    found: [t.hasPrivacy && 'Privacy Policy page', t.hasTerms && 'Terms of Service page', t.hasContact && 'Contact page', t.hasAbout && 'About Us page'].filter(Boolean),
+                    missing: [!t.hasPrivacy && 'Privacy Policy page', !t.hasTerms && 'Terms of Service page', !t.hasContact && 'Contact page', !t.hasAbout && 'About Us page'].filter(Boolean),
                 };
             case 'contactTransparency':
                 return {
-                    found: [t.hasTel && 'click-to-call phone', t.hasAddress && 'physical address', t.hasAuthor && 'author byline'].filter(Boolean),
-                    missing: [!t.hasTel && 'click-to-call phone', !t.hasAddress && 'physical address', !t.hasAuthor && 'author byline'].filter(Boolean),
+                    found: [t.hasTel && 'clickable phone number', t.hasAddress && 'street address', t.hasAuthor && 'author name/byline'].filter(Boolean),
+                    missing: [!t.hasTel && 'clickable phone number', !t.hasAddress && 'street address', !t.hasAuthor && 'author name/byline'].filter(Boolean),
                 };
             case 'trustBasics':
                 return {
-                    found: [t.isHttps && 'HTTPS', t.hasDisclosure && 'disclosure statement', t.hasUpdated && 'dated content'].filter(Boolean),
-                    missing: [!t.isHttps && 'HTTPS', !t.hasDisclosure && 'disclosure statement', !t.hasUpdated && 'dated content'].filter(Boolean),
+                    found: [t.isHttps && 'secure HTTPS link', t.hasDisclosure && 'disclosure statement', t.hasUpdated && 'visible content dates'].filter(Boolean),
+                    missing: [!t.isHttps && 'secure HTTPS link', !t.hasDisclosure && 'disclosure statement', !t.hasUpdated && 'visible content dates'].filter(Boolean),
                 };
             default:
                 return null;
@@ -600,8 +666,8 @@ const getSubScores = (signal, data) => {
             { label: 'Address', got: addrFound ? 1 : 0, max: 1, want: 'Add your address — in schema or an address block in the footer.' },
         ];
         if (phoneFound) {
-            rows.push({ label: 'Phone is consistent', got: (data?.distinctPhoneCount ?? 0) <= 1 ? 1 : 0, max: 1,
-                want: `Use one phone number everywhere — the page shows ${data?.distinctPhoneCount ?? 0} different numbers.` });
+            rows.push({ label: 'Phone is consistent', got: (data?.distinctPhoneCount ?? 0) <= 2 ? 1 : 0, max: 1,
+                want: `Use one or two phone numbers everywhere — the page shows ${data?.distinctPhoneCount ?? 0} different numbers.` });
         }
         if (nameFound) {
             rows.push({ label: 'Name is consistent', got: (bd.nameConsistency ?? 0) >= 15 ? 1 : 0, max: 1,
@@ -625,10 +691,10 @@ const getSubScores = (signal, data) => {
         case 'botAccess': {
             const bots = data?.bots || {};
             const rows = ['GPTBot', 'Google-Extended', 'PerplexityBot'].map((b) => ({
-                label: `${b} allowed`,
+                label: `${CORE_BOT_DISPLAY[b] || b} allowed`,
                 got: bots[b] === 'blocked' ? 0 : 1,
                 max: 1,
-                want: `Allow ${b} in your robots.txt so this AI engine can crawl the page.`,
+                want: `Allow ${b}${b === 'GPTBot' ? ' (or OAI-SearchBot / ChatGPT-User)' : ''} in your robots.txt so this AI engine can crawl the page.`,
             }));
             rows.push({
                 label: 'Page is indexable',
@@ -677,13 +743,11 @@ const getSubScores = (signal, data) => {
         }
         case 'entityRecognition': {
             const o = data?.orgSchema || {};
-            const kg = data?.knowledgeGraph || {};
             return [
                 { label: 'Organization schema', got: o.found ? 1 : 0, max: 1, want: 'Add Organization / LocalBusiness JSON-LD so AI knows who you are.' },
                 { label: 'Postal address', got: o.hasAddress ? 1 : 0, max: 1, want: 'Add your postal address to the schema.' },
                 { label: 'Logo', got: o.hasLogo ? 1 : 0, max: 1, want: 'Add a logo to your Organization schema.' },
                 { label: 'sameAs profile links', got: (o.sameAsCount ?? 0) >= 3 ? 2 : (o.sameAsCount ?? 0) > 0 ? 1 : 0, max: 2, want: 'Add 3+ sameAs links (Google, Facebook, LinkedIn, Yelp).' },
-                { label: 'Knowledge Graph presence', got: kg.found ? 1 : 0, max: 1, want: 'Build a wider web presence so engines recognise you as a distinct entity.' },
             ];
         }
         case 'answerFirst': {
@@ -729,6 +793,7 @@ const INLINE_BREAKDOWN = new Set([
 // One per-part sub-check row: dot + label + OK/Partial/Missing badge, plus the
 // "Wants:" hint when the part isn't fully passing.
 const SubScoreRow = ({ row, darkMode }) => {
+    const [isOpen, setIsOpen] = useState(false);
     const full = row.got >= row.max;
     const partial = !full && row.got > 0;
     const state = full ? 'ok' : partial ? 'partial' : 'missing';
@@ -739,35 +804,54 @@ const SubScoreRow = ({ row, darkMode }) => {
             ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
             : 'bg-rose-500/10 text-rose-600 dark:text-rose-400';
     const badgeText = full ? 'OK' : partial ? 'Partial' : 'Missing';
+
+    const canExpand = state !== 'ok' && (row.gotText?.found?.length > 0 || row.gotText?.missing?.length > 0 || row.want);
+
     return (
-        <div className={`p-3.5 rounded-xl border ${full
-            ? (darkMode ? "bg-slate-900/40 border-slate-800" : "bg-cardsoft border-line")
-            : (darkMode ? "bg-rose-500/5 border-rose-500/15" : "bg-rose-50/40 border-rose-100")}`}>
+        <div 
+            onClick={() => { if (canExpand) setIsOpen(!isOpen); }}
+            className={`p-3.5 rounded-xl border transition-all duration-300 ${
+                canExpand ? 'cursor-pointer hover:bg-slate-100/50 dark:hover:bg-slate-900/50' : ''
+            } ${full
+                ? (darkMode ? "bg-slate-900/40 border-slate-800" : "bg-cardsoft border-line")
+                : (darkMode ? "bg-rose-500/5 border-rose-500/15" : "bg-rose-50/40 border-rose-100")}`}
+        >
             <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                     <span className={`w-2 h-2 rounded-full ${dot}`} />
                     <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>{row.label}</span>
                 </div>
-                <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${badge}`}>
-                    {badgeText}{row.max > 2 ? ` · ${row.got}/${row.max}` : ''}
-                </span>
+                <div className="flex items-center gap-2.5">
+                    <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${badge}`}>
+                        {badgeText}
+                    </span>
+                    {canExpand && (
+                        <span className={`transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''} ${darkMode ? 'text-slate-500' : 'text-faint'}`}>
+                            <ChevronDown size={14} />
+                        </span>
+                    )}
+                </div>
             </div>
-            {state !== 'ok' && row.gotText?.found?.length > 0 && (
-                <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                    <span className="text-emerald-500 mt-0.5">✓</span>
-                    <span><span className="font-semibold">Found: </span>{row.gotText.found.join(', ')}</span>
-                </div>
-            )}
-            {state !== 'ok' && row.gotText?.missing?.length > 0 && (
-                <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                    <span className="text-rose-500 mt-0.5">✕</span>
-                    <span><span className="font-semibold">Missing: </span>{row.gotText.missing.join(', ')}</span>
-                </div>
-            )}
-            {state !== 'ok' && row.want && (
-                <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                    <span className="text-indigo-500 mt-0.5">→</span>
-                    <span><span className="font-semibold">Wants: </span>{row.want}</span>
+            {canExpand && isOpen && (
+                <div className="mt-3 pt-3 border-t border-dashed border-line dark:border-slate-800/80 animate-in fade-in slide-in-from-top-1 duration-200">
+                    {row.gotText?.found?.length > 0 && (
+                        <div className={`flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                            <span className="text-emerald-500 mt-0.5">✓</span>
+                            <span><span className="font-semibold">Found: </span>{row.gotText.found.join(', ')}</span>
+                        </div>
+                    )}
+                    {row.gotText?.missing?.length > 0 && (
+                        <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                            <span className="text-rose-500 mt-0.5">✕</span>
+                            <span><span className="font-semibold">Missing: </span>{row.gotText.missing.join(', ')}</span>
+                        </div>
+                    )}
+                    {row.want && (
+                        <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                            <span className="text-indigo-500 mt-0.5">→</span>
+                            <span><span className="font-semibold">Wants: </span>{row.want}</span>
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -783,8 +867,15 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const T1 = 25;
     const T2 = 75;
 
+    // A crashed/timed-out probe carries score null (notCalculated) — it was left
+    // out of the score, so the card must say "Not Run", never "Failed".
+    const notCalculated = data?.notCalculated === true || typeof score !== "number";
+
     let status, statusColor;
-    if (score >= T2) {
+    if (notCalculated) {
+        status = "Not Run";
+        statusColor = "text-slate-500 bg-slate-500/10 border-slate-500/20";
+    } else if (score >= T2) {
         status = "Passed";
         statusColor = "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
     } else if (score >= T1) {
@@ -817,6 +908,21 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
     const okRows = subScores.filter((r) => r.got >= r.max);
     const todoRows = subScores.filter((r) => r.got < r.max);
 
+    const info = InfoDetails[signal] || {};
+    const fallbackReasons = info.actualReasonsForFailure || [];
+    const fallbackFixes = info.howToOvercomeFailure || [];
+
+    const causeList = Array.isArray(data?.issues) && data.issues.length > 0 
+        ? data.issues 
+        : (data?.cause ? [data.cause] : (data?.reason ? [data.reason] : fallbackReasons));
+
+    const recList = Array.isArray(data?.recommendations) && data.recommendations.length > 0
+        ? data.recommendations
+        : (data?.recommendation ? [data.recommendation] : fallbackFixes);
+
+    const hasCause = causeList.length > 0;
+    const hasRec = recList.length > 0;
+
     return (
         <div className={`relative overflow-hidden rounded-[2rem] border transition-all duration-500 p-8 flex flex-col gap-6 ${darkMode ? "bg-slate-900 border-slate-800 shadow-xl" : "bg-card border-line shadow-sm shadow-slate-200 hover:shadow-md"}`}>
 
@@ -835,7 +941,7 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {(score < 100 || status !== "Passed") && isActionableParam(signal) && !inlineBreakdown && (
+                    {!notCalculated && (score < 100 || status !== "Passed") && isActionableParam(signal) && !inlineBreakdown && (
                         <button
                             onClick={() => setShowDetails(!showDetails)}
                             className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${showDetails
@@ -870,7 +976,18 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
             {/* Current Data Section — shows the actual data for this parameter
                 (mirrors the "Current Description" box on the Meta Description card). */}
             {(() => {
-                const cur = getCurrentData(signal, data);
+                if (notCalculated) {
+                    return (
+                        <div className="flex flex-col gap-3">
+                            <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>Check Skipped</span>
+                            <div className={`p-6 rounded-2xl border text-sm ${darkMode ? "bg-slate-950 border-slate-800 text-slate-400" : "bg-cardsoft border-line text-muted"}`}>
+                                This check could not run on this audit, so it was left out of the score entirely. Re-run the audit to measure it.
+                            </div>
+                        </div>
+                    );
+                }
+                const cur = getCurrentData(signal, data, darkMode);
+                if (!cur || !cur.value) return null;
                 return (
                     <div className="flex flex-col gap-3">
                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] opacity-40 ${darkMode ? "text-white" : "text-ink"}`}>{cur.label}</span>
@@ -881,31 +998,50 @@ const AEOSignalCard = ({ signal, score, data, title, description, darkMode, onIn
                 );
             })()}
 
-            {/* Inline breakdown (no click) — OK parts and the parts that need work, separated. */}
-            {inlineBreakdown && (
-                <div className="flex flex-col gap-5 pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
-                    {okRows.length > 0 && (
-                        <div className="flex flex-col gap-2.5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600/70 dark:text-emerald-400/70">OK · {okRows.length}</span>
-                            {okRows.map((row, i) => <SubScoreRow key={`ok-${i}`} row={row} darkMode={darkMode} />)}
-                        </div>
-                    )}
-                    {todoRows.length > 0 && (
-                        <div className="flex flex-col gap-2.5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-rose-600/70 dark:text-rose-400/70">Missing · {todoRows.length}</span>
-                            {todoRows.map((row, i) => <SubScoreRow key={`todo-${i}`} row={row} darkMode={darkMode} />)}
-                        </div>
-                    )}
+            {/* Inline breakdown (no click) — list of all sub-checks */}
+            {inlineBreakdown && !notCalculated && (
+                <div className="flex flex-col gap-3.5 pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
+                    {subScores.map((row, i) => (
+                        <SubScoreRow key={i} row={row} darkMode={darkMode} />
+                    ))}
                 </div>
             )}
 
-            {/* Expanded Content — every part of this parameter, with what each one wants */}
-            {showDetails && !inlineBreakdown && (
-                <div className="flex flex-col gap-3 animate-in fade-in slide-in-from-top-4 duration-500 pt-2 border-t border-slate-800/10 dark:border-slate-100/10">
-                    <span className="text-[9px] font-black uppercase tracking-widest opacity-40">What each part needs</span>
-                    <div className="flex flex-col gap-2.5">
-                        {subScores.map((row, i) => <SubScoreRow key={i} row={row} darkMode={darkMode} />)}
-                    </div>
+            {/* Expanded Content — Cause and Recommendation */}
+            {showDetails && !inlineBreakdown && !notCalculated && (
+                <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in slide-in-from-top-4 duration-500 pt-4 border-t ${darkMode ? "border-slate-800" : "border-line"}`}>
+                    {hasCause && (
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-500">
+                                <AlertTriangle size={14} />
+                                <span>Cause</span>
+                            </div>
+                            <ul className="space-y-1.5">
+                                {causeList.map((reason, i) => (
+                                    <li key={i} className={`text-sm flex items-start gap-2.5 leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+                                        <span>{reason}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    {hasRec && (
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-500">
+                                <CheckCircle size={14} />
+                                <span>Recommendation</span>
+                            </div>
+                            <ul className="space-y-1.5">
+                                {recList.map((rec, i) => (
+                                    <li key={i} className={`text-sm flex items-start gap-2.5 leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                        <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                                        <span>{rec}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

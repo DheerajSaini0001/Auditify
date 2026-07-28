@@ -459,7 +459,6 @@ weights_data = [
     ["Sitemap", "0.05", "4.72%", "HTTP fetch", "1431"],
     ["Title", "0.04", "3.77%", "Cheerio", "1044"],
     ["Title_Uniqueness", "0.04", "3.77%", "Multi-page HTTP", "2159"],
-    ["Title_Keyword_Optimization", "0.04", "3.77%", "Multi-page HTTP", "2172"],
     ["Robots_Txt", "0.04", "3.77%", "HTTP fetch", "1308"],
     ["Title_Location_Optimization", "0.03", "2.83%", "Schema/footer/contact", "2239"],
     ["Meta_Description_Uniqueness", "0.03", "2.83%", "Multi-page HTTP", "2162"],
@@ -749,14 +748,7 @@ add_param("3.20", "Meta Description Uniqueness &mdash; <font face='Courier'>Meta
         "Otherwise: <b>score = uniqueCount / pagesChecked</b>",
     ])
 
-add_param("3.21", "Title Keyword Optimization &mdash; <font face='Courier'>Title_Keyword_Optimization</font>", "Weight 0.04 &bull; Multi-page HTTP &bull; checkTitleKeywordOptimization() &bull; line 2172",
-    "For each sampled page, derives a target keyword and checks whether the page&rsquo;s &lt;title&gt; contains it. Keyword derivation cascade: (1) URL slug &rarr; (2) H1 first 3 tokens &rarr; (3) top-2 most frequent content words.",
-    [
-        f"Sample failed (<font face='Courier'>!sample.ok</font>) &rarr; {W} (inconclusive)",
-        "Otherwise: <b>score = optimizedCount / pagesChecked</b> (titles containing their derived keyword &divide; pages). Match = keyword token, or its &ge;4-char stem, is a substring of the title.",
-    ])
-
-add_param("3.22", "Title Location Optimization &mdash; <font face='Courier'>Title_Location_Optimization</font>", "Weight 0.03 &bull; Schema &rarr; footer &rarr; contact page &rarr; body &bull; checkTitleLocationOptimization() &bull; line 2239",
+add_param("3.21", "Title Location Optimization &mdash; <font face='Courier'>Title_Location_Optimization</font>", "Weight 0.02 &bull; Schema &rarr; footer &rarr; contact page &rarr; body &bull; checkTitleLocationOptimization()",
     "Resolves the business city/state using a cascade (first hit wins): (1) JSON-LD schema address, (2) footer text, (3) fetched contact page, (4) whole-page body text. Then checks whether the title mentions that location.",
     [
         f"Location cannot be determined (no city and no state) &rarr; {W} (inconclusive)",

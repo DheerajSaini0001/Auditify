@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { classifyPageType } from "../utils/pageClassifier.js";
 
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
@@ -174,16 +175,81 @@ const checkImages = async ($, base_url) => {
     let namingDenom = 0;         // non-data images considered for naming
     const legacyExamples = [];
     const badNameExamples = [];
+    const notLazyExamples = [];
+    const notResponsiveExamples = [];
     const GENERIC_NAME = /^(img|image|dsc|dscn|photo|pic|picture|screenshot|untitled|download|unnamed|file|scaled|cropped|asset)[-_]?\d*$|^\d+$|^[a-f0-9]{16,}$|^[a-z0-9]{1,3}$/i;
 
     const meaningless = ["", "image", "logo", "icon", "pic", "picture", "photo", " ", "12345", "-", "graphics", "img", "undefined", "null", "spacer"];
+
+    // Normalise an image src so all variants of the same underlying image collapse to one
+    // key. Handles Next.js image proxy (/_next/image?url=…&w=…&q=…) and responsive query
+    // params, so a carousel's rotating duplicate layers are recognised as the same image.
+    const normSrc = (s) => {
+      if (!s) return "";
+      try {
+        const u = new URL(s, base_url);
+        if (u.pathname.endsWith("/_next/image") && u.searchParams.get("url")) {
+          return decodeURIComponent(u.searchParams.get("url")).toLowerCase();
+        }
+        return u.pathname.toLowerCase();
+      } catch { return String(s).toLowerCase(); }
+    };
+
+    // The underlying image URL behind an optimizer proxy — decodes the ?url= param of
+    // Next.js (/_next/image) and Cloudflare (/cdn-cgi/image) so format & filename checks
+    // inspect the REAL source, not the proxy path (which would look like "image").
+    const effectiveImageUrl = (s) => {
+      if (!s) return "";
+      try {
+        const u = new URL(s, base_url);
+        if ((u.pathname.endsWith("/_next/image") || u.pathname.includes("/cdn-cgi/image")) && u.searchParams.get("url")) {
+          return decodeURIComponent(u.searchParams.get("url"));
+        }
+        return s;
+      } catch { return s; }
+    };
+
+    // Pre-pass: which images carry alt text anywhere? A rotating carousel renders
+    // decorative duplicate layers of the SAME banner; if one instance has alt, its
+    // copies must not be reported as "missing".
+    const srcsWithAlt = new Set();
+    for (const img of images) {
+      const a = ($(img).attr("alt") ?? "").trim();
+      const s = $(img).attr("src") || "";
+      if (a && s) srcsWithAlt.add(normSrc(s));
+    }
+    const missingAltSeen = new Set();
 
     // 🔍 Metadata + Broken Image Check
     for (const img of images) {
       const el = $(img);
       const src = el.attr("src") || "";
-      const alt = el.attr("alt")?.trim() || "";
+      const altAttr = el.attr("alt");            // undefined when the attribute is absent
+      const alt = (altAttr ?? "").trim();
       const title = el.attr("title")?.trim() || "";
+
+      // Decorative images are exempt from alt text (WCAG): aria-hidden="true",
+      // role="presentation"/"none", or an explicit empty alt="" (author's deliberate
+      // "this image is decorative" marker).
+      const role = (el.attr("role") || "").toLowerCase();
+      const isDecorative =
+        el.attr("aria-hidden") === "true" ||
+        role === "presentation" || role === "none" ||
+        altAttr === "";
+
+      // An image also needs no alt of its own when its accessible name comes from
+      // elsewhere: the img carries aria-label/aria-labelledby, OR it's an icon inside a
+      // link/button that already has an accessible label (aria-label, title,
+      // aria-labelledby, or visible text) — e.g. <a aria-label="Facebook"><img …></a>.
+      // A bare, unlabelled icon link is NOT exempt (that's a real accessibility gap).
+      const imgAriaNamed = !!(el.attr("aria-label") || el.attr("aria-labelledby"));
+      const anc = el.closest("a, button");
+      const labeledControl = anc.length > 0 && (
+        !!(anc.attr("aria-label") || "").trim() ||
+        !!(anc.attr("title") || "").trim() ||
+        !!anc.attr("aria-labelledby") ||
+        !!(anc.text() || "").replace(/\s+/g, " ").trim()
+      );
 
       // ALT CHECK
       if (alt) {
@@ -192,8 +258,14 @@ const checkImages = async ($, base_url) => {
         if (!meaningless.includes(alt.toLowerCase()) && (words.length >= 2 || alt.length > 5)) {
           meaningfulAlt++;
         }
+      } else if (isDecorative || imgAriaNamed || labeledControl || (src && srcsWithAlt.has(normSrc(src)))) {
+        // Exempt: decorative, accessibly named elsewhere, or a rotating duplicate of an
+        // image that has alt elsewhere. Count as satisfied and don't flag it.
+        withAlt++;
+        meaningfulAlt++;
       } else {
-        missingAlt.push({ src });
+        const key = normSrc(src);
+        if (!missingAltSeen.has(key)) { missingAltSeen.add(key); missingAlt.push({ src }); }
       }
 
       // TITLE CHECK
@@ -203,25 +275,42 @@ const checkImages = async ($, base_url) => {
         missingTitle.push({ src });
       }
 
-      // FORMAT (next-gen) / LAZY / RESPONSIVE / NAMING
+      // FORMAT (next-gen) / LAZY / RESPONSIVE / NAMING — inspect the REAL source behind
+      // any optimizer proxy, not the proxy path.
       const srcset = el.attr("srcset") || "";
-      const fmtHay = (src + " " + srcset).toLowerCase();
+      const eff = effectiveImageUrl(src);
+      const fmtHay = (eff + " " + src + " " + srcset).toLowerCase();
       const inPicture = el.closest("picture");
       const pictureNextGen = inPicture.length > 0 &&
         inPicture.find('source[type="image/webp"], source[type="image/avif"], source[srcset*=".webp"], source[srcset*=".avif"]').length > 0;
-      const isNextGen = /\.(webp|avif)(\?|#|$)/.test(fmtHay) || fmtHay.includes("format=webp") || fmtHay.includes("format=avif") || pictureNextGen;
+      // Image optimizers (Next.js, Cloudflare, Cloudinary, imgix, weserv, …) negotiate
+      // WebP/AVIF automatically, so an image served through one IS next-gen regardless of
+      // its source extension. Also match ?format=/fm=/output=webp|avif and .webp/.avif
+      // even when followed by a query param (…&w=3840).
+      const viaOptimizer = /\/_next\/image|\/cdn-cgi\/image|res\.cloudinary\.com|imgix\.net|images\.weserv\.nl|imagedelivery\.net/.test(fmtHay);
+      const isNextGen =
+        /\.(webp|avif)([?#&]|$)/.test(fmtHay) ||
+        /(?:format|fm|output)=(?:webp|avif)/.test(fmtHay) ||
+        viaOptimizer ||
+        pictureNextGen;
       if (isNextGen) nextGenCount++;
-      else if (/\.(jpe?g|png)(\?|#|$)/.test(fmtHay) && legacyExamples.length < 10) legacyExamples.push(src);
+      else if (/\.(jpe?g|png|gif)([?#&]|$)/.test(fmtHay) && legacyExamples.length < 20) legacyExamples.push(src);
 
-      if ((el.attr("loading") || "").toLowerCase() === "lazy") lazyCount++;
-      if (srcset || el.attr("sizes")) responsiveCount++;
+      const isLazy = (el.attr("loading") || "").toLowerCase() === "lazy";
+      if (isLazy) lazyCount++;
+      else if (!src.startsWith("data:") && !src.startsWith("blob:") && notLazyExamples.length < 20) notLazyExamples.push(src);
+
+      const isResponsive = !!(srcset || el.attr("sizes"));
+      if (isResponsive) responsiveCount++;
+      else if (!src.startsWith("data:") && !src.startsWith("blob:") && notResponsiveExamples.length < 20) notResponsiveExamples.push(src);
 
       if (src && !src.startsWith("data:") && !src.startsWith("blob:")) {
         namingDenom++;
-        const fname = (src.split("?")[0].split("#")[0].split("/").pop() || "").replace(/\.[a-z0-9]+$/i, "");
+        const nameSrc = eff.split("?")[0].split("#")[0];
+        const fname = (nameSrc.split("/").pop() || "").replace(/\.[a-z0-9]+$/i, "");
         const descriptive = fname && !GENERIC_NAME.test(fname) && /[a-z]{3,}/i.test(fname);
         if (descriptive) descriptiveNameCount++;
-        else if (badNameExamples.length < 10) badNameExamples.push(fname || src);
+        else if (badNameExamples.length < 20) badNameExamples.push(fname || src);
       }
     }
 
@@ -323,22 +412,41 @@ const checkImages = async ($, base_url) => {
     let explanation = "";
     let recommendation = "";
 
+    // Build the cause & recommendation from ONLY the issues that actually apply, so both
+    // are specific to this page rather than a generic catch-all.
     const issues = [];
+    const fixes = [];
+    const plural = (n) => (n === 1 ? "" : "s");
+    const weakAlt = Math.max(0, total - meaningfulAlt);
+    const notNextGen = Math.max(0, total - nextGenCount);
+    const notLazy = Math.max(0, total - lazyCount);
+    const notResponsive = Math.max(0, total - responsiveCount);
+    const badNames = Math.max(0, namingDenom - descriptiveNameCount);
+    const addIssue = (cond, issueText, fixText) => { if (cond) { issues.push(issueText); if (fixText) fixes.push(fixText); } };
 
-    if (withAlt < total) issues.push(`${total - withAlt} images missing Alt text`);
-    if (meaningfulAlt < total) issues.push(`${total - meaningfulAlt} weak Alt text`);
-    if (largeImages.length > 0) issues.push(`${largeImages.length} large images (>150KB)`);
-    if (brokenImages.length > 0) issues.push(`${brokenImages.length} broken images`);
-    if (nextGenCount < total) issues.push(`${total - nextGenCount} images not next-gen (WebP/AVIF)`);
-    if (total > 4 && lazyCount < total - 2) issues.push(`${total - lazyCount} images not lazy-loaded`);
-    if (descriptiveNameCount < namingDenom) issues.push(`${namingDenom - descriptiveNameCount} non-descriptive file names`);
+    addIssue(brokenImages.length > 0, `${brokenImages.length} broken image${plural(brokenImages.length)}`,
+      "Fix or replace images that fail to load.");
+    addIssue(missingAlt.length > 0, `${missingAlt.length} image${plural(missingAlt.length)} missing alt text`,
+      'Add descriptive alt text to meaningful images (genuinely decorative ones can use alt="").');
+    addIssue(weakAlt > 0, `${weakAlt} image${plural(weakAlt)} with weak/generic alt text`,
+      'Rewrite vague alt text (e.g. "image", "photo") to describe the image and include relevant keywords.');
+    addIssue(largeImages.length > 0, `${largeImages.length} oversized image${plural(largeImages.length)} (>150KB)`,
+      "Compress large images so each is comfortably under ~150KB.");
+    addIssue(notNextGen > 0, `${notNextGen} image${plural(notNextGen)} not served in a next-gen format`,
+      "Serve images as WebP or AVIF (via your image CDN or build pipeline).");
+    addIssue(total > 4 && lazyCount < total - 2, `${notLazy} image${plural(notLazy)} not lazy-loaded`,
+      'Add loading="lazy" to below-the-fold images (keep hero/above-the-fold images eager).');
+    addIssue(notResponsive > 0, `${notResponsive} image${plural(notResponsive)} not responsive`,
+      "Add srcset/sizes so browsers can load an appropriately sized image per device.");
+    addIssue(badNames > 0, `${badNames} image${plural(badNames)} with non-descriptive file names`,
+      "Rename files to descriptive, keyword-rich names instead of hashes or numbers.");
 
     if (issues.length > 0) {
-      explanation = `Issues found: ${issues.join(", ")}.`;
-      recommendation = "Fix broken images, add descriptive Alt text, serve WebP/AVIF, lazy-load below-the-fold images, use keyword-rich file names, and compress large images.";
+      explanation = `${issues.length} image optimisation issue${plural(issues.length)} found — ${issues.join("; ")}.`;
+      recommendation = fixes.join(" ");
     } else {
-      explanation = "All images are optimized and accessible.";
-      recommendation = "Maintain this optimization.";
+      explanation = "All images are optimised, accessible, and efficiently delivered.";
+      recommendation = "Maintain this — keep alt text descriptive, images compressed and served as WebP/AVIF, and file names meaningful.";
     }
 
     return evaluateParameter(score, details, {
@@ -361,6 +469,8 @@ const checkImages = async ($, base_url) => {
       namingPct: namingDenom > 0 ? Math.round((descriptiveNameCount / namingDenom) * 100) : 100,
       legacyExamples,
       badNameExamples,
+      notLazyExamples,
+      notResponsiveExamples,
       why_this_occurred: explanation,
       how_to_fix: recommendation
     });
@@ -446,15 +556,38 @@ const checkHeadingHierarchy = ($) => {
   });
 
   let score = 1;
-  if (counts.h1 > 1) score = 0.5; // WARNING
-  if (counts.h1 === 0 && headings.length === 0) score = 0; // High Severity
-  else if (issues.length > 0) score = 0.5; // WARNING
-  const details = score === 1 ? "Proper hierarchy" : (score === 0 ? "No headings at all" : "Heading hierarchy issues found");
+  if (counts.h1 === 0 && headings.length === 0) score = 0; // High severity — no structure at all
+  else if (issues.length > 0) score = 0.5; // WARNING — H1 problems or skipped levels
+
+  const details = score === 1
+    ? "Proper hierarchy"
+    : (score === 0 ? "No headings at all" : `Heading hierarchy issues found (${issues.length})`);
+
+  // Surface WHY the score isn't full: state the actual findings and a targeted fix,
+  // instead of leaving evaluateParameter's generic "Issue detected with this metric".
+  const findings = issues.map((i) => i.finding);
+  let explanation, recommendation;
+  if (score === 1) {
+    explanation = "Headings form a clean, logical outline — a single H1 with no skipped levels.";
+    recommendation = "Maintain this structure: keep one H1 and nest H2/H3 in order as you add content.";
+  } else if (score === 0) {
+    explanation = "The page has no headings at all, so users and search engines can't see its structure or topic.";
+    recommendation = "Add one descriptive H1 for the page's main topic, then H2/H3 subheadings for each section.";
+  } else {
+    explanation = `Heading structure needs work: ${findings.join("; ")}.`;
+    const recs = [];
+    if (counts.h1 === 0) recs.push("Add exactly one H1 that states the page's main topic.");
+    if (counts.h1 > 1) recs.push(`Keep only one H1 (found ${counts.h1}) and demote the extras to H2.`);
+    if (findings.some((f) => f.startsWith("Skipped"))) recs.push("Don't skip heading levels — go H1 → H2 → H3 in order.");
+    recommendation = recs.join(" ") || "Fix the heading structure so levels nest in order beneath a single H1.";
+  }
 
   return evaluateParameter(score, details, {
     counts,
     headings: headingList,
     issues,
+    why_this_occurred: explanation,
+    how_to_fix: recommendation,
   });
 };
 
@@ -491,6 +624,30 @@ const checkLinks = ($, url) => {
       baseHostname = "";
     }
 
+    // For image/logo/icon anchors with no visible text, derive a best-effort label
+    // from the image alt/title, the anchor's aria-label/title, an SVG <title>, or —
+    // as a last resort — the image filename. This lets a text-less link (e.g. a car
+    // photo → its detail page, or a logo → home) still be judged for contextual intent.
+    const deriveAltText = (el) => {
+      const $el = $(el);
+      const aria = ($el.attr("aria-label") || $el.attr("title") || "").trim();
+      if (aria) return aria;
+      const $img = $el.find("img").first();
+      if ($img.length) {
+        const alt = ($img.attr("alt") || $img.attr("title") || "").trim();
+        if (alt) return alt;
+        const src = ($img.attr("src") || $img.attr("data-src") || "").trim();
+        if (src) {
+          const file = src.split("?")[0].split("#")[0].split("/").filter(Boolean).pop() || "";
+          const name = file.replace(/\.[a-z0-9]+$/i, "").replace(/[-_]+/g, " ").trim();
+          if (name) return name;
+        }
+      }
+      const svgTitle = $el.find("svg title").first().text().trim();
+      if (svgTitle) return svgTitle;
+      return "";
+    };
+
     links.forEach(link => {
       const href = $(link).attr("href");
       if (!href) return;
@@ -498,6 +655,7 @@ const checkLinks = ($, url) => {
       unique.add(href);
 
       const originalText = $(link).text().trim();
+      const altText = originalText ? "" : deriveAltText(link);
       const lowerText = originalText.toLowerCase();
 
       // 🔥 Generic anchor detection
@@ -522,10 +680,10 @@ const checkLinks = ($, url) => {
 
           if (linkHostname === baseHost) {
             internal++;
-            internalLinksList.push({ href, text: originalText || "[No Text]", target });
+            internalLinksList.push({ href, text: originalText || "[No Text]", altText, target });
           } else {
             external++;
-            externalLinksList.push({ href, text: originalText || "[No Text]", target });
+            externalLinksList.push({ href, text: originalText || "[No Text]", altText, target });
           }
         }
       } catch (e) {
@@ -698,366 +856,78 @@ const checkSemanticTags = async ($) => {
   }
 };
 
-const isTextRelatedToUrl = (text, href) => {
-  if (!text || !href) return false;
-  const t = text.toLowerCase().trim();
-  const h = href.toLowerCase();
 
-  // 1. Direct Synonyms / Intents (e.g. Sign in -> /login)
-  const intentMap = {
-  // --- AUTHENTICATION ---
-  "sign in": ["login", "signin", "log-in", "sign-in", "auth", "portal-login", "client-login", "secure-access", "start-session", "account-access", "gateway", "verify-identity"],
-  "sign up": ["register", "signup", "sign-up", "join", "enroll", "create-account", "get-started", "onboarding", "become-a-member", "trial-signup", "free-trial", "open-account"],
-  "logout": ["logout", "signout", "sign-out", "log-out", "exit", "end-session", "terminate-session", "disconnect"],
-  "password management": ["forgot-password", "reset-password", "recover-account", "password-recovery", "change-password", "update-credentials"],
+// Universal web/auto boilerplate — words that appear on virtually EVERY dealer page
+// regardless of its actual topic, so as single tokens they carry no topical signal.
+// Deliberately conservative: page-type topics like service/finance/lease/parts/brakes
+// are NOT here (they ARE the subject on their pages), and generic words still count in
+// bigrams ("service department", "used inventory") which do carry topic.
+const CR_GENERIC = new Set([
+  // Web / navigation chrome
+  "home", "page", "site", "website", "click", "here", "more", "view", "read", "learn",
+  "menu", "search", "welcome", "get", "find", "see", "visit", "online", "today", "info",
+  "information", "details", "link", "links", "back", "next", "previous", "skip", "close",
+  "open", "toggle", "show", "hide", "load", "loading",
+  // Cookie-consent / modal / form-control chrome (these leak in from banners & widgets)
+  "cookie", "cookies", "cooky", "consent", "gdpr", "ccpa", "privacy", "policy", "accept",
+  "decline", "reject", "allow", "settings", "preferences", "checkbox", "label", "button",
+  "submit", "field", "input", "select", "option", "form", "required", "store", "app",
+  "apps", "download", "subscribe", "newsletter", "signup", "login", "register", "account",
+  "share", "follow", "chat", "message", "notification",
+  // Generic auto-retail terms (appear on every dealer page regardless of its topic)
+  "car", "cars", "vehicle", "vehicles", "auto", "autos", "automotive", "motor",
+  "dealer", "dealers", "dealership", "inventory", "stock", "shop", "browse", "new",
+  "used", "preowned",
+  // Generic marketing filler (adjectives/verbs that describe nothing specific)
+  "wide", "leading", "easy", "best", "great", "top", "trusted", "quality", "premier",
+  "premium", "huge", "large", "largest", "biggest", "amazing", "perfect", "ultimate",
+  "exclusive", "affordable", "competitive", "reliable", "professional", "experienced",
+  "dedicated", "committed", "proud", "serving", "selection", "range", "variety", "choose",
+  "help", "offering", "provide", "ensure", "way", "ways", "need", "needs", "want", "make",
+  "right", "good", "better", "everything", "great", "value", "save", "savings",
+]);
 
-  // --- IDENTITY & REPUTATION ---
-  "about": ["about", "about-us", "our-story", "who-we-are", "company", "mission", "vision", "values", "culture", "background", "history", "heritage", "company-profile", "biography"],
-  "team": ["team", "leadership", "our-people", "executive-team", "management", "board-members", "staff", "meet-the-team", "employees", "founders", "faculty"],
-  "careers": ["careers", "jobs", "hiring", "work-with-us", "opportunities", "openings", "join-the-team", "internships", "vacancies", "employment", "recruitment"],
-  "press": ["press", "media", "newsroom", "press-kit", "media-kit", "brand-assets", "news", "announcements", "public-relations", "press-releases", "coverage"],
-
-  // --- CUSTOMER CONVERSION ---
-  "contact": ["contact", "contact-us", "get-in-touch", "reach-out", "contact-me", "write-to-us", "enquiry", "sales-inquiry", "business-contact", "ask-a-question", "request-info", "inbound"],
-  "pricing": ["pricing", "plans", "subscription", "cost", "rates", "fees", "billing", "compare-plans", "tiers", "enterprise-pricing", "calculator", "estimates", "price-list"],
-  "quote": ["get-quote", "estimate", "quotation", "purchase", "buy", "order-now", "request-quote", "book-demo", "schedule-call"],
-  "services": ["services", "our-services", "what-we-do", "solutions", "features", "capabilities", "expertise", "specializations", "offerings", "platform", "infrastructure"],
-
-  // --- E-COMMERCE & ACCOUNT ---
-  "ecommerce": ["cart", "bag", "basket", "checkout", "shop", "store", "marketplace", "catalog", "collections", "wishlist", "shopping-cart", "pay-online"],
-  "profile": ["profile", "account", "dashboard", "my-account", "settings", "preferences", "me", "user-profile", "personal-info", "security-settings", "manage-account"],
-  "orders": ["orders", "my-orders", "purchase-history", "track-order", "shipments", "receipts", "invoices", "downloads", "my-digital-assets"],
-
-  // --- SUPPORT & RESOURCES ---
-  "support": ["help", "support", "help-center", "customer-care", "service-desk", "ticketing", "knowledge-base", "faq", "faqs", "troubleshooting", "how-to", "tutorial-center"],
-  "resources": ["resources", "whitepapers", "ebooks", "guides", "tutorials", "webinars", "case-studies", "documentation", "learning-center", "academy", "training"],
-  "developer": ["docs", "api", "api-docs", "developers", "dev-portal", "documentation", "sdk", "integrations", "changelog", "github-repo", "sandbox"],
-  "blog": ["blog", "news", "articles", "insights", "magazine", "updates", "editorial", "posts", "latest", "newsletter", "stories"],
-
-  // --- SOCIAL PROOF ---
-  "social proof": ["testimonials", "reviews", "customer-reviews", "ratings", "success-stories", "portfolio", "our-work", "projects", "partners", "clients", "affiliates", "sponsors", "certifications", "awards"],
-
-  // --- LEGAL & COMPLIANCE ---
-  "legal": ["privacy", "privacy-policy", "terms", "terms-of-service", "tos", "terms-and-conditions", "t-and-c", "legal", "disclaimer", "cookie-policy", "gdpr", "compliance", "data-protection"],
-  "security": ["security", "trust-center", "vulnerability", "responsible-disclosure", "security-policy", "encryption", "system-status", "uptime"],
-  "refunds": ["refund-policy", "return-policy", "shipping-policy", "delivery-info", "cancellation-policy"],
-
-  // --- PHYSICAL LOCATION ---
-  "location": ["location", "find-us", "map", "offices", "headquarters", "branches", "store-locator", "directions", "contact-details", "reach-us-at"]
+// JUNK — fully EXCLUDED from both promise keywords and topic terms (not just down-weighted):
+//   • generic marketing adjectives/adverbs — fluff, not topical nouns ("wide", "leading"…);
+//   • UI / cookie-consent / form chrome that leaks into body text as plain <div>s and
+//     would otherwise be mistaken for page topics ("cookie"→stems to "cooky", "checkbox",
+//     "store"…). Stemmed forms are included where the stem differs (cookies→cooky).
+const CR_JUNK = new Set([
+  // marketing fluff
+  "leading", "trusted", "easy", "wide", "transparent", "thorough", "best", "great", "top",
+  "premier", "quality", "affordable", "reliable", "friendly", "professional", "convenient",
+  "seamless", "exceptional", "unbeatable", "competitive", "extensive", "comprehensive",
+  "exclusive", "dedicated", "committed", "proud", "range", "trust", "experience",
+  // UI / consent / form / cookie chrome
+  "cookie", "cookies", "cooky", "consent", "accept", "decline", "preference", "preferences",
+  "gdpr", "checkbox", "label", "toggle", "submit", "required", "newsletter", "subscribe",
+  "unsubscribe", "close", "dropdown", "modal", "dialog", "popup", "overlay", "banner",
+  "store", "stores", "slider", "carousel", "skip", "select", "option",
+  "homepage", "sitemap", "breadcrumb", "footer", "header", "sidebar",
+]);
+const CR_STEM = (w) => {
+  if (!w || w.length <= 3) return w;
+  if (w.endsWith('ies')) return w.slice(0, -3) + 'y';
+  if (w.endsWith('es')) return w.slice(0, -2);
+  if (w.endsWith('s') && !w.endsWith('ss')) return w.slice(0, -1);
+  return w;
 };
+const isJunk = (w) => CR_JUNK.has(w) || CR_JUNK.has(CR_STEM(w));
 
-  if (intentMap[t]) {
-    if (intentMap[t].some(keyword => h.includes(keyword))) return true;
-  }
-
-  // 2. Slug match (e.g. "About" in /about-us)
-  const slug = h.split('/').filter(Boolean).pop() || "";
-  if (t.length > 3 && (slug.includes(t) || t.includes(slug))) return true;
-
-  // 3. TLD/Country logic (Australia -> .au)
-  const countryTLDs = {
-  ".au": ["australia", "oz", "aus", "down-under"],
-  ".uk": ["uk", "united-kingdom", "britain", "gb", "great-britain", "england"],
-  ".in": ["india", "bharat", "ind"],
-  ".ca": ["canada", "can"],
-  ".us": ["usa", "united-states", "america", "states"],
-  ".de": ["germany", "deutschland", "de"],
-  ".fr": ["france", "fr"],
-  ".jp": ["japan", "nippon", "jp"],
-  ".cn": ["china", "prc"],
-  ".br": ["brazil", "brasil"],
-  ".mx": ["mexico", "mx"],
-  ".ru": ["russia", "rf"],
-  ".za": ["south-africa", "sa"],
-  ".ae": ["uae", "emirates", "dubai"],
-  ".sg": ["singapore", "sg"],
-  ".nz": ["new-zealand", "nz", "kiwi"],
-  ".es": ["spain", "espana", "es"],
-  ".it": ["italy", "italia", "it"],
-  ".nl": ["netherlands", "holland", "nl"],
-  ".se": ["sweden", "sverige"],
-  ".no": ["norway", "norge"],
-  ".fi": ["finland", "suomi"],
-  ".dk": ["denmark", "danmark"],
-  ".ch": ["switzerland", "swiss"],
-  ".at": ["austria", "osterreich"],
-  ".be": ["belgium", "belgie"],
-  ".ie": ["ireland", "eire"],
-  ".my": ["malaysia", "my"],
-  ".th": ["thailand", "thai"],
-  ".vn": ["vietnam", "vn"],
-  ".id": ["indonesia", "id"],
-  ".pk": ["pakistan", "pk"],
-  ".bd": ["bangladesh", "bd"],
-  ".sa": ["saudi-arabia", "ksa"],
-  ".tr": ["turkey", "turkiye"],
-  ".eg": ["egypt", "eg"],
-  ".ng": ["nigeria", "ng"],
-  ".ar": ["argentina", "arg"],
-  ".cl": ["chile", "cl"]
-};
-
-  for (const [ext, names] of Object.entries(countryTLDs)) {
-    if (h.includes(ext) && names.some(name => t.includes(name))) return true;
-  }
-
-  return false;
-};
-
-const checkContextualLinks = async ($, url) => {
+// Content Relevance — measures whether the page is genuinely ABOUT a clear topic, not
+// just whether the body echoes its own title/meta. ONE blended score drives the number,
+// the label and the section weight. Improvements over a naive keyword-match:
+//   • Coverage (60%) weights each promise keyword by DISTINCTIVENESS (a specific term
+//     like "tundra"/"financing" counts double vs generic "car"/"dealer"/"used") and by
+//     DEPTH — a keyword that's genuinely developed (appears ≥3×) earns full credit, one
+//     that's merely mentioned once earns partial. So "delivers on its promise" means the
+//     topic is actually covered, not name-dropped.
+//   • Topical focus (40%) derives what the page is REALLY about from its distinctive
+//     terms + 2-word phrases (down-weighting boilerplate), then checks how many are
+//     reflected in the title/H1 — catching pages whose content drifts from their headline.
+// A `confidence` flag reports how much content was available to judge.
+const checkContentRelevance = ($, title, metaDesc, pageType = "generic") => {
   try {
-    const contentLinks = new Set();
-    const contentLinkText = new Map(); // href -> anchor text (for semantic relatedness)
-    const menuLinks = new Set();
-    const issues = [];
-
-    // 🔍 Identify Content Area
-    const contentArea = $("main, article, .content, #content, .post, .entry").first();
-    const scope = contentArea.length > 0 ? contentArea : $("body");
-
-    // 🔗 Extract Contextual Links
-    scope.find("a").each((i, el) => {
-      const $el = $(el);
-      const href = $el.attr("href");
-
-      if (!href) return;
-
-      if (
-        href.startsWith("#") ||
-        href.startsWith("javascript") ||
-        href.startsWith("tel") ||
-        href.startsWith("mailto")
-      ) return;
-
-      const isNav = $el.closest("nav, header, footer, .navbar, .menu, .sidebar, .nav").length > 0;
-      const text = $el.text().trim();
-
-      if (isNav) {
-        // Nav links: only include if text is semantically related to the URL
-        if (isTextRelatedToUrl(text, href)) {
-          contentLinks.add(href);
-          if (!contentLinkText.has(href)) contentLinkText.set(href, text);
-        }
-        return;
-      }
-
-      // Non-nav (content area) links:
-      // Include if → has no visible text (icon/image anchor) OR text is related to the URL
-      if (!text || isTextRelatedToUrl(text, href)) {
-        contentLinks.add(href);
-        if (!contentLinkText.has(href)) contentLinkText.set(href, text);
-      }
-    });
-
-    // 🔗 Extract Menu Links
-    $("nav, header, footer, .menu, .nav, .sidebar").find("a").each((i, el) => {
-      const href = $(el).attr("href");
-      if (href) menuLinks.add(href);
-    });
-
-    const totalContextual = contentLinks.size;
-    const totalMenu = menuLinks.size;
-
-    // 🎯 Ratio
-    const ratio = (totalContextual + totalMenu) > 0
-      ? totalContextual / (totalContextual + totalMenu)
-      : 1;
-
-    let score = 1;
-
-    // ⚠️ Base checks
-    if (totalContextual === 0) {
-      score = 0.5;
-      issues.push("No contextual links found in main content.");
-    } else if (totalContextual > 100) {
-      score = 0.5;
-      issues.push("Too many contextual links (spam risk).");
-    } else if (ratio < 0.3) {
-      score = 0.5;
-      issues.push("Low contextual linking ratio.");
-    }
-
-    // 🔍 Missing important links
-    const missingLinks = [];
-    const ignoredPatterns = [];
-
-    menuLinks.forEach(link => {
-      if (link.startsWith("/") || link.includes(url)) {
-        if (!contentLinks.has(link)) {
-          const lower = link.toLowerCase();
-          if (!ignoredPatterns.some(p => lower.includes(p))) {
-            missingLinks.push(link);
-          }
-        }
-      }
-    });
-
-    if (score === 1 && missingLinks.length > 5) {
-      score = 0.5;
-      issues.push("Important pages not linked contextually.");
-    }
-
-   // 🔥 BROKEN LINK CHECK (IMPROVED)
-const brokenLinks = [];
-const headers = { "User-Agent": "Mozilla/5.0" };
-
-const maxChecks = 150;
-const linksToCheck = Array.from(contentLinks).slice(0, maxChecks);
-
-// 🚀 Parallel requests (faster + accurate)
-const requests = linksToCheck.map(async (href) => {
-  try {
-    if (href.toLowerCase().includes("inventory")) {
-      return null; // Skip check, treat as valid
-    }
-
-    const fullUrl = new URL(href, url).href;
-
-    if (fullUrl.toLowerCase().includes("inventory")) {
-      return null; // Skip check, treat as valid
-    }
-
-    const res = await fetch(fullUrl, {
-      method: "GET", // ✅ real page load
-      headers,
-      signal: AbortSignal.timeout(6000) // ⏳ wait properly
-    });
-
-    if (!res.ok) {
-      return {
-        url: fullUrl,
-        status: res.status
-      };
-    }
-
-    return null;
-
-  } catch (e) {
-    return {
-      url: href,
-      error: "Request failed / timeout"
-    };
-  }
-});
-
-// ⏳ wait for all links to load
-const results = await Promise.all(requests);
-
-// collect broken links
-results.forEach(r => {
-  if (r) brokenLinks.push(r);
-});
-
-// ⚠️ scoring impact
-if (brokenLinks.length > 0) {
-  score = 0.5;
-  issues.push(`${brokenLinks.length} broken contextual links found.`);
-}
-
-// 🧠 Semantic relatedness — are the in-content links topically related to THIS page?
-const topicTerms = new Set();
-const titleTxt = $("title").first().text() || "";
-const h1Txt = $("h1").first().text() || "";
-const headTxt = $("h2, h3").map((i, el) => $(el).text()).get().join(" ");
-[titleTxt, h1Txt, headTxt].forEach(t => cleanText(t).forEach(w => topicTerms.add(w)));
-// Add the most frequent body terms so a single generic heading doesn't dominate the topic.
-const _freq = {};
-cleanText((scope.text() || "").slice(0, 1500)).forEach(w => { _freq[w] = (_freq[w] || 0) + 1; });
-Object.entries(_freq).sort((a, b) => b[1] - a[1]).slice(0, 15).forEach(([w]) => topicTerms.add(w));
-
-const relatedExamples = [];
-const unrelatedExamples = [];
-let relatedCount = 0;
-const uniqueLinks = Array.from(contentLinks);
-uniqueLinks.forEach(href => {
-  const anchor = contentLinkText.get(href) || "";
-  let slug = "";
-  try { slug = new URL(href, url).pathname.replace(/[-_/]+/g, " "); } catch (_) { slug = String(href).replace(/[-_/]+/g, " "); }
-  const linkTerms = new Set([...cleanText(anchor), ...cleanText(slug)]);
-  const shared = [...linkTerms].filter(t => topicTerms.has(t));
-  if (shared.length > 0) {
-    relatedCount++;
-    if (relatedExamples.length < 8) relatedExamples.push({ href, anchor: anchor.slice(0, 40), shared: shared.slice(0, 4) });
-  } else if (unrelatedExamples.length < 8) {
-    unrelatedExamples.push({ href, anchor: anchor.slice(0, 40) });
-  }
-});
-const relatedRatio = uniqueLinks.length > 0 ? relatedCount / uniqueLinks.length : 1;
-
-// Only judge relatedness when there are enough links for it to be meaningful.
-if (uniqueLinks.length >= 5 && relatedRatio < 0.3) {
-  if (score === 1) score = 0.5;
-  issues.push(`Only ${Math.round(relatedRatio * 100)}% of in-content links are topically related to this page.`);
-}
-
-const details = score === 1
-  ? "Good contextual linking"
-  : "Contextual linking issues found";
-
-// 🧠 Explanation
-let explanation = "";
-let recommendation = "";
-
-if (totalContextual === 0) {
-  explanation = "No links found inside the main content area.";
-  recommendation = "Add internal links within content.";
-} 
-else if (brokenLinks.length > 0) {
-  explanation = `Found ${brokenLinks.length} broken links inside content.`;
-  recommendation = "Fix or replace broken links to improve SEO and UX.";
-}
-else if (ratio < 0.3) {
-  explanation = "Most links are in navigation instead of content.";
-  recommendation = "Increase contextual linking.";
-}
-else if (uniqueLinks.length >= 5 && relatedRatio < 0.3) {
-  explanation = "Most in-content links point to topically unrelated pages.";
-  recommendation = "Link to pages that share this page's topic (e.g. related models, services, or guides) to build topical clusters.";
-}
-else if (missingLinks.length > 0) {
-  explanation = "Important pages are not linked within content.";
-  recommendation = "Link key pages inside content.";
-}
-else {
-  explanation = "Links are well distributed inside content.";
-  recommendation = "Maintain contextual linking strategy.";
-}
-    return evaluateParameter(score, details, {
-      totalContextual,
-      totalMenu,
-      contextual_ratio: ratio.toFixed(2),
-      related_ratio: relatedRatio.toFixed(2),
-      related_count: relatedCount,
-      related_examples: relatedExamples,
-      unrelated_examples: unrelatedExamples,
-      topic_terms: Array.from(topicTerms).slice(0, 20),
-      foundLinks: Array.from(contentLinks).slice(0, 50),
-      missingLinks: missingLinks.slice(0, 20),
-      broken_links_count: brokenLinks.length, // 🔥 NEW
-      broken_links: brokenLinks, // 🔥 NEW
-      issues,
-      why_this_occurred: explanation,
-      how_to_fix: recommendation
-    });
-
-  } catch (err) {
-    return evaluateParameter(0, "Error checking contextual links", {
-      error: err.message
-    });
-  }
-};
-
-
-
-const checkContentRelevance = ($, title, metaDesc) => {
-  try {
-    const $body = $("body").clone();
-    
-    // For relevance, we check all visible text (including header/nav where branding often lives)
-    // but we still remove non-visible/technical tags
-    $body.find("script, style, noscript, template, svg, img, video, iframe, link, meta, [hidden], [aria-hidden='true']").remove();
-    const visibleText = $body.text().replace(/\s+/g, " ").trim();
-    
     const stem = (word) => {
       if (!word || word.length <= 3) return word;
       if (word.endsWith('ies')) return word.slice(0, -3) + 'y';
@@ -1065,91 +935,183 @@ const checkContentRelevance = ($, title, metaDesc) => {
       if (word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1);
       return word;
     };
+    const isDistinctive = (w) => w.length >= 4 && !CR_GENERIC.has(w);
 
-    const titleKws = cleanText(title, false);
-    const metaKws = cleanText(metaDesc, false).filter(kw => !titleKws.includes(kw));
-    const allTargetKeywords = [...new Set([...titleKws, ...metaKws])];
-    const N = allTargetKeywords.length;
-
-    if (N === 0) {
-      return { score: "LOW", percentage: 0, matchedKeywords: [], missingKeywords: [], reason: "No significant keywords found.", status: "fail" };
-    }
-
-    const contentTextClean = visibleText.toLowerCase().replace(/[^a-z0-9\s]/g, " ");
-    const contentWordsRaw = contentTextClean.split(/\s+/).filter(w => w.length > 2);
-    
-    const contentInventory = new Set(contentWordsRaw);
-    const stemmedInventory = new Set(contentWordsRaw.map(w => stem(w)));
-    
-    // Add phrases
-    for (let i = 0; i < contentWordsRaw.length - 1; i++) {
-      const phrase = `${contentWordsRaw[i]} ${contentWordsRaw[i+1]}`;
-      contentInventory.add(phrase);
-      stemmedInventory.add(`${stem(contentWordsRaw[i])} ${stem(contentWordsRaw[i+1])}`);
-    }
-
-    // Advanced match for brands/compound words (like CarDekho matching "Car Dekho")
-    const matchedKws = allTargetKeywords.filter(kw => {
-      if (contentInventory.has(kw)) return true;
-      
-      const stemmedKw = kw.includes(" ") ? kw.split(" ").map(w => stem(w)).join(" ") : stem(kw);
-      if (stemmedInventory.has(stemmedKw)) return true;
-      
-      // Compound check: If keyword is "cardekho" and content has "car" and "dekho" adjacent
-      // (This is already handled by phrases if they are adjacent)
-      
-      // Partial check for brand names (Keyword exists as a substring of a content word)
-      // or a content word exists as a substantial substring of a keyword
-      if (kw.length >= 5) {
-        for (let word of contentWordsRaw) {
-          if (word.length >= 5 && (word.includes(kw) || kw.includes(word))) return true;
-        }
-      }
-      
-      return false;
+    // ── Extract the MAIN content region STRUCTURALLY (generalises beyond a word list) ──
+    // Prefer semantic main-content containers; fall back to <body>. Then strip chrome by
+    // structure/role (nav/header/footer/forms/dialogs) and cookie/consent/modal widgets.
+    const mainSel = "main, article, [role='main'], #main, #content, .main-content, .entry-content, .page-content";
+    const picked = $(mainSel).first();
+    const $main = (picked.length ? picked : $("body")).clone();
+    $main.find([
+      "script", "style", "noscript", "template", "svg", "img", "video", "iframe", "link", "meta",
+      "[hidden]", "[aria-hidden='true']", "header", "footer", "nav",
+      "form", "button", "label", "select", "[role='dialog']", "[role='navigation']", "[aria-modal='true']",
+      "[class*='cookie']", "[id*='cookie']", "[class*='consent']", "[id*='consent']",
+      "[class*='modal']", "[class*='popup']", "[class*='newsletter']", "[class*='gdpr']",
+    ].join(", ")).remove();
+    // Link-density pruning: drop blocks that are mostly links (menus/link-lists/tag clouds)
+    // even when they aren't inside <nav>. This removes chrome GENERICALLY — no word list.
+    $main.find("ul, ol, div, section, aside").each((_, el) => {
+      const $el = $(el);
+      const t = $el.text().replace(/\s+/g, " ").trim();
+      if (t.length < 40) return;
+      const linkLen = $el.find("a").text().replace(/\s+/g, " ").trim().length;
+      if (linkLen / t.length > 0.6) $el.remove();
     });
-    
-    const M = matchedKws.length;
-    const P = Math.round((M / N) * 100);
-    const missingKws = allTargetKeywords.filter(kw => !matchedKws.includes(kw));
-    const X = missingKws.length;
+    const mainText = $main.text().replace(/\s+/g, " ").trim();
+    // stop-words + short tokens already stripped by cleanText; then drop marketing fluff
+    // and any residual UI/consent chrome (backstop) so only real topical words remain.
+    const mainWords = cleanText(mainText, false).filter((w) => !isJunk(w));
+    const wordCount = mainWords.length;
 
-    // Quality penalties (Stuffing/Repetition) - Use stricter body-only text for this
-    const $mainOnly = $("body").clone();
-    $mainOnly.find("script, style, noscript, template, svg, img, video, iframe, link, meta, [hidden], [aria-hidden='true'], header, footer, nav").remove();
-    const mainText = $mainOnly.text().trim();
-    const mainWords = cleanText(mainText, false);
-    
-    const keywordFrequency = {};
-    mainWords.forEach(word => {
-      keywordFrequency[word] = (keywordFrequency[word] || 0) + 1;
-    });
-    
-    const totalWords = mainWords.length || 1;
+    // Occurrence maps (by stem) — used for depth-aware coverage AND topic frequency. NO
+    // loose substring matching; a term matches only as a whole word/stem (or bigram).
+    const stemCount = {};
+    for (const w of mainWords) { const s = stem(w); stemCount[s] = (stemCount[s] || 0) + 1; }
+    const bigramCount = {};
+    for (let i = 0; i < mainWords.length - 1; i++) {
+      const bg = `${stem(mainWords[i])} ${stem(mainWords[i + 1])}`;
+      bigramCount[bg] = (bigramCount[bg] || 0) + 1;
+    }
+    const occurrencesOf = (kw) =>
+      kw.includes(" ") ? (bigramCount[kw.split(" ").map(stem).join(" ")] || 0) : (stemCount[stem(kw)] || 0);
+    // Present at all earns most of the credit (a keyword mentioned once still counts);
+    // being developed (≥3×) earns the last bit. Forgiving so a genuinely on-topic page
+    // isn't marked down for not repeating every title word.
+    const depthCredit = (occ) => (occ >= 3 ? 1 : occ === 2 ? 0.9 : occ === 1 ? 0.8 : 0);
+
+    // ── Signal A — promise coverage, weighted by distinctiveness × depth ──
+    const h1Text = $("h1").first().text() || "";
+    // Drop marketing fluff ("wide", "leading", "easy"…) and UI chrome so we only test
+    // whether the body delivers on the page's real TOPICAL keywords, not adjectives.
+    const promiseKws = [...new Set([
+      ...cleanText(title, false),
+      ...cleanText(metaDesc, false),
+      ...cleanText(h1Text, false),
+    ])].filter((w) => !isJunk(w));
+    const N = promiseKws.length;
+    const matchedKws = [], missingKws = [];
+    let covNum = 0, covDen = 0;
+    for (const kw of promiseKws) {
+      const w = isDistinctive(kw) ? 2 : 1;
+      const occ = occurrencesOf(kw);
+      covNum += w * depthCredit(occ);
+      covDen += w;
+      (occ > 0 ? matchedKws : missingKws).push(kw);
+    }
+    const coverage = covDen > 0 ? Math.round((covNum / covDen) * 100) : 0;
+
+    // ── Signal B — topical focus. What is the page actually about? Rank distinctive
+    // single terms and 2-word phrases (phrases weighted higher — they're more topical),
+    // then measure how many of the top ones are reflected in the title/H1. ──
+    // A real topic is REPEATED, not used once. Require a minimum count (scaled to page
+    // length) so one-off marketing adjectives that slip through can't become "topics" —
+    // this generalises fluff removal without relying on the denylist.
+    const minTopicCount = Math.min(4, Math.max(2, Math.round(wordCount / 200)));
+    const candidates = {};
+    for (const [s, c] of Object.entries(stemCount)) if (isDistinctive(s) && c >= minTopicCount) candidates[s] = (candidates[s] || 0) + c;
+    for (const [bg, c] of Object.entries(bigramCount)) {
+      const [a, b] = bg.split(" ");
+      if (!(CR_GENERIC.has(a) && CR_GENERIC.has(b)) && c >= 2) candidates[bg] = (candidates[bg] || 0) + c * 1.6;
+    }
+    const topTerms = Object.entries(candidates).sort((x, y) => y[1] - x[1]).slice(0, 5).map(([t]) => t);
+    const headlineStems = new Set([...cleanText(title, false), ...cleanText(h1Text, false)].map(stem));
+    const isReflected = (t) => t.includes(" ") ? t.split(" ").every((p) => headlineStems.has(p)) : headlineStems.has(t);
+    const focusedTerms = topTerms.filter(isReflected);
+    const focus = topTerms.length ? Math.round((focusedTerms.length / topTerms.length) * 100) : 0;
+
+    // ── Keyword-stuffing penalty — gated behind a minimum word count so a short page
+    // where a legit brand/model term is naturally frequent isn't falsely flagged. ──
     let stuffingPenalty = 0;
-    Object.keys(keywordFrequency).forEach(kw => {
-      if ((keywordFrequency[kw] / totalWords) * 100 > 7) stuffingPenalty += 10;
-    });
+    const stuffedTerms = [];
+    if (wordCount >= 100) {
+      for (const [s, c] of Object.entries(stemCount)) {
+        const density = (c / wordCount) * 100;
+        if (density > 8) { stuffingPenalty += 8; stuffedTerms.push({ term: s, count: c, density: Math.round(density) }); }
+      }
+      stuffedTerms.sort((a, b) => b.density - a.density);
+      stuffingPenalty = Math.min(stuffingPenalty, 20);
+    }
 
-    let finalScore = P - stuffingPenalty;
+    // ── Page-type / prose-level awareness. Listing & transactional pages (SRP grids,
+    // VDP spec sheets, OEM lineups, lease/specials boards, dealer locators) and any page
+    // with little body prose legitimately DON'T read like an article — their body rarely
+    // echoes the title. Judge those loosely: low confidence + a neutral floor so they're
+    // never a false LOW just for their structure (this is general — driven by page type
+    // AND measured prose, not a per-word list). ──
+    const LISTING_TYPES = new Set(["srp", "vdp", "models", "specials", "locator", "inventory"]);
+    const listingPage = LISTING_TYPES.has(pageType);
+    const lowProse = wordCount < 80;
+    const relaxed = listingPage || lowProse;
+
+    const isThin = wordCount < 25;
+    const confidence = (isThin || relaxed) ? "low" : wordCount < 150 ? "medium" : "high";
+
+    // ── Blend into ONE score (coverage + focus, evenly). If there are no promise
+    // keywords, the page's intended topic is undefined — fall back to focus alone. ──
+    let finalScore = N === 0
+      ? Math.min(Math.round(focus), 50)
+      : Math.round(0.5 * coverage + 0.5 * focus) - stuffingPenalty;
+    // Relaxed pages: floor at 55 (neutral MEDIUM) so a legit listing/thin page isn't
+    // penalised for not being prose; thin pages also get a soft cap so they can't score
+    // deceptively high on a couple of coincidental matches.
+    if (relaxed) finalScore = Math.max(finalScore, 55);
+    if (isThin) finalScore = Math.min(finalScore, 60);
     finalScore = Math.max(0, Math.min(100, finalScore));
 
-    let scoreLabel = "LOW";
-    let status = "fail";
+    let scoreLabel = "LOW", status = "fail";
     if (finalScore >= 75) { scoreLabel = "HIGH"; status = "pass"; }
     else if (finalScore >= 40) { scoreLabel = "MEDIUM"; status = "warning"; }
 
+    // Human-readable findings.
+    const relaxedNote = relaxed
+      ? ` This is a ${listingPage ? `${pageType.toUpperCase()} (listing/transactional)` : "low-prose"} page — it isn't expected to read like an article, so relevance is judged loosely and reported as low-confidence (floored at neutral, not penalised for its structure).`
+      : "";
+    let reason;
+    if (isThin && !relaxed) {
+      reason = `Too little body content (${wordCount} meaningful words) to reliably judge topical relevance — treat this score as low-confidence. Add substantive on-topic copy.`;
+    } else if (N === 0) {
+      reason = "No title/meta/H1 keywords were found, so the page's intended topic is undefined. Add a descriptive title, meta description and H1." + relaxedNote;
+    } else {
+      reason = `Relevance ${finalScore}%. Coverage ${coverage}% — ${matchedKws.length}/${N} title/meta/H1 keywords appear in the body (weighted toward distinctive, well-developed terms). Topical focus ${focus}% — the headline reflects ${focusedTerms.length}/${topTerms.length} of the page's main topics (${topTerms.slice(0, 3).join(", ") || "n/a"}).`
+        + (stuffingPenalty ? ` A keyword-stuffing penalty of ${stuffingPenalty} was applied.` : "")
+        + relaxedNote;
+    }
+
+    const recommendation = status === "pass"
+      ? "Keep the title/H1 aligned with the page's main topic and develop the promised keywords in the body."
+      : (relaxed
+        ? "This page type is naturally light on prose — no action needed for relevance unless you add descriptive copy. Any intro paragraph should use the page's real topic terms (models, offers, services)."
+        : (isThin
+          ? "Add more substantive, on-topic content so search engines (and this check) can determine what the page is about."
+          : (N === 0
+            ? "Add a descriptive title, meta description and H1 so the page's target topic is explicit."
+            : (focus < coverage
+              ? "The page's headline doesn't fully reflect what the body is actually about — align the title/H1 with the page's dominant terms shown above."
+              : "Develop the title/meta keywords more thoroughly in the body (mention them in context, not just once) so the page delivers on its promise."))));
+
     return {
+      // `percentage` is the SINGLE relevance score — number, label and section weight all use it.
       score: scoreLabel,
-      percentage: P,
+      percentage: finalScore,
+      status,
+      confidence,
       matchedKeywords: matchedKws,
       missingKeywords: missingKws,
-      reason: P === 100 ? "Perfect match! Your content perfectly reflects your metadata." : `Match Status: ${P}% Match (${M}/${N}).`,
-      status,
-      details: `Topic Alignment: ${M}/${N} keywords found.`
+      topicTerms: topTerms,
+      focusedTerms,       // which of the page's main topics ARE reflected in the title/H1
+      coverage,
+      focus,
+      stuffingPenalty,
+      stuffedTerms,       // [{ term, count, density }] over-used terms that triggered the penalty
+      wordCount,
+      reason,
+      details: `Relevance ${finalScore}% (coverage ${coverage}% · focus ${focus}% · ${confidence} confidence)`,
+      analysis: status === "pass" ? null : { cause: reason, recommendation },
     };
   } catch (err) {
-    return { score: "LOW", percentage: 0, matchedKeywords: [], missingKeywords: [], reason: "Calculation error", status: "fail" };
+    return { score: "LOW", percentage: 0, status: "fail", confidence: "low", matchedKeywords: [], missingKeywords: [], topicTerms: [], reason: "Calculation error", analysis: { cause: "Content relevance could not be calculated.", recommendation: "Re-run the audit." } };
   }
 };
 
@@ -1231,7 +1193,16 @@ const checkURLStructure = (url) => {
 };
 
 const checkTitle = ($) => {
-  const titleTag = $("title");
+  // Take the document <title> ONLY. `$("title")` also matches <title> elements inside
+  // inline <svg> icons (used as accessibility labels, e.g. "close carousel" on a
+  // carousel control) — and `.text()` on the whole set would concatenate them onto the
+  // real title. Exclude any <title> that has an <svg> ancestor, then take the first.
+  const titleTag = $("title").filter((_, el) => {
+    for (let p = el.parent; p; p = p.parent) {
+      if (p.name && p.name.toLowerCase() === "svg") return false;
+    }
+    return true;
+  }).first();
   const exists = titleTag.length > 0;
   const title = exists ? titleTag.text().trim() : "";
   const titleLength = title.length;
@@ -1246,25 +1217,25 @@ const checkTitle = ($) => {
       : "The document is missing a <title> tag in the <head> section.";
     recommendation = "Add a descriptive <title> (50–60 characters) with the primary keyword near the front and the brand name as a suffix.";
   } else {
-    // Graded length curve (spec rule 1: continuous, not pass/fail). Optimal
-    // 50–60 chars = 1.0; shorter wastes SERP space, longer truncates.
-    if (titleLength >= 50 && titleLength <= 60) score = 1;
-    else if (titleLength >= 40 && titleLength < 50) score = 0.9;
-    else if (titleLength >= 30 && titleLength < 40) score = 0.8;
-    else if (titleLength >= 20 && titleLength < 30) score = 0.65;
-    else if (titleLength < 20) score = 0.5;
-    else if (titleLength > 60 && titleLength <= 65) score = 0.9;
-    else if (titleLength > 65 && titleLength <= 75) score = 0.7;
+    // Graded length curve (spec rule 1: continuous, not pass/fail). The ideal is 50–60,
+    // but Google truncates by PIXEL width (~600px), not an exact character count — so a
+    // few characters either side is fine. Treat ~45–65 as fully acceptable (full marks)
+    // and only grade down once the title is clearly too short or long enough to truncate.
+    if (titleLength >= 45 && titleLength <= 65) score = 1;
+    else if (titleLength >= 35 && titleLength < 45) score = 0.85; // a little short
+    else if (titleLength >= 25 && titleLength < 35) score = 0.7;
+    else if (titleLength < 25) score = 0.5;
+    else if (titleLength > 65 && titleLength <= 75) score = 0.8;  // a little long
     else score = 0.5; // > 75 — truncates badly in SERPs
 
     if (score === 1) {
-      explanation = `The title length (${titleLength} chars) is within the optimal 50–60 character range.`;
+      explanation = `The title length (${titleLength} chars) is within the acceptable ~50–65 character range for search results.`;
       recommendation = "No substantial changes needed. Keep the primary keyword near the front and the brand as a suffix.";
-    } else if (titleLength < 50) {
-      explanation = `The title is ${titleLength} characters — shorter than the optimal 50–60 range, leaving SERP space unused.`;
+    } else if (titleLength < 45) {
+      explanation = `The title is ${titleLength} characters — shorter than the ideal 50–60 range, leaving SERP space unused.`;
       recommendation = "Expand toward 50–60 characters, e.g. \"{Year} {Make} {Model} for Sale in {City} | {Dealer}\".";
     } else {
-      explanation = `The title is ${titleLength} characters — beyond the ~60-character SERP display limit, so it will be truncated.`;
+      explanation = `The title is ${titleLength} characters — beyond the ~65-character SERP display limit, so it will likely be truncated.`;
       recommendation = "Trim to ~60 characters so the full title shows in search results; keep the primary keyword in the visible portion.";
     }
   }
@@ -1290,7 +1261,7 @@ const checkH1 = ($) => {
   let recommendation = "";
 
   if (h1Count === 0) {
-    score = 0.5;
+    score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
     details = "Missing H1 tag";
     explanation = "No <h1> tag was found on the page.";
     recommendation = "Add exactly one <h1> tag that describes the main topic of the page. It's crucial for SEO and accessibility.";
@@ -1395,7 +1366,7 @@ const checkCanonical = ($, url) => {
   let noindexConflict = false;
 
   if (!exists) {
-    score = 0.5;
+    score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
     details = "Canonical tag missing";
     explanation = "No canonical tag was found in the <head> of the page.";
     recommendation = "Add a <link rel=\"canonical\" href=\"...\" /> pointing to the authoritative URL for this page to prevent duplicate-content issues.";
@@ -1517,7 +1488,8 @@ const checkSocial = ($) => {
   };
   const ogRequired = ["og:title", "og:image", "og:url"];
   const ogCount = ogRequired.reduce((acc, key) => acc + (ogTags[key] ? 1 : 0), 0);
-  let ogScore = ogCount === ogRequired.length ? 1 : 0.5; // WARNING for missing or incomplete
+  const ogPresent = Object.values(ogTags).some(Boolean);
+  let ogScore = ogCount === ogRequired.length ? 1 : ogPresent ? 0.5 : 0; // 0.5 only when present-but-incomplete; fully absent scores 0 (SCORING_FORMAT §7 rule 3)
   const ogMissing = ogRequired.filter(key => !ogTags[key]);
   const ogDetails = ogScore === 1 ? "Open Graph tags are optimized" : ogScore === 0.5 ? `Missing key OG tags: ${ogMissing.join(", ")}` : "No Open Graph tags found";
   const ogMetric = evaluateParameter(ogScore, ogDetails, { tags: ogTags, missing: ogMissing, parameter: "1 if og:title, og:image, og:url exist" });
@@ -1534,7 +1506,8 @@ const checkSocial = ($) => {
   };
   const twRequired = ["twitter:card", "twitter:title"];
   const twCount = twRequired.reduce((acc, key) => acc + (twTags[key] ? 1 : 0), 0);
-  let twScore = twCount === twRequired.length ? 1 : 0.5; // WARNING for missing or incomplete
+  const twPresent = Object.values(twTags).some(Boolean);
+  let twScore = twCount === twRequired.length ? 1 : twPresent ? 0.5 : 0; // 0.5 only when present-but-incomplete; fully absent scores 0 (SCORING_FORMAT §7 rule 3)
   const twMissing = twRequired.filter(key => !twTags[key]);
   const twDetails = twScore === 1 ? "Twitter Card tags are optimized" : twScore === 0.5 ? `Missing key Twitter tags: ${twMissing.join(", ")}` : "No Twitter Card tags found";
   const twitterMetric = evaluateParameter(twScore, twDetails, { tags: twTags, missing: twMissing, parameter: "1 if twitter:card and twitter:title exist" });
@@ -1618,7 +1591,7 @@ const checkSocial = ($) => {
 
   let linkScore, linkDetails, lExpl, lFix;
   if (!hasSocial && !hasSameAs) {
-    linkScore = 0.5;
+    linkScore = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
     linkDetails = "No social profiles found";
     lExpl = "No social-media links or sameAs entries were found.";
     lFix = "Link your social profiles (footer) and declare them in Organization/LocalBusiness sameAs.";
@@ -1725,9 +1698,9 @@ const checkRobotsTxt = async (url, page, $ = null) => {
     let details = "Robots.txt check";
 
     if (!exists) {
-      score = 0.5;
+      score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
       details = "Robots.txt missing";
-    } 
+    }
     else if (!content || content.trim() === "") {
       score = 0.5;
       details = "Robots.txt empty";
@@ -1924,7 +1897,7 @@ const checkSitemap = async (url, robotsContent = null, page) => {
     let hasHreflang = false;
 
     if (!exists) {
-      score = 0.5;
+      score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
       details = "sitemap.xml missing";
       explanation = "No sitemap was found via robots.txt or the common default locations.";
       recommendation = "Create a sitemap.xml, list your important URLs with <lastmod>, and reference it in robots.txt.";
@@ -2045,7 +2018,8 @@ const checkStructuredData = async (page) => {
     });
 
     if (!result.hasData) {
-      return evaluateParameter(0.5, "Structured Data missing", {
+      // absent scores 0 (SCORING_FORMAT §7 rule 3); 0.5 is reserved for present-but-flawed markup
+      return evaluateParameter(0, "Structured Data missing", {
         content: [], types: "", exists: false, detectedTypes: [], otherTypes: [], validated: [], errorCount: 0,
         why_this_occurred: "No JSON-LD structured data found on the page.",
         how_to_fix: "Add Schema.org JSON-LD (Organization/LocalBusiness, Product/Vehicle, Offer, FAQPage, BreadcrumbList) so the page is eligible for rich results.",
@@ -2204,6 +2178,13 @@ const tuIsEligible = (href) => {
   try {
     const { pathname } = new URL(href);
     if (TU_ASSET_RE.test(pathname)) return false;
+
+    // Use centralized classifier to screen out VDP, SRP, about/contact, and legal pages
+    const pageType = classifyPageType(href);
+    if (pageType === "vdp" || pageType === "srp" || pageType === "about" || pageType === "generic") {
+      return false;
+    }
+
     if (TU_VIN_RE.test(pathname)) return false;
     if (TU_EXCLUDE_RE.test(pathname)) return false;
     return true;
@@ -2350,63 +2331,6 @@ const tuExtractBodyText = (html) => {
   return tuNormalizeText(text).slice(0, 5000);
 };
 
-// Derive a target keyword for a page — URL slug first, then H1, then the most
-// frequent significant word in the main content (mirrors the spec's methods).
-const tuKeywordFromSlug = (pageUrl) => {
-  try {
-    const { pathname } = new URL(pageUrl);
-    const segs = pathname.split("/").filter(Boolean);
-    if (!segs.length) return [];
-    const last = segs[segs.length - 1].replace(/\.(html?|php|aspx?)$/i, "");
-    return last
-      .split(/[-_]+/)
-      .map((t) => t.toLowerCase())
-      .filter((t) => t.length > 2 && !stopWords.has(t) && !/^\d+$/.test(t));
-  } catch {
-    return [];
-  }
-};
-
-const tuDeriveKeyword = (page) => {
-  // Method 1 — URL slug.
-  let tokens = tuKeywordFromSlug(page.url);
-  if (tokens.length) return { tokens, source: "url" };
-
-  // Method 2 — Page H1.
-  if (page.h1) {
-    tokens = cleanText(page.h1).slice(0, 3);
-    if (tokens.length) return { tokens, source: "h1" };
-  }
-
-  // Method 3 — Most frequent significant words in main content.
-  if (page.bodyText) {
-    const words = cleanText(page.bodyText);
-    const freq = {};
-    words.forEach((w) => { freq[w] = (freq[w] || 0) + 1; });
-    const top = Object.entries(freq)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 2)
-      .map((e) => e[0]);
-    if (top.length) return { tokens: top, source: "content" };
-  }
-
-  return { tokens: [], source: "none" };
-};
-
-// Loose match: direct substring or a stemmed substring so "finance" matches
-// "Financing" and "specials" matches "Special Offers".
-const tuStem = (w) => w.replace(/(ing|ed|es|s|e)$/i, "");
-const tuTitleHasKeyword = (title, tokens) => {
-  if (!title || !tokens.length) return false;
-  const t = title.toLowerCase();
-  return tokens.some((tok) => {
-    const k = tok.toLowerCase();
-    if (k.length >= 3 && t.includes(k)) return true;
-    const stem = tuStem(k);
-    return stem.length >= 4 && t.includes(stem);
-  });
-};
-
 // ── Location helpers (Title Location Optimization) ──────────────────────────
 const TU_STATES = {
   AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
@@ -2424,6 +2348,57 @@ const TU_STATES = {
 const TU_STATE_BY_NAME = Object.fromEntries(
   Object.entries(TU_STATES).map(([abbr, name]) => [name.toLowerCase(), abbr])
 );
+
+// Collect EVERY geographic term the business itself declares — country-agnostic, no
+// hardcoded place lists. The business is the source of truth for its own locations, so
+// we read what it publishes: all PostalAddress locality/region/country values in the
+// page's JSON-LD, its areaServed / serviceArea (where a suburb business lists the metro
+// it serves, e.g. "Brisbane"), and geo / OpenGraph locality meta tags.
+const tuCollectLocationTerms = (structuredData, $) => {
+  const terms = new Set();
+  const add = (v) => {
+    if (v == null) return;
+    const s = String(v).trim().toLowerCase();
+    if (s.length > 2 && !/^\d+$/.test(s)) terms.add(s);
+  };
+  const addSplit = (v) => { // for codes like "AU-QLD" / "US-CA"
+    if (v == null) return;
+    String(v).toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2).forEach((w) => terms.add(w));
+  };
+
+  const walk = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) { node.forEach(walk); return; }
+    const addrs = Array.isArray(node.address) ? node.address : (node.address ? [node.address] : []);
+    for (const a of addrs) {
+      if (a && typeof a === "object") {
+        add(a.addressLocality || a.addresslocality);
+        add(a.addressRegion || a.addressregion);
+        add(a.addressCountry || a.addresscountry);
+      }
+    }
+    add(node.addressLocality); add(node.addressRegion); add(node.addressCountry);
+    for (const key of ["areaServed", "serviceArea"]) {
+      const as = node[key];
+      if (!as) continue;
+      (Array.isArray(as) ? as : [as]).forEach((x) => {
+        if (typeof x === "string") add(x);
+        else if (x && typeof x === "object") { add(x.name); if (x.address) { add(x.address.addressLocality); add(x.address.addressRegion); } }
+      });
+    }
+    Object.values(node).forEach((v) => { if (v && typeof v === "object") walk(v); });
+  };
+  if (structuredData) walk(structuredData);
+
+  if ($) {
+    add($('meta[name="geo.placename"]').attr("content"));
+    addSplit($('meta[name="geo.region"]').attr("content"));
+    add($('meta[property="og:locality"]').attr("content"));
+    add($('meta[property="business:contact_data:locality"]').attr("content"));
+    add($('meta[property="business:contact_data:region"]').attr("content"));
+  }
+  return terms;
+};
 
 // Walk parsed JSON-LD looking for a postal address (LocalBusiness etc.).
 const tuFindSchemaAddress = (node) => {
@@ -2499,13 +2474,85 @@ const tuTitleHasLocation = (title, loc) => {
   if (loc.city && loc.city.length > 2 && t.includes(loc.city.toLowerCase())) {
     hits.push(loc.city);
   }
-  if (loc.state) {
-    if (new RegExp(`\\b${loc.state.toUpperCase()}\\b`).test(title)) hits.push(loc.state);
-    const full = TU_STATES[loc.state.toUpperCase()];
+  const stateAbbr = loc.state ? loc.state.toUpperCase() : null;
+  if (stateAbbr) {
+    if (new RegExp(`\\b${stateAbbr}\\b`).test(title)) hits.push(loc.state);
+    const full = TU_STATES[stateAbbr] || loc.stateName;
     if (full && t.includes(full.toLowerCase())) hits.push(full);
   }
   if (loc.stateName && t.includes(loc.stateName.toLowerCase())) hits.push(loc.stateName);
   return { found: hits.length > 0, hits: [...new Set(hits)] };
+};
+
+// Escape a harvested term for safe use inside a RegExp (place names can contain . - ' etc.).
+const tuEscapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+// Vertical / generic words that are NOT locations. Used only to isolate the locality
+// token when confirming a title's place-name against the business's own name/domain.
+// This is an industry stoplist (about the auto-dealer vertical & common car makes),
+// NOT a geographic gazetteer — no place names are hardcoded.
+const TU_NONLOCATION = new Set([
+  "car", "cars", "auto", "autos", "automotive", "motor", "motors", "vehicle", "vehicles",
+  "dealer", "dealers", "dealership", "sales", "sale", "used", "new", "preowned", "certified",
+  "group", "centre", "center", "company", "inc", "ltd", "pty", "llc", "corp",
+  "best", "top", "quality", "premium", "expert", "experts", "finance", "financing", "leasing",
+  "service", "servicing", "parts", "truck", "trucks", "van", "vans", "ute", "utes",
+  "buy", "shop", "online", "official", "home", "homepage", "website", "your", "sourcing",
+  // common makes (brand names, not places)
+  "toyota", "ford", "holden", "mazda", "honda", "hyundai", "kia", "nissan", "mitsubishi",
+  "subaru", "volkswagen", "audi", "mercedes", "benz", "lexus", "jeep", "chevrolet",
+  "gmc", "tesla", "volvo", "porsche", "isuzu", "suzuki", "renault", "peugeot", "jaguar",
+  "mini", "skoda", "ssangyong", "haval",
+]);
+
+// Fallback (no gazetteer): confirm a title's place word against the business's OWN
+// identity — its domain and declared name. A title token that isn't a vertical/generic
+// word and appears in the business name or domain is the business's locality (e.g. the
+// domain "carsalesbrisbane" or name "Car Sales Brisbane" + title "…Cars Brisbane" → "brisbane").
+const tuTitleLocationFromBrand = (title, url, structuredData, $) => {
+  if (!title) return [];
+  const corpusParts = [];
+  try { corpusParts.push(new URL(url).hostname.replace(/^www\./, "")); } catch (_) { /* ignore */ }
+  if ($) corpusParts.push($('meta[property="og:site_name"]').attr("content") || "");
+  const pushNames = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) { node.forEach(pushNames); return; }
+    const type = String(node["@type"] || "").toLowerCase();
+    if (node.name && /organization|localbusiness|dealer|store|business/.test(type)) corpusParts.push(String(node.name));
+    if (node.legalName) corpusParts.push(String(node.legalName));
+    if (node.alternateName) corpusParts.push(String(node.alternateName));
+    Object.values(node).forEach((v) => { if (v && typeof v === "object") pushNames(v); });
+  };
+  if (structuredData) pushNames(structuredData);
+
+  const corpus = corpusParts.join(" ").toLowerCase();
+  const corpusConcat = corpus.replace(/[^a-z0-9]/g, "");
+  const corpusTokens = new Set(corpus.split(/[^a-z0-9]+/).filter(Boolean));
+  if (!corpusConcat) return [];
+
+  const hits = [];
+  const seen = new Set();
+  for (const tokRaw of title.toLowerCase().split(/[^a-z0-9]+/)) {
+    const tok = tokRaw.trim();
+    if (tok.length < 4 || TU_NONLOCATION.has(tok) || stopWords.has(tok) || seen.has(tok)) continue;
+    if (corpusTokens.has(tok) || corpusConcat.includes(tok)) {
+      seen.add(tok);
+      hits.push(tok.replace(/\b\w/g, (c) => c.toUpperCase()));
+    }
+  }
+  return hits;
+};
+
+// Does the title mention ANY location the business declares about itself?
+const tuTitleHasDeclaredLocation = (title, terms) => {
+  if (!title || !terms || terms.size === 0) return [];
+  const hits = [];
+  for (const term of terms) {
+    if (new RegExp(`\\b${tuEscapeRegex(term)}\\b`, "i").test(title)) {
+      hits.push(term.replace(/\b\w/g, (c) => c.toUpperCase())); // Title-case for display
+    }
+  }
+  return hits;
 };
 
 // Find a same-origin "Contact" page link on the current page.
@@ -2710,70 +2757,6 @@ const checkMetaDescriptionUniqueness = (sample) =>
 // Title Keyword Optimization — for each sampled page derive a target keyword
 // (URL → H1 → main content) and check whether the <title> contains it.
 // Score = optimized pages / pages checked (4 of 5 → 80).
-const checkTitleKeywordOptimization = (sample) => {
-  if (!sample || !sample.ok) {
-    return evaluateParameter(0.5, "Not enough eligible pages to check keyword optimization", {
-      pagesChecked: 0,
-      optimizedCount: 0,
-      results: [],
-      statusLabel: "Inconclusive",
-      why_this_occurred:
-        (sample && sample.reason) ||
-        "No eligible content pages were found to evaluate title keyword optimization across the site.",
-      how_to_fix:
-        "Expose crawlable content pages through a valid sitemap.xml or homepage navigation so titles can be evaluated.",
-    });
-  }
-
-  const results = sample.results.map((r) => {
-    const { tokens, source } = tuDeriveKeyword(r);
-    const optimized = tuTitleHasKeyword(r.title, tokens);
-    return {
-      url: r.url,
-      title: r.title || null,
-      keyword: tokens.join(" ") || null,
-      source,
-      optimized,
-    };
-  });
-
-  const pagesChecked = results.length;
-  const optimizedCount = results.filter((r) => r.optimized).length;
-  const score = pagesChecked ? optimizedCount / pagesChecked : 0;
-  const scorePct = Math.round(score * 100);
-
-  let statusLabel;
-  if (scorePct >= 100) statusLabel = "Excellent";
-  else if (scorePct >= 80) statusLabel = "Good";
-  else if (scorePct >= 60) statusLabel = "Fair";
-  else if (scorePct >= 40) statusLabel = "Needs Improvement";
-  else statusLabel = "Poor";
-
-  const details =
-    score === 1
-      ? `All ${pagesChecked} sampled titles include their target keyword`
-      : `Checked ${pagesChecked} pages — ${optimizedCount} title(s) include the target keyword`;
-
-  const explanation =
-    score === 1
-      ? `Every one of the ${pagesChecked} sampled pages has a title that includes its target keyword.`
-      : `Only ${optimizedCount} of ${pagesChecked} sampled pages have a title that includes the page's target keyword (derived from the URL, H1 or main content). Titles missing their keyword rank weaker for the terms the page is about.`;
-
-  const recommendation =
-    score === 1
-      ? "Keep including each page's primary keyword naturally in its <title> tag."
-      : "Include each page's primary keyword (what the page is actually about) near the start of its <title> tag.";
-
-  return evaluateParameter(score, details, {
-    pagesChecked,
-    optimizedCount,
-    results,
-    statusLabel,
-    why_this_occurred: explanation,
-    how_to_fix: recommendation,
-  });
-};
-
 // Title Location Optimization — determine the dealership's city/state (from
 // LocalBusiness schema → footer → contact page) and check whether the home
 // page <title> mentions it. Binary: location in title → 100, else 0.
@@ -2839,12 +2822,21 @@ const checkTitleLocationOptimization = async (url, $, page, titleText, structure
       });
     }
 
-    const match = tuTitleHasLocation(title, loc);
+    // Primary match (detected city/state) OR any location the business declares about
+    // itself (address localities, areaServed metros, geo meta) — data-driven, so a title
+    // that names the metro ("Brisbane") is credited for a suburb business ("Ormiston")
+    // whenever the business publishes that metro anywhere in its structured data.
+    const baseMatch = tuTitleHasLocation(title, loc);
+    const declaredTerms = tuCollectLocationTerms(structuredData, $);
+    const declaredHits = tuTitleHasDeclaredLocation(title, declaredTerms);
+    const brandHits = tuTitleLocationFromBrand(title, url, structuredData, $);
+    const allHits = [...new Set([...baseMatch.hits, ...declaredHits, ...brandHits])];
+    const match = { found: allHits.length > 0, hits: allHits };
     const score = match.found ? 1 : 0;
     const locStr = [loc.city, loc.stateName || loc.state].filter(Boolean).join(", ");
 
     const details = match.found
-      ? `Title includes the dealership location (${locStr})`
+      ? `Title includes a local signal (${match.hits.join(", ")})`
       : `Title is missing the dealership location (${locStr})`;
 
     const explanation = match.found
@@ -4301,7 +4293,8 @@ const checkContentFreshness = ($) => {
   if (m) pushDate(m[2], 'visible-text');
 
   if (sources.length === 0) {
-    return evaluateParameter(0.5, "No content freshness signal found.", {
+    // absent scores 0 (SCORING_FORMAT §7 rule 3) — spec explicitly cites freshness "gives 50 with no timestamp at all"
+    return evaluateParameter(0, "No content freshness signal found.", {
       mostRecent: null, signalCount: 0,
       checked: "meta tags, JSON-LD dateModified/datePublished, <time>, visible 'last updated' text",
       why_this_occurred: "No update timestamp (meta tag, structured-data date, <time> element, or visible 'last updated' text) was found, so search engines can't tell how fresh this content is.",
@@ -4554,6 +4547,7 @@ const checkVdpUniqueness = async (url, $, page, sitemapContent = null) => {
 
 export default async function seoMetrics(url, $, page) {
 
+  const pageType = tuClassifyPageType(url);
   const titleMetric = checkTitle($);
   const metaDescMetric = checkMetaDescription($);
   const urlStructureMetric = checkURLStructure(url);
@@ -4563,12 +4557,13 @@ export default async function seoMetrics(url, $, page) {
   // Video HIDDEN: not an On-Page SEO parameter in the spec (§2.2).
   const hierarchyMetric = checkHeadingHierarchy($);
   const semanticMetric = await checkSemanticTags($);
-  const contextualMetric = await checkContextualLinks($, url);
   const linksMetric = checkLinks($, url);
+  // Contextual_Linking REMOVED 2026-07-28 (user request): its AI link-relevance judge
+  // (Gemini) dominated audit wall-clock time. Its 4% weight was folded into Links so the
+  // spec's 7% internal-link group is unchanged, and the whole check (checkContextualLinks
+  // / buildLinkClassifications / aiLinkRelevance.js) is gone rather than left dormant.
 
-
-
-  const contentRelevanceMetric = checkContentRelevance($, titleMetric.meta.title, metaDescMetric.meta.description);
+  const contentRelevanceMetric = checkContentRelevance($, titleMetric.meta.title, metaDescMetric.meta.description, pageType);
   // Content_Freshness HIDDEN (rule 4): double-counts AIO "content freshness markers".
   const slugMetric = checkSlugs(url, $);
   const robotsMetric = await checkRobotsTxt(url, page, $);
@@ -4577,7 +4572,6 @@ export default async function seoMetrics(url, $, page) {
   const uniquenessSample = await tuSamplePages(url, $, page, sitemapMetric?.meta?.content);
   const titleUniquenessMetric = checkTitleUniqueness(uniquenessSample);
   const metaDescUniquenessMetric = checkMetaDescriptionUniqueness(uniquenessSample);
-  const titleKeywordMetric = checkTitleKeywordOptimization(uniquenessSample);
   const structuredDataMetric = await checkStructuredData(page);
   const titleLocationMetric = await checkTitleLocationOptimization(
     url,
@@ -4599,7 +4593,6 @@ export default async function seoMetrics(url, $, page) {
   // their page type and added to the weight set below (renormalizing the
   // common params downward for that page type, per spec §5.2).
   const viewportMetric = checkViewport($);
-  const pageType = tuClassifyPageType(url);
   const vdpUniquenessMetric = pageType === "vdp"
     ? await checkVdpUniqueness(url, $, page, sitemapMetric?.meta?.content)
     : null;
@@ -4609,11 +4602,15 @@ export default async function seoMetrics(url, $, page) {
   // ── Spec-aligned On-Page SEO weights (AUDIT_FRAMEWORK_SPECIFICATION.md §2.2 / §5.1) ──
   // The product splits some spec parameters into sub-cards whose weights SUM to
   // that spec parameter's within-section weight:
-  //   Meta title 15%  → Title(7) + Uniqueness(3) + Keyword(3) + Location(2)
+  //   Meta title 15%  → Title(10) + Uniqueness(3) + Location(2)
+  //     (Title_Keyword_Optimization removed 2026-07-08 (user request); its 3% was
+  //      folded into Title so the Meta-title group stays at 15%.)
   //   Heading 11%     → H1(7) + Heading_Hierarchy(4)
   //   Meta desc 9%    → Meta_Description(6) + Meta_Description_Uniqueness(3)
   //   URL 8%          → URL_Structure(5) + URL_Slugs(3)
-  //   Internal link 7%→ Contextual_Linking(4) + Links(3)
+  //   Internal link 7%→ Links(7)
+  //     (Contextual_Linking removed 2026-07-28 (user request); its 4% was folded into
+  //      Links so the internal-link group stays at 7%.)
   //   Open Graph 6%   → Open_Graph(3) + Twitter_Card(2) + Social_Links(1)
   //   Canonical 11 · Robots meta+intent 8 · Image 8 · Content relevance 6 · Semantic 5
   //
@@ -4626,9 +4623,8 @@ export default async function seoMetrics(url, $, page) {
   // deferred): Sitemap (→ Technical), Video (not in spec). Output-only already:
   // URL_Structure is dual — weighted here AND shown; Service/Content_Depth/Local_SEO.
   const weights = {
-    Title: 0.07,
+    Title: 0.10,
     Title_Uniqueness: 0.03,
-    Title_Keyword_Optimization: 0.03,
     Title_Location_Optimization: 0.02,
     Canonical: 0.11,
     H1: 0.07,
@@ -4639,12 +4635,13 @@ export default async function seoMetrics(url, $, page) {
     URL_Structure: 0.05,
     URL_Slugs: 0.03,
     Image: 0.08,
-    Contextual_Linking: 0.04,
-    Links: 0.03,
+    Links: 0.07,
     Open_Graph: 0.03,
     Twitter_Card: 0.02,
     Social_Links: 0.01,
-    Content_Relevance: 0.06,
+    // Content_Relevance: 0.06,  // HIDDEN 2026-07-07 (user request) pending redesign —
+    //   checkContentRelevance still runs, but it's dropped from the weighted % and its
+    //   card is hidden in On_Page_SEO.jsx. Re-add this line to bring it back.
     Semantic_Tags: 0.05,
     Viewport: 0.03,
   };
@@ -4663,7 +4660,6 @@ export default async function seoMetrics(url, $, page) {
   const metricOf = {
     Title: titleMetric,
     Title_Uniqueness: titleUniquenessMetric,
-    Title_Keyword_Optimization: titleKeywordMetric,
     Title_Location_Optimization: titleLocationMetric,
     Canonical: canonicalMetric,
     H1: h1Metric,
@@ -4674,7 +4670,6 @@ export default async function seoMetrics(url, $, page) {
     URL_Structure: urlStructureMetric,
     URL_Slugs: slugMetric,
     Image: imageMetric,
-    Contextual_Linking: contextualMetric,
     Links: linksMetric,
     Open_Graph: ogMetric,
     Twitter_Card: twitterMetric,
@@ -4706,7 +4701,6 @@ export default async function seoMetrics(url, $, page) {
   return {
     Title: titleMetric,
     Title_Uniqueness: titleUniquenessMetric,
-    Title_Keyword_Optimization: titleKeywordMetric,
     Title_Location_Optimization: titleLocationMetric,
     Meta_Description: metaDescMetric,
     Meta_Description_Uniqueness: metaDescUniquenessMetric,
@@ -4716,7 +4710,6 @@ export default async function seoMetrics(url, $, page) {
     Image: imageMetric,
     Heading_Hierarchy: hierarchyMetric,
     Semantic_Tags: semanticMetric,
-    Contextual_Linking: contextualMetric,
     Links: linksMetric,
     Content_Relevance: contentRelevanceMetric,
     URL_Slugs: slugMetric,

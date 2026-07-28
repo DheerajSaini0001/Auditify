@@ -219,12 +219,12 @@ export const InfoDetails = {
     Render_Blocking: {
         title: "Render Blocking Resources",
         whatThisParameterIs: "Render-blocking resources are files that force the browser to stop and wait before it can show anything on the screen.",
-        whatItCalculates: "We identify scripts in the `<head>` without `async` or `defer` attributes and stylesheets without media attributes that delay the first paint.",
-        whyItMatters: "Removing these 'roadblocks' allows your site to show its face much sooner, keeping visitors engaged from the very first second.",
+        whatItCalculates: "We read Lighthouse's render-blocking-resources audit, which measures how many milliseconds of first paint each blocking file actually costs, and score inversely to the total delay (falling back to counting head scripts/stylesheets without async/defer/media when Lighthouse data is unavailable).",
+        whyItMatters: "Removing these 'roadblocks' allows your site to show its face much sooner, keeping visitors engaged from the very first second. Because the score follows the measured delay, fixing any single blocking file improves it.",
         thresholds: {
-            good: "0 blocking resources",
-            needsImprovement: "1 – 5 blocking resources",
-            poor: "> 5 blocking resources"
+            good: "≲300ms of blocked paint time",
+            needsImprovement: "~300ms – 1.2s blocked",
+            poor: "> 1.2s blocked"
         },
         actualReasonsForFailure: [
             "<script> tags missing 'async' or 'defer'",
@@ -286,9 +286,9 @@ export const InfoDetails = {
         whatItCalculates: "We read Lighthouse's `categories.performance.score` straight from the PageSpeed Insights API for each strategy. It is Lighthouse's own weighted blend of FCP, Speed Index, LCP, Total Blocking Time and CLS — not our internal weighting.",
         whyItMatters: "This is the number clients, agencies and Google itself quote. It is a quick, standardized benchmark of overall speed, and because Mobile is scored separately it reflects how most real visitors actually experience the site.",
         thresholds: {
-            good: "90–100 (Green)",
-            needsImprovement: "50–89 (Orange)",
-            poor: "0–49 (Red)"
+            good: "75–100 (Green)",
+            needsImprovement: "25–74 (Orange)",
+            poor: "0–24 (Red)"
         },
         actualReasonsForFailure: [
             "Slow Largest Contentful Paint and Speed Index",
@@ -458,24 +458,24 @@ export const InfoDetails = {
     },
 
     citations: {
-        title: "Trust Signals",
-        whatThisParameterIs: "Trust Signals measures citations & transparency on the page — cited sources/references, policy pages (privacy/terms/contact/about), transparent contact & authorship, and trust basics like HTTPS, disclosures and dates.",
-        whatItCalculates: "We score four components: citations to reputable sources (45), presence of policy pages (20), contact & authorship transparency (20), and trust basics such as HTTPS and dated content (15).",
-        whyItMatters: "Trust signals tell engines your content is accountable: cited sources, clear policies (privacy/terms/contact), transparent contact & authorship, HTTPS and dated content. RAG engines like Perplexity prioritize verifiable, trustworthy pages.",
+        title: "Citations & Attribution",
+        whatThisParameterIs: "Citations & Attribution measures how trustworthy and verifiable your content is: links to outside sources, standard policy pages, contact details, author names, and security/dates.",
+        whatItCalculates: "We score four parts: links to outside sources (45), policy pages (20), clear contact details and authors (20), and secure connection and dates (15).",
+        whyItMatters: "AI engines prefer information they can verify. Providing clear outside sources, standard policies, author names, and update dates builds high trust, making search and AI engines much more likely to cite your site.",
         thresholds: {
-            good: "Cited sources plus complete policy, contact and trust basics",
-            needsImprovement: "Some trust elements present but citations or policies are thin",
-            poor: "No external citations and missing policy/contact transparency"
+            good: "Links to outside sources plus complete policy, contact and security details",
+            needsImprovement: "Some trust pages present, but lacking source links or author info",
+            poor: "No links to outside sources and missing basic contact/policy pages"
         },
         actualReasonsForFailure: [
-            "No links or references to reputable external sources",
-            "Missing privacy/terms/contact/about pages",
-            "No visible authorship, contact details or content dates"
+            "Missing links to outside sources",
+            "Missing basic policy pages (like privacy or contact)",
+            "No visible authors, clickable contact info, or update dates"
         ],
         howToOvercomeFailure: [
-            "Link to reputable external sources and add citation markers",
-            "Publish clear privacy, terms, contact and about pages",
-            "Show authorship, contact info, publish/updated dates and serve over HTTPS"
+            "Link to outside sources and use number markers like [1]",
+            "Add standard policy pages in your menu or footer",
+            "Show author names, contact info, update dates, and use a secure HTTPS connection"
         ]
     },
 
@@ -503,23 +503,21 @@ export const InfoDetails = {
 
     entityRecognition: {
         title: "Entity Recognition",
-        whatThisParameterIs: "Entity Recognition checks whether engines can confidently identify your business as a real entity, via Organization/LocalBusiness schema plus Knowledge Graph presence.",
-        whatItCalculates: "We look for valid Organization/LocalBusiness JSON-LD (and its completeness) and check for a matching Knowledge Graph entity using the Knowledge Graph API.",
-        whyItMatters: "AI engines can only cite or recommend a business they can identify with confidence. Organization/LocalBusiness schema and a Knowledge Graph entity turn your site from 'some text' into a recognized entity engines trust.",
+        whatThisParameterIs: "Entity Recognition checks whether engines can confidently identify your business as a real entity via Organization/LocalBusiness schema.",
+        whatItCalculates: "We analyze the presence and completeness of your Organization/LocalBusiness JSON-LD.",
+        whyItMatters: "AI engines can only cite or recommend a business they can identify with confidence. Valid, complete Organization/LocalBusiness schema turns your site from 'some text' into a recognized entity engines trust.",
         thresholds: {
-            good: "Complete Organization/LocalBusiness schema with a matching Knowledge Graph entity",
-            needsImprovement: "Schema present but missing fields, or no Knowledge Graph match",
+            good: "Complete Organization/LocalBusiness schema with address and sameAs profile links",
+            needsImprovement: "Schema present but missing key fields (like address or links)",
             poor: "No Organization/LocalBusiness schema found"
         },
         actualReasonsForFailure: [
             "No Organization/LocalBusiness JSON-LD on the page",
-            "Schema present but missing key fields (name, logo, url, sameAs)",
-            "No matching entity in the Knowledge Graph"
+            "Schema present but missing key fields (name, logo, url, sameAs)"
         ],
         howToOvercomeFailure: [
             "Add complete Organization/LocalBusiness JSON-LD",
-            "Include name, logo, url, address, contact and sameAs links",
-            "Build consistent off-site references so a Knowledge Graph entity forms"
+            "Include name, logo, url, address, contact and sameAs links"
         ]
     },
 
@@ -615,19 +613,19 @@ export const InfoDetails = {
         title: "Citation Consistency",
         whatThisParameterIs: "Citation Consistency checks whether your NAP (Name/Address/Phone) and brand details agree across the page — schema, tel: links and brand tags — so engines can state your identity with confidence.",
         whatItCalculates: "We compare on-page identity signals and score completeness (40), phone consistency (25), name consistency (20) and address completeness (15). (On-page only — a full citation audit needs the Places API with billing.)",
-        whyItMatters: "If your name, address, or phone conflicts across sources, engines can't confidently state your details — so they omit or hedge. One consistent NAP everywhere is foundational for local trust and 'near me / call X' answers.",
+        whyItMatters: "If your name, address, or phone conflicts across sources, engines can't confidently state your details — so they omit or hedge. Consistent NAP everywhere is foundational for local trust and 'near me / call X' answers.",
         thresholds: {
-            good: "One consistent NAP across schema, tel: links and visible text",
+            good: "Consistent NAP (up to two matching phone numbers allowed)",
             needsImprovement: "Mostly consistent but some details are incomplete",
-            poor: "Conflicting phone numbers or mismatched name/address on the page"
+            poor: "More than two conflicting phone numbers or mismatched name/address on the page"
         },
         actualReasonsForFailure: [
-            "Multiple different phone numbers appear on the page",
+            "Three or more different phone numbers appear on the page",
             "Business name or address differs between schema and visible text",
             "Address or contact details are incomplete"
         ],
         howToOvercomeFailure: [
-            "Use one identical NAP everywhere (schema, tel: links, footer)",
+            "Use identical NAP everywhere (up to two phone numbers allowed, schema, tel: links, footer)",
             "Match your LocalBusiness schema to the visible name/address/phone",
             "Complete all address and contact fields"
         ]
@@ -945,27 +943,6 @@ export const InfoDetails = {
             "Replace generic <div>s with semantic elements where they convey structure"
         ]
     },
-    Contextual_Linking: {
-        title: "Contextual Linking",
-        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website — and whether those links are topically related to the page they sit on.",
-        whatItCalculates: "We identify links in the main content area (excluding navigation), verify they aren't broken, and now measure topical relatedness: we derive this page's topic terms (title, headings, top body terms) and check what share of in-content links have anchor text or URL slugs that overlap that topic. A low related ratio (with enough links) signals weak topical clustering.",
-        whyItMatters: "Internal links help visitors and search bots discover more content. Links to topically related pages build 'topic clusters' that strengthen rankings; a wall of unrelated links does little for SEO.",
-        thresholds: {
-            good: "Contextual links present, valid, and topically related",
-            needsImprovement: "Few links related to the page topic, or some key links missing",
-            poor: "No contextual links, or broken links"
-        },
-        actualReasonsForFailure: [
-            "No links in main content",
-            "Most in-content links point to topically unrelated pages",
-            "Important pages only linked in navigation, or broken links present"
-        ],
-        howToOvercomeFailure: [
-            "Add internal links naturally within content body",
-            "Link to pages that share this page's topic (related models, services, guides) to build topic clusters",
-            "Use descriptive anchor text that reflects the linked page's subject"
-        ]
-    },
     Heading_Hierarchy: {
         title: "Heading Hierarchy",
         whatThisParameterIs: "Heading Hierarchy is the logical order of your titles (H1, H2, H3). It creates an easy-to-follow outline for your readers.",
@@ -1030,8 +1007,8 @@ export const InfoDetails = {
     },
     Content_Relevance: {
         title: "Content Relevance",
-        whatThisParameterIs: "Content Relevance measures how well your actual page content aligns with the primary topics promised in your Page Title and Meta Description.",
-        whatItCalculates: "We extract core keywords from your title and meta description and check if they are naturally woven into the body text. We prioritize Title alignment and penalize for keyword stuffing or excessive filler content.",
+        whatThisParameterIs: "Content Relevance measures whether the page is genuinely about a clear topic — both that the body delivers on the title/meta/H1 promise, and that the page's own dominant content actually matches its headline.",
+        whatItCalculates: "Two blended signals: (1) Coverage (60%) — how many of the title/meta/H1 keywords actually appear in the main body (whole-word / stemmed match); (2) Topical focus (40%) — we derive the page's most-used content terms (what it's really about) and check how many are reflected in the title/H1. A keyword-stuffing penalty applies only on pages with enough content to judge fairly.",
         whyItMatters: "Search engines prioritize 'Satisfactory Search Intent.' If a user clicks your link because of the title but finds unrelated content, they will bounce immediately, which severely hurts your rankings.",
         thresholds: {
             good: "Strong keyword alignment & natural flow",
@@ -1350,27 +1327,6 @@ export const InfoDetails = {
         ]
     },
 
-    Title_Keyword_Optimization: {
-        title: "Title Keyword Optimization",
-        whatThisParameterIs: "Checks whether each page's <title> tag actually contains the keyword that page is about.",
-        whatItCalculates: "We sample up to 5 eligible content pages, derive each page's target keyword (from its URL, then its H1, then its main content), and check whether the <title> includes that keyword. Score = optimized pages / pages checked.",
-        whyItMatters: "A title that includes the page's primary keyword tells search engines and users exactly what the page offers, directly improving rankings and click-through for those terms.",
-        thresholds: {
-            good: "All sampled titles contain their keyword (100)",
-            poor: "No sampled titles contain their keyword (0)"
-        },
-        actualReasonsForFailure: [
-            "Titles are generic and omit the page's main keyword",
-            "Same templated title reused across different pages",
-            "Title focuses only on brand name, not the topic"
-        ],
-        howToOvercomeFailure: [
-            "Include the page's primary keyword in its <title>",
-            "Place the keyword near the start of the title",
-            "Match the title to the page's actual content and URL"
-        ]
-    },
-
     Title_Location_Optimization: {
         title: "Title Location Optimization",
         whatThisParameterIs: "Checks whether your home page <title> tag mentions your dealership's city or state.",
@@ -1510,7 +1466,7 @@ export const InfoDetails = {
                     <span className="font-semibold">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
                 </li>
                 <li>
-                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
+                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure internal links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
                 </li>
                 <li>
                     <span className="font-semibold">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
@@ -1536,7 +1492,7 @@ export const InfoDetails = {
             { param: "Meta Description", weight: "8%" },
             { param: "Image Optimization", weight: "8%" },
             { param: "Canonical Tag", weight: "8%" },
-            { param: "Contextual Linking", weight: "8%" },
+            { param: "Internal Linking", weight: "8%" },
             { param: "Structured Data", weight: "6%" },
             { param: "Sitemap & Robots.txt", weight: "9%" },
             { param: "Other Factors (Headings, Social, URLs)", weight: "16%" }
@@ -2348,6 +2304,66 @@ export const InfoDetails = {
             "Add the 'X-Content-Type-Options: nosniff' header to all server responses",
             "Configure this header at the web server level to prevent MIME type sniffing",
             "Verify header configuration using a security header scanner"
+        ]
+    },
+    Referrer_Policy: {
+        title: "Referrer-Policy Header",
+        whatThisParameterIs: "This setting controls how much of your page's web address is shared with other websites when a visitor clicks a link away from your site.",
+        whatItCalculates: "It checks the 'Referrer-Policy' response header and grades the safety of its value (safe, permissive, or unsafe).",
+        whyItMatters: "Without it, full page URLs — which can include search terms or tracking parameters — leak to every third-party site your visitors navigate to. It is also one of the six headers external tools like SecurityHeaders.com grade on.",
+        thresholds: {
+            good: "A safe value such as 'strict-origin-when-cross-origin', 'same-origin', 'strict-origin', or 'no-referrer'",
+            poor: "Header missing, an unsafe value ('unsafe-url'), or an unrecognized value"
+        },
+        actualReasonsForFailure: [
+            "The Referrer-Policy header is missing from the server response",
+            "The policy is set to a permissive value like 'no-referrer-when-downgrade' or 'origin-when-cross-origin'",
+            "The policy is set to 'unsafe-url', which sends full URLs to every destination"
+        ],
+        howToOvercomeFailure: [
+            "Add 'Referrer-Policy: strict-origin-when-cross-origin' — the safe modern default",
+            "Use 'same-origin' or 'no-referrer' if you never need referrer data shared externally",
+            "Configure the header at the web server (Nginx/Apache) or CDN level and verify with a security header scanner"
+        ]
+    },
+    Permissions_Policy: {
+        title: "Permissions-Policy Header",
+        whatThisParameterIs: "This setting declares which powerful browser features (camera, microphone, location, payment prompts) your site — and anything embedded in it — is allowed to use.",
+        whatItCalculates: "It checks for the 'Permissions-Policy' response header (and flags sites still using the deprecated 'Feature-Policy').",
+        whyItMatters: "Dealer sites embed many third-party widgets (chat, maps, video, trade-in tools); without this header, any of them can request sensitive device features. It is also one of the six headers external tools like SecurityHeaders.com grade on.",
+        thresholds: {
+            good: "Permissions-Policy header present with explicit directives",
+            poor: "Header missing, or only the deprecated Feature-Policy header is set"
+        },
+        actualReasonsForFailure: [
+            "The Permissions-Policy header is missing from the server response",
+            "Only the deprecated Feature-Policy header is present, which modern browsers ignore",
+            "No response was received from the server during the header check"
+        ],
+        howToOvercomeFailure: [
+            "Add a Permissions-Policy disabling features you don't use, e.g. 'camera=(), microphone=(), geolocation=()'",
+            "Replace any legacy Feature-Policy header with the equivalent Permissions-Policy",
+            "Configure the header at the web server or CDN level and verify with a security header scanner"
+        ]
+    },
+    Header_Security: {
+        title: "Header Security Grade (External-Checker Comparable)",
+        whatThisParameterIs: "A letter grade (A+ to F) summarizing your transport and security-header hardening, computed the same way public tools like SecurityHeaders.com and Mozilla HTTP Observatory compute theirs.",
+        whatItCalculates: "Starts at 100 and deducts points per failed test — missing/weak CSP, missing HSTS, missing anti-framing protection, Referrer-Policy, Permissions-Policy, X-Content-Type-Options, cookie flags, and HTTPS — then maps the result to Observatory's published letter-grade table.",
+        whyItMatters: "This is the number to compare when someone checks your site on SecurityHeaders.com or the Mozilla Observatory. The section headline covers much more (vulnerabilities, privacy, finance forms), so it will not match those tools — this grade will.",
+        thresholds: {
+            good: "Grade B+ or better (80+): the major hardening headers are enforced",
+            poor: "Grade C or below (< 60): multiple hardening headers missing or unenforced"
+        },
+        actualReasonsForFailure: [
+            "Content-Security-Policy missing, report-only, or containing unsafe directives",
+            "HSTS or anti-framing protection (X-Frame-Options / frame-ancestors) missing",
+            "Referrer-Policy, Permissions-Policy or X-Content-Type-Options missing, or cookies lacking Secure/HttpOnly flags"
+        ],
+        howToOvercomeFailure: [
+            "Fix in order of deduction size shown in the card: CSP first, then HSTS and anti-framing, then the remaining headers",
+            "Each fix is a server/CDN configuration change — no application code changes needed",
+            "Re-verify on SecurityHeaders.com after deploying; the grade there should match this one"
         ]
     },
     HSTS: {

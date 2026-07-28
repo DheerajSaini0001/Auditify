@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, Download, Lock } from "lucide-react";
+import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, Download, Lock, Loader2 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -44,7 +44,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Dealerpulse-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+        link.download = `Site Audit-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -79,8 +79,31 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
     setIsAiChatOpen(true);
   };
 
-  const displayUrl = data?.url ? data.url.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing...";
-  const formattedUrl = displayUrl.length > 45 ? `${displayUrl.substring(0, 42)}...` : displayUrl;
+  // Merged (multi-sample averaged) reports carry a synthetic "#merged-<id>"
+  // suffix on their URL — strip it for both display and the outbound link.
+  const realUrl = (data?.url || '').replace(/#merged-[a-f0-9]+$/i, '');
+  const displayUrl = realUrl ? realUrl.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing...";
+  // The COMPLETE url is always shown (no "…" truncation) — the font just steps
+  // down as the url gets longer, and break-all wraps whatever still overflows.
+  const urlFontClass =
+    displayUrl.length <= 45 ? 'text-2xl md:text-3xl'
+      : displayUrl.length <= 80 ? 'text-xl md:text-2xl'
+        : displayUrl.length <= 120 ? 'text-lg md:text-xl'
+          : 'text-base md:text-lg';
+
+  // "(Home Page)"-style page-type line under the url. Keys match the discovery
+  // catalog (HeroSection PAGE_TYPES / CORPORATE_PAGE_TYPES).
+  const PAGE_TYPE_LABELS = {
+    home: 'Home Page', srp: 'Inventory / SRP', vdp: 'Vehicle Detail / VDP',
+    trade: 'Trade-In Tool', lease: 'Lease Specials', service: 'Service & Parts',
+    about: 'About / Contact', content: 'Content / Blog',
+    models: 'Models & Lineup', locator: 'Dealer Locator', press: 'Press & News',
+  };
+  const pageTypeLabel = data?.pageType
+    ? (PAGE_TYPE_LABELS[data.pageType] || (String(data.pageType).charAt(0).toUpperCase() + String(data.pageType).slice(1)))
+    : null;
+
+  const isAuditPending = data?.status === "pending" || (data?.rawStatus && data.rawStatus !== "completed" && data.rawStatus !== "success");
 
   return (
     <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-line bg-surface-2/80"}`}>
@@ -92,28 +115,42 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-muted"}`} />
             <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>Audit Report For</span>
           </div>
-          <div className="flex items-center gap-3 group min-w-0 w-full">
+          <div className="flex items-start gap-3 group min-w-0 w-full">
             <a
-              href={data?.url || "#"}
+              href={realUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className={`text-2xl md:text-3xl font-semibold truncate hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
-              title={data?.url || ""}
+              className={`${urlFontClass} font-semibold whitespace-normal break-all leading-snug hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
+              title={realUrl || ""}
             >
-              {formattedUrl}
+              {displayUrl}
             </a>
-            <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            <ExternalLink className="w-5 h-5 mt-1.5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
+          {pageTypeLabel && (
+            <div className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-muted"}`}>
+              ({pageTypeLabel})
+            </div>
+          )}
         </div>
 
-        {/* Middle: Average Score */}
-        {typeof data?.score === 'number' && (
+        {/* Middle: Average Score / Status */}
+        {isAuditPending ? (
+          <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
+            <div className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-card border-line/50"}`}>
+              <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+              <div className="flex flex-col">
+                <span className={`text-[10px] font-bold uppercase tracking-widest text-emerald-500`}>Audit Analysis</span>
+                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-inksoft"}`}>In Progress...</span>
+              </div>
+            </div>
+          </div>
+        ) : typeof data?.score === 'number' && (
           <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
             <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-card border-line/50"}`}>
-              <div className={`text-2xl font-black ${
-                data.score >= 90 ? "text-emerald-500" : 
-                data.score >= 50 ? "text-amber-500" : "text-red-500"
-              }`}>
+              <div className={`text-2xl font-black ${data.score >= 90 ? "text-emerald-500" :
+                  data.score >= 50 ? "text-amber-500" : "text-red-500"
+                }`}>
                 {data.score.toFixed(0)}%
               </div>
               <div className="flex flex-col">

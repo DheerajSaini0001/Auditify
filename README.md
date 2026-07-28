@@ -1,4 +1,4 @@
-# 🚀 DealerPulse (Website Health & SEO Audit Engine)
+# 🚀 Site Audit (Website Health & SEO Audit Engine)
 
 A powerful, production-ready MERN Stack application designed to perform deep technical audits of websites. It evaluates **Technical Performance, SEO, Accessibility, Security, UX, AIO Readiness, and Conversion Flow** using advanced scraping and browser automation tools.
 
@@ -58,8 +58,8 @@ A powerful, production-ready MERN Stack application designed to perform deep tec
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/DheerajSaini0001/DealerPulse.git
-cd DealerPulse
+git clone https://github.com/DheerajSaini0001/Site Audit.git
+cd Site Audit
 ```
 
 ### 2. Backend Setup
@@ -117,7 +117,7 @@ npm run dev
 ## 📂 Project Structure
 
 ```bash
-DealerPulse/
+Site Audit/
 ├── Backend/                 # Express Server & Workers
 │   ├── controllers/         # Audit & Report Logic
 │   ├── models/              # MongoDB Schemas (SiteReport)

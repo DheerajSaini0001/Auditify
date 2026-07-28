@@ -105,7 +105,7 @@ export const requestAuditOTP = async (req, res) => {
 
     sendEmail({
       to: email,
-      subject: 'Your Dealerpulse audit verification code',
+      subject: 'Your Site Audit audit verification code',
       html: otpEmailHtml(rawOTP),
     })
       .then(() => logger.info(`[GuestAudit] Verification code sent to ${email}`))

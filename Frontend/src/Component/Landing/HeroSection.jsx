@@ -5,10 +5,13 @@ import {
     Monitor, Smartphone, Search, Loader2, AlertCircle, ChevronDown, Settings, ArrowRight,
     Globe, CheckCircle2, MinusCircle, Sparkles, ExternalLink, Check, ListChecks,
     Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
+    Building2, MapPin, Megaphone,
 } from 'lucide-react';
 import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
+import { saveGuestGrant, getValidGuestGrant } from "../../utils/guestGrant.js";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useData } from '../../context/DataContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
@@ -26,11 +29,32 @@ const PAGE_TYPES = [
     { key: 'srp', label: 'Inventory / SRP', desc: 'Search results page, filters', Icon: LayoutGrid },
     { key: 'vdp', label: 'Vehicle Detail / VDP', desc: 'Per-car detail + lead form', Icon: Car },
     { key: 'trade', label: 'Trade-In Tool', desc: 'KBB-style valuation, lead capture', Icon: Repeat },
-    { key: 'lease', label: 'Lease Specials', desc: 'Lease offers + calculator', Icon: Key },
+    { key: 'lease', label: 'Lease Deals', desc: 'Lease offers + calculator', Icon: Key },
+    { key: 'specials', label: 'Offers & Specials', desc: 'Deals, incentives, rebates', Icon: Tag },
+    { key: 'finance', label: 'Financing', desc: 'Credit application, payment tools', Icon: CreditCard },
     { key: 'service', label: 'Service & Parts', desc: 'Service, repair, parts & accessories', Icon: Wrench },
     { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
     { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
 ];
+
+/* ─────────────────────────────────────────
+   Corporate / OEM page-type catalog — shown instead of PAGE_TYPES once
+   discovery reports `siteType: "corporate"` (no dealer inventory of its own).
+───────────────────────────────────────── */
+const CORPORATE_PAGE_TYPES = [
+    { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
+    { key: 'models', label: 'Models & Lineup', desc: 'Vehicle lineup, research, build & price', Icon: LayoutGrid },
+    { key: 'locator', label: 'Dealer Locator', desc: 'Find a dealer near you', Icon: MapPin },
+    { key: 'press', label: 'Press & News', desc: 'Newsroom, media, investor relations', Icon: Megaphone },
+    { key: 'about', label: 'About / Corporate', desc: 'Company info, leadership, careers', Icon: Building2 },
+    { key: 'content', label: 'Content / Blog', desc: 'Blog, guides, FAQ', Icon: Newspaper },
+];
+
+// Union of both catalogs' keys — the SAFE default `scopes` selection before the
+// first scan, since we don't yet know which catalog (dealer or corporate)
+// applies. Once discovery resolves a siteType, scopes is intersected down to
+// that catalog's keys (see detect()).
+const ALL_PAGE_TYPE_KEYS = [...new Set([...PAGE_TYPES, ...CORPORATE_PAGE_TYPES].map((p) => p.key))];
 
 /* ─────────────────────────────────────────
    Audit report sections (Screen 01 report-scope checklist).
@@ -170,10 +194,19 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const allSelected = selected.length === options.length;
+    // Count only selected keys that are actually in the visible options. `scopes` can
+    // hold cross-catalog keys (its default is the dealer+corporate union so corporate
+    // keys survive detect()'s filter) — counting the raw length would show nonsense like
+    // "11 Pages" / "11/8" when only 8 page types are listed.
+    const selectedInOptions = selected.filter((s) => options.some((o) => o.value === s));
+    const allSelected = options.length > 0 && selectedInOptions.length === options.length;
     const label = getLabel
-        ? getLabel(selected, options)
-        : allSelected ? "All Pages" : selected.length === 0 ? "No Pages" : `${selected.length} Pages`;
+        ? getLabel(selectedInOptions, options)
+        : allSelected ? "All pages"
+            : selectedInOptions.length === 0 ? "No pages"
+                // Just the home page = only the URL the user typed, so say that outright.
+                : selectedInOptions.length === 1 && selectedInOptions[0] === 'home' ? "This page only"
+                    : `${selectedInOptions.length} page${selectedInOptions.length > 1 ? "s" : ""}`;
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -186,7 +219,7 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                     ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
             >
                 <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
-                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[110px] text-white">{label}</span>
+                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[190px] text-white">{label}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 text-white ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
@@ -208,7 +241,7 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                                 ${darkMode ? "text-orange-400 hover:bg-white/5" : "text-[#ea580c] hover:bg-cardsoft"}`}
                         >
                             <span>{allSelected ? "Clear all" : "Select all"}</span>
-                            <span className="font-semibold">{selected.length}/{options.length}</span>
+                            <span className="font-semibold">{selectedInOptions.length}/{options.length}</span>
                         </button>
 
                         <div className="max-h-72 overflow-y-auto custom-scrollbar space-y-1">
@@ -346,7 +379,16 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
                             ✓ {audit.total > 1 ? `${audit.total} reports generated` : 'Report generated'}
                         </span>
                     )}
-                    {auditFailed && <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-500">Audit failed</span>}
+                    {auditFailed && (
+                        <div className="space-y-0.5">
+                            <span className="text-[10px] font-semibold uppercase tracking-wider text-rose-500">Audit failed</span>
+                            {audit.error && (
+                                <span className="block text-[10px] leading-snug text-rose-400/90" title={audit.error}>
+                                    {audit.error}
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
         </div>
@@ -370,15 +412,27 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
 
-    // Which dealer page types to include in the audit (defaults to all). The
-    // multi-select dropdown in the form drives this; only selected types are
-    // audited on "Run Full Audit", and unselected cards are dimmed.
-    const [scopes, setScopes] = useState(() => PAGE_TYPES.map((p) => p.key));
+    // Which page types to include in the audit (defaults to all, across BOTH
+    // catalogs — we don't know if this is a dealer or corporate site until the
+    // first scan resolves). The multi-select dropdown in the form drives this;
+    // only selected types are audited on "Run Full Audit", and unselected cards
+    // are dimmed. Intersected down to the resolved catalog's keys once known.
+    const [scopes, setScopes] = useState(() => ALL_PAGE_TYPE_KEYS);
+
+    // Detected site type ("dealer" | "corporate" | null before the first scan).
+    // Drives which page-type catalog (PAGE_TYPES vs CORPORATE_PAGE_TYPES) is shown.
+    const [siteType, setSiteType] = useState(null);
 
     // Discovery state
     const [phase, setPhase] = useState('idle');       // idle | detecting | done
     const [discovery, setDiscovery] = useState(null);
     const [detectError, setDetectError] = useState(null);
+    // True when the backend hard-rejected the URL (not a dealer/automotive
+    // corporate site) — distinct from a transient network/server error.
+    const [rejected, setRejected] = useState(false);
+    // True when the per-IP report budget is exhausted (429 REPORT_LIMIT_EXCEEDED)
+    // — nothing can run until the window rolls over, so don't imply otherwise.
+    const [budgetBlocked, setBudgetBlocked] = useState(false);
     const auditTokenRef = useRef(null);               // guest grant, reused for the audit
 
     // Parallel per-page audit state. `auditState[pageKey] = { status, id, progress, url, error }`
@@ -396,57 +450,67 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     }, []);
 
 
+    const { fetchData } = useData();
     const location = useLocation();
     const navigate = useNavigate();
     const isAutoStarting = useRef(false);
+    const urlInputRef = useRef(null);                 // the audit URL field (for "Check My Website")
+    const visibleTypes = siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES;
 
-    const catMap = useMemo(
-        () => Object.fromEntries((discovery?.categories || []).map((c) => [c.key, c])),
-        [discovery]
-    );
+    // "Check My Website" (footer) navigates to "/" with state.focusAudit — scroll to the
+    // top and focus the URL field so the keyboard opens. Keyed on location.key so it fires
+    // every time the link is clicked, even when already on the home page.
+    useEffect(() => {
+        if (!location.state?.focusAudit) return;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // A short delay lets the smooth scroll begin and the field mount before focusing;
+        // focusing opens the on-screen keyboard on touch devices and the caret on desktop.
+        // Focus FIRST, then clear the flag — clearing it via navigate() changes
+        // location.key and re-runs this effect, whose cleanup would cancel a still-pending
+        // focus timeout. Doing it inside the timeout (after focus) avoids that.
+        const t = setTimeout(() => {
+            urlInputRef.current?.focus();
+            // Strip the flag so a refresh / back-nav doesn't re-trigger the jump.
+            navigate(location.pathname, { replace: true, state: {} });
+        }, 350);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.key]);
 
-    // Run page discovery (sitemap → robots.txt → crawl) against the entered URL.
-    const detect = async (urlToScan, token) => {
-        setPhase('detecting');
-        setDiscovery(null);
-        setDetectError(null);
-        try {
-            const bearer = localStorage.getItem('dealerpulse_token');
-            const res = await fetch(`${API_URL}/single-audit/discover`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(bearer && { Authorization: `Bearer ${bearer}` }),
-                    ...(token && { 'x-audit-token': token }),
-                },
-                // Only discover the page types the user kept selected — the backend
-                // skips all resolution work (status checks, SRP/VDP sampling) for the rest.
-                body: JSON.stringify({ url: urlToScan, scopes }),
-            });
-            let data = {};
-            try { data = await res.json(); } catch { /* empty */ }
-            if (!res.ok) setDetectError(data?.error || data?.message || `Detection failed (${res.status}).`);
-            else setDiscovery(data);
-        } catch {
-            setDetectError('Could not reach the server to detect pages.');
-        } finally {
-            setPhase('done');
-        }
-    };
-
-    // Step 1 — "Run Audit": validate, gate guests behind email verification, then detect.
-    const beginFlow = (token, rawUrl) => {
+    // Step 1 — "Run Audit": validate, gate guests behind email verification, then run audit.
+    const beginFlow = async (token, rawUrl) => {
         const urlToScan = normalizeUrl(rawUrl ?? url);
         auditTokenRef.current = token || null;
-        detect(urlToScan, token || null);
+        setPhase('detecting');
+        setLocalError(null);
+
+        // Only send the page types that exist in the catalog on screen — `scopes`
+        // defaults to the dealer+corporate union, and the backend treats the list as
+        // the allow-list for its key-page crawl.
+        // Nothing unticked → send no restriction at all, so the crawl behaves exactly
+        // as it did before this picker was wired up.
+        const activeScopes = scopes.filter((k) => visibleTypes.some((p) => p.key === k));
+        const scopesToSend = activeScopes.length === visibleTypes.length ? null : activeScopes;
+
+        const result = await fetchData(urlToScan, device, report, token || null, false, scopesToSend);
+        setPhase('idle');
+
+        if (result?.success && result?.id) {
+            navigate(`/report/${result.id}`);
+        } else {
+            setLocalError(result?.error || "Could not start audit.");
+        }
     };
 
     const handleRun = (e) => {
         e?.preventDefault?.();
         setLocalError(null);
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
-        if (user || SKIP_EMAIL_VERIFY) { beginFlow(null); return; }
+        if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
+        // Logged-in / dev bypass, or a returning guest whose grant is still valid → run
+        // straight through (fetchData replays the stored grant). Only a first-time /
+        // expired guest sees the email modal.
+        if (user || SKIP_EMAIL_VERIFY || getValidGuestGrant()) { beginFlow(null); return; }
         setShowVerify(true);
     };
 
@@ -457,7 +521,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 : 'pending';
 
     // Flatten the detected categories into one audit task per page. A category may
-    // own several pages now (VDP = a 5-car sample, SRP = separate new/used listings),
+    // own several pages now (VDP = a 2-car sample, SRP = separate new/used listings),
     // so each task gets a unique `auditKey` and a display `label` that disambiguates
     // the samples (e.g. "Vehicle Detail / VDP — Used 1"). `catKey` keeps the task tied
     // back to its card for aggregate progress.
@@ -499,6 +563,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     auditToken: auditTokenRef.current,
                     screenResolution: `${window.screen.width}x${window.screen.height}`,
                     pageType: catKey,
+                    // Reuse the siteType this same /discover scan already resolved —
+                    // the worker needs it to re-classify a redirected page correctly.
+                    siteType: siteType || undefined,
                 }),
             });
             let data = {};
@@ -564,12 +631,53 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setBatchRunning(true);
         window.history.replaceState(null, '', window.location.pathname);
 
-        const results = await Promise.all(targets.map(auditOnePage));
+        const bearer0 = localStorage.getItem('dealerpulse_token');
+        const lookupHeaders = { 'Content-Type': 'application/json', ...(bearer0 && { Authorization: `Bearer ${bearer0}` }) };
+
+        // Multi-sample categories (VDP, SRP) can't reuse via the normal per-URL
+        // dedupe: their sample URLs are freshly discovered each run, the sample
+        // reports are deleted after merging, and the merged report lives under a
+        // synthetic "#merged-" URL. So before auditing the samples, ask the
+        // backend for an existing merged report for this site + pageType — a hit
+        // means the whole category resolves instantly, exactly like the
+        // single-page cache hits.
+        const byCatTargets = {};
+        for (const t of targets) (byCatTargets[t.catKey] = byCatTargets[t.catKey] || []).push(t);
+        const reusedPages = [];
+        const reusedCats = new Set();
+        await Promise.all(
+            Object.entries(byCatTargets)
+                .filter(([, list]) => list.length > 1)
+                .map(async ([catKey, list]) => {
+                    try {
+                        const res = await fetch(`${API_URL}/single-audit/find-merged`, {
+                            method: 'POST',
+                            credentials: 'include',
+                            headers: lookupHeaders,
+                            body: JSON.stringify({ url: normalizeUrl(url), pageType: catKey, device, auditToken: auditTokenRef.current }),
+                        });
+                        const data = await res.json().catch(() => ({}));
+                        if (res.ok && data._id) {
+                            reusedCats.add(catKey);
+                            const baseLabel = (list[0].label || '').split(' — ')[0] || list[0].label;
+                            reusedPages.push({ key: catKey, label: baseLabel, url: list[0].url, id: data._id, status: 'success', mergedFrom: data.mergedFrom });
+                            // Surface the instant cache hit on the category's card.
+                            setAuditState((prev) => ({
+                                ...prev,
+                                [`${catKey}__cached`]: { catKey, label: baseLabel, status: 'success', id: data._id, progress: 100, url: list[0].url, stage: 'Loaded from a recent audit' },
+                            }));
+                        }
+                    } catch { /* lookup is best-effort — fall through to a full audit */ }
+                })
+        );
+
+        const runTargets = targets.filter((t) => !reusedCats.has(t.catKey));
+        const results = await Promise.all(runTargets.map(auditOnePage));
         setBatchRunning(false);
         if (cancelledRef.current) return;
 
         // Group successful results by category. A category sampled across several pages
-        // (VDP = 5 cars, SRP = new/used) is merged server-side into ONE averaged report,
+        // (VDP = 2 cars, SRP = new/used) is merged server-side into ONE averaged report,
         // so the summary shows a single row whose drill-in IS that averaged report.
         const ok = results.filter((r) => r && r.id && r.status !== 'failed');
         const byCat = [];
@@ -582,7 +690,8 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         const bearer = localStorage.getItem('dealerpulse_token');
         const mergeHeaders = { 'Content-Type': 'application/json', ...(bearer && { Authorization: `Bearer ${bearer}` }) };
 
-        const pages = [];
+        // Categories resolved from the merged-report cache skip auditing entirely.
+        const pages = [...reusedPages];
         for (const { catKey, items } of byCat) {
             if (items.length === 1) {
                 const r = items[0];
@@ -621,9 +730,26 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         navigate('/audit-summary', { state: payload });
     };
 
-    // Modal success → store grant, then detect.
+    // Auto-start: once discovery lands successfully, kick off the full audit
+    // immediately instead of waiting for a click on "Run Full Audit on These
+    // Pages". Runs exactly once per completed scan — invalidateDetection()
+    // (scope change / new URL) clears `discovery`, so the next scan re-arms.
+    // The button stays rendered as a visible progress state and manual retry.
+    useEffect(() => {
+        if (phase !== 'done' || !discovery || rejected || budgetBlocked || batchRunning) return;
+        if (autoAuditRanFor.current === discovery) return;
+        if (reportSections.length === 0) return; // nothing selected to score — leave it manual
+        const anyFound = (discovery.categories || []).some((c) => c.found && scopes.includes(c.key));
+        if (!anyFound) return;
+        autoAuditRanFor.current = discovery;
+        handleFullAudit();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [phase, discovery, rejected, budgetBlocked]);
+
+    // Modal success → store grant so later audits skip the email/OTP step, then detect.
     const handleVerified = (auditToken) => {
         setShowVerify(false);
+        saveGuestGrant(auditToken);
         beginFlow(auditToken);
     };
 
@@ -655,7 +781,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         }
         isAutoStarting.current = true;
 
-        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token')) {
+        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token') || getValidGuestGrant()) {
             beginFlow(null, queryUrl);
             window.history.replaceState(null, '', window.location.pathname);
         } else {
@@ -678,6 +804,8 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         if (phase !== 'idle') setPhase('idle');
         setDiscovery(null);
         setDetectError(null);
+        setRejected(false);
+        setBudgetBlocked(false);
         setAuditState({});
     };
     const toggleScope = (key) => {
@@ -685,7 +813,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         invalidateDetection();
     };
     const setAllScopes = (all) => {
-        setScopes(all ? PAGE_TYPES.map((p) => p.key) : []);
+        setScopes(all ? visibleTypes.map((p) => p.key) : []);
         invalidateDetection();
     };
 
@@ -695,7 +823,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setReportSections((prev) => (prev.includes(val) ? prev.filter((v) => v !== val) : [...prev, val]));
     const setAllSections = (all) => setReportSections(all ? SECTIONS.map((s) => s.value) : []);
 
-    const visibleTypes = PAGE_TYPES;
     const foundCount = discovery?.categories?.filter((c) => c.found).length ?? 0;
     const sourceLabel = { sitemap: 'XML sitemap', robots: 'robots.txt → sitemap', crawl: 'link crawl', none: 'direct check' };
 
@@ -724,7 +851,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             const progress = Math.round(tasks.reduce((s, t) => s + (t.progress || 0), 0) / total);
             const status = pending > 0 ? 'pending' : done > 0 ? 'success' : 'failed';
             const stage = total > 1 ? `${done}/${total} pages done` : tasks[0]?.stage;
-            agg[catKey] = { status, progress, stage, total, done, failed };
+            // Surface WHY it failed: a start-request rejection stores `error`
+            // (e.g. the rate-limit message); a worker failure leaves the backend's
+            // error text as the last polled `stage`.
+            const failedTask = failed > 0 ? tasks.find((t) => t.status === 'failed') : null;
+            const error = failedTask ? (failedTask.error || failedTask.stage) : null;
+            agg[catKey] = { status, progress, stage, total, done, failed, error };
         }
         return agg;
     }, [auditState]);
@@ -742,39 +874,51 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         return m;
     }, [auditState]);
 
-    const runBtnDisabled = isLoading || phase === 'detecting' || !url.trim();
+    // Count only page types that are both selected AND in the currently-visible
+    // catalog — `scopes` defaults to the dealer+corporate union, so its raw length
+    // can exceed what's actually shown. "No page selected" ⇒ nothing to audit.
+    const selectedPageCount = scopes.filter((k) => visibleTypes.some((p) => p.key === k)).length;
+    const noSectionSelected = reportSections.length === 0;
+    const noPageSelected = selectedPageCount === 0;
+
+    // Block the run button unless the user has picked at least one section AND one page.
+    const runBtnDisabled =
+        isLoading || phase === 'detecting' || !url.trim() || noSectionSelected || noPageSelected;
 
     return (
         <section
             className={`relative flex flex-col items-center pt-10 pb-16 px-5 sm:px-6 transition-colors duration-500 ${darkMode ? '' : 'bg-surface'}`}
             style={darkMode ? { background: 'linear-gradient(to bottom, #0B1120, #0A0520)' } : undefined}
         >
-            <div className="w-full max-w-6xl mx-auto">
+            <div className="w-full max-w-7xl mx-auto">
 
                 {/* ── Hero copy ── */}
-                <div className="text-center max-w-3xl mx-auto space-y-4">
-                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 ${darkMode ? 'text-orange-200' : 'text-accent'}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
-                        Dealer Website Audit Platform
+                <div className="text-center max-w-4xl mx-auto space-y-4 flex flex-col items-center justify-center">
+
+                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border
+                        ${darkMode ? 'bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400' : 'bg-[#ea580c]/10 border-[#ea580c]/20 text-[#EA580B]'}`}>
+                        <Car size={13} /> For dealership &amp; automotive websites
                     </span>
 
-                    <h1 className={`text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] ${darkMode ? 'text-white' : 'text-ink'}`}>
-                        Audit any dealer site in{" "}
-                        <span className="text-[#EA580B]">48 hours</span>
+                    <h1 className={`text-center text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-[-0.03em] ${darkMode ? 'text-white' : 'text-ink'}`}>
+                        Your website, checked in{" "}
+                        <span className="text-[#EA580B]">minutes</span>
                     </h1>
 
-                    <p className={`text-[clamp(0.95rem,1.4vw,1.125rem)] font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
-                        Drop a URL. We crawl the right pages, score them on 8 dealer-specific parameters,
-                        and hand back a fix list ranked by impact.
+                    <p className={`text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                        Enter your web address. We open your site the way a customer does, then give
+                        you a clear list of what to fix first.
                     </p>
                 </div>
 
                 {/* ── URL input form ── */}
-                <form onSubmit={handleRun} className="relative max-w-3xl mx-auto mt-8 z-[60]">
+                <form onSubmit={handleRun} className="relative max-w-5xl mx-auto mt-8 z-[60]">
                     <div className={`rounded-[2rem] border p-4 sm:p-5 backdrop-blur-2xl shadow-2xl shadow-black/20 ${darkMode ? 'bg-[#111a33]/80 border-white/10' : 'bg-card border-line'}`}>
                         <div className="flex items-center px-3 h-12 gap-3">
                             <Globe className={`flex-shrink-0 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-muted'}`} />
                             <input
+                                ref={urlInputRef}
+                                id="audit-url-input"
                                 type="text"
                                 autoComplete="off"
                                 spellCheck="false"
@@ -799,14 +943,14 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 onToggle={toggleSection}
                                 onSetAll={setAllSections}
                                 getLabel={(sel) =>
-                                    sel.length === SECTIONS.length ? "Full Audit (All 7)"
-                                        : sel.length === 0 ? "No Sections"
-                                            : `${sel.length} Section${sel.length > 1 ? "s" : ""}`}
+                                    sel.length === SECTIONS.length ? `Full audit (all ${SECTIONS.length})`
+                                        : sel.length === 0 ? "No sections"
+                                            : `${sel.length} section${sel.length > 1 ? "s" : ""}`}
                                 icon={<Settings />} darkMode={darkMode} disabled={isLoading || batchRunning}
                             />
                             <MultiSelectDropdown
                                 selected={scopes}
-                                options={PAGE_TYPES.map((p) => ({ value: p.key, label: p.label }))}
+                                options={visibleTypes.map((p) => ({ value: p.key, label: p.label }))}
                                 onToggle={toggleScope}
                                 onSetAll={setAllScopes}
                                 icon={<ListChecks />}
@@ -814,8 +958,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 disabled={isLoading || batchRunning}
                             />
 
-                            {/* Primary button: Run Audit (detect) → Run Full Audit (audit) */}
-                            {phase !== 'done' ? (
+                            {/* Primary button: Run Audit (detect) → Run Full Audit (audit).
+                                Stays on "Run Audit" when rejected — there's nothing to run,
+                                the user needs to try a different URL. */}
+                            {phase !== 'done' || rejected ? (
                                 <button
                                     type="submit"
                                     disabled={runBtnDisabled}
@@ -830,7 +976,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 <button
                                     type="button"
                                     onClick={handleFullAudit}
-                                    disabled={batchRunning || reportSections.length === 0}
+                                    disabled={batchRunning || noSectionSelected || noPageSelected}
                                     className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-500 text-white hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {batchRunning ? <><Loader2 className="animate-spin w-5 h-5" /> Auditing…</> : <>Run Full Audit <ArrowRight size={16} /></>}
@@ -838,12 +984,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             )}
                         </div>
                     </div>
-
-                    {/* Auto-detect callout */}
-                    <p className={`mt-3 flex items-center justify-center gap-2 text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-                        <Sparkles className="w-3.5 h-3.5 text-[#ea580c]" />
-                        One URL → we auto-detect all {PAGE_TYPES.length} dealer page types below.
-                    </p>
 
                     <AnimatePresence>
                         {error && (
@@ -855,53 +995,22 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </form>
 
-                {/* ── Auto-detect section ── */}
-                <div className="mt-12">
-                    <div className="mb-5">
-                        <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
-                            {phase === 'done'
-                                ? `Detected ${foundCount} of ${PAGE_TYPES.length} key pages on your site`
-                                : "We'll auto-detect and audit these pages on your site"}
-                        </h3>
-                        {phase === 'done' && discovery && (
-                            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-                                via {sourceLabel[discovery.source] || discovery.source}
-                                {discovery.sitemapUrl ? ` · ${prettyPath(discovery.sitemapUrl)}` : ''}
-                            </p>
-                        )}
-                        {phase === 'done' && detectError && (
-                            <p className="text-xs mt-1 text-amber-500">{detectError} — you can still run the full audit.</p>
-                        )}
-                    </div>
-
-                    <motion.div
-                        initial="hidden" animate="show"
-                        variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                        className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-                    >
-                        {visibleTypes.map((def) => (
-                            <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-                                <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={!scopes.includes(def.key)} inScope={scopes.includes(def.key)} audit={auditByCat[def.key]} pageAudits={pageAuditsByCat[def.key]} />
-                            </motion.div>
+                    {/* What to expect — answers the three questions people ask before typing a URL */}
+                    <div className={`mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm font-medium
+                        ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                        {[
+                            'No card needed',
+                            'Takes a few minutes',
+                            'Nothing on your site is changed',
+                        ].map((t) => (
+                            <span key={t} className="inline-flex items-center gap-2">
+                                <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                {t}
+                            </span>
                         ))}
-                    </motion.div>
-
-                    {/* Bottom CTA once detected */}
-                    {phase === 'done' && (
-                        <div className="flex justify-center mt-8">
-                            <button
-                                type="button"
-                                onClick={handleFullAudit}
-                                disabled={batchRunning}
-                                className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {batchRunning ? <><Loader2 className="w-5 h-5 animate-spin" /> Auditing pages…</> : <>Run Full Audit on These Pages <ArrowRight className="w-5 h-5" /></>}
-                            </button>
-                        </div>
-                    )}
-                </div>
+                    </div>
+                </form>
             </div>
 
             <AuditEmailVerifyModal

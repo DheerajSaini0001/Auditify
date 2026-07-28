@@ -48,7 +48,7 @@ const getEnvColor = (env) => ENVIRONMENTS.find(e => e.value === env)?.color || '
 
 // ── Main Component ──────────────────────────────────────────────────
 const AdminConfig = () => {
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const dk = theme === 'dark';
   const darkMode = dk;
   const navigate = useNavigate();
@@ -164,44 +164,12 @@ const AdminConfig = () => {
               <span>System Setup</span>
             </button>
           )}
-
-          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-linesoft'}`}></div>
-
-          <button
-            onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
-          >
-            <div className="flex items-center gap-3">
-              {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
-              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
-            </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-line"}`}>
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-faint"}`}></div>
-            </div>
-          </button>
         </nav>
 
 
       </div>
 
-      {/* Premium promotional block */}
-      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-linesoft'}`}>
-        <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
-          <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
-            <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
-            <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
-          </div>
-          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-            Get deeper insights, historical data, and AI-powered recommendations.
-          </p>
-          <button
-            onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
-          >
-            Upgrade Now
-          </button>
-        </div>
-      </div>
+   
     </div>
   );
 

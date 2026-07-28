@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Info, ChevronDown, ChevronUp } from "lucide-react";
-import ThresholdBar from "./ThresholdBar";
 import MetricAnalysisDetails from "./MetricAnalysisDetails";
 import AskAIButton from "../AskAIButton";
 import Tooltip from "./Tooltip";
@@ -44,9 +43,15 @@ const MetricCard = ({
             ? needsData.crux
             : needsData.lab || needsData;
 
+    // "Not measured" — the metric couldn't be scored (e.g. PageSpeed returned no data).
+    // Render a neutral amber state, not a red "fail", and hide View Details (there is
+    // nothing to fix — it's a measurement gap, not a real failure).
+    const isNotScored = !!(activeData?.meta?.notScored);
     const status = activeData.status || "fail";
-    const statusBadgeColor = statusBadge(status, darkMode);
-    const statusLabel = statusLabelText(status);
+    const statusBadgeColor = isNotScored
+        ? (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100")
+        : statusBadge(status, darkMode);
+    const statusLabel = isNotScored ? "Not Run" : statusLabelText(status);
     const valueColor = statusText(status, darkMode, "value");
 
     const cardBg = darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line";
@@ -81,7 +86,7 @@ const MetricCard = ({
                 </div>
 
                 <div className="flex items-center gap-1">
-                    {status !== "pass" && isActionableParam(paramKey) && (
+                    {status !== "pass" && !isNotScored && isActionableParam(paramKey) && (
                         <button
                             onClick={handleToggle}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
@@ -125,7 +130,23 @@ const MetricCard = ({
                     </Tooltip>
                 </div>
             </div>
-            <div className="space-y-6 flex-grow">
+            {/* flex-grow only while collapsed: it bottom-aligns the footer across sibling
+                cards, but with the details panel open it would stretch and leave an ugly
+                gap between the stats and the panel. */}
+            <div className={`space-y-6 ${showDetails ? "" : "flex-grow"}`}>
+                {isNotScored ? (
+                    <div className={`p-4 rounded-xl border ${darkMode ? "bg-amber-900/10 border-amber-800/40" : "bg-amber-50 border-amber-100"}`}>
+                        <h4 className="text-xs font-semibold uppercase tracking-wider mb-1.5 text-amber-500">Not Measured</h4>
+                        <p className={`text-sm leading-relaxed ${darkMode ? "text-amber-200/90" : "text-amber-800"}`}>
+                            {activeData?.details || "This metric could not be measured, so it is excluded from the score."}
+                        </p>
+                        {activeData?.analysis?.recommendation && (
+                            <p className={`text-xs leading-relaxed mt-2 ${darkMode ? "text-amber-300/70" : "text-amber-700"}`}>
+                                {activeData.analysis.recommendation}
+                            </p>
+                        )}
+                    </div>
+                ) : (
                 <div>
                     <h4
                         className={`text-[10px] font-semibold uppercase tracking-wider mb-2 ${darkMode ? "text-gray-500" : "text-faint"
@@ -143,16 +164,7 @@ const MetricCard = ({
                         </span>
                     </div>
                 </div>
-                <div className="-mt-2">
-                    <ThresholdBar
-                        activeData={activeData}
-                        metricData={metricData}
-                        isPassed={status === "pass"}
-                        isWarning={status === "warning"}
-                        darkMode={darkMode}
-                        scaleFactor={1.5}
-                    />
-                </div>
+                )}
             </div>
             <MetricAnalysisDetails
                 analysis={activeData?.analysis}
@@ -164,8 +176,8 @@ const MetricCard = ({
                 fallbackRecommendations={fallbackRecommendations}
             />
 
-            {/* Ask AI Button */}
-            {status !== "pass" && (
+            {/* Ask AI Button — not for unmeasured metrics (nothing to advise on) */}
+            {status !== "pass" && !isNotScored && (
                 <AskAIButton
                     finding={{ type: 'Technical Performance', title: title, details: activeData?.details || '', severity: status === 'pass' ? 'pass' : status === 'warning' ? 'warning' : 'critical', url: '' }}
                     darkMode={darkMode}

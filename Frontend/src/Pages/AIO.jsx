@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react";
+import React, { useContext } from "react";
 import UrlHeader from "../Component/UrlHeader";
 import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
@@ -11,7 +11,7 @@ import {
   MessageSquare, Tag, Calendar, Link, Copy, Activity,
   Users, Target, FlaskConical, MessageCircle,
   Brain, Cpu, Network, Loader2,
-  Compass, HelpCircle, Layers, List, UserCheck, CheckSquare, BookOpen, ShieldCheck, AlertCircle,
+  Compass, HelpCircle, Layers, List, UserCheck, CheckSquare, BookOpen, ShieldCheck,
   ChevronDown, ChevronUp, Bot
 } from "lucide-react";
 import MetricInfoModal from "../Component/MetricInfoModal";
@@ -53,60 +53,17 @@ const iconMap = {
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.AIO_Readiness_Methodologies;
 
-const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
 
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
-  const { score, status, details, meta, analysis, qanda, infoOnly } = data || {};
+  const { score, status, details, meta, analysis, infoOnly } = data || {};
   const [showAnalysis, setShowAnalysis] = React.useState(false);
 
-  // Three-tier status: green (100 / near 100), amber (partial), red (0 / near 0).
+  // Three-tier status: green (100 / near 100), amber (partial), red (0 / near 0),
+  // plus a neutral Not Applicable tier for params gated off on this page type.
   // Prefer the backend status (used by the summary counts); fall back to score bands.
   const tier = status || (score >= 80 ? "pass" : score >= 40 ? "warning" : "fail");
+  const isNotApplicable = tier === "not_applicable";
   const isPassed = tier === "pass";
   const isWarning = tier === "warning";
 
@@ -120,11 +77,13 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const textColor = darkMode ? "text-gray-100" : "text-ink";
   const subTextColor = darkMode ? "text-gray-400" : "text-muted";
 
-  const statusColor = isPassed
-    ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
-    : isWarning
-      ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
-      : "text-rose-500 bg-rose-500/10 border-rose-500/20";
+  const statusColor = isNotApplicable
+    ? "text-slate-500 bg-slate-500/10 border-slate-500/20"
+    : isPassed
+      ? "text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+      : isWarning
+        ? "text-amber-500 bg-amber-500/10 border-amber-500/20"
+        : "text-rose-500 bg-rose-500/10 border-rose-500/20";
 
   return (
 
@@ -136,29 +95,27 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
               <Icon size={24} className={darkMode ? "text-indigo-400" : "text-indigo-600"} />
             </div>
             <div>
-              <h3 className={`font-semibold text-lg ${textColor}`}>{title}</h3>
+              <h3 className={`font-semibold text-lg ${textColor}`}>
+                {title}
+                {infoOnly && <span className={`font-medium ${subTextColor}`} title="Informational — not included in the section score"> (Info-only)</span>}
+              </h3>
               <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                 <p className={`text-xs font-medium px-2 py-0.5 rounded-full w-fit border ${statusColor}`}>
-                  {isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
+                  {isNotApplicable ? "Not Applicable" : isPassed ? "Ready" : isWarning ? "Partially Ready" : "Optimization Needed"}
                 </p>
-                {infoOnly && (
-                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full w-fit border ${darkMode ? "bg-slate-700/40 text-slate-300 border-slate-600" : "bg-cardsoft text-muted border-line"}`}>
-                    Informational · not scored
-                  </span>
-                )}
               </div>
             </div>
           </div>
           <div className="flex justify-end items-center gap-2">
-            {!isPassed && isActionableParam(metricKey) && (
+            {!isPassed && !isNotApplicable && isActionableParam(metricKey) && (
               <button
                 onClick={() => setShowAnalysis(!showAnalysis)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-semibold uppercase tracking-wider transition-all duration-300 ${showAnalysis
-                  ? (darkMode ? "bg-slate-700 text-white" : "bg-cardsoft text-ink")
-                  : (darkMode ? "bg-slate-800/50 text-slate-400 hover:text-white" : "bg-cardsoft text-muted hover:text-ink")}`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
+                  ? "bg-slate-700 hover:bg-slate-600 text-slate-300"
+                  : "bg-cardsoft hover:bg-surface-2 text-muted"}`}
               >
-                {showAnalysis ? "Hide Detail" : "View Detail"}
-                {showAnalysis ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                {showAnalysis ? "Hide Details" : "View Details"}
+                {showAnalysis ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
               </button>
             )}
             {onInfo && (
@@ -178,43 +135,27 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
 
 
 
-        {/* Q&A Insight */}
-        {qanda && (
-          <div className={`p-4 rounded-xl border-l-[3px] transition-all duration-300 ${darkMode
-            ? "bg-indigo-500/5 border-indigo-500/30 text-indigo-100"
-            : "bg-indigo-50/30 border-indigo-400 text-indigo-900"}`}>
-            <h4 className="text-[10px] font-semibold uppercase tracking-widest opacity-60 mb-1.5 flex items-center gap-1.5">
-              <MessageCircle size={12} className="text-indigo-500" />
-              Intelligence Insight
-            </h4>
-            <div className="space-y-1">
-              <p className="text-xs font-semibold leading-tight italic">"{qanda.question}"</p>
-              <p className={`text-[11px] leading-relaxed font-medium ${darkMode ? "text-indigo-300/80" : "text-indigo-700/80"}`}>
-                {qanda.answer}
-              </p>
-            </div>
-          </div>
-        )}
-
         {/* Status Verdict */}
-        <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-300 ${isPassed
-          ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100")
-          : (isWarning
-            ? (darkMode ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50/50 border-amber-100")
-            : (darkMode ? "bg-rose-500/5 border-rose-500/10" : "bg-rose-50/50 border-rose-100"))}`}>
+        <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all duration-300 ${isNotApplicable
+          ? (darkMode ? "bg-slate-500/5 border-slate-500/10" : "bg-slate-50/50 border-slate-100")
+          : isPassed
+            ? (darkMode ? "bg-emerald-500/5 border-emerald-500/10" : "bg-emerald-50/50 border-emerald-100")
+            : (isWarning
+              ? (darkMode ? "bg-amber-500/5 border-amber-500/10" : "bg-amber-50/50 border-amber-100")
+              : (darkMode ? "bg-rose-500/5 border-rose-500/10" : "bg-rose-50/50 border-rose-100"))}`}>
           <div className="flex items-center gap-2">
-            <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${isPassed ? "bg-emerald-500" : (isWarning ? "bg-amber-500" : "bg-rose-500")}`}></div>
+            <div className={`w-1.5 h-1.5 rounded-full ${isNotApplicable ? "bg-slate-400" : `animate-pulse ${isPassed ? "bg-emerald-500" : (isWarning ? "bg-amber-500" : "bg-rose-500")}`}`}></div>
             <h4 className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-faint"}`}>
               Audit Status
             </h4>
           </div>
-          <p className={`text-sm font-semibold leading-normal ${isPassed ? "text-emerald-600 dark:text-emerald-400" : (isWarning ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
+          <p className={`text-sm font-semibold leading-normal ${isNotApplicable ? "text-slate-500 dark:text-slate-400" : isPassed ? "text-emerald-600 dark:text-emerald-400" : (isWarning ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400")}`}>
             {details}
           </p>
         </div>
 
         {/* Ask AI Button */}
-        {!isPassed && (
+        {!isPassed && !isNotApplicable && (
           <AskAIButton
             finding={{
               type: 'AIO (AI Optimization)',
@@ -576,56 +517,50 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
         </div>
 
         {showAnalysis && (
-          <div className="space-y-3 mt-4 animate-in fade-in slide-in-from-top-2 duration-300">
-            {(analysis?.cause || reasons.length > 0) && (
-              <div className={`p-3 rounded-lg border ${darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-rose-50 border-rose-100"}`}>
-                <div className="flex items-start gap-2">
-                  <AlertCircle size={14} className="text-rose-500 mt-0.5" />
-                  <div>
-                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-rose-500 mb-1">Why This Occurred</h4>
-                    <div className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
-                      {analysis?.cause ? (
-                        <p>{analysis.cause}</p>
-                      ) : (
-                        <ul className="space-y-1">
-                          {reasons.map((reason, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
-                              <span>{reason}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                </div>
+          <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "border-gray-700" : "border-line"}`}>
+            {/* Cause */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-500">
+                <AlertTriangle size={12} />
+                <span>Cause</span>
               </div>
-            )}
+              {analysis?.cause ? (
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                  {analysis.cause}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {reasons.map((reason, idx) => (
+                    <li key={idx} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                      <span className="mt-1.5 w-1 h-1 rounded-full bg-rose-500 flex-shrink-0" />
+                      <span>{reason}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-            {(analysis?.recommendation || recommendations.length > 0) && (
-              <div className={`p-3 rounded-lg border ${darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-emerald-50 border-emerald-100"}`}>
-                <div className="flex items-start gap-2">
-                  <CheckCircle size={14} className="text-emerald-500 mt-0.5" />
-                  <div>
-                    <h4 className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500 mb-1">How to Fix</h4>
-                    <div className={`text-xs leading-relaxed ${darkMode ? "text-gray-300" : "text-inksoft"}`}>
-                      {analysis?.recommendation ? (
-                        <p>{analysis.recommendation}</p>
-                      ) : (
-                        <ul className="space-y-1">
-                          {recommendations.map((rec, idx) => (
-                            <li key={idx} className="flex items-start gap-2">
-                              <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
-                              <span>{rec}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </div>
-                </div>
+            {/* Recommendation */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-500">
+                <CheckCircle size={12} />
+                <span>Recommendation</span>
               </div>
-            )}
+              {analysis?.recommendation ? (
+                <p className={`text-sm ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                  {analysis.recommendation}
+                </p>
+              ) : (
+                <ul className="space-y-1">
+                  {recommendations.map((rec, idx) => (
+                    <li key={idx} className={`text-sm flex items-start gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
+                      <span className="mt-1.5 w-1 h-1 rounded-full bg-emerald-500 flex-shrink-0" />
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         )}
 
@@ -660,25 +595,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const { audienceMode } = useData();
 
-  const auditSteps = useMemo(() => [
-    { icon: <Database className="w-8 h-8 text-blue-500" />, title: "Structured Data", text: "Analyzing JSON-LD Schema markup and rich snippets eligibility..." },
-    { icon: <MessageSquare className="w-8 h-8 text-purple-500" />, title: "NLP Readiness", text: "Evaluating content structure and semantic clarity for AI models..." },
-    { icon: <Zap className="w-8 h-8 text-teal-500" />, title: "Crawl Efficiency", text: "Measuring page load speed and API accessibility for AI bots..." },
-    { icon: <Tag className="w-8 h-8 text-indigo-500" />, title: "Entity Recognition", text: "Scanning for named entities, keywords, and topic clusters..." },
-    { icon: <Brain className="w-8 h-8 text-amber-500" />, title: "AI Optimization", text: "Checking for voice search compatibility and answer engine readiness..." },
-    { icon: <Bot className="w-8 h-8 text-rose-500" />, title: "Agentic Browsing", text: "Evaluating agent-driven navigation and form-filling capabilities..." },
-  ], []);
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
-  React.useEffect(() => {
-    if (loading || !data || data.status === "pending") {
-      const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % auditSteps.length);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading, data, auditSteps.length]);
 
   const hasAioData = aio && Object.keys(aio).length > 0;
   const isAioLoading = loading || !data || data.status === "pending" || !hasAioData;
@@ -710,9 +627,10 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           {isAioLoading ? (
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
-              {/* Right Panel: Shimmer */}
-              <div className="flex-1 flex flex-col justify-center">
-                <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+              {/* Right Panel: Loading */}
+              <div className="flex-1 flex flex-col items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+                <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>Analyzing AIO Readiness...</p>
               </div>
             </div>
           ) : (
@@ -737,6 +655,13 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
                         <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                           Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
                         </p>
+                        <span
+                          title="This score is Auditify's own composite index for AI-readiness. No industry-standard external tool produces a comparable AIO score to cross-check against."
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                        >
+                          <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                          Auditify Index · no external equivalent
+                        </span>
                       </div>
 
                       {/* Stats & Tools */}

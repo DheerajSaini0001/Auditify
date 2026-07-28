@@ -43,8 +43,87 @@ const hasValue = (v) => {
     return false;
 };
 
-// Normalize a phone to its last 10 digits for comparison (ignores formatting/country code).
-const normPhone = (s) => {
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
+
+const detectCountryCode = (url, $, org) => {
+    // 1. Schema address (addressCountry)
+    const addr = org && org.address && typeof org.address === 'object' ? org.address : null;
+    const schemaCountry = addr?.addressCountry || (org && typeof org.address === 'object' && org.address?.addressCountry);
+    if (schemaCountry && typeof schemaCountry === 'string') {
+        const clean = schemaCountry.trim().toUpperCase();
+        if (clean.length === 2) return clean;
+        if (clean === 'AUSTRALIA') return 'AU';
+        if (clean === 'UNITED KINGDOM' || clean === 'UK' || clean === 'GREAT BRITAIN' || clean === 'ENGLAND') return 'GB';
+        if (clean === 'UNITED STATES' || clean === 'USA' || clean === 'US') return 'US';
+        if (clean === 'CANADA') return 'CA';
+        if (clean === 'INDIA') return 'IN';
+    }
+
+    // 2. Business location keywords
+    const addrString = org && typeof org.address === 'string' ? org.address : '';
+    const schemaAddrString = addr
+        ? ['streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry']
+            .map((k) => addr[k]).filter(Boolean).join(', ')
+        : '';
+    const visibleAddress = $('address, [class*="address" i], [id*="address" i], [itemprop="address"]').text() || '';
+    const combinedAddressText = `${addrString} ${schemaAddrString} ${visibleAddress}`.toLowerCase();
+
+    if (/\b(sydney|melbourne|brisbane|nsw|vic|qld|wa|sa|tas|act|nt|australia)\b/i.test(combinedAddressText)) {
+        return 'AU';
+    }
+    if (/\b(london|manchester|birmingham|uk|united kingdom|great britain|england|gb)\b/i.test(combinedAddressText)) {
+        return 'GB';
+    }
+    if (/\b(india|mumbai|delhi|bangalore|in)\b/i.test(combinedAddressText)) {
+        return 'IN';
+    }
+    if (/\b(canada|toronto|vancouver|montreal|ca)\b/i.test(combinedAddressText)) {
+        return 'CA';
+    }
+
+    // 3. TLD (fallback)
+    try {
+        const hostname = new URL(url).hostname;
+        if (hostname.endsWith('.au')) return 'AU';
+        if (hostname.endsWith('.uk')) return 'GB';
+        if (hostname.endsWith('.in')) return 'IN';
+        if (hostname.endsWith('.ca')) return 'CA';
+    } catch (e) {
+        // invalid URL
+    }
+
+    // 4. hreflang / locale
+    const htmlLang = $('html').attr('lang');
+    if (htmlLang && typeof htmlLang === 'string') {
+        const locale = htmlLang.trim().toUpperCase();
+        if (locale.includes('-')) {
+            const parts = locale.split('-');
+            const country = parts[parts.length - 1];
+            if (country.length === 2) return country;
+        }
+        if (locale.includes('_')) {
+            const parts = locale.split('_');
+            const country = parts[parts.length - 1];
+            if (country.length === 2) return country;
+        }
+    }
+
+    // 5. Default to US
+    return 'US';
+};
+
+// Normalize a phone to E.164 format using Google's libphonenumber
+const normPhone = (s, countryCode = 'US') => {
+    if (!s) return null;
+    try {
+        const cleanStr = String(s).trim();
+        const phoneNumber = parsePhoneNumberFromString(cleanStr, countryCode);
+        if (phoneNumber && phoneNumber.isValid()) {
+            return phoneNumber.format('E.164');
+        }
+    } catch (e) {
+        // fallback
+    }
     const d = String(s || '').replace(/\D/g, '');
     return d.length >= 10 ? d.slice(-10) : null;
 };
@@ -126,6 +205,8 @@ const analyzeCitationConsistency = (url, $) => {
         const addr = org && org.address && typeof org.address === 'object' ? org.address : null;
         const addrString = org && typeof org.address === 'string' ? org.address : null;
 
+        const countryCode = detectCountryCode(url, $, org);
+
         // ── Brand-name sources ──
         const ogSiteName = $('meta[property="og:site_name"]').attr('content') || null;
         const titleBrand = ($('title').first().text() || '').split(/[|\-–—]/)[0].trim() || null;
@@ -137,7 +218,14 @@ const analyzeCitationConsistency = (url, $) => {
             const href = ($(el).attr('href') || '').replace(/^tel:/i, '');
             if (href) phones.push(href);
         });
-        const distinctPhones = [...new Set(phones.map(normPhone).filter(Boolean))];
+
+        // Filter out '0' or placeholder telephone links/values
+        const filteredPhones = phones.filter(p => {
+            const trimmed = p.trim();
+            return trimmed !== '0' && trimmed !== '0000000000' && trimmed.replace(/\D/g, '') !== '0' && trimmed.replace(/\D/g, '') !== '';
+        });
+
+        const distinctPhones = [...new Set(filteredPhones.map(p => normPhone(p, countryCode)).filter(Boolean))];
         const phonePresent = distinctPhones.length > 0;
 
         // ── Scoring ──
@@ -149,7 +237,7 @@ const analyzeCitationConsistency = (url, $) => {
         // 2) Phone consistency across all on-page sources
         let phoneConsistency;
         if (!phonePresent) phoneConsistency = 0;
-        else if (distinctPhones.length === 1) phoneConsistency = 25;
+        else if (distinctPhones.length === 1 || distinctPhones.length === 2) phoneConsistency = 25;
         else phoneConsistency = 5; // conflicting numbers — the core problem
 
         // 3) Name/brand consistency across schema / og / title
@@ -180,7 +268,7 @@ const analyzeCitationConsistency = (url, $) => {
 
         // ── Issues + reason ──
         const issues = [];
-        if (distinctPhones.length > 1) issues.push(`Conflicting phone numbers on the page (${distinctPhones.length} different numbers) — pick one canonical number.`);
+        if (distinctPhones.length > 2) issues.push(`Conflicting phone numbers on the page (${distinctPhones.length} different numbers) — pick one or two canonical numbers.`);
         if (!schemaPhone && !phonePresent) issues.push('No phone number found in schema or tel: links.');
         if (presentNames.length >= 2 && nameConsistency === 5) issues.push('Brand name differs across schema / og:site_name / title — standardize one exact name.');
         if (!org) issues.push('No Organization/LocalBusiness schema — NAP is not machine-readable.');
@@ -201,7 +289,24 @@ const analyzeCitationConsistency = (url, $) => {
             ? ['streetAddress', 'addressLocality', 'addressRegion', 'postalCode', 'addressCountry']
                 .map((k) => addr[k]).filter(hasValue).join(', ') || null
             : (addrString || null);
-        const phoneDisplay = schemaPhone || phones[0] || findPagePhone($) || null;
+        // Deduplicate phones based on normalized value, but keep the original display format
+        const phoneMap = new Map();
+        filteredPhones.forEach(p => {
+            const norm = normPhone(p, countryCode);
+            if (norm && !phoneMap.has(norm)) {
+                phoneMap.set(norm, p.trim());
+            }
+        });
+        const distinctPhoneDisplays = [...phoneMap.values()];
+        
+        let pagePhone = findPagePhone($);
+        if (pagePhone && (pagePhone.trim() === '0' || pagePhone.replace(/\D/g, '') === '0' || pagePhone.replace(/\D/g, '') === '')) {
+            pagePhone = null;
+        }
+
+        const phoneDisplay = distinctPhoneDisplays.length > 0 
+            ? distinctPhoneDisplays.join(' / ') 
+            : pagePhone;
         const addressDisplay = schemaAddressDisplay || findPageAddress($) || null;
 
         return {
@@ -221,7 +326,9 @@ const analyzeCitationConsistency = (url, $) => {
     } catch (error) {
         return {
             signal: 'citationConsistency',
-            score: 50,
+            // Crashed probe → not calculated, renormalized out (SCORING_FORMAT §7 policy 4).
+            score: null,
+            notCalculated: true,
             source: 'on-page',
             breakdown: { completeness: 0, phoneConsistency: 0, nameConsistency: 0, addressCompleteness: 0 },
             issues: [`Citation consistency check failed: ${error.message}`],

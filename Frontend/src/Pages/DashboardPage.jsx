@@ -79,7 +79,7 @@ const CircularProgress = ({ score, size = 66, strokeWidth = 4, color = "#3b82f6"
 
 const DashboardPage = () => {
   const { user, apiFetch, logout } = useAuth();
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
   const location = useLocation();
@@ -126,7 +126,6 @@ const DashboardPage = () => {
   // Dropdown States
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
-  const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
 
   // Card action menu state
   const [activeMenuId, setActiveMenuId] = useState(null);
@@ -387,18 +386,13 @@ const DashboardPage = () => {
     return { isAudited: false, status: 'not_started' };
   };
 
-  // Helper for metric dot rating
-  const getRatingInfo = (score, type) => {
-    if (score >= 90) return { label: "Excellent", dotColor: "bg-emerald-500" };
-    if (score >= 80) {
-      if (type === 'aiReadiness') return { label: "Very Good", dotColor: "bg-teal-500" };
-      return { label: "Very Good", dotColor: "bg-blue-500" };
-    }
-    if (score >= 70) {
-      if (type === 'aiReadiness') return { label: "Good", dotColor: "bg-teal-500" };
-      return { label: "Good", dotColor: "bg-purple-500" };
-    }
-    return { label: "Needs Improvement", dotColor: "bg-orange-350" };
+  // Rating shown next to each metric. Same three bands the report and the
+  // documentation page use (90+ good, 50–89 needs work, below 50 poor) so a score
+  // never reads as "Good" in one place and "Needs work" in another.
+  const getRatingInfo = (score) => {
+    if (score >= 90) return { label: "Good", dotColor: "bg-emerald-500" };
+    if (score >= 50) return { label: "Needs work", dotColor: "bg-amber-500" };
+    return { label: "Poor", dotColor: "bg-rose-500" };
   };
 
   // Filter GSC + local properties
@@ -422,10 +416,6 @@ const DashboardPage = () => {
 
   // Direct Audit Bar States
   const [directUrl, setDirectUrl] = useState("");
-  const [protocol, setProtocol] = useState("http + https");
-  const [scope, setScope] = useState("Homepage (Fast)");
-  const [protocolOpen, setProtocolOpen] = useState(false);
-  const [scopeOpen, setScopeOpen] = useState(false);
   const [directAuditing, setDirectAuditing] = useState(false);
 
   // New parameters for device and audit type
@@ -435,8 +425,6 @@ const DashboardPage = () => {
   const [reportOpen, setReportOpen] = useState(false);
 
   const closeAllDropdowns = () => {
-    setProtocolOpen(false);
-    setScopeOpen(false);
     setDeviceOpen(false);
     setReportOpen(false);
   };
@@ -449,13 +437,10 @@ const DashboardPage = () => {
     const handleOutsideClick = (e) => {
       const clickedId = e.target.closest('[data-dropdown]')?.getAttribute('data-dropdown');
       const setters = {
-        protocol: setProtocolOpen,
         device: setDeviceOpen,
         report: setReportOpen,
-        scope: setScopeOpen,
         time: setTimeDropdownOpen,
         sort: setSortDropdownOpen,
-        create: setCreateDropdownOpen,
       };
       Object.entries(setters).forEach(([id, set]) => {
         if (id !== clickedId) set(false);
@@ -484,10 +469,12 @@ const DashboardPage = () => {
       return;
     }
 
+    // Add https:// when the user just typed a domain. (The protocol picker that used
+    // to sit in front of this field defaulted to https anyway, and it asked the user a
+    // question they have no reason to care about.)
     let targetUrl = directUrl.trim();
     if (!/^https?:\/\//i.test(targetUrl)) {
-      const proto = protocol === "http + https" || protocol === "https://" ? "https://" : "http://";
-      targetUrl = `${proto}${targetUrl}`;
+      targetUrl = `https://${targetUrl}`;
     }
 
     setDirectAuditing(true);
@@ -574,7 +561,7 @@ const DashboardPage = () => {
     if (sortBy === "Alphabetical") {
       return list.sort((a, b) => a.url.localeCompare(b.url));
     }
-    if (sortBy === "By health score") {
+    if (sortBy === "Best score first") {
       return list.sort((a, b) => getAverageScore(b) - getAverageScore(a));
     }
     return list;
@@ -599,30 +586,15 @@ const DashboardPage = () => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full  justify-between select-none">
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
-        {/* Create Project Button */}
-        <div className="relative" data-dropdown="create">
-          <button
-            onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-            className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
-          >
-            <div className="flex items-center gap-2">
-              <Plus size={16} />
-              <span>Create Project</span>
-            </div>
-            <ChevronDown size={14} className="opacity-80" />
-          </button>
-
-          {createDropdownOpen && (
-            <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-              <button
-                onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-surface-2'}`}
-              >
-                Add Google Search Console Site
-              </button>
-            </div>
-          )}
-        </div>
+        {/* Add website — this was a dropdown holding a single item, so it is just a
+            button now; it goes to the same page. */}
+        <button
+          onClick={() => navigate("/dashboard/add-website")}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
+        >
+          <Plus size={16} />
+          <span>Add website</span>
+        </button>
 
         {/* Search project box */}
         <div className="relative">
@@ -632,7 +604,7 @@ const DashboardPage = () => {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search projects..."
+            placeholder="Search your websites"
             className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-surface-2 border-line text-ink placeholder:text-faint'}`}
           />
           <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-muted bg-surface-2 border-line'}`}>
@@ -660,7 +632,7 @@ const DashboardPage = () => {
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-surface-2'}`}
           >
             <FileText size={16} />
-            <span>Report History</span>
+            <span>Past reports</span>
           </button>
 
 
@@ -700,44 +672,12 @@ const DashboardPage = () => {
               <span>System Setup</span>
             </button>
           )}
-
-          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}></div>
-
-          <button
-            onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-surface-2'}`}
-          >
-            <div className="flex items-center gap-3">
-              {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
-              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
-            </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-surface-2"}`}>
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
-            </div>
-          </button>
         </nav>
 
 
       </div>
 
-      {/* Premium promotional block */}
-      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}>
-        <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
-          <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
-            <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
-            <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
-          </div>
-          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-            Get deeper insights, historical data, and AI-powered recommendations.
-          </p>
-          <button
-            onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-xs shadow-md shadow-orange-600/10 transition-all active:scale-[0.98]"
-          >
-            Upgrade Now
-          </button>
-        </div>
-      </div>
+  
     </div>
   );
 
@@ -783,43 +723,13 @@ const DashboardPage = () => {
             dropdowns) above the tools/projects bar that follows it in the DOM. */}
         <div className={`relative z-40 p-3 rounded-2xl border flex flex-col xl:flex-row items-stretch gap-1.5 transition-all duration-300 shadow-lg ${darkMode ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md' : 'bg-card border-line'}`}>
 
-          {/* 1. Protocol Selector Dropdown */}
-          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="protocol">
-            <button
-              onClick={() => {
-                const state = !protocolOpen;
-                closeAllDropdowns();
-                setProtocolOpen(state);
-              }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-surface-2 hover:bg-cardsoft text-inksoft border border-line'
-                }`}
-            >
-              <span className="truncate">{protocol}</span>
-              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${protocolOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {protocolOpen && (
-              <div className={`absolute top-full left-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-36 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                {["http + https", "https://", "http://"].map(p => (
-                  <button
-                    key={p}
-                    onClick={() => { setProtocol(p); setProtocolOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${protocol === p ? (darkMode ? 'bg-slate-750 text-white' : 'bg-surface-2 text-ink') : ''}`}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* 2. URL Input Box */}
+          {/* 1. URL Input Box */}
           <form onSubmit={handleDirectAudit} className="flex-grow flex items-center relative min-w-[200px]">
             <input
               type="text"
               value={directUrl}
               onChange={(e) => setDirectUrl(e.target.value)}
-              placeholder="Domain or URL"
+              placeholder="Enter a website address, e.g. yourdealership.com"
               className={`w-full h-11 pl-4 pr-10 rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 ${darkMode ? 'bg-slate-850 border-none text-slate-100 placeholder-slate-505 focus:shadow-emerald-950/20' : 'bg-surface-2 border border-line text-ink placeholder:text-faint focus:shadow-emerald-500/5'
                 }`}
             />
@@ -887,47 +797,25 @@ const DashboardPage = () => {
             )}
           </div>
 
-          {/* 5. Scope Selector Dropdown (Subdomains option removed) */}
-          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="scope">
-            <button
-              onClick={() => {
-                const state = !scopeOpen;
-                closeAllDropdowns();
-                setScopeOpen(state);
-              }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-surface-2 hover:bg-cardsoft text-inksoft border border-line'
-                }`}
-            >
-              <span className="truncate">{scope}</span>
-              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {scopeOpen && (
-              <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-44 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                {["Homepage (Fast)"].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setScope(s); setScopeOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${scope === s ? (darkMode ? 'bg-slate-750 text-white' : 'bg-surface-2 text-ink') : ''}`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          {/* The scope picker that sat here offered a single option ("Homepage (Fast)")
+              and its value was never sent with the audit request — removed. */}
 
           {/* Audit Submit Button */}
           <button
             onClick={handleDirectAudit}
             disabled={directAuditing}
-            className="h-11 w-11 flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white rounded-xl transition-all shadow-md shadow-emerald-600/10 shrink-0 disabled:opacity-50 flex-grow sm:flex-grow-0"
-            title="Launch Direct Website Audit"
+            className="h-11 px-5 flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.98] text-white rounded-xl text-sm font-semibold transition-all shadow-md shadow-emerald-600/10 shrink-0 disabled:opacity-50 flex-grow sm:flex-grow-0"
           >
             {directAuditing ? (
-              <RefreshCw size={16} className="animate-spin" />
+              <>
+                <RefreshCw size={16} className="animate-spin" />
+                <span>Checking…</span>
+              </>
             ) : (
-              <Search size={16} />
+              <>
+                <Search size={16} />
+                <span>Run audit</span>
+              </>
             )}
           </button>
 
@@ -950,7 +838,7 @@ const DashboardPage = () => {
           {/* Right dropdown filters */}
           <div className="flex flex-wrap items-center gap-2">
             <span className={`text-xs font-semibold flex items-center gap-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>
-              Metrics based on monthly volume <HelpCircle size={12} className="cursor-help" title="Based on average GSC and audit impressions" />
+              Scores from your latest check <HelpCircle size={12} className="cursor-help" title="Each website shows the scores from the last audit we ran for it" />
             </span>
 
             {/* Date drop */}
@@ -990,7 +878,7 @@ const DashboardPage = () => {
               </button>
               {sortDropdownOpen && (
                 <div className={`absolute right-0 mt-1 border rounded-lg shadow-xl z-50 py-1 w-40 animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                  {["Newest first", "Alphabetical", "By health score"].map(option => (
+                  {["Newest first", "Alphabetical", "Best score first"].map(option => (
                     <button
                       key={option}
                       onClick={() => { setSortBy(option); setSortDropdownOpen(false); }}
@@ -1011,7 +899,7 @@ const DashboardPage = () => {
               title="Force Sync with Backend"
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-              <span>Sync Data</span>
+              <span>Refresh</span>
             </button>
           </div>
         </div>
@@ -1045,7 +933,7 @@ const DashboardPage = () => {
         {syncing && (
           <div className={`p-3 border rounded-xl flex items-center justify-center gap-2 text-xs font-semibold animate-pulse animate-in fade-in duration-300 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30 text-emerald-400' : 'bg-emerald-50 border-emerald-100 text-emerald-700'}`}>
             <RefreshCw size={14} className="animate-spin" />
-            <span>Synchronizing GSC properties with Google Search Console API...</span>
+            <span>Getting your sites from Google Search Console…</span>
           </div>
         )}
 
@@ -1059,7 +947,7 @@ const DashboardPage = () => {
               type="text"
               value={apiSearchInput}
               onChange={(e) => setApiSearchInput(e.target.value)}
-              placeholder="Search website projects..."
+              placeholder="Search your websites"
               className={`w-full pl-11 pr-12 py-2.5 border rounded-xl text-sm font-medium focus:outline-none focus:border-emerald-500/50 transition-all duration-300 shadow-sm ${darkMode
                 ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500 focus:shadow-emerald-950/20'
                 : 'bg-surface-2 border-line text-ink placeholder:text-faint focus:shadow-emerald-500/5'
@@ -1079,11 +967,8 @@ const DashboardPage = () => {
                 >
                   <X size={14} />
                 </button>
-              ) : (
-                <span className={`text-[10px] font-black border px-1.5 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-500 bg-slate-800/80 border-slate-700/50' : 'text-faint bg-surface-2 border-line'}`}>
-                  Debounced
-                </span>
-              )}
+              ) : null /* a "Debounced" badge used to sit here — an internal detail,
+                          not something a customer needs to read */}
             </div>
           </div>
         </div>
@@ -1093,12 +978,12 @@ const DashboardPage = () => {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <RefreshCw size={32} className="animate-spin text-emerald-500" />
-              <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Syncing latest database records...</p>
+              <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Loading your websites…</p>
             </div>
           ) : (isApiSearching && apiSearchLoading) ? (
             <div className="flex flex-col items-center justify-center py-12 gap-3">
               <RefreshCw size={32} className="animate-spin text-emerald-500" />
-              <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Searching projects on server...</p>
+              <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Searching…</p>
             </div>
           ) : displayProjects.length === 0 ? (
             <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>

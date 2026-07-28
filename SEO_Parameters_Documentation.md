@@ -50,8 +50,7 @@ Key facts:
 | 9 | `Sitemap` | 0.05 | 4.72% | HTTP fetch | Full |
 | 10 | `Title` | 0.04 | 3.77% | Cheerio | Full |
 | 11 | `Title_Uniqueness` | 0.04 | 3.77% | Multi-page HTTP | Full |
-| 12 | `Title_Keyword_Optimization` | 0.04 | 3.77% | Multi-page HTTP | Full |
-| 13 | `Robots_Txt` | 0.04 | 3.77% | HTTP fetch | Full |
+| 12 | `Robots_Txt` | 0.04 | 3.77% | HTTP fetch | Full |
 | 14 | `Title_Location_Optimization` | 0.03 | 2.83% | Schema/footer/contact | Full |
 | 15 | `Meta_Description_Uniqueness` | 0.03 | 2.83% | Multi-page HTTP | Full |
 | 16 | `Heading_Hierarchy` | 0.03 | 2.83% | Cheerio | Full |
@@ -92,12 +91,7 @@ Key facts:
 - Score = fraction of **unique** titles across the sampled set; duplicates/missing lower it.
 - If the sample isn't usable → **0.5** (inconclusive).
 
-### Title Keyword Optimization — `Title_Keyword_Optimization` (0.04) — multi-page HTTP
-- For each sampled page, derives a target keyword (URL slug → H1 → most-frequent content word).
-- `score = optimizedCount / pagesChecked` (title contains keyword).
-- Not enough eligible pages → **0.5**.
-
-### Title Location Optimization — `Title_Location_Optimization` (0.03) — schema → footer → contact → body
+### Title Location Optimization — `Title_Location_Optimization` (0.02) — schema → footer → contact → body
 - Resolves the business city/state from JSON-LD address, then footer, then a contact-page fetch, then body text.
 - Title mentions the location → **1**; doesn't → **0**; location undeterminable → **0.5**.
 
@@ -220,7 +214,6 @@ const getScore = (metric) => metric?.score || 0;   // 0–100 integer
 const weightedScore =
   (getScore(titleMetric)            * weights.Title) +
   (getScore(titleUniquenessMetric)  * weights.Title_Uniqueness) +
-  (getScore(titleKeywordMetric)     * weights.Title_Keyword_Optimization) +
   (getScore(titleLocationMetric)    * weights.Title_Location_Optimization) +
   (getScore(metaDescMetric)         * weights.Meta_Description) +
   (getScore(metaDescUniquenessMetric) * weights.Meta_Description_Uniqueness) +

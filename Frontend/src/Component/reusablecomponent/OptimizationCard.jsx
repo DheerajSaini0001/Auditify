@@ -1,6 +1,5 @@
 import React from 'react';
 import { Info, ChevronUp, ChevronDown } from 'lucide-react';
-import DirectThresholdBar from './DirectThresholdBar';
 import MetricAnalysisDetails from './MetricAnalysisDetails';
 import Tooltip from './Tooltip';
 import AskAIButton from '../AskAIButton';
@@ -27,7 +26,15 @@ const OptimizationCard = ({
     const needsData = metricData;
     const status = needsData.status || "poor";
     const { cardBg, textColor, subTextColor, statusBadgeColor, statusText } = getThemeStyles(darkMode, status);
-    const displayVal = displayValue || needsData.value || needsData.score;
+    // Info-only = shown but not folded into the weighted section score. Not-scored
+    // (measurement failed) and N/A cards have their own labels, so skip those.
+    const isInfoOnly = (needsData.infoOnly || needsData.meta?.informational) && !needsData.meta?.notScored && status !== "not_applicable";
+    // Resource lists live only in the View Details panel, so the toggle must stay
+    // reachable even on passing cards that have resources to show.
+    // redirectDetails always holds the final URL, so only >1 entry means a real chain.
+    const hasAffectedResources =
+        ["uncompressedResources", "uncachedResources", "unoptimizedImages", "unminifiedScripts", "blockingResources"]
+            .some((k) => needsData.meta?.[k]?.length > 0) || needsData.meta?.redirectDetails?.length > 1;
 
     return (
         <div
@@ -41,7 +48,10 @@ const OptimizationCard = ({
                         <Icon size={24} strokeWidth={2} />
                     </div>
                     <div>
-                        <h3 className={`font-semibold text-lg leading-tight mb-1 ${textColor}`}>{title}</h3>
+                        <h3 className={`font-semibold text-lg leading-tight mb-1 ${textColor}`}>
+                            {title}
+                            {isInfoOnly && <span className={`font-medium ${subTextColor}`} title="Informational — not included in the section score"> (Info-only)</span>}
+                        </h3>
                         <div className="flex items-center gap-2 flex-wrap">
                             <span className={`text-xs font-semibold px-2.5 py-1 rounded-md border ${statusBadgeColor}`}>{statusText}</span>
                         </div>
@@ -49,7 +59,7 @@ const OptimizationCard = ({
                 </div>
 
                 <div className="flex items-center gap-1">
-                    {status !== "pass" && isActionableParam(paramKey) && (
+                    {(status !== "pass" || hasAffectedResources) && isActionableParam(paramKey) && (
                         <button
                             onClick={onToggle}
                             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${darkMode
@@ -91,16 +101,13 @@ const OptimizationCard = ({
                 </div>
             </div>
 
-            {/* Body */}
-            <div className="space-y-6 flex-grow">
+            {/* Body — flex-grow only while collapsed: it bottom-aligns the footer across
+                sibling cards, but with the details panel open it would stretch and leave
+                an ugly gap between the stats and the panel. */}
+            <div className={`space-y-6 ${isOpen ? "" : "flex-grow"}`}>
 
                 {/* Specific Stats Grid (Children) */}
                 {children}
-
-                {/* Threshold Bar */}
-                <div>
-                    <DirectThresholdBar metricData={{ ...needsData, value: displayVal }} darkMode={darkMode} />
-                </div>
             </div>
 
 
@@ -108,6 +115,7 @@ const OptimizationCard = ({
             <MetricAnalysisDetails
                 analysis={needsData?.analysis}
                 meta={needsData?.meta}
+                status={status}
                 darkMode={darkMode}
                 isOpen={isOpen}
                 onToggle={onToggle}

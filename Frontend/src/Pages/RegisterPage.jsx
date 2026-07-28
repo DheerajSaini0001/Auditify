@@ -199,8 +199,8 @@ const RegisterPage = () => {
                       <div
                         key={level}
                         className={`flex-1 rounded-full transition-all duration-500 ${strength >= level
-                            ? strength <= 2 ? 'bg-rose-500' : strength === 3 ? 'bg-amber-500' : 'bg-emerald-500'
-                            : darkMode ? "bg-white/10" : 'bg-cardsoft'
+                          ? strength <= 2 ? 'bg-rose-500' : strength === 3 ? 'bg-amber-500' : 'bg-emerald-500'
+                          : darkMode ? "bg-white/10" : 'bg-cardsoft'
                           }`}
                       ></div>
                     ))}

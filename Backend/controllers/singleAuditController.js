@@ -9,7 +9,9 @@ import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
-import { classifyPageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { detectSiteType } from "../utils/siteTypeDetector.js";
+import { registerWorkerWithManager } from "../utils/browserManager.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -81,7 +83,18 @@ const mergeScores = (base, siblings) => {
 export const startAudit = async (req, res) => {
 
   try {
-    let { url, device, report, force, pageType } = req.body;
+    let { url, device, report, force, pageType, siteType, pageScopes } = req.body;
+
+    // Page types the user kept ticked in the home-page picker. Stage 2 only audits
+    // these; ["home"] alone means "just the URL I entered". Unknown keys are dropped
+    // so a stale or hand-rolled client can't widen the crawl.
+    const VALID_PAGE_SCOPES = new Set([
+      "home", "srp", "vdp", "trade", "lease", "finance", "service", "specials",
+      "about", "content", "models", "locator", "press",
+    ]);
+    const normalizedScopes = Array.isArray(pageScopes)
+      ? [...new Set(pageScopes.filter((k) => VALID_PAGE_SCOPES.has(k)))]
+      : null;
 
     if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -219,6 +232,7 @@ export const startAudit = async (req, res) => {
             screenshot: fullAudit.screenshot,
             timeTaken: "0s (cached)",
             isBotProtected: fullAudit.isBotProtected,
+            siteType: fullAudit.siteType || null,
             userId: req.user?.userId || null
           });
 
@@ -236,8 +250,10 @@ export const startAudit = async (req, res) => {
           }
 
           // Weighted by the page-type tilt over the extracted sections (spec §5.4),
-          // matching what a fresh subset audit of this URL would produce.
-          const sectionScore = computePageScoreFromMap(pctBySection, classifyPageType(url));
+          // matching what a fresh subset audit of this URL would produce. Reuse
+          // whichever siteType the original full audit was classified as.
+          const classify = fullAudit.siteType === "corporate" ? classifyCorporatePageType : classifyPageType;
+          const sectionScore = computePageScoreFromMap(pctBySection, classify(url));
           const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
           newSectionReport.score = sectionScore;
           newSectionReport.grade = sectionGrade;
@@ -273,7 +289,39 @@ export const startAudit = async (req, res) => {
     const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
     if (raceCheck) return res.status(200).json(raceCheck);
 
-    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report}`);
+    // The frontend already ran /single-audit/discover for this URL and knows the
+    // siteType from that single homepage fetch — trust it when supplied so we
+    // never re-fetch. Only direct API callers (or the merge/reuse paths) land
+    // here without one; fall back to detecting it ourselves.
+    //
+    // Product decision: Auditify only audits dealership and automotive
+    // corporate/OEM sites — "unknown" (including inconclusive) is REJECTED,
+    // not failed open. /single-audit/discover already enforces this same gate
+    // before a user ever reaches this endpoint through the normal UI flow;
+    // this is the defense-in-depth check for direct API callers and a stale
+    // or tampered client-supplied siteType.
+    let normalizedSiteType = siteType === "corporate" || siteType === "dealer" ? siteType : null;
+    if (!normalizedSiteType) {
+      const detection = await detectSiteType(url);
+      if (detection.siteType !== "dealer" && detection.siteType !== "corporate") {
+        logger.info(`🚫 Rejected audit — not a dealer or automotive corporate site: ${url} (${detection.reason})`);
+        return res.status(400).json({
+          error: "This doesn't look like a dealership or automotive corporate/OEM website. Auditify only audits dealer and automotive-corporate sites.",
+        });
+      }
+      normalizedSiteType = detection.siteType;
+      // detection.resolvedUrl may differ from what was submitted — e.g. a bare
+      // apex domain that fails outright (TLS/DNS-level) while "www." works.
+      // Classification already succeeded against the working hostname; the
+      // worker that's about to launch a real browser against `url` needs that
+      // same hostname or it repeats the identical failure.
+      if (detection.resolvedUrl && detection.resolvedUrl !== url) {
+        logger.info(`${url} didn't resolve directly — auditing ${detection.resolvedUrl} instead`);
+        url = detection.resolvedUrl;
+      }
+    }
+
+    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report} | ${normalizedSiteType}`);
 
     // No DB write here. The report lives in memory until the worker finishes; the
     // main thread then batches it to Mongo. We generate the id up front so the
@@ -285,6 +333,7 @@ export const startAudit = async (req, res) => {
       report,
       userId: req.user?.userId || null,
       pageType: pageType || null,
+      siteType: normalizedSiteType,
     });
 
     // Create a pending AuditLog entry asynchronously
@@ -345,8 +394,12 @@ export const startAudit = async (req, res) => {
         report,
         auditId: newReport._id.toString(),
         pageType: newReport.pageType || null,
+        siteType: newReport.siteType || null,
+        pageScopes: normalizedScopes,
       },
     });
+
+    registerWorkerWithManager(worker);
 
     // The worker is DB-free: it streams progress and the final result here. The
     // main thread owns the in-memory store and batches the final write to Mongo.
@@ -361,8 +414,75 @@ export const startAudit = async (req, res) => {
       }
     };
 
+    // Insert or update ONE row in the parent report's crawledPagesSummary (keyed by
+    // reportId, falling back to url). Drives the summary page's per-page rows.
+    const upsertCrawledPage = (parentId, entry) => {
+      const parent = auditStore.get(parentId);
+      if (!parent) return;
+      const list = Array.isArray(parent.crawledPagesSummary) ? [...parent.crawledPagesSummary] : [];
+      const idx = list.findIndex(
+        (p) => (entry.reportId && p.reportId === entry.reportId) || (entry.url && p.url === entry.url)
+      );
+      if (idx >= 0) list[idx] = { ...list[idx], ...entry };
+      else list.push(entry);
+      auditStore.applyPatch(parentId, { crawledPagesSummary: list, crawledPagesCount: list.length });
+    };
+
     worker.on("message", async (msg) => {
       if (!msg || !msg.type) return;
+
+      // ── Multi-page fan-out ──
+      // Each key page is audited in its OWN browser and becomes its OWN child
+      // report. The worker streams these three messages; the main thread owns
+      // creating/patching the child reports and the parent's per-page summary rows
+      // (so each child is independently openable and the summary can roll them up).
+      if (msg.type === "childInit") {
+        const c = msg.child || {};
+        if (!c.childId || !c.url) return;
+        const childDevice = c.device || device;
+        // Clear any stale, NON-failed report for this exact {url,device,report} so
+        // the partial-unique index can't reject the child (and a forced re-audit
+        // refreshes the page). Memory is sync; the old Mongo doc (if any, e.g. from
+        // a prior forced run) is cleared best-effort, never touching the new child.
+        auditStore.removeMatching({ url: c.url, device: childDevice, report: "All", userId: newReport.userId || null });
+        auditStore.createInProgress({
+          _id: new mongoose.Types.ObjectId(c.childId),
+          url: c.url,
+          device: childDevice,
+          report: "All",
+          userId: newReport.userId || null,
+          pageType: c.pageType || null,
+          siteType: newReport.siteType || null,
+        });
+        upsertCrawledPage(newReport._id, {
+          url: c.url, pageType: c.pageType || "generic", label: c.label || "Key Page",
+          reportId: c.childId, isProcessing: true, success: false, status: 200, title: c.label || "Auditing…",
+        });
+        SingleAuditReport.deleteMany({
+          _id: { $ne: new mongoose.Types.ObjectId(c.childId) },
+          url: c.url, device: childDevice, report: "All",
+          userId: newReport.userId || null, status: { $ne: "failed" },
+        }).catch(() => { /* best-effort; the batch flush also tolerates dup-key */ });
+        return;
+      }
+
+      if (msg.type === "childProgress") {
+        if (msg.childId) auditStore.applyPatch(msg.childId, msg.patch || {});
+        return;
+      }
+
+      if (msg.type === "childDone") {
+        if (!msg.childId) return;
+        auditStore.complete(msg.childId, msg.patch || {});
+        const s = msg.summary || {};
+        upsertCrawledPage(newReport._id, {
+          url: s.url, pageType: s.pageType || "generic", label: s.label || "Key Page",
+          reportId: msg.childId, score: s.score ?? null, grade: s.grade ?? null,
+          isProcessing: false, success: s.success !== false, isBotProtected: !!s.isBotProtected,
+          status: s.status || 200, title: s.label || "",
+        });
+        return;
+      }
 
       if (msg.type === "progress") {
         // Live, in-memory update — served straight to polling clients, no DB hit.
@@ -503,7 +623,7 @@ export const getReportStatusById = async (req, res) => {
     const { doc: report, ok } = await resolveReport(
       req,
       id,
-      "_id status screenshotUrl error technicalPerformance.Percentage onPageSEO.Percentage " +
+      "_id status screenshotUrl error stage1Completed stage2Completed stage2Progress crawledPagesCount crawledPagesSummary technicalPerformance.Percentage onPageSEO.Percentage " +
       "accessibility.Percentage securityOrCompliance.Percentage UXOrContentStructure.Percentage " +
       "conversionAndLeadFlow.Percentage aioReadiness.Percentage aeo.Percentage"
     );
@@ -542,7 +662,7 @@ export const getReportStatusById = async (req, res) => {
       message = "Audit completed";
     } else if (completedSections > 0) {
       progress = Math.min(99, 45 + Math.round((completedSections / total) * 55));
-      message = `Analyzing your site — ${completedSections}/${total} sections scored`;
+      message = report.stage2Progress || `Analyzing your site — ${completedSections}/${total} sections scored`;
     } else if (PHASES[report.status]) {
       progress = PHASES[report.status][0];
       message = PHASES[report.status][1];
@@ -555,6 +675,11 @@ export const getReportStatusById = async (req, res) => {
       _id: report._id,
       status: report.status,
       screenshotUrl: report.screenshotUrl,
+      stage1Completed: report.stage1Completed,
+      stage2Completed: report.stage2Completed,
+      stage2Progress: report.stage2Progress,
+      crawledPagesCount: report.crawledPagesCount,
+      crawledPagesSummary: report.crawledPagesSummary || [],
       progress,
       message,
       completedSections,
@@ -567,7 +692,7 @@ export const getReportStatusById = async (req, res) => {
 };
 
 // POST /single-audit/merge  { ids: [reportId…], pageType?, label? }
-// Builds ONE averaged report from several sample reports (e.g. the 5 VDP samples):
+// Builds ONE averaged report from several sample reports (e.g. the VDP samples):
 // each section keeps a representative sample's rich detail, but its headline Percentage
 // — and the overall score — become the MEAN across the samples. Saved as a new report so
 // the summary shows a single VDP row whose drill-in IS the averaged report. The samples'
@@ -654,6 +779,7 @@ export const mergeReports = async (req, res) => {
     mergedDoc.score = overall;
     mergedDoc.grade = gradeForScore(overall);
     mergedDoc.sectionScore = sectionScore;
+    mergedDoc.mergedFrom = source.length;
 
     await new SingleAuditReport(mergedDoc).save();
 
@@ -682,6 +808,60 @@ export const mergeReports = async (req, res) => {
   } catch (error) {
     logger.error("Merge reports failed", error);
     return res.status(500).json({ error: "Failed to merge reports", details: error.message });
+  }
+};
+
+// Look up an existing merged (multi-sample averaged) report for a site + pageType,
+// so a repeat audit of the same site reuses the VDP/SRP average instead of
+// re-auditing every sample. Merged reports live under a synthetic
+// "<sampleUrl>#merged-<id>" URL (see mergeReports) and their source samples are
+// deleted after merging, so startAudit's {url,device,report} dedupe can never
+// find them — this endpoint matches by site HOST + pageType + device instead,
+// scoped per user exactly like the startAudit dedupe (guests share the
+// null-user pool). TTL expiry keeps hits fresh (reports self-delete after 3h).
+export const findMergedReport = async (req, res) => {
+  try {
+    const { url, pageType, device } = req.body || {};
+    if (!url || !pageType) {
+      return res.status(400).json({ error: "url and pageType are required" });
+    }
+
+    let host;
+    try {
+      host = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`).hostname.replace(/^www\./i, "");
+    } catch {
+      return res.status(400).json({ error: "Invalid url" });
+    }
+
+    const esc = host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const query = {
+      // any sample URL on this site carrying the merge marker
+      url: { $regex: `^https?://(www\\.)?${esc}(/|:).*#merged-`, $options: "i" },
+      pageType,
+      status: "completed",
+      userId: req.user?.userId || null,
+    };
+    if (device) query.device = device;
+
+    const doc = await SingleAuditReport.findOne(query)
+      .sort({ createdAt: -1 })
+      .select("_id url device report pageType score grade mergedFrom createdAt");
+    if (!doc) return res.status(404).json({ error: "No merged report found for this site/pageType" });
+
+    logger.info(`♻️ Reusing merged ${pageType} report ${doc._id} for ${host} (no re-audit)`);
+    return res.status(200).json({
+      _id: doc._id,
+      pageType: doc.pageType,
+      device: doc.device,
+      report: doc.report,
+      score: doc.score,
+      grade: doc.grade,
+      mergedFrom: doc.mergedFrom || undefined,
+      createdAt: doc.createdAt,
+    });
+  } catch (error) {
+    logger.error("find-merged lookup failed", error);
+    return res.status(500).json({ error: "Failed to look up merged report" });
   }
 };
 

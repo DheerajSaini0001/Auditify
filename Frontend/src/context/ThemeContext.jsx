@@ -1,74 +1,37 @@
-import React, { createContext, useState, useEffect } from "react";
-import logoDark from "../assets/Logo.png";
-import logoLight from "../assets/logolight.png";
+import React, { createContext, useEffect } from "react";
 
-// 1️⃣ Create the context
+// Dark mode was removed from the product — the app is light-only now.
+//
+// This provider is deliberately kept (rather than deleted) because ~84 files still
+// read `theme` from it. They all now receive "light", so every `darkMode ? … : …`
+// branch resolves to its light side. `toggleTheme` stays as a no-op so any leftover
+// caller cannot crash. Once the dark branches have been stripped out of the
+// components, this file and its consumers can go too.
 export const ThemeContext = createContext();
 
-// 2️⃣ Create the provider
 export const ThemeProvider = ({ children }) => {
-  // Read initial theme from localStorage (before hydration)
-  const getInitialTheme = () => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("theme");
-      if (stored) return stored;
-      // Use system preference if no saved theme
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-      return prefersDark ? "dark" : "light";
-    }
-    return "light";
-  };
+  const theme = "light";
 
-  const [theme, setTheme] = useState(getInitialTheme);
-
-  // Sync the HTML <html> class with current theme
   useEffect(() => {
     const root = document.documentElement;
-    root.classList.remove("light", "dark");
-    root.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  // Sync favicon with the system color scheme (prefers-color-scheme: dark)
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    
-    const updateFavicon = (e) => {
-      const isSystemDark = e.matches;
-      const favicon = document.querySelector("link[rel='icon']");
-      if (favicon) {
-        favicon.href = isSystemDark ? logoLight : logoDark;
-        favicon.type = "image/png";
-      }
-    };
-
-    // Initialize favicon
-    updateFavicon(mediaQuery);
-
-    // Watch for system theme changes
-    if (mediaQuery.addEventListener) {
-      mediaQuery.addEventListener("change", updateFavicon);
-      return () => mediaQuery.removeEventListener("change", updateFavicon);
-    } else {
-      mediaQuery.addListener(updateFavicon);
-      return () => mediaQuery.removeListener(updateFavicon);
+    root.classList.remove("dark");
+    root.classList.add("light");
+    // Clear any theme a user picked before dark mode was removed, so an old
+    // localStorage value can't put `.dark` back later.
+    try {
+      localStorage.removeItem("theme");
+    } catch {
+      /* storage unavailable — nothing to clean up */
     }
   }, []);
 
-  // Sync across tabs
   useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key === "theme" && e.newValue) {
-        setTheme(e.newValue);
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
+    const favicon = document.querySelector("link[rel='icon'][type='image/png']");
+    if (favicon) favicon.href = "/favicon-light.png";
   }, []);
 
-  // Toggle function
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+    /* no-op: the app has a single (light) theme */
   };
 
   return (

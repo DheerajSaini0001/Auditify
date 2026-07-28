@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, Target, Gauge, Cpu, BarChart3, Activity, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Target, Gauge, Cpu, BarChart3, Activity, CheckCircle2, XCircle, AlertCircle, MinusCircle, AlertTriangle, CheckCircle } from 'lucide-react';
+
+const getBlockedCauseAndRecommendation = (platformKey, reason) => {
+    const platName = platformKey === 'gemini' ? 'Gemini' : platformKey === 'chatgpt' ? 'ChatGPT' : 'Perplexity';
+    const botName = platformKey === 'gemini' ? 'Google-Extended' : platformKey === 'chatgpt' ? 'GPTBot' : 'PerplexityBot';
+    
+    const cause = reason || `Visibility is 0% because ${botName} is blocked in your robots.txt.`;
+    const recommendation = `Remove any 'Disallow: /' or block rules for ${botName} in your robots.txt file so ${platName} can crawl and index your pages.`;
+    
+    return { cause, recommendation };
+};
 
 const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard = false }) => {
     const [expandedPlatform, setExpandedPlatform] = useState(null);
@@ -90,30 +100,42 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                     {/* Parameter Detail — failed and passed kept in separate groups */}
                     {isOpen && (() => {
                         const all = platforms[plat.key].parameters || [];
-                        const failed = all.filter((p) => !p.passed);
+                        // Skipped probes (notCalculated) are their own neutral group —
+                        // they were left out of the score, so they are neither passed
+                        // nor "needs attention".
+                        const skipped = all.filter((p) => p.notCalculated);
+                        const failed = all.filter((p) => !p.passed && !p.notCalculated);
                         const passed = all.filter((p) => p.passed);
+                        const isBlocked = !!platforms?.[plat.key]?.blocked;
+                        const blockReason = platforms?.[plat.key]?.reason;
 
                         const renderRow = (p) => (
                             <div
                                 key={p.key}
-                                className={`p-4 rounded-xl border ${p.passed
-                                    ? (darkMode ? "bg-slate-900/40 border-slate-800" : "bg-card border-line")
-                                    : (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")}`}
+                                className={`p-4 rounded-xl border ${p.notCalculated
+                                    ? (darkMode ? "bg-slate-900/40 border-slate-800 opacity-75" : "bg-cardsoft border-line opacity-75")
+                                    : p.passed
+                                        ? (darkMode ? "bg-slate-900/40 border-slate-800" : "bg-card border-line")
+                                        : (darkMode ? "bg-rose-500/5 border-rose-500/20" : "bg-rose-50/50 border-rose-100")}`}
                             >
-                                {/* Parameter header: name + pass/fail */}
+                                {/* Parameter header: name + pass/fail/skipped */}
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex items-center gap-2">
-                                        {p.passed
-                                            ? <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
-                                            : <XCircle size={15} className="text-rose-500 flex-shrink-0" />}
+                                        {p.notCalculated
+                                            ? <MinusCircle size={15} className="text-slate-400 flex-shrink-0" />
+                                            : p.passed
+                                                ? <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                                : <XCircle size={15} className="text-rose-500 flex-shrink-0" />}
                                         <span className={`text-xs font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
                                             {p.label}
                                         </span>
                                     </div>
-                                    <span className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${p.passed
-                                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                                        : "bg-rose-500/10 text-rose-600 dark:text-rose-400"}`}>
-                                        {p.passed ? 'Passed' : 'Not Passed'}
+                                    <span className={`text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full whitespace-nowrap ${p.notCalculated
+                                        ? "bg-slate-500/10 text-slate-500 dark:text-slate-400"
+                                        : p.passed
+                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                            : "bg-rose-500/10 text-rose-600 dark:text-rose-400"}`}>
+                                        {p.notCalculated ? 'Not Run' : p.passed ? 'Passed' : 'Not Passed'}
                                     </span>
                                 </div>
 
@@ -124,11 +146,13 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                                     </p>
                                 )}
 
-                                {/* Cause — only when the parameter does not pass */}
+                                {/* Cause — when the parameter does not pass (neutral tone for skipped) */}
                                 {!p.passed && p.cause && (
-                                    <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${darkMode ? "text-rose-300" : "text-rose-700"}`}>
-                                        <AlertCircle size={13} className="text-rose-500 flex-shrink-0 mt-0.5" />
-                                        <span><span className="font-semibold">Cause: </span>{p.cause}</span>
+                                    <div className={`mt-2 flex items-start gap-1.5 text-[11px] leading-relaxed ${p.notCalculated
+                                        ? (darkMode ? "text-slate-400" : "text-muted")
+                                        : (darkMode ? "text-rose-300" : "text-rose-700")}`}>
+                                        <AlertCircle size={13} className={`${p.notCalculated ? "text-slate-400" : "text-rose-500"} flex-shrink-0 mt-0.5`} />
+                                        <span><span className="font-semibold">{p.notCalculated ? 'Note: ' : 'Cause: '}</span>{p.cause}</span>
                                     </div>
                                 )}
                             </div>
@@ -142,8 +166,42 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                             </div>
                         );
 
+                        if (isBlocked) {
+                            const { cause, recommendation } = getBlockedCauseAndRecommendation(plat.key, blockReason);
+                            return (
+                                 <div className={`p-6 rounded-xl animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
+                                     <div className={`grid grid-cols-1 md:grid-cols-2 gap-6`}>
+                                         <div className="space-y-2">
+                                             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-500">
+                                                 <AlertTriangle size={14} />
+                                                 <span>Cause</span>
+                                             </div>
+                                             <ul className="space-y-1.5">
+                                                 <li className={`text-sm flex items-start gap-2.5 leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                                     <span className="mt-2 w-1.5 h-1.5 rounded-full bg-rose-500 flex-shrink-0" />
+                                                     <span>{cause}</span>
+                                                 </li>
+                                             </ul>
+                                         </div>
+                                         <div className="space-y-2">
+                                             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-500">
+                                                 <CheckCircle size={14} />
+                                                 <span>Recommendation</span>
+                                             </div>
+                                             <ul className="space-y-1.5">
+                                                 <li className={`text-sm flex items-start gap-2.5 leading-relaxed ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                                                     <span className="mt-2 w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0" />
+                                                     <span>{recommendation}</span>
+                                                 </li>
+                                             </ul>
+                                         </div>
+                                     </div>
+                                 </div>
+                            );
+                        }
+
                         return (
-                            <div className={`p-4 rounded-xl space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
+                             <div className={`p-4 rounded-xl space-y-5 animate-in fade-in slide-in-from-top-2 duration-300 ${darkMode ? "bg-slate-950/50 border border-slate-800" : "bg-cardsoft border border-line"}`}>
                                 <div className="flex items-center gap-2 opacity-40">
                                     <BarChart3 size={12} />
                                     <span className="text-[9px] font-semibold uppercase tracking-[0.2em]">What This AI Checks</span>
@@ -162,6 +220,14 @@ const PlatformScoreBar = ({ platforms, darkMode, platformKey = null, singleCard 
                                     <div className="space-y-3">
                                         {groupHeader(<CheckCircle2 size={12} className="text-emerald-500" />, 'Passed', passed.length, "text-emerald-500")}
                                         <div className="flex flex-col gap-3">{passed.map(renderRow)}</div>
+                                    </div>
+                                )}
+
+                                {/* Not Run group — probes that crashed/timed out; excluded from the score */}
+                                {skipped.length > 0 && (
+                                    <div className="space-y-3">
+                                        {groupHeader(<MinusCircle size={12} className="text-slate-400" />, 'Not Run · Excluded From Score', skipped.length, "text-slate-400")}
+                                        <div className="flex flex-col gap-3">{skipped.map(renderRow)}</div>
                                     </div>
                                 )}
                             </div>

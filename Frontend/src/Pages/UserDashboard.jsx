@@ -188,7 +188,7 @@ const UserDashboard = () => {
                                   const url = window.URL.createObjectURL(blob);
                                   const link = document.createElement('a');
                                   link.href = url;
-                                  link.download = `DealerPulse-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                  link.download = `Site Audit-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
                                   document.body.appendChild(link);
                                   link.click();
                                   document.body.removeChild(link);

@@ -165,13 +165,12 @@ Two kinds exist. **(A) Actively double-counted** — weighted in *both* sections
 | Canonical | 0.11 | Heading_Hierarchy | 0.04 |
 | Robots_Txt | 0.08 | Contextual_Linking | 0.04 |
 | Image | 0.08 | Title_Uniqueness | 0.03 |
-| Title | 0.07 | Meta_Description_Uniqueness | 0.03 |
+| Title | 0.10 | Meta_Description_Uniqueness | 0.03 |
 | H1 | 0.07 | URL_Slugs | 0.03 |
-| Meta_Description | 0.06 | Title_Keyword_Optimization | 0.03 |
-| Content_Relevance | 0.06 | Links | 0.03 |
-| URL_Structure | 0.05 | Viewport | 0.03 |
-| Semantic_Tags | 0.05 | Open_Graph | 0.03 |
-| | | Title_Location_Optimization | 0.02 |
+| Meta_Description | 0.06 | Links | 0.03 |
+| Content_Relevance | 0.06 | Viewport | 0.03 |
+| URL_Structure | 0.05 | Open_Graph | 0.03 |
+| Semantic_Tags | 0.05 | Title_Location_Optimization | 0.02 |
 | | | Twitter_Card | 0.02 |
 | | | Social_Links | 0.01 |
 

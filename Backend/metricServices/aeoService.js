@@ -20,9 +20,11 @@ import logger from '../utils/logger.js';
 import { classifyPageType } from '../utils/pageClassifier.js';
 
 // Safety net: no single signal may stall the whole AEO. If one exceeds this budget
-// it resolves to a neutral fallback so the rest of the audit still completes.
+// it resolves to a NOT-CALCULATED fallback (score null) so the rest of the audit
+// still completes. A timed-out probe is renormalized out of the section score and
+// platform gauges — it must never masquerade as a measured 50 (rule 4 / §7 policy 4).
 const SIGNAL_TIMEOUT_MS = 20000;
-const timeoutFallback = (key) => ({ signal: key, score: 50, timedOut: true, issues: ['This check timed out and was skipped.'] });
+const timeoutFallback = (key) => ({ signal: key, score: null, notCalculated: true, timedOut: true, issues: ['This check timed out and was skipped — it does not count toward the score. Re-run the audit to measure it.'] });
 const withTimeout = (value, key) => {
     let timer;
     return Promise.race([
@@ -74,7 +76,7 @@ const deriveFaqScore = (schemaSignal) => {
     if (d.hasFAQSchema && d.hasFAQContent) return 100;
     if (d.hasFAQSchema) return 80;
     if (d.hasFAQContent) return 50;
-    return 25;
+    return 0; // neither FAQ schema nor Q/A content — absent scores 0 (SCORING_FORMAT §7 rule 3)
 };
 
 // Derive a sameAs sub-score from the entity-recognition signal's sameAs breadth
@@ -84,7 +86,7 @@ const deriveSameAsScore = (entitySignal) => {
     if (n >= 3) return 100;
     if (n === 2) return 80;
     if (n === 1) return 60;
-    return 20;
+    return 0; // zero sameAs links — absent scores 0 (SCORING_FORMAT §7 rule 3)
 };
 
 const aeoParamStatus = (score) => (score >= 75 ? 'pass' : score >= 25 ? 'warning' : 'fail');
@@ -165,42 +167,60 @@ class AEOService {
         const eeatApplies = ['about', 'content', 'service'].includes(pageType);
         const sameAsApplies = ['home', 'about'].includes(pageType);
 
-        const eeatComposite = Math.round(
-            ((signals.experienceSignals?.score || 0) +
-             (signals.expertiseSignals?.score || 0) +
-             (signals.authoritySignals?.score || 0)) / 3
-        );
+        // Not-calculated plumbing (rule 4 / §7 policy 4): a crashed or timed-out
+        // probe carries score null. `scored` distinguishes "measured a number"
+        // from "couldn't measure" — null scores never enter the denominator and
+        // never masquerade as a neutral 50.
+        const scored = (signal) => typeof signal?.score === 'number';
 
-        // Each entry: [score, weight, applicable]. infoOnly params carry weight 0.
+        // E-E-A-T composite averages only the sub-signals that actually ran.
+        const eeatParts = [signals.experienceSignals, signals.expertiseSignals, signals.authoritySignals].filter(scored);
+        const eeatComposite = eeatParts.length
+            ? Math.round(eeatParts.reduce((s, p) => s + p.score, 0) / eeatParts.length)
+            : null;
+
+        // Derived params are only as good as their source signal: if the source
+        // probe didn't run, the derived score is unknown — not "absent = 0".
+        const faqScore = scored(signals.schema) ? deriveFaqScore(signals.schema) : null;
+        const sameAsScore = scored(signals.entityRecognition) ? deriveSameAsScore(signals.entityRecognition) : null;
+
+        // Each entry: [score|null, weight, applicable]. infoOnly params carry weight 0.
         const rows = {
-            Schema_Markup:          [signals.schema?.score ?? 0,              AEO_SECTION_WEIGHTS.schema,              true],
-            Answer_First_Structure: [signals.answerFirst?.score ?? 0,         AEO_SECTION_WEIGHTS.answerFirst,         true],
-            Bot_Access:             [signals.botAccess?.score ?? 0,           AEO_SECTION_WEIGHTS.botAccess,           true],
-            Structured_Content:     [signals.structuredContent?.score ?? 0,   AEO_SECTION_WEIGHTS.structuredContent,   true],
-            FAQ_QA_Blocks:          [deriveFaqScore(signals.schema),          AEO_SECTION_WEIGHTS.faqQa,               faqApplies],
-            Entity_Recognition:     [signals.entityRecognition?.score ?? 0,   AEO_SECTION_WEIGHTS.entityRecognition,   true],
-            Citation_NAP_Consistency:[signals.citationConsistency?.score ?? 0,AEO_SECTION_WEIGHTS.citationConsistency, true],
-            Citations_Attribution:  [signals.citations?.score ?? 0,           AEO_SECTION_WEIGHTS.citations,           true],
-            Topical_Authority:      [signals.topicalAuthority?.score ?? 0,    AEO_SECTION_WEIGHTS.topicalAuthority,    true],
-            Index_Coverage:         [signals.indexCoverage?.score ?? 0,       AEO_SECTION_WEIGHTS.indexCoverage,       true],
-            SameAs_Validation:      [deriveSameAsScore(signals.entityRecognition), AEO_SECTION_WEIGHTS.sameAs,         sameAsApplies],
-            EEAT_Composite:         [eeatComposite,                           AEO_SECTION_WEIGHTS.eeat,                eeatApplies],
-            Llms_Txt:               [signals.llmsTxt?.score ?? 0,             AEO_SECTION_WEIGHTS.llmsTxt,             true],
+            Schema_Markup:          [signals.schema?.score ?? null,            AEO_SECTION_WEIGHTS.schema,              true],
+            Answer_First_Structure: [signals.answerFirst?.score ?? null,       AEO_SECTION_WEIGHTS.answerFirst,         true],
+            Bot_Access:             [signals.botAccess?.score ?? null,         AEO_SECTION_WEIGHTS.botAccess,           true],
+            Structured_Content:     [signals.structuredContent?.score ?? null, AEO_SECTION_WEIGHTS.structuredContent,   true],
+            FAQ_QA_Blocks:          [faqScore,                                 AEO_SECTION_WEIGHTS.faqQa,               faqApplies],
+            Entity_Recognition:     [signals.entityRecognition?.score ?? null, AEO_SECTION_WEIGHTS.entityRecognition,   true],
+            Citation_NAP_Consistency:[signals.citationConsistency?.score ?? null,AEO_SECTION_WEIGHTS.citationConsistency, true],
+            Citations_Attribution:  [signals.citations?.score ?? null,         AEO_SECTION_WEIGHTS.citations,           true],
+            Topical_Authority:      [signals.topicalAuthority?.score ?? null,  AEO_SECTION_WEIGHTS.topicalAuthority,    true],
+            Index_Coverage:         [signals.indexCoverage?.score ?? null,     AEO_SECTION_WEIGHTS.indexCoverage,       true],
+            SameAs_Validation:      [sameAsScore,                              AEO_SECTION_WEIGHTS.sameAs,              sameAsApplies],
+            EEAT_Composite:         [eeatComposite,                            AEO_SECTION_WEIGHTS.eeat,                eeatApplies],
+            Llms_Txt:               [signals.llmsTxt?.score ?? null,           AEO_SECTION_WEIGHTS.llmsTxt,             true],
         };
 
         // Informational params (weight 0, displayed but excluded from the denominator).
         const infoRows = {
-            Brand_Entity_Strength: signals.brandEntityStrength?.score ?? 0,
-            Markdown_Structure:    signals.markdownHeaders?.score ?? 0,
-            Page_Speed:            signals.pageSpeed?.score ?? 0,
+            Brand_Entity_Strength: signals.brandEntityStrength?.score ?? null,
+            Markdown_Structure:    signals.markdownHeaders?.score ?? null,
+            Page_Speed:            signals.pageSpeed?.score ?? null,
         };
 
         let weightedSum = 0;
         let weightTotal = 0;
         let parametersScored = 0;
+        let parametersNotCalculated = 0;
         const params = {};
 
         Object.entries(rows).forEach(([key, [score, weight, applicable]]) => {
+            if (typeof score !== 'number') {
+                // Probe didn't run — shown as "not calculated", renormalized out.
+                params[key] = { score: null, weight, applicable, status: null, notCalculated: true, infoOnly: true };
+                if (applicable) parametersNotCalculated += 1;
+                return;
+            }
             params[key] = {
                 score: Math.round(score),
                 weight,
@@ -217,7 +237,9 @@ class AEOService {
         });
 
         Object.entries(infoRows).forEach(([key, score]) => {
-            params[key] = { score: Math.round(score), weight: 0, applicable: false, infoOnly: true, status: aeoParamStatus(score) };
+            params[key] = typeof score === 'number'
+                ? { score: Math.round(score), weight: 0, applicable: false, infoOnly: true, status: aeoParamStatus(score) }
+                : { score: null, weight: 0, applicable: false, infoOnly: true, status: null, notCalculated: true };
         });
 
         const Percentage = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : 0;
@@ -227,6 +249,7 @@ class AEOService {
             Confidence: 'heuristic',
             pageType,
             parametersScored,
+            parametersNotCalculated,
             params,
         };
     }
@@ -245,6 +268,9 @@ class AEOService {
         } else {
             ba.gscIndexed = false;
             ba.score = Math.min(typeof ba.score === 'number' ? ba.score : 100, 35);
+            // Real GSC data IS a measurement — a crashed on-page probe no longer
+            // makes this signal "not calculated" once we have field data.
+            delete ba.notCalculated;
             const note = `Google Search Console (real data): "${gsc.coverageState || gsc.verdict}" — this page is NOT currently indexed by Google.`;
             ba.issues = [note, ...(Array.isArray(ba.issues) ? ba.issues : [])];
             ba.reason = `⚠️ ${note}`;
@@ -312,7 +338,7 @@ class AEOService {
             platforms.gemini.score = 0;
             platforms.gemini.blocked = true;
         }
-        if (signals.botAccess.bots?.['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
+        if (signals.botAccess.bots?.['GPTBot'] === 'blocked') {
             platforms.chatgpt.score = 0;
             platforms.chatgpt.blocked = true;
         }
@@ -342,7 +368,7 @@ class AEOService {
         return {
             url,
             overallScore,
-            Percentage: section.Percentage,
+            Percentage: overallScore,
             Confidence: section.Confidence,
             pageType: section.pageType,
             parametersScored: section.parametersScored,
@@ -366,7 +392,9 @@ class AEOService {
                 return result;
             } catch (err) {
                 logger.error(`Error in AEO signal ${signalKey}`, err);
-                const errorResult = { score: 0, error: err.message };
+                // Crashed probe → not calculated (score null), renormalized out —
+                // never a fake 0 or neutral 50 (rule 4 / §7 policy 4).
+                const errorResult = { signal: signalKey, score: null, notCalculated: true, error: err.message, issues: [`This check could not run (${err.message}) — it does not count toward the score. Re-run the audit.`] };
                 if (onSignalComplete) onSignalComplete(signalKey, errorResult);
                 return errorResult;
             }
@@ -422,7 +450,7 @@ class AEOService {
             platforms.gemini.score = 0;
             platforms.gemini.blocked = true;
         }
-        if (signals.botAccess.bots?.['GPTBot'] === 'blocked' && !signals.llmsTxt.exists) {
+        if (signals.botAccess.bots?.['GPTBot'] === 'blocked') {
             platforms.chatgpt.score = 0;
             platforms.chatgpt.blocked = true;
         }
@@ -448,7 +476,7 @@ class AEOService {
         return {
             url,
             overallScore,
-            Percentage: section.Percentage,
+            Percentage: overallScore,
             Confidence: section.Confidence,
             pageType: section.pageType,
             parametersScored: section.parametersScored,
@@ -562,7 +590,7 @@ class AEOService {
 
             case 'citationConsistency': {
                 const cc = signals.citationConsistency || {};
-                if ((cc.distinctPhoneCount ?? 0) > 1) return 'Your page shows more than one phone number. Pick one and use it everywhere.';
+                if ((cc.distinctPhoneCount ?? 0) > 2) return 'Your page shows more than two phone numbers. Pick one or two and use them everywhere.';
                 if (!cc.hasSchemaPhone) return 'No clear phone number AI can read. Add one in your business details.';
                 if (!cc.hasSchemaAddress) return 'No clear address AI can read. Add your full address in your business details.';
                 return 'Your name, address, and phone don’t fully match across the page. Use the exact same details everywhere.';
@@ -586,7 +614,21 @@ class AEOService {
         const relevant = Object.keys(weights).filter((k) => weights[k] > 0);
 
         return relevant.map((key) => {
-            const score = typeof signals[key]?.score === 'number' ? signals[key].score : 0;
+            // Crashed/timed-out probe → not calculated: no pass/fail verdict, no
+            // fabricated cause — the card says the check didn't run.
+            if (typeof signals[key]?.score !== 'number') {
+                return {
+                    key,
+                    label: PARAM_LABELS[key] || key,
+                    weight: weights[key],
+                    score: null,
+                    passed: null,
+                    notCalculated: true,
+                    requirement: PARAM_REQUIREMENTS[key] || '',
+                    cause: 'This check could not run on this audit, so it was left out of the score. Re-run the audit to measure it.',
+                };
+            }
+            const score = signals[key].score;
             const passed = this.isParamPassed(key, signals, platform);
             return {
                 key,
@@ -613,30 +655,44 @@ class AEOService {
         }
 
         const params = parameters || this.buildPlatformParameters(platform, signals, aeoWeights[platform]);
-        const failingCauses = params.filter((p) => !p.passed && p.cause).map((p) => p.cause);
+        // Not-calculated checks are excluded here — the one-line summary reports
+        // real failures only; the parameter list still shows the skipped checks.
+        const failingCauses = params.filter((p) => !p.passed && !p.notCalculated && p.cause).map((p) => p.cause);
+        const skippedCount = params.filter((p) => p.notCalculated).length;
 
         if (failingCauses.length === 0) {
-            return 'This page is well set up for this AI engine.';
+            return skippedCount
+                ? `This page is well set up for this AI engine (${skippedCount} check${skippedCount === 1 ? '' : 's'} could not run and ${skippedCount === 1 ? 'was' : 'were'} left out of the score).`
+                : 'This page is well set up for this AI engine.';
         }
         return failingCauses.join(' ');
     }
 
     static computePlatformScore(platformName, signals, weights) {
         let weightedSum = 0;
+        let weightTotal = 0;
         const breakdown = {};
+        const skipped = [];
 
         Object.keys(weights).forEach(signalKey => {
-            const signalScore = signals[signalKey].score;
+            const signalScore = signals[signalKey]?.score;
             const signalWeight = weights[signalKey];
-            const contribution = (signalScore * signalWeight) / 100;
-            
-            weightedSum += contribution;
-            breakdown[signalKey] = Math.round(contribution);
+            // Not-calculated signals (crashed/timed-out probes, score null) are
+            // renormalized out — the gauge scores only what was actually measured.
+            if (typeof signalScore !== 'number') {
+                breakdown[signalKey] = null;
+                skipped.push(signalKey);
+                return;
+            }
+            weightedSum += signalScore * signalWeight;
+            weightTotal += signalWeight;
+            breakdown[signalKey] = Math.round((signalScore * signalWeight) / 100);
         });
 
         return {
-            score: Math.round(weightedSum),
-            breakdown
+            score: weightTotal > 0 ? Math.round(weightedSum / weightTotal) : 0,
+            breakdown,
+            ...(skipped.length ? { skippedSignals: skipped } : {}),
         };
     }
 }

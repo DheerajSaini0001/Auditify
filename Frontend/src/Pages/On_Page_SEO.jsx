@@ -10,11 +10,12 @@ import {
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
   CheckCircle, AlertTriangle, XCircle, Info, Loader2, ArrowRight,
   ChevronDown, ChevronUp, ExternalLink, Box, Check, ShieldCheck, MapPin, Clock, Linkedin, AlertCircle,
-  Smartphone, Car
+  Smartphone, Car, Sparkles
 } from "lucide-react";
 import {
   SiFacebook, SiX, SiInstagram, SiYoutube, SiPinterest,
-  SiTiktok, SiReddit, SiSnapchat, SiMedium, SiYelp
+  SiTiktok, SiReddit, SiSnapchat, SiMedium, SiYelp,
+  SiGooglemaps, SiWhatsapp, SiTelegram, SiGoogle
 } from "react-icons/si";
 import MetricInfoModal from "../Component/MetricInfoModal";
 import ParameterInfoModal from "../Component/ParameterInfoModal";
@@ -141,11 +142,14 @@ const Section = ({ title, icon: Icon, children, darkMode, gridClasses = "grid-co
 const TitleTagCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const status = data?.status || "fail";
   const analysis = data?.analysis;
-  const isPassed = status === "pass";
-
-  const statusText = isPassed ? "Optimized" : "Needs Improvement";
+  // Colour AND label must come from the SAME source. The badge colour is score-tiered
+  // (getStatusFromScore: ≥90 green), so derive the label from that too — otherwise a
+  // 90-scoring title showed a GREEN badge reading "Needs Improvement" (colour from score,
+  // label from the stricter backend status which only passes at 100).
+  const badgeStatus = getStatusFromScore(score);
+  const isPassed = badgeStatus === "pass";
+  const statusText = isPassed ? "Optimized" : badgeStatus === "warning" ? "Needs Improvement" : "Missing";
 
   const [showDetails, setShowDetails] = React.useState(false);
 
@@ -162,7 +166,7 @@ const TitleTagCard = ({ data, darkMode, onInfo }) => {
               <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Title Tag</h3>
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
-                  status={getStatusFromScore(score)}
+                  status={badgeStatus}
                   value={statusText}
                   darkMode={darkMode}
                 />
@@ -238,8 +242,8 @@ const MetaDescriptionCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
-  const statusText = isPassed ? "Optimized" : "Needs Improvement";
+  const isPassed = getStatusFromScore(score) === "pass";
+  const statusText = (getStatusFromScore(score) === "pass") ? "Optimized" : "Needs Improvement";
 
   return (
     <SEOCard
@@ -277,8 +281,8 @@ const CanonicalTagCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
-  const statusText = isPassed ? "Optimized" : "Warning / Info";
+  const isPassed = getStatusFromScore(score) === "pass";
+  const statusText = (getStatusFromScore(score) === "pass") ? "Optimized" : "Warning / Info";
 
   return (
     <SEOCard
@@ -343,8 +347,8 @@ const URLStructureCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
-  const statusText = isPassed ? "Clean Details" : "Issues Found";
+  const isPassed = getStatusFromScore(score) === "pass";
+  const statusText = (getStatusFromScore(score) === "pass") ? "Clean Details" : "Issues Found";
 
   return (
     <SEOCard
@@ -420,8 +424,8 @@ const H1TagCard = ({ data, darkMode, onInfo }) => {
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const analysis = data?.analysis;
-  const isPassed = status === "pass";
-  const statusText = isPassed ? "Optimized" : "Attention Needed";
+  const isPassed = getStatusFromScore(score) === "pass";
+  const statusText = (getStatusFromScore(score) === "pass") ? "Optimized" : "Attention Needed";
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
@@ -520,10 +524,41 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const analysis = data?.analysis;
-  const isPassed = status === "pass";
+  // Treat ≥90 as a pass, consistent with the badge (getStatusFromScore) — the backend
+  // only marks "pass" at a perfect 100, which left 90–99 cards showing the green
+  // "Fully Optimized" badge while still behaving as not-passed.
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
   const statusText = isPassed ? "Fully Optimized" : (score >= 50 ? "Good / Improvements" : "Needs Attention");
+
+  // Reusable list of image sources/filenames for the detail blocks. `items` may be an
+  // array of strings or of { src } objects; `linkify` renders each as a clickable link.
+  const ImgDetailList = ({ title, items = [], icon, hint, linkify = true }) => {
+    if (!items || items.length === 0) return null;
+    return (
+      <div className={`text-xs p-3 rounded border border-amber-500/20 bg-amber-500/5`}>
+        <div className="font-semibold text-amber-500 mb-1 uppercase flex items-center gap-1">
+          {icon} {title} ({items.length})
+        </div>
+        {hint && <div className={`normal-case mb-2 text-[10px] ${darkMode ? "text-gray-400" : "text-muted"}`}>{hint}</div>}
+        <div className="space-y-1 max-h-32 overflow-y-auto custom-scrollbar">
+          {items.map((it, i) => {
+            const src = typeof it === "string" ? it : it.src;
+            return linkify ? (
+              <a key={i} href={resolveLink(src)} target="_blank" rel="noopener noreferrer"
+                 className="flex items-center gap-2 overflow-hidden hover:underline group/link" title={src}>
+                <div className="truncate opacity-70 font-mono text-[10px] group-hover/link:opacity-100 group-hover/link:text-blue-500 transition-colors">{src}</div>
+                <Link size={8} className="opacity-0 group-hover/link:opacity-100 transition-opacity" />
+              </a>
+            ) : (
+              <div key={i} className="truncate opacity-70 font-mono text-[10px]" title={src}>{src}</div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
@@ -637,9 +672,14 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
             </div>
           )}
 
-          {/* Issues List (Clickable Links) */}
+          {/* Cause & Recommendation — shown first when "View Details" is expanded */}
+          {showDetails && !isPassed && (
+            <DetailsPanel analysis={analysis} metricKey="Image" darkMode={darkMode} />
+          )}
+
+          {/* Issues List — revealed via the "View Details" toggle */}
           {
-            (meta.missingAlt?.length > 0 || meta.missingTitle?.length > 0 || meta.largeImages?.length > 0 || meta.broken_images?.length > 0) && (
+            showDetails && (meta.missingAlt?.length > 0 || meta.missingTitle?.length > 0 || meta.largeImages?.length > 0 || meta.broken_images?.length > 0 || meta.legacyExamples?.length > 0 || meta.notLazyExamples?.length > 0 || meta.notResponsiveExamples?.length > 0 || meta.badNameExamples?.length > 0) && (
               <div className="space-y-3">
                 {/* 0. Broken Images */}
                 {meta.broken_images?.length > 0 && (
@@ -749,14 +789,38 @@ const ImageAnalysisCard = ({ data, darkMode, onInfo, resolveLink, className = ""
                     </div>
                   </div>
                 )}
+
+                {/* 4. Not next-gen format */}
+                <ImgDetailList
+                  title="Not Next-Gen Format"
+                  items={meta.legacyExamples}
+                  icon={<AlertTriangle size={10} />}
+                  hint="Serve these as WebP or AVIF to cut file size without losing quality." />
+
+                {/* 5. Not lazy-loaded */}
+                <ImgDetailList
+                  title="Not Lazy-Loaded"
+                  items={meta.notLazyExamples}
+                  icon={<AlertTriangle size={10} />}
+                  hint={'Add loading="lazy" to below-the-fold images (keep hero/above-the-fold images eager).'} />
+
+                {/* 6. Not responsive */}
+                <ImgDetailList
+                  title="Not Responsive"
+                  items={meta.notResponsiveExamples}
+                  icon={<AlertTriangle size={10} />}
+                  hint="Add srcset/sizes so the browser can load an appropriately sized image per device." />
+
+                {/* 7. Poorly named files */}
+                <ImgDetailList
+                  title="Poorly Named Files"
+                  items={meta.badNameExamples}
+                  icon={<AlertTriangle size={10} />}
+                  hint="Use descriptive, keyword-rich file names instead of hashes or numbers."
+                  linkify={false} />
               </div>
             )
           }
-
-          {/* Analysis Details (collapsible) */}
-          {showDetails && !isPassed && (
-            <DetailsPanel analysis={analysis} metricKey="Image" darkMode={darkMode} />
-          )}
 
           {/* Ask AI Button */}
           {!isPassed && (
@@ -787,10 +851,10 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const analysis = data?.analysis;
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
-  const statusText = isPassed ? "Excellent Structure" : (score >= 50 ? "Good Structure" : "Weak Structure");
+  const statusText = (getStatusFromScore(score) === "pass") ? "Excellent Structure" : (score >= 50 ? "Good Structure" : "Weak Structure");
 
   const renderTagBadge = (tagName, isCritical) => {
     const exists = meta.found?.some(t => t.toLowerCase() === tagName.toLowerCase());
@@ -934,397 +998,15 @@ const SemanticTagsCard = ({ data, darkMode, onInfo, className }) => {
   );
 };
 
-// ------------------------------------------------------
-// Specialized Contextual Analysis Card
-// ------------------------------------------------------
-const ContextualAnalysisCard = ({ data, linksData, darkMode, onInfo, resolveLink }) => {
-  const meta = data?.meta || {};
-  const score = data?.score || 0;
-
-  // Mirrors backend isTextRelatedToUrl + handles no-text (icon/image) anchors
-  const isContextual = (text, href) => {
-    if (!href) return false;
-
-    // No visible anchor text — can't determine intent, treat as Non-Contextual
-    // Note: backend stores "[No Text]" as the literal string when anchor has no text
-    const trimmedText = (text || "").trim();
-    if (!trimmedText || trimmedText === "[No Text]") return false;
-
-    const t = trimmedText.toLowerCase();
-    const h = href.toLowerCase();
-
-    // Extract meaningful words from text (reused across checks)
-    const textWords = t.split(/[^a-z0-9]+/).filter(w => w.length > 2);
-
-    // 1. Intent synonym map (mirrors backend intentMap)
-    const intentMap = {
-      "sign in": ["login", "signin", "log-in", "sign-in", "auth", "portal-login", "client-login", "secure-access", "start-session", "account-access", "gateway", "verify-identity"],
-      "sign up": ["register", "signup", "sign-up", "join", "enroll", "create-account", "get-started", "onboarding", "become-a-member", "trial-signup", "free-trial", "open-account"],
-      "logout": ["logout", "signout", "sign-out", "log-out", "exit", "end-session", "terminate-session", "disconnect"],
-      "password management": ["forgot-password", "reset-password", "recover-account", "password-recovery", "change-password", "update-credentials"],
-      "about": ["about", "about-us", "our-story", "who-we-are", "company", "mission", "vision", "values", "culture", "background", "history", "heritage", "company-profile", "biography"],
-      "team": ["team", "leadership", "our-people", "executive-team", "management", "board-members", "staff", "meet-the-team", "employees", "founders", "faculty"],
-      "careers": ["careers", "jobs", "hiring", "work-with-us", "opportunities", "openings", "join-the-team", "internships", "vacancies", "employment", "recruitment"],
-      "press": ["press", "media", "newsroom", "press-kit", "media-kit", "brand-assets", "news", "announcements", "public-relations", "press-releases", "coverage"],
-      "contact": ["contact", "contact-us", "get-in-touch", "reach-out", "contact-me", "write-to-us", "enquiry", "sales-inquiry", "business-contact", "ask-a-question", "request-info", "inbound"],
-      "pricing": ["pricing", "plans", "subscription", "cost", "rates", "fees", "billing", "compare-plans", "tiers", "enterprise-pricing", "calculator", "estimates", "price-list"],
-      "quote": ["get-quote", "estimate", "quotation", "purchase", "buy", "order-now", "request-quote", "book-demo", "schedule-call"],
-      "services": ["services", "our-services", "what-we-do", "solutions", "features", "capabilities", "expertise", "specializations", "offerings", "platform", "infrastructure"],
-      "ecommerce": ["cart", "bag", "basket", "checkout", "shop", "store", "marketplace", "catalog", "collections", "wishlist", "shopping-cart", "pay-online"],
-      "profile": ["profile", "account", "dashboard", "my-account", "settings", "preferences", "me", "user-profile", "personal-info", "security-settings", "manage-account"],
-      "orders": ["orders", "my-orders", "purchase-history", "track-order", "shipments", "receipts", "invoices", "downloads", "my-digital-assets"],
-      "support": ["help", "support", "help-center", "customer-care", "service-desk", "ticketing", "knowledge-base", "faq", "faqs", "troubleshooting", "how-to", "tutorial-center"],
-      "resources": ["resources", "whitepapers", "ebooks", "guides", "tutorials", "webinars", "case-studies", "documentation", "learning-center", "academy", "training"],
-      "developer": ["docs", "api", "api-docs", "developers", "dev-portal", "documentation", "sdk", "integrations", "changelog", "github-repo", "sandbox"],
-      "blog": ["blog", "news", "articles", "insights", "magazine", "updates", "editorial", "posts", "latest", "newsletter", "stories"],
-      "social proof": ["testimonials", "reviews", "customer-reviews", "ratings", "success-stories", "portfolio", "our-work", "projects", "partners", "clients", "affiliates", "sponsors", "certifications", "awards"],
-      "legal": ["privacy", "privacy-policy", "terms", "terms-of-service", "tos", "terms-and-conditions", "t-and-c", "legal", "disclaimer", "cookie-policy", "gdpr", "compliance", "data-protection"],
-      "security": ["security", "trust-center", "vulnerability", "responsible-disclosure", "security-policy", "encryption", "system-status", "uptime"],
-      "refunds": ["refund-policy", "return-policy", "shipping-policy", "delivery-info", "cancellation-policy"],
-      "location": ["location", "find-us", "map", "offices", "headquarters", "branches", "store-locator", "directions", "contact-details", "reach-us-at"],
-    };
-
-    // ── Check full text against intentMap ──────────────────────────────
-    // If text IS exactly a category label ("Blog", "About", etc.), trust it contextual
-    if (intentMap[t]) return true;
-
-    // Check individual words in text against intentMap (handles plurals: "Blogs" → "blog")
-    for (const word of textWords) {
-      const singular = word.endsWith('s') && word.length > 3 ? word.slice(0, -1) : word;
-      if (intentMap[word]) return true;
-      if (singular !== word && intentMap[singular]) return true;
-      // Also try URL keyword match for multi-word texts (e.g. "Blog section" → blog URL)
-      if (intentMap[word] && intentMap[word].some(kw => h.includes(kw))) return true;
-      if (singular !== word && intentMap[singular] && intentMap[singular].some(kw => h.includes(kw))) return true;
-    }
-
-    // ── Acronym / initials match ─────────────────────────────────────
-    // "Certified Pre-Owned" → initials "cpo" matches /cpo
-    const initials = textWords.map(w => w[0]).join("");
-    if (initials.length >= 2 && h.includes(initials)) return true;
-
-    // ── Country TLD matching (mirrors backend) ────────────────────────
-    // "UAE" → .ae, "Australia" → .au
-    const countryTLDs = {
-      ".au": ["australia", "oz", "aus"],
-      ".uk": ["uk", "united-kingdom", "britain", "gb", "england"],
-      ".in": ["india", "bharat"],
-      ".ca": ["canada"],
-      ".us": ["usa", "united-states", "america"],
-      ".de": ["germany", "deutschland"],
-      ".fr": ["france"],
-      ".jp": ["japan", "nippon"],
-      ".cn": ["china"],
-      ".br": ["brazil", "brasil"],
-      ".mx": ["mexico"],
-      ".ru": ["russia"],
-      ".za": ["south-africa"],
-      ".ae": ["uae", "emirates", "dubai"],
-      ".sg": ["singapore"],
-      ".nz": ["new-zealand", "newzealand", "kiwi"],
-      ".es": ["spain", "espana"],
-      ".it": ["italy", "italia"],
-      ".nl": ["netherlands", "holland"],
-      ".se": ["sweden"],
-      ".no": ["norway"],
-      ".fi": ["finland"],
-      ".dk": ["denmark"],
-      ".ch": ["switzerland", "swiss"],
-      ".at": ["austria"],
-      ".be": ["belgium"],
-      ".ie": ["ireland"],
-      ".my": ["malaysia"],
-      ".th": ["thailand"],
-      ".id": ["indonesia"],
-      ".pk": ["pakistan"],
-      ".sa": ["saudi-arabia", "ksa"],
-      ".tr": ["turkey"],
-      ".eg": ["egypt"],
-      ".ng": ["nigeria"],
-      ".ar": ["argentina"],
-      ".cl": ["chile"],
-    };
-    for (const [ext, names] of Object.entries(countryTLDs)) {
-      if (h.includes(ext) && names.some(name => t.includes(name))) return true;
-    }
-
-    // ── URL path segment matching ─────────────────────────────────────
-    try {
-      const urlObj = href.startsWith('http') ? new URL(href) : { pathname: href, hostname: "" };
-      const urlPath = urlObj.pathname || href;
-      const hostname = (urlObj.hostname || "").toLowerCase().replace(/^www\./, "");
-
-      // ── Hostname matching ─────────────────────────────────────────
-      // Strip digits from hostname parts: "bikes24" → "bikes", "insure24" → "insure"
-      const hostParts = hostname.split('.').filter(p => p && p !== 'com' && p !== 'www');
-      for (const part of hostParts) {
-        const partStripped = part.replace(/\d+/g, ""); // "bikes24" → "bikes"
-        if (!partStripped || partStripped.length < 3) continue;
-        for (const w of textWords) {
-          if (w === partStripped) return true;                           // exact match
-          if (w.startsWith(partStripped) || partStripped.startsWith(w)) return true; // prefix
-          if (w.includes(partStripped) || partStripped.includes(w)) return true;     // substring
-        }
-      }
-
-      if (urlPath === "/" || urlPath === "") {
-        return t.includes("home") || t.includes("index") || t.includes("main");
-      }
-
-      // All path segments: /research/toyota/rav4/2025 → ["research","toyota","rav4","2025"]
-      const allSegments = urlPath
-        .replace(/\.[^/.]+$/, "")
-        .split('/')
-        .filter(Boolean)
-        .map(s => s.toLowerCase());
-
-      const normalizedText = t.replace(/[^a-z0-9]/g, "");
-
-      for (const seg of allSegments) {
-        const segNorm = seg.replace(/[^a-z0-9]/g, "");
-        if (!segNorm || segNorm.length < 2) continue;
-
-        if (normalizedText.includes(segNorm) || segNorm.includes(normalizedText)) return true;
-
-        const segWords = seg.split(/[^a-z0-9]+/).filter(w => w.length > 2);
-        for (const w of textWords) {
-          if (segWords.includes(w)) return true;
-          if (w.startsWith(segNorm) || segNorm.startsWith(w)) return true;
-          if (segNorm.includes(w) || w.includes(segNorm)) return true;
-        }
-      }
-
-    } catch { /* ignore invalid URLs */ }
-
-    return false;
-  };
-
-  // Combine Internal & External Links for analysis
-  const allLinks = [
-    ...(linksData?.meta?.internalLinks || []),
-    ...(linksData?.meta?.externalLinks || [])
-  ];
-
-  // Analyze Links
-  const analyzedLinks = allLinks.map(link => ({
-    ...link,
-    isContextual: isContextual(link.text, link.href)
-  }));
-
-  const contextualLinks = analyzedLinks.filter(l => l.isContextual);
-  const nonContextualLinks = analyzedLinks.filter(l => !l.isContextual);
-
-  // Determine score based on ratio
-  const contextualRatio = allLinks.length > 0 ? contextualLinks.length / allLinks.length : 0;
-  const derivedScore = contextualRatio > 0.5 ? 100 : (contextualRatio > 0.3 ? 70 : 0);
-  const finalScore = score !== undefined ? (score <= 1 ? score * 100 : score) : derivedScore;
-  const finalStatus = data?.status || (finalScore >= 90 ? "pass" : finalScore >= 50 ? "warning" : "fail");
-
-  const isPassed = finalStatus === "pass";
-  const statusText = isPassed ? "Good Context" : "Improve Relevance";
-  const [showDetails, setShowDetails] = React.useState(false);
-
-  return (
-    <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
-      <div className="p-5 space-y-5">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-surface-2"} group-hover:scale-110 transition-transform duration-300`}>
-              <ExternalLink size={24} className={darkMode ? "text-amber-400" : "text-amber-600"} />
-            </div>
-            <div>
-              <h3 className={`font-semibold text-lg ${darkMode ? "text-gray-100" : "text-ink"}`}>Contextual Links</h3>
-              <div className={`flex items-center gap-2 mt-1`}>
-                <ScoreBadge
-                  status={getStatusFromScore(finalScore)}
-                  value={statusText}
-                  darkMode={darkMode}
-                />
-                <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
-                  ({contextualLinks.length} / {allLinks.length} Contextual)
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-1">
-            {!isPassed && (
-              <DetailsToggle isOpen={showDetails} setIsOpen={setShowDetails} darkMode={darkMode} paramKey="Contextual_Linking" />
-            )}
-            {onInfo && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onInfo();
-                }}
-                className={`p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors ${darkMode ? "text-gray-400 hover:text-white" : "text-faint hover:text-ink"}`}
-              >
-                <Info size={18} />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* New Viz: Contextual vs Non-Contextual Lists */}
-        <div className="space-y-4">
-          {/* Description */}
-          <div>
-            <span className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>DESCRIPTION: </span>
-            <span className={`text-xs ${darkMode ? "text-gray-300" : "text-muted"}`}>
-              {InfoDetails.Contextual_Linking.whatThisParameterIs}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Contextual Links */}
-            <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-cardsoft border-line"}`} style={{ maxHeight: '300px' }}>
-              <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-emerald-900/30 border-gray-700 text-emerald-400" : "bg-emerald-50 border-line text-emerald-700"}`}>
-                Contextual Links ({contextualLinks.length})
-              </div>
-              <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
-                {contextualLinks.length > 0 ? contextualLinks.map((link, i) => (
-                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-emerald-900/10 border-transparent hover:bg-emerald-900/20" : "bg-card border-transparent hover:border-emerald-200 hover:shadow-sm"}`}>
-                    <div className={`font-semibold mb-0.5 ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>"{link.text}"</div>
-                    <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
-                  </a>
-                )) : <div className="p-4 text-center opacity-50 text-[10px]">No contextual links found.</div>}
-              </div>
-            </div>
-
-            {/* Non-Contextual Links */}
-            <div className={`rounded-xl border overflow-hidden flex flex-col ${darkMode ? "bg-black/20 border-gray-700" : "bg-cardsoft border-line"}`} style={{ maxHeight: '300px' }}>
-              <div className={`px-4 py-2 border-b text-xs font-semibold uppercase tracking-wider sticky top-0 bg-opacity-90 backdrop-blur ${darkMode ? "bg-amber-900/30 border-gray-700 text-amber-400" : "bg-amber-50 border-line text-amber-700"}`}>
-                Non-Contextual Links ({nonContextualLinks.length})
-              </div>
-              <div className="overflow-y-auto custom-scrollbar p-1 space-y-1 flex-1">
-                {nonContextualLinks.length > 0 ? nonContextualLinks.map((link, i) => (
-                  <a key={i} href={resolveLink(link.href)} target="_blank" rel="noopener noreferrer" className={`block p-2 rounded text-[10px] break-all border group/link transition-all ${darkMode ? "bg-amber-900/10 border-transparent hover:bg-amber-900/20" : "bg-card border-transparent hover:border-amber-200 hover:shadow-sm"}`}>
-                    <div className={`font-semibold mb-0.5 ${darkMode ? "text-amber-300" : "text-amber-700"}`}>"{link.text}"</div>
-                    <div className="opacity-50 font-mono text-[9px] truncate group-hover/link:opacity-80 transition-opacity">{link.href}</div>
-                  </a>
-                )) : <div className="p-4 text-center opacity-50 text-[10px]">All links are contextual!</div>}
-              </div>
-            </div>
-          </div>
-
-          {/* Broken Contextual Links */}
-          <div className={`text-xs p-4 rounded-xl border ${meta.broken_links?.length > 0 ? "border-red-500/20 bg-red-500/5" : "border-emerald-500/20 bg-emerald-500/5"}`}>
-            <div className={`font-semibold mb-2 uppercase flex items-center gap-1 ${meta.broken_links?.length > 0 ? "text-red-500" : "text-emerald-500"}`}>
-              {meta.broken_links?.length > 0 ? <AlertTriangle size={14} className="mt-[-2px]" /> : <CheckCircle size={14} className="mt-[-2px]" />}
-              Broken Contextual Links ({meta.broken_links_count || 0})
-            </div>
-
-            {meta.broken_links?.length > 0 ? (
-              <>
-                <p className={`mb-3 ${darkMode ? "text-gray-300" : "text-muted"}`}>
-                  These contextual links are returning an error (e.g., 404 Not Found) when accessed.
-                </p>
-                <div className="max-h-80 overflow-y-auto custom-scrollbar space-y-1 p-2 bg-black/5 dark:bg-black/20 rounded">
-                  {meta.broken_links.map((linkObj, i) => (
-                    <div key={i} className={`flex justify-between items-center ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"} p-2 rounded border shadow-sm`}>
-                      <div className="flex items-center gap-2 font-mono text-[11px] truncate mr-2">
-                        <span className="font-semibold text-red-500 dark:text-red-400 shrink-0 truncate">
-                          {linkObj.status ? `HTTP ${linkObj.status}` : linkObj.error || "Broken"}
-                        </span>
-                      </div>
-                      <a href={resolveLink(linkObj.url || "")} target="_blank" rel="noopener noreferrer" className={`font-mono text-[10px] truncate transition-colors max-w-[70%] text-right ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}>
-                        {linkObj.url || "—"}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <p className={`${darkMode ? "text-emerald-400/80" : "text-emerald-700/80"}`}>
-                Perfect! All your contextual links are valid and completely functional.
-              </p>
-            )}
-          </div>
-
-
-          {/* Topical Relatedness */}
-          {meta.related_ratio !== undefined && (
-            <div className={`text-xs p-4 rounded-xl border ${darkMode ? "border-gray-700 bg-gray-800/40" : "border-line bg-cardsoft"}`}>
-              <div className={`font-semibold mb-2 uppercase flex items-center gap-2 ${darkMode ? "text-gray-300" : "text-muted"}`}>
-                <Link size={14} className="mt-[-2px]" />
-                Topical Relatedness
-                <span className={`ml-auto font-semibold ${Number(meta.related_ratio) >= 0.3 ? "text-emerald-500" : "text-amber-500"}`}>
-                  {Math.round(Number(meta.related_ratio) * 100)}% related
-                </span>
-              </div>
-              {meta.topic_terms?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mb-3">
-                  {meta.topic_terms.slice(0, 12).map((t, i) => (
-                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-mono ${darkMode ? "bg-gray-900 text-gray-400" : "bg-card text-muted border border-line"}`}>{t}</span>
-                  ))}
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                {meta.related_examples?.length > 0 && (
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500 mb-1">Related Links</div>
-                    <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
-                      {meta.related_examples.map((e, i) => (
-                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-muted"}`} title={e.href}>
-                          <span className="text-emerald-500">↳</span> {e.anchor || e.href} {e.shared?.length ? <span className="opacity-60">({e.shared.join(", ")})</span> : null}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {meta.unrelated_examples?.length > 0 && (
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-500 mb-1">Unrelated Links</div>
-                    <div className="space-y-1 max-h-40 overflow-y-auto custom-scrollbar">
-                      {meta.unrelated_examples.map((e, i) => (
-                        <div key={i} className={`font-mono text-[10px] truncate ${darkMode ? "text-gray-400" : "text-muted"}`} title={e.href}>
-                          <span className="text-amber-500">↳</span> {e.anchor || e.href}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Analysis Details (collapsible) */}
-          {showDetails && !isPassed && (
-            <DetailsPanel analysis={data?.analysis} metricKey="Contextual_Linking" darkMode={darkMode} />
-          )}
-
-          {/* Ask AI Button */}
-          {!isPassed && (
-            <AskAIButton
-              finding={{
-                type: 'On-Page SEO',
-                title: 'Contextual Links',
-                details: statusText || '',
-                severity: finalStatus === 'pass' ? 'pass' : finalStatus === 'warning' ? 'warning' : 'critical',
-                url: ''
-              }}
-              darkMode={darkMode}
-              meta={meta}
-              paramKey="Contextual_Linking"
-            />
-          )}
-
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const LinkProfileCard = ({ data, darkMode, onInfo, resolveLink, className = "lg:col-span-3" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [activeTab, setActiveTab] = React.useState("internal");
   const [showDetails, setShowDetails] = React.useState(false);
 
-  const statusText = isPassed ? "Healthy Link Profile" : "Needs Review";
+  const statusText = (getStatusFromScore(score) === "pass") ? "Healthy Link Profile" : "Needs Review";
 
   const renderLinkList = (links, type) => {
     if (!links || links.length === 0) {
@@ -1491,10 +1173,10 @@ const HeadingHierarchyCard = ({ data, darkMode, onInfo }) => {
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const analysis = data?.analysis;
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
-  const statusText = isPassed ? "Logical Structure" : "Imbalanced Hierarchy";
+  const statusText = (getStatusFromScore(score) === "pass") ? "Logical Structure" : "Imbalanced Hierarchy";
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group col-span-1 md:col-span-2 lg:col-span-3 ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
@@ -1634,7 +1316,9 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
   const meta = data || {};
   const percentage = meta.percentage || 0;
   const status = meta.status || "fail";
-  const isPassed = status === "pass";
+  // Tier-based card (meta.score is HIGH/MEDIUM/LOW, not a 0–100 number) — keep the
+  // backend status, don't switch to a numeric ≥90 threshold like the graded cards.
+  const isPassed = (status === "pass");
   const [showDetails, setShowDetails] = React.useState(false);
 
   const statusText = meta.score === "HIGH" ? "Strong Relevance" : (meta.score === "MEDIUM" ? "Moderate Relevance" : "Low Relevance");
@@ -1657,7 +1341,7 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
                   darkMode={darkMode}
                 />
                 <span className={`text-xs ${darkMode ? "text-gray-400" : "text-muted"}`}>
-                  ({percentage}% Match)
+                  ({percentage}% Relevant)
                 </span>
               </div>
             </div>
@@ -1730,6 +1414,53 @@ const ContentRelevanceCard = ({ data, darkMode, onInfo }) => {
                 </div>
               </div>
             </div>
+
+            {/* Topical Focus — what the page is actually about, and which of those
+                topics the title/H1 reflect (green) vs don't (grey). */}
+            {meta.topicTerms?.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-indigo-500">
+                  <Tag size={12} />
+                  <span>Topical Focus — {meta.focus ?? 0}% ({meta.focusedTerms?.length || 0}/{meta.topicTerms.length} main topics in title/H1)</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {meta.topicTerms.map((t, i) => {
+                    const reflected = (meta.focusedTerms || []).includes(t);
+                    return (
+                      <span key={i} title={reflected ? "Reflected in the title/H1" : "A main topic of the page that the title/H1 does NOT mention"}
+                        className={`px-2 py-0.5 rounded text-[10px] font-semibold border inline-flex items-center gap-1 ${reflected
+                          ? (darkMode ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-emerald-50 text-emerald-700 border-emerald-100")
+                          : (darkMode ? "bg-slate-700/40 text-slate-300 border-slate-600" : "bg-cardsoft text-muted border-line")}`}>
+                        {reflected ? <CheckCircle size={10} /> : <AlertTriangle size={10} />}{t}
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className={`text-[11px] leading-relaxed ${darkMode ? "text-gray-400" : "text-muted"}`}>
+                  These are the page's most-emphasised topics. Grey ones aren't in your title or H1 — align your headline with them (or the reverse) to raise topical focus.
+                </p>
+              </div>
+            )}
+
+            {/* Keyword-stuffing penalty — which over-used terms cost points. */}
+            {meta.stuffingPenalty > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-500">
+                  <AlertTriangle size={12} />
+                  <span>Keyword Stuffing — −{meta.stuffingPenalty} penalty</span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {(meta.stuffedTerms || []).map((s, i) => (
+                    <span key={i} className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${darkMode ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : "bg-rose-50 text-rose-700 border-rose-100"}`}>
+                      {s.term} · {s.density}%
+                    </span>
+                  ))}
+                </div>
+                <p className={`text-[11px] leading-relaxed ${darkMode ? "text-gray-400" : "text-muted"}`}>
+                  These words exceed ~8% of the body text (over-repetition). Vary your wording and use natural synonyms to remove the penalty.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Analysis Details (collapsible) */}
@@ -1766,10 +1497,10 @@ const VideoAnalysisCard = ({ data, darkMode, onInfo, className = "" }) => {
   const score = data?.score || 0;
   const status = data?.status || "fail";
   const analysis = data?.analysis;
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
-  const statusText = isPassed ? "Fully Optimized" : (score >= 50 ? "Partially Optimized" : "Needs Attention");
+  const statusText = (getStatusFromScore(score) === "pass") ? "Fully Optimized" : (score >= 50 ? "Partially Optimized" : "Needs Attention");
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
@@ -1861,7 +1592,7 @@ const URLSlugCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const statusText = isPassed ? "Clean Slugs" : "SEO Issues Found";
 
   return (
@@ -1945,7 +1676,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const statusText = data?.details || (isPassed ? "Found" : "Missing");
 
   return (
@@ -1983,7 +1714,7 @@ const RobotsTxtCard = ({ data, darkMode, onInfo }) => {
 const ContentFreshnessCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = data?.status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const statusText = data?.details || "Content freshness";
 
   return (
@@ -2030,7 +1761,7 @@ const SitemapCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const statusText = data?.details || (isPassed ? "Found" : "Missing");
 
   return (
@@ -2199,87 +1930,6 @@ const UniquenessCard = ({ data, darkMode, onInfo, title, metricKey, noun = "Valu
               </div>
             );
           })}
-        </div>
-      )}
-    </SEOCard>
-  );
-};
-
-// Cross-page Title Keyword Optimization card.
-const KeywordOptimizationCard = ({ data, darkMode, onInfo }) => {
-  const meta = data?.meta || {};
-  const score = data?.score || 0;
-  const status = data?.status || "fail";
-  const statusText = data?.details || "Title Keyword Optimization";
-
-  const results = Array.isArray(meta?.results) ? meta.results : [];
-  const pagesChecked = meta?.pagesChecked ?? results.length;
-  const optimizedCount = meta?.optimizedCount ?? results.filter(r => r?.optimized).length;
-
-  return (
-    <SEOCard
-      title="Title Keyword Optimization"
-      icon={Search}
-      iconColor="text-blue-400"
-      score={score}
-      status={status}
-      statusText={statusText}
-      analysis={data?.analysis}
-      meta={meta}
-      metricKey="Title_Keyword_Optimization"
-      darkMode={darkMode}
-      onInfo={onInfo}
-      className="col-span-1"
-      getStatusFromScore={getStatusFromScore}
-      InfoDetails={InfoDetails}
-    >
-      {pagesChecked > 0 && (
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          {[
-            { label: "Pages Checked", value: pagesChecked, color: darkMode ? "text-gray-100" : "text-ink" },
-            { label: "Keyword Optimized", value: `${optimizedCount}/${pagesChecked}`, color: optimizedCount === pagesChecked ? "text-emerald-500" : "text-amber-500" },
-          ].map((s, i) => (
-            <div key={i} className={`p-3 rounded-lg text-center ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
-              <div className={`text-lg font-semibold ${s.color}`}>{s.value}</div>
-              <div className="text-[10px] uppercase font-semibold tracking-wider opacity-60">{s.label}</div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {results.length > 0 && (
-        <div className="space-y-2">
-          <div className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-500" : "text-faint"}`}>
-            Sampled Pages
-          </div>
-          {results.map((r, i) => (
-            <div key={i} className={`p-2 rounded text-xs ${darkMode ? "bg-gray-900" : "bg-cardsoft border border-line"}`}>
-              <div className="flex items-center gap-2">
-                {r?.optimized ? (
-                  <CheckCircle size={12} className="text-emerald-500 shrink-0" />
-                ) : (
-                  <AlertTriangle size={12} className="text-amber-500 shrink-0" />
-                )}
-                <span className={`font-semibold truncate ${darkMode ? "text-gray-200" : "text-ink"}`}>
-                  {r?.title || "Missing title"}
-                </span>
-              </div>
-              <div className="mt-1 pl-5 flex items-center gap-2 flex-wrap">
-                {r?.keyword ? (
-                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${r.optimized ? "bg-emerald-500/15 text-emerald-500" : "bg-amber-500/15 text-amber-500"}`}>
-                    keyword: {r.keyword}{r?.source ? ` (${r.source})` : ""}
-                  </span>
-                ) : (
-                  <span className="text-[10px] text-gray-400 italic">no keyword detected</span>
-                )}
-              </div>
-              {r?.url && (
-                <div className={`mt-1 pl-5 truncate text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>
-                  {r.url}
-                </div>
-              )}
-            </div>
-          ))}
         </div>
       )}
     </SEOCard>
@@ -3040,7 +2690,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
@@ -3057,7 +2707,7 @@ const StructuredDataCard = ({ data, darkMode, onInfo, className = "" }) => {
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
-                  value={isPassed ? "Valid" : (meta?.errorCount > 0 ? "Incomplete" : (meta?.exists ? "No rich types" : "Missing"))}
+                  value={(getStatusFromScore(score) === "pass") ? "Valid" : (meta?.errorCount > 0 ? "Incomplete" : (meta?.exists ? "No rich types" : "Missing"))}
                   darkMode={darkMode}
                 />
               </div>
@@ -3164,7 +2814,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
@@ -3181,7 +2831,7 @@ const OpenGraphCard = ({ data, darkMode, onInfo, className = "" }) => {
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
-                  value={isPassed ? "Optimized" : "Improvement Needed"}
+                  value={(getStatusFromScore(score) === "pass") ? "Optimized" : "Improvement Needed"}
                   darkMode={darkMode}
                 />
               </div>
@@ -3245,7 +2895,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
 
   return (
@@ -3262,7 +2912,7 @@ const TwitterCardCard = ({ data, darkMode, onInfo, className = "" }) => {
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
-                  value={isPassed ? "Optimized" : "Improvement Needed"}
+                  value={(getStatusFromScore(score) === "pass") ? "Optimized" : "Improvement Needed"}
                   darkMode={darkMode}
                 />
               </div>
@@ -3337,23 +2987,19 @@ const SOCIAL_BRANDS = [
   { match: ["snapchat.com"],            name: "Snapchat",  Icon: SiSnapchat,  bg: "#FFFC00", fg: "#000000" },
   { match: ["medium.com"],              name: "Medium",    Icon: SiMedium,    bg: "#000000", fg: "#FFFFFF" },
   { match: ["yelp.com"],                name: "Yelp",      Icon: SiYelp,      bg: "#FF1A1A", fg: "#FFFFFF" },
+  // Google Maps must precede any generic Google match so map links resolve here.
+  { match: ["google.com/maps", "maps.google.", "maps.app.goo.gl", "goo.gl/maps"], name: "Google Maps", Icon: SiGooglemaps, bg: "#34A853", fg: "#FFFFFF" },
+  { match: ["g.page", "business.google.com", "google.com/business"], name: "Google Business", Icon: SiGoogle, bg: "#4285F4", fg: "#FFFFFF" },
+  { match: ["wa.me", "whatsapp.com"],   name: "WhatsApp",  Icon: SiWhatsapp,  bg: "#25D366", fg: "#FFFFFF" },
+  { match: ["t.me", "telegram.me", "telegram.org"], name: "Telegram", Icon: SiTelegram, bg: "#26A5E4", fg: "#FFFFFF" },
 ];
 
 const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
   const status = data?.status || "fail";
-  const isPassed = status === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const [showDetails, setShowDetails] = React.useState(false);
-
-  // Match a link to its brand; fall back to a neutral chip with a generic link icon.
-  const getPlatformInfo = (url) => {
-    const u = (url || "").toLowerCase();
-    return (
-      SOCIAL_BRANDS.find((b) => b.match.some((d) => u.includes(d))) ||
-      { name: "Social Profile", Icon: Link, bg: darkMode ? "#4B5563" : "#6B7280", fg: "#FFFFFF" }
-    );
-  };
 
   // Safely derive a display hostname; tolerates protocol-less / relative links.
   const getDisplayHost = (link) => {
@@ -3365,6 +3011,71 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
       return String(link).replace(/^https?:\/\//i, "").replace("www.", "").split("/")[0];
     }
   };
+
+  // Derive a readable platform name from a URL's domain — the registrable label,
+  // Title-cased (e.g. "carsandbids.com" → "Carsandbids"). Used for URLs from platforms
+  // we don't have a dedicated brand entry for, so the heading is still meaningful.
+  const platformNameFromDomain = (url) => {
+    const host = getDisplayHost(url);
+    if (!host) return "Website";
+    const parts = host.split(".").filter(Boolean);
+    const tlds = new Set(["com", "org", "net", "co", "io", "gov", "edu", "au", "uk", "us", "ca", "nz", "in", "info", "biz", "app", "page", "gl", "me"]);
+    let label = parts[0] || host;
+    for (let i = parts.length - 1; i >= 0; i--) { if (!tlds.has(parts[i])) { label = parts[i]; break; } }
+    return label ? label.charAt(0).toUpperCase() + label.slice(1) : "Website";
+  };
+
+  // Match a link to its brand (name + logo). For an unrecognised platform, derive the
+  // heading from its domain and use a neutral globe icon.
+  const getPlatformInfo = (url) => {
+    const u = (url || "").toLowerCase();
+    const brand = SOCIAL_BRANDS.find((b) => b.match.some((d) => u.includes(d)));
+    if (brand) return brand;
+    return { name: platformNameFromDomain(url), Icon: Globe, bg: darkMode ? "#4B5563" : "#6B7280", fg: "#FFFFFF" };
+  };
+
+  // Show EVERY profile URL — the union of on-page social links (meta.links) and
+  // schema sameAs entries (meta.sameAs) — deduped, each tagged with where it came from.
+  const normUrl = (u) => {
+    try {
+      const x = new URL(/^https?:\/\//i.test(u) ? u : `https://${u}`);
+      return (x.hostname.replace(/^www\./, "") + x.pathname.replace(/\/+$/, "")).toLowerCase();
+    } catch { return String(u || "").toLowerCase().replace(/\/+$/, ""); }
+  };
+  const profileMap = new Map();
+  (meta.links || []).forEach((u) => {
+    const k = normUrl(u); const e = profileMap.get(k) || { url: u, onPage: false, declared: false };
+    e.onPage = true; profileMap.set(k, e);
+  });
+  (meta.sameAs || []).forEach((u) => {
+    const k = normUrl(u); const e = profileMap.get(k) || { url: u, onPage: false, declared: false };
+    e.declared = true; profileMap.set(k, e);
+  });
+  const allProfiles = [...profileMap.values()];
+  const distinctPlatformCount = new Set(allProfiles.map((p) => getPlatformInfo(p.url).name)).size;
+
+  // Plain-language verdict instead of a row of bare numbers. Priority: conflicts (worst),
+  // then on-page profiles missing from schema, else all good.
+  const onPageCount = meta.count || 0;
+  const missingCount = meta.missingFromSameAs?.length || 0;
+  const conflictCount = meta.conflicts?.length || 0;
+  const schemaOnlyCount = allProfiles.filter((p) => p.declared && !p.onPage).length;
+  let summaryVerdict;
+  if (allProfiles.length === 0) {
+    summaryVerdict = { tone: "warn", text: "No social profiles were found on the page or in your structured data. Link your profiles in the footer and declare them in your Organization/LocalBusiness sameAs." };
+  } else if (conflictCount > 0) {
+    summaryVerdict = { tone: "bad", text: `${conflictCount} platform${conflictCount === 1 ? "" : "s"} point to conflicting profiles — the same platform links to different URLs on your page vs your structured data. Use one consistent URL per platform.` };
+  } else if (missingCount > 0) {
+    summaryVerdict = { tone: "warn", text: `${missingCount} profile${missingCount === 1 ? " that is" : "s that are"} linked on your page ${missingCount === 1 ? "isn't" : "aren't"} declared in your structured data (sameAs). Add ${missingCount === 1 ? "it" : "them"} so search engines can tie ${missingCount === 1 ? "it" : "them"} to your business.` };
+  } else {
+    summaryVerdict = { tone: "good", text: `All ${onPageCount} profile${onPageCount === 1 ? "" : "s"} linked on your page ${onPageCount === 1 ? "is" : "are"} also declared in your structured data (sameAs), with no conflicts.${schemaOnlyCount > 0 ? ` ${schemaOnlyCount} more ${schemaOnlyCount === 1 ? "profile is" : "profiles are"} declared in schema only — that's fine.` : ""}` };
+  }
+  const verdictStyle = {
+    good: { icon: CheckCircle, cls: darkMode ? "text-emerald-400" : "text-emerald-600" },
+    warn: { icon: AlertTriangle, cls: darkMode ? "text-amber-400" : "text-amber-600" },
+    bad: { icon: AlertTriangle, cls: darkMode ? "text-rose-400" : "text-rose-600" },
+  }[summaryVerdict.tone];
+  const VerdictIcon = verdictStyle.icon;
 
   return (
     <div className={`relative overflow-hidden rounded-xl border shadow-sm hover:shadow-md transition-shadow group ${className} ${darkMode ? "bg-gray-800 border-gray-700" : "bg-card border-line"}`}>
@@ -3380,7 +3091,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
               <div className={`flex items-center gap-2 mt-1`}>
                 <ScoreBadge
                   status={getStatusFromScore(score)}
-                  value={`${meta.count || 0} Profiles Detected`}
+                  value={`${allProfiles.length} Profile${allProfiles.length === 1 ? "" : "s"} Found`}
                   darkMode={darkMode}
                 />
               </div>
@@ -3401,19 +3112,19 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
         <div className="space-y-4">
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {meta.links?.length > 0 ? (
-              meta.links.map((link, i) => {
-                const info = getPlatformInfo(link);
+            {allProfiles.length > 0 ? (
+              allProfiles.map((p, i) => {
+                const info = getPlatformInfo(p.url);
                 const BrandIcon = info.Icon;
                 return (
-                  <a key={i} href={link} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-between p-2.5 rounded-lg border group/link transition-all ${darkMode ? "bg-gray-900/40 border-gray-700/50 hover:bg-gray-700/50" : "bg-cardsoft border-line hover:bg-surface-2 hover:border-line"}`}>
+                  <a key={i} href={p.url} target="_blank" rel="noopener noreferrer" className={`flex items-center justify-between p-2.5 rounded-lg border group/link transition-all ${darkMode ? "bg-gray-900/40 border-gray-700/50 hover:bg-gray-700/50" : "bg-cardsoft border-line hover:bg-surface-2 hover:border-line"}`}>
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="flex items-center justify-center w-8 h-8 rounded-lg ring-1 ring-black/5 dark:ring-white/10 shadow-sm flex-shrink-0 group-hover/link:scale-105 transition-transform" style={{ background: info.bg }}>
                         <BrandIcon size={16} color={info.fg} style={{ color: info.fg }} />
                       </div>
                       <div className="flex flex-col min-w-0">
                         <span className={`text-[10px] font-semibold uppercase tracking-tight opacity-60`}>{info.name}</span>
-                        <span className={`text-xs font-medium truncate ${darkMode ? "text-gray-300" : "text-inksoft"}`}>{getDisplayHost(link)}</span>
+                        <span className={`text-xs font-medium truncate ${darkMode ? "text-gray-300" : "text-inksoft"}`}>{getDisplayHost(p.url)}</span>
                       </div>
                     </div>
                     <ArrowRight size={14} className="opacity-0 group-hover/link:opacity-100 translate-x-[-10px] group-hover/link:translate-x-0 transition-all text-blue-500" />
@@ -3422,7 +3133,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
               })
             ) : (
               <div className={`col-span-2 p-4 rounded-lg border border-dashed ${darkMode ? "bg-gray-900/30 border-gray-700 text-gray-500" : "bg-cardsoft border-line text-faint"} text-center text-xs italic`}>
-                No official social profiles detected in the page code.
+                No social profiles found on the page or in schema.
               </div>
             )}
           </div>
@@ -3431,22 +3142,12 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
           {(meta.sameAsCount !== undefined) && (
             <div className={`p-3 rounded-lg border ${darkMode ? "border-gray-700 bg-gray-900/40" : "border-line bg-cardsoft"}`}>
               <div className="flex items-center justify-between mb-2">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>schema sameAs</span>
-                <span className={`text-xs font-semibold ${meta.sameAsCount > 0 ? "text-emerald-500" : "text-amber-500"}`}>{meta.sameAsCount} declared</span>
+                <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-gray-400" : "text-muted"}`}>profile summary</span>
+                <span className={`text-[10px] ${darkMode ? "text-gray-500" : "text-faint"}`}>{onPageCount} on page · {meta.sameAsCount || 0} in schema</span>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-center">
-                <div>
-                  <div className={`text-sm font-semibold ${darkMode ? "text-gray-200" : "text-ink"}`}>{meta.platformCount || 0}</div>
-                  <div className="text-[9px] uppercase opacity-60">Platforms</div>
-                </div>
-                <div>
-                  <div className={`text-sm font-semibold ${meta.missingFromSameAs?.length > 0 ? "text-amber-500" : "text-emerald-500"}`}>{(meta.count || 0) - (meta.missingFromSameAs?.length || 0)}/{meta.count || 0}</div>
-                  <div className="text-[9px] uppercase opacity-60">In sameAs</div>
-                </div>
-                <div>
-                  <div className={`text-sm font-semibold ${meta.conflicts?.length > 0 ? "text-rose-500" : "text-emerald-500"}`}>{meta.conflicts?.length || 0}</div>
-                  <div className="text-[9px] uppercase opacity-60">Conflicts</div>
-                </div>
+              <div className="flex items-start gap-2">
+                <VerdictIcon size={15} className={`mt-0.5 shrink-0 ${verdictStyle.cls}`} />
+                <p className={`text-xs ${darkMode ? "text-gray-300" : "text-muted"}`}>{summaryVerdict.text}</p>
               </div>
               {meta.conflicts?.length > 0 && (
                 <div className="mt-2 space-y-1">
@@ -3498,7 +3199,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
 const ViewportCard = ({ data, darkMode, onInfo }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = (data?.status || "fail") === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   return (
     <SEOCard
       title="Viewport Meta"
@@ -3506,7 +3207,7 @@ const ViewportCard = ({ data, darkMode, onInfo }) => {
       iconColor="text-teal-400"
       score={score}
       status={getStatusFromScore(score)}
-      statusText={isPassed ? "Responsive" : "Needs Attention"}
+      statusText={(getStatusFromScore(score) === "pass") ? "Responsive" : "Needs Attention"}
       meta={meta}
       analysis={data?.analysis}
       metricKey="Viewport"
@@ -3542,7 +3243,7 @@ const ViewportCard = ({ data, darkMode, onInfo }) => {
 const VdpUniquenessCard = ({ data, darkMode, onInfo, resolveLink, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = (data?.status || "fail") === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   return (
     <SEOCard
       title="Vehicle Description Uniqueness"
@@ -3550,7 +3251,7 @@ const VdpUniquenessCard = ({ data, darkMode, onInfo, resolveLink, className = ""
       iconColor="text-orange-400"
       score={score}
       status={getStatusFromScore(score)}
-      statusText={isPassed ? "Unique" : "Needs Attention"}
+      statusText={(getStatusFromScore(score) === "pass") ? "Unique" : "Needs Attention"}
       meta={meta}
       analysis={data?.analysis}
       metricKey="VDP_Content_Uniqueness"
@@ -3597,7 +3298,7 @@ const VdpUniquenessCard = ({ data, darkMode, onInfo, resolveLink, className = ""
 const SrpIndexControlCard = ({ data, darkMode, onInfo, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = (data?.status || "fail") === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   const chip = (ok, label) => (
     <span className={`px-2 py-0.5 rounded text-[10px] font-semibold border ${ok ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"}`}>{label}</span>
   );
@@ -3608,7 +3309,7 @@ const SrpIndexControlCard = ({ data, darkMode, onInfo, className = "" }) => {
       iconColor="text-cyan-400"
       score={score}
       status={getStatusFromScore(score)}
-      statusText={isPassed ? "Controlled" : "Index-Bloat Risk"}
+      statusText={(getStatusFromScore(score) === "pass") ? "Controlled" : "Index-Bloat Risk"}
       meta={meta}
       analysis={data?.analysis}
       metricKey="SRP_Index_Control"
@@ -3640,7 +3341,7 @@ const SrpIndexControlCard = ({ data, darkMode, onInfo, className = "" }) => {
 const SrpVdpLinksCard = ({ data, darkMode, onInfo, resolveLink, className = "" }) => {
   const meta = data?.meta || {};
   const score = data?.score || 0;
-  const isPassed = (data?.status || "fail") === "pass";
+  const isPassed = getStatusFromScore(score) === "pass";
   return (
     <SEOCard
       title="Inventory Link Depth (SRP→VDP)"
@@ -3648,7 +3349,7 @@ const SrpVdpLinksCard = ({ data, darkMode, onInfo, resolveLink, className = "" }
       iconColor="text-amber-400"
       score={score}
       status={getStatusFromScore(score)}
-      statusText={isPassed ? "Crawlable" : "Needs Attention"}
+      statusText={(getStatusFromScore(score) === "pass") ? "Crawlable" : "Needs Attention"}
       meta={meta}
       analysis={data?.analysis}
       metricKey="SRP_To_VDP_Links"
@@ -3698,8 +3399,8 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
   const { audienceMode } = useData();
   const vis = (key) => isVisibleForAudience(key, audienceMode);
   const segVisible = (keys) => keys.some((k) => isVisibleForAudience(k, audienceMode));
-  const contentMasteryVisible = segVisible(["Title", "H1", "Meta_Description", "Content_Relevance", "Content_Freshness", "Contextual_Linking", "Service_Content_Quality", "Content_Depth_Quality", "EEAT"]);
-  const technicalFoundationVisible = segVisible(["Canonical", "Robots_Txt", "Sitemap", "Title_Uniqueness", "Meta_Description_Uniqueness", "Title_Keyword_Optimization", "Title_Location_Optimization", "Structured_Data", "URL_Structure", "URL_Slugs"]);
+  const contentMasteryVisible = segVisible(["Title", "H1", "Meta_Description", "Content_Relevance", "Content_Freshness", "Service_Content_Quality", "Content_Depth_Quality", "EEAT"]);
+  const technicalFoundationVisible = segVisible(["Canonical", "Robots_Txt", "Sitemap", "Title_Uniqueness", "Meta_Description_Uniqueness", "Title_Location_Optimization", "Structured_Data", "URL_Structure", "URL_Slugs"]);
   const mediaVisible = segVisible(["Image", "Video", "Heading_Hierarchy", "Semantic_Tags"]);
   const socialVisible = segVisible(["Links", "Open_Graph", "Twitter_Card", "Social_Links"]);
   const overallScore = seo.Percentage || 0;
@@ -3710,7 +3411,6 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
     const metrics = [
       seo.Title,
       seo.Title_Uniqueness,
-      seo.Title_Keyword_Optimization,
       seo.Title_Location_Optimization,
       seo.Meta_Description,
       seo.Meta_Description_Uniqueness,
@@ -3722,7 +3422,6 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
       seo.Semantic_Tags,
       seo.Image,
       seo.Video,
-      seo.Contextual_Linking,
       seo.Links,
       seo.Duplicate_Content,
       seo.Content_Relevance,
@@ -3927,7 +3626,11 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Meta_Description, icon: FileText })}
               />
               )}
-              {vis('Content_Relevance') && (
+              {/* Content Relevance HIDDEN (2026-07-07, user request) pending a redesign
+                  discussion — card + section weight both disabled; logic is intact in
+                  seoMetrics.checkContentRelevance. Re-enable by removing `false &&` here
+                  and un-commenting the Content_Relevance weight in seoMetrics.js. */}
+              {false && vis('Content_Relevance') && (
               <ContentRelevanceCard
                 data={seo.Content_Relevance}
                 darkMode={darkMode}
@@ -3940,16 +3643,6 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                   darkMode={darkMode}
                   onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Content_Freshness, icon: Clock })}
                 />
-              )}
-              {vis('Contextual_Linking') && (
-              <ContextualAnalysisCard
-                data={seo.Contextual_Linking}
-                linksData={seo.Links}
-                darkMode={darkMode}
-                onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Contextual_Linking, icon: Link })}
-                resolveLink={resolveLink}
-                className="md:col-span-2"
-              />
               )}
               {seo.Service_Content_Quality && vis('Service_Content_Quality') && (
                 <ServiceContentQualityCard
@@ -4022,13 +3715,6 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                   noun="Description"
                   missingLabel="Missing description"
                   onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Meta_Description_Uniqueness, icon: Copy })}
-                />
-              )}
-              {seo.Title_Keyword_Optimization && vis('Title_Keyword_Optimization') && (
-                <KeywordOptimizationCard
-                  data={seo.Title_Keyword_Optimization}
-                  darkMode={darkMode}
-                  onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title_Keyword_Optimization, icon: Search })}
                 />
               )}
               {seo.Title_Location_Optimization && vis('Title_Location_Optimization') && (

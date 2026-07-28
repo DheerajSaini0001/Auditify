@@ -11,7 +11,7 @@ import {
   Cell,
   ReferenceLine
 } from "recharts";
-import { ArrowRight, Loader2, Bot, CheckCircle2, AlertCircle, Server, Search, Eye, ShieldCheck, LayoutTemplate, TrendingUp } from "lucide-react";
+import { ArrowRight, Loader2, Bot, CheckCircle2, AlertCircle, Server, Search, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import CircularProgress from "./CircularProgress";
 import LivePreview from "./LivePreview";
@@ -84,7 +84,16 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     ).length;
   }, [data, sectionMappings]);
 
-  const isAuditComplete = completedSections === sectionMappings.length;
+  // Report view is ready ONLY when backend status is completed/success OR all sections have reported
+  const isAuditComplete = Boolean(
+    data && (
+      data.status === "completed" ||
+      data.status === "success" ||
+      data.rawStatus === "completed" ||
+      data.rawStatus === "success" ||
+      (completedSections === sectionMappings.length && sectionMappings.length > 0)
+    )
+  );
   const isLoadingView = loading || !isAuditComplete;
 
   // Current audit PHASE (no timer). Driven by the backend's raw status (data.rawStatus);
@@ -119,6 +128,38 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     return { progress: 8, title: "Auditing your site", desc: "Running checks across all report sections." };
   }, [data?.rawStatus, data?.status, data?.error, completedSections, sectionMappings.length]);
 
+  // AI Visibility summary — derived as soon as AEO (or AIO Readiness) reports, which
+  // normally happens well before the rest of the audit finishes. The moment this is
+  // non-null the overview panel swaps the progress bar out for the real numbers, so the
+  // client sees a result instead of a spinner while the remaining sections finish.
+  const aiVisibility = useMemo(() => {
+    const aeoPct = data?.aeo?.Percentage;
+    const aioPct = data?.aioReadiness?.Percentage;
+    if (aeoPct == null && aioPct == null) return null;
+
+    const headlineScore = Math.round(aioPct ?? aeoPct);
+    const headlineLabel = aioPct != null ? "AIO Readiness" : "AEO Visibility";
+    // Per-engine reach comes from AEO; fall back to the headline when an engine
+    // hasn't reported its own score.
+    const engineScore = (key) =>
+      data?.aeo?.platforms?.[key]?.score != null
+        ? Math.round(data.aeo.platforms[key].score)
+        : headlineScore;
+
+    return {
+      headlineScore,
+      headlineLabel,
+      engines: [
+        { title: "Google Gemini", score: engineScore("gemini"), color: "#4285F4" },
+        { title: "OpenAI ChatGPT", score: engineScore("chatgpt"), color: "#10A37F" },
+        { title: "Perplexity", score: engineScore("perplexity"), color: "#A259FF" },
+      ],
+    };
+  }, [data?.aeo, data?.aioReadiness]);
+
+  // Progress view is only for the window BEFORE any AI visibility result exists.
+  const showProgressView = (loading || !isAuditComplete) && !aiVisibility;
+
   // Rotating "did you know" quotes to keep the user engaged while they wait.
   const loadingQuotes = useMemo(() => [
     "53% of mobile visitors leave a page that takes longer than 3 seconds to load.",
@@ -151,7 +192,9 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
   const barData = useMemo(() => sectionMappings.map((section) => ({
     name: section.name,
-    value: data?.[section.key]?.Percentage || 0,
+    key: section.key,
+    value: data?.[section.key]?.Percentage,
+    hasPercentage: data?.[section.key]?.Percentage !== undefined && data?.[section.key]?.Percentage !== null,
     Link: section.link,
   })), [data, sectionMappings]);
 
@@ -231,7 +274,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
               {true && (
                 <div className="flex-1 p-8 lg:p-12 flex flex-col justify-center">
 
-                  {(loading || !isAuditComplete) ? (
+                  {showProgressView ? (
                     /* Loading State: Dynamic status & countdown */
                     <div className="flex flex-col justify-center h-full min-h-[300px] animate-in fade-in duration-500">
                       <div className="w-full max-w-lg mx-auto space-y-6">
@@ -278,69 +321,54 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                     /* Real Data */
                     <div className="space-y-7 animate-in fade-in slide-in-from-right-4 duration-500 max-w-2xl mx-auto w-full">
 
-                      {/* Overall Score Section - Refined */}
-                      <div className="flex flex-col sm:flex-row items-center gap-8 justify-center xl:justify-start">
-                        <div className="relative flex-shrink-0 group cursor-default">
-                          {/* Subtle Glow Effect */}
-                          <div className={`absolute -inset-4 rounded-full blur-3xl opacity-10 transition-opacity duration-700 group-hover:opacity-20 ${data.grade && ["A+", "A", "B"].includes(data.grade) ? "bg-emerald-500" : "bg-amber-500"}`}></div>
 
-                          <CircularProgress value={data.score?.toFixed(0) || 0} size={160} stroke={14} />
-                          <div className="absolute inset-0 flex items-center justify-center flex-col gap-1">
-                            <span className={`text-3xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{data.score?.toFixed(0)}%</span>
-                            <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>SCORE</span>
-                          </div>
-                        </div>
-
-                        <div className="text-center sm:text-left space-y-4 max-w-lg">
-                          <div>
-                            <h3 className={`text-3xl font-semibold tracking-tight mb-3 ${darkMode ? "text-white" : "text-ink"}`}>Overall Health Score</h3>
-                            <p className={`text-sm md:text-base leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                              {healthSummary(data.score)}
-                            </p>
-                          </div>
-
-                          <div className={`inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full text-sm font-semibold border shadow-sm ${gradeColor(data.grade)}`}>
-                            {["A+", "A", "B"].includes(data.grade) ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                            Grade {data.grade || "-"}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className={`w-full h-px ${darkMode ? "bg-slate-800/60" : "bg-line"}`}></div>
-
-                      {/* AIO Readiness Card - Production Polished */}
-                      <div
-                        onClick={() => navigate(data?._id ? `/aio/${data._id}` : '/aio')}
-                        className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 cursor-pointer ${darkMode ? "bg-slate-800/20 border-slate-700/50 hover:bg-slate-800/40 hover:border-slate-600" : "bg-card border-line hover:border-slate-300 hover:shadow-md"}`}
-                      >
-                        {/* Hover Gradient Line */}
-                        <div className={`absolute top-0 left-0 w-1 h-full transition-all duration-300 ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-
-                        <div className="p-5 flex items-center justify-between pl-7">
-                          <div className="flex items-center gap-5">
-                            <div className={`p-3.5 rounded-full ${data.aioCompatibilityBadge === "High" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400"}`}>
-                              <Bot className="w-6 h-6" />
-                            </div>
+                      {/* ✅ AI Visibility Score Card — shown as soon as AEO / AIO Readiness
+                          reports, even while the remaining sections are still being audited. */}
+                      {aiVisibility && (
+                        <div className={`mt-6 pt-6 border-t ${darkMode ? "border-slate-800" : "border-linesoft"} space-y-4`}>
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div>
-                              <h4 className={`font-semibold text-base mb-1 ${darkMode ? "text-white" : "text-ink"}`}>AIO & GEO Readiness</h4>
-                              <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                                {data.aioCompatibilityBadge === "High"
-                                  ? "Content is structure-optimized for AI engines (ChatGPT, Gemini) coverage."
-                                  : "Optimization required for better visibility in Generative AI results."}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Bot className="w-5 h-5 text-emerald-500" />
+                                <h4 className={`text-lg font-bold ${darkMode ? "text-white" : "text-ink"}`}>AI Visibility Score</h4>
+                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${darkMode ? "bg-slate-800 border-slate-700 text-emerald-400" : "bg-emerald-50 border-emerald-200 text-emerald-700"}`}>
+                                  {aiVisibility.headlineLabel} {aiVisibility.headlineScore}%
+                                </span>
+                              </div>
+                              <p className={`text-xs mt-1 leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                                How visible this website is to AI answer engines — the search channel your next customers are switching to. Per-engine reach shown alongside.
                               </p>
                             </div>
+
+                            <button
+                              onClick={() => navigate(data?._id ? `/aeo/${data._id}` : "/aeo")}
+                              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-semibold border transition-all ${darkMode ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
+                            >
+                              View AI report
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </button>
                           </div>
 
-                          <div className="flex items-center gap-3">
-                            <span className={`text-lg font-semibold ${data.aioCompatibilityBadge === "High" ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-                              {data.aioCompatibilityBadge || "N/A"}
-                            </span>
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${darkMode ? "bg-slate-800 group-hover:bg-slate-700" : "bg-surface-2 group-hover:bg-slate-200"}`}>
-                              <ArrowRight className={`w-4 h-4 transition-transform duration-300 group-hover:translate-x-1 ${darkMode ? "text-slate-400" : "text-muted"}`} />
-                            </div>
+                          {/* Per-engine reach cards grid */}
+                          <div className="grid grid-cols-3 gap-3">
+                            {aiVisibility.engines.map((eng) => (
+                              <div key={eng.title} className={`p-3 rounded-2xl border flex flex-col items-center text-center ${darkMode ? "bg-slate-800/50 border-slate-700/60" : "bg-cardsoft border-line"}`}>
+                                <span className="text-xl font-black" style={{ color: eng.color }}>{eng.score}%</span>
+                                <span className={`text-[11px] font-semibold mt-0.5 ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{eng.title}</span>
+                              </div>
+                            ))}
                           </div>
+
+                          {/* The AI result landed early — tell the user the rest is still running
+                              (this replaces the progress bar, which is gone from this panel). */}
+                          {!isAuditComplete && (
+                            <div className={`flex items-center gap-2 text-xs font-medium ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-500" />
+                              <span>{stageInfo.title} — remaining sections are still being scored.</span>
+                            </div>
+                          )}
                         </div>
-                      </div>
+                      )}
 
                     </div>
                   )}
@@ -349,6 +377,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
             </div>
           </div>
         )}
+
+    
 
         {/* Guest lock removed — reports are open to everyone, so guests see the
             same full Overview + Category grid as authenticated users. */}
@@ -370,19 +400,26 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {barData.map((item, index) => {
                   /* Determine Color & Status */
-                  const score = item.value || 0;
-                  let statusColor = "text-red-500";
-                  let statusText = "Action Needed";
-                  let ringColor = "#ef4444"; // red-500
+                  const isDone = item.hasPercentage;
+                  const score = isDone ? (item.value || 0) : 0;
+                  let statusColor = "text-amber-500";
+                  let statusText = "Analyzing...";
+                  let ringColor = "#f59e0b"; // amber-500
 
-                  if (score >= 90) {
-                    statusColor = "text-emerald-500";
-                    statusText = "Excellent";
-                    ringColor = "#10b981";
-                  } else if (score >= 50) {
-                    statusColor = "text-amber-500";
-                    statusText = "Needs Work";
-                    ringColor = "#f59e0b";
+                  if (isDone || isAuditComplete) {
+                    if (score >= 90) {
+                      statusColor = "text-emerald-500";
+                      statusText = "Excellent";
+                      ringColor = "#10b981";
+                    } else if (score >= 50) {
+                      statusColor = "text-amber-500";
+                      statusText = "Needs Work";
+                      ringColor = "#f59e0b";
+                    } else {
+                      statusColor = "text-red-500";
+                      statusText = "Action Needed";
+                      ringColor = "#ef4444";
+                    }
                   }
 
                   return (
@@ -397,12 +434,16 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
                       <div className="mb-6 mt-2 relative">
                         {/* Glowing Background for Score */}
-                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${score >= 90 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500"}`}></div>
-                        <CircularProgress value={score} size={110} stroke={8} color={ringColor} />
+                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${isDone && score >= 90 ? "bg-emerald-500" : isDone && score >= 50 ? "bg-amber-500" : "bg-amber-400"}`}></div>
+                        <CircularProgress value={isDone ? score : 0} size={110} stroke={8} color={ringColor} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>
-                            {score}%
-                          </span>
+                          {isDone ? (
+                            <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>
+                              {score}%
+                            </span>
+                          ) : (
+                            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                          )}
                         </div>
                       </div>
 
@@ -417,11 +458,127 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                 })}
               </div>
             </div>
+
+            {/* ✅ Stage 2 Discovered & Crawled Key Pages Card */}
+            {(data?.crawledPagesSummary?.length > 0 || data?.stage2Progress) && (
+              <div className={`rounded-3xl border p-6 lg:p-8 space-y-6 ${cardClass}`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Globe className="w-5 h-5 text-emerald-500" />
+                      <h3 className={`text-xl font-bold ${darkMode ? "text-white" : "text-ink"}`}>
+                        Site-Wide Crawled Key Pages (Stage 2 Audit)
+                      </h3>
+                      {data?.stage2Completed ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                          ✓ 3-Puppeteer Crawl Complete
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Crawling 3-Parallel
+                        </span>
+                      )}
+                    </div>
+                    <p className={`text-xs mt-1 leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                      3 parallel Puppeteer instances crawled these key domain pages in the background to enrich site-wide signals.
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      const summaryPages = [
+                        { key: data?.pageType || 'home', label: 'Home Page', url: data?.url, id: data?._id, status: 'done' }
+                      ];
+                      (data?.crawledPagesSummary || []).forEach((cp) => {
+                        if (cp.url && !summaryPages.some((s) => s.url === cp.url)) {
+                          summaryPages.push({
+                            key: cp.pageType || 'generic',
+                            label: cp.label || 'Key Page',
+                            url: cp.url,
+                            // Each key page has its OWN full child report — open that.
+                            id: cp.reportId || data?._id,
+                            status: cp.isProcessing ? 'pending' : (cp.success ? 'done' : 'pending')
+                          });
+                        }
+                      });
+
+                      const payload = {
+                        siteUrl: data?.url,
+                        device: data?.device || 'Desktop',
+                        pages: summaryPages
+                      };
+
+                      try {
+                        sessionStorage.setItem("auditSummary", JSON.stringify(payload));
+                      } catch {}
+
+                      navigate("/audit-summary", { state: payload });
+                    }}
+                    className={`shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold border transition-all ${darkMode ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
+                  >
+                    View Multi-Page Matrix
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {(data?.crawledPagesSummary || []).map((pg, idx) => {
+                    const scored = typeof pg.score === "number";
+                    const openable = !pg.isProcessing && pg.success && pg.reportId;
+                    const gradeCls = !scored
+                      ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/20"
+                      : pg.score >= 80
+                        ? "bg-emerald-500/15 text-emerald-500 border-emerald-500/20"
+                        : pg.score >= 60
+                          ? "bg-amber-500/15 text-amber-400 border-amber-500/20"
+                          : "bg-rose-500/15 text-rose-400 border-rose-500/20";
+                    return (
+                    <div
+                      key={idx}
+                      onClick={openable ? () => navigate(`/report/${pg.reportId}`) : undefined}
+                      title={openable ? `Open full report — ${pg.label || pg.url}` : pg.url}
+                      className={`p-4 rounded-2xl border flex flex-col justify-between space-y-3 transition-all ${openable ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md" : ""} ${darkMode ? "bg-slate-800/40 border-slate-700/60" : "bg-cardsoft border-line"}`}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className={`text-xs font-bold ${darkMode ? "text-slate-200" : "text-ink"}`}>
+                          {pg.label || "Key Automotive Page"}
+                        </span>
+                        {pg.isProcessing ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/20">
+                            Auditing…
+                          </span>
+                        ) : scored ? (
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${gradeCls}`}>
+                            {pg.score}{pg.grade ? ` · ${pg.grade}` : ""}
+                          </span>
+                        ) : pg.success ? (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/20">
+                            ✓ Done
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20">
+                            Failed
+                          </span>
+                        )}
+                      </div>
+
+                      <span className="text-[11px] font-mono truncate block opacity-70" title={pg.url}>
+                        {pg.url}
+                      </span>
+
+                      {openable && (
+                        <span className="text-[10px] font-semibold opacity-60">Open full report →</span>
+                      )}
+                    </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
-
       </div>
-    </div >
+    </div>
   );
 });
 

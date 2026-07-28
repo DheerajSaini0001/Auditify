@@ -26,10 +26,66 @@ import fastFetch from "../utils/fastFetch.js";
 
 const IMPACT_RANK = { minor: 1, moderate: 2, serious: 3, critical: 4 };
 
+// ── Headline deduction model (AccessibilityChecker.org-aligned) ─────────────
+// Calibrated to match instance-counting external checkers rather than the old
+// per-rule flat model. A rule's deduction scales with HOW MANY elements fail
+// (not just that it failed at all): base severity weight × a saturating
+// instance factor, capped per rule so one pervasive issue (e.g. contrast on
+// 100 nodes) can't zero the page by itself.
+//
+// These are the single place to tune when calibrating against real
+// AccessibilityChecker.org scores (see scripts/calibrateScores.js --a11y-ref).
+// Defaults were grounded on live dealer pages so a clean page ≈ the 90 ceiling,
+// a single 1-node serious issue ≈ 88, and an issue-heavy page (unlabeled
+// selects + widespread contrast + tiny tap targets) lands ≈ 55–60, matching
+// AccessibilityChecker.org's band for the same page.
+// AUTOMATED_CEILING = 90 is not arbitrary: AccessibilityChecker.org's own docs
+// define "90 = Highly Accessible (automated tests passed)" and reserve the last
+// 10 points for the interactive-element (−10) + manual (−10) checks a purely
+// automated scan can't perform. So a clean automated scan tops out at exactly
+// 90 in both tools.
+// AUTOMATED_CEILING = 90 mirrors AccessibilityChecker.org: their docs define
+// "90 = Highly Accessible (automated tests passed)", reserving the last 10 for
+// the manual audits an automated scan can't do.
+const AUTOMATED_CEILING = 90;
+// Per-FAILING-ELEMENT deduction, reverse-engineered from a real ACR report
+// (carsalesbrisbane.com.au: 2 issue types / 5 failing elements → 90→60, i.e.
+// ~6 pts per failing element). ACR counts each failing element (not just the
+// rule) and penalizes hard, labelling most issues "critical". We deduct
+// per-element by axe impact, capped per rule so one pervasive issue can't drive
+// the score past its cap. These constants are the single tuning point.
+const ELEM_DEDUCTION = { critical: 6, serious: 5, moderate: 2, minor: 0.75 };
+const PER_RULE_CAP = { critical: 30, serious: 25, moderate: 10, minor: 4 };
+// ACR's automated scan is axe-core-only; it does NOT run our extra DOM probes
+// (target-size 2.5.8, reflow, skip-links, landmarks, affordance) — confirmed by
+// its report not flagging our 12 small tap targets. Those are real WCAG 2.2
+// issues we keep checking, but to track ACR we let them only NUDGE: halved and
+// capped low (at the minor cap), so the headline is driven by the same axe
+// violations ACR actually scans.
+const PROBE_WEIGHT_FACTOR = 0.5;
+
+// Deduction for one failing rule/probe: per-failing-element × tier weight,
+// capped per rule. `warning` halves it (a partial/soft failure counts less).
+function ruleDeduction(impact, nodes, warning = false) {
+  const tier = ELEM_DEDUCTION[impact] !== undefined ? impact : "moderate";
+  let d = ELEM_DEDUCTION[tier] * Math.max(1, nodes || 1);
+  d = Math.min(d, PER_RULE_CAP[tier]);
+  return warning ? d / 2 : d;
+}
+
 const COVERAGE_NOTE =
   "Automated checks (axe-core + DOM probes) cover roughly 30–40% of WCAG 2.2 success criteria. " +
   "A clean result is necessary but not sufficient for full Level AA conformance — manual review is still required. " +
-  "The score is therefore capped below 100 and reported with 'heuristic' confidence.";
+  "The headline score deducts per FAILING ELEMENT, scaled by impact and capped per rule, matching how " +
+  "AccessibilityChecker.org counts issues. It runs the same broadened rule set (WCAG A/AA + best-practice + " +
+  "experimental, excluding AAA). The automated ceiling is 90 — the remaining 10 points require a passing manual review.";
+
+// Appended to the section note when the axe scan itself crashed: axe-backed
+// parameters are renormalized out rather than assumed passing, and the headline
+// is capped — most of the section simply wasn't evaluated.
+const AXE_FAILURE_NOTE =
+  "The automated axe-core scan could not run on this page. Axe-backed checks (contrast, alt text, names/labels, ARIA, etc.) " +
+  "were excluded from the score rather than assumed passing; the section reflects only the DOM-probe checks that did run.";
 
 // Standard result for a check whose subject is genuinely absent on this page
 // (e.g. Form Labels on a page with no inputs). score/status are null so the
@@ -898,6 +954,20 @@ const checkWcagAACompliance = (results) => {
 };
 
 export default async function accessibilityMetrics(page) {
+  // Determinism: axe must run on a SETTLED DOM. Client-rendered widgets that
+  // inject/replace nodes after first paint (carousels, inventory feeds) change
+  // what axe sees run-to-run — the same page scored 56 vs 80 across renders in
+  // testing purely because contrast/label nodes appeared late. A bounded
+  // network-idle wait plus a short pause lets late content land so the score is
+  // repeatable and comparable to external checkers that also scan the rendered
+  // page. Best-effort and non-fatal — a timeout just proceeds with what's there.
+  try {
+    if (page && !page.isClosed?.()) {
+      await page.waitForLoadState?.("networkidle", { timeout: 5000 }).catch(() => {});
+      await page.waitForTimeout?.(600);
+    }
+  } catch (_) { /* settle is best-effort */ }
+
   // Neutralize the stealth plugin's Function.prototype.toString proxy before
   // running axe — axe serializes functions and the proxy recurses forever.
   try {
@@ -910,29 +980,54 @@ export default async function accessibilityMetrics(page) {
   } catch (_) { /* page context unavailable — axe will try anyway */ }
 
   let axeResults;
+  let axeFailed = false;
   try {
-    axeResults = await new AxeBuilder({ page }).analyze();
+    // Match AccessibilityChecker.org's rule breadth: axe's default WCAG A/AA set
+    // PLUS best-practice, experimental and ACT rules (ACR flagged
+    // `label-content-name-mismatch`, an EXPERIMENTAL rule axe disables by
+    // default — without this we miss it entirely). AAA is deliberately excluded:
+    // ACR's report did NOT count the 50-node `color-contrast-enhanced` (AAA) so
+    // we disable it explicitly (it rides in on a non-AAA tag otherwise).
+    axeResults = await new AxeBuilder({ page })
+      .options({
+        runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice", "experimental", "ACT"] },
+        rules: { "color-contrast-enhanced": { enabled: false } },
+      })
+      .analyze();
   } catch (err) {
     logger.error("Axe analysis failed", new Error(err.message));
+    axeFailed = true;
     axeResults = { violations: [], passes: [], incomplete: [], inapplicable: [] };
   }
 
+  // When the axe scan itself crashed, empty results must NOT read as
+  // "0 failing nodes = pass" (graded) or "0 violations = no deductions"
+  // (headline). Every axe-backed parameter becomes notCalculated (score null)
+  // so it is renormalized out of the weighted denominator (spec rule 6)
+  // instead of silently scoring 100.
+  const axeDown = () =>
+    notCalculated(
+      "Automated axe-core scan could not run on this page, so this check was not evaluated.",
+      "Re-run the audit; if the scan keeps failing, verify this check manually."
+    );
+  const viaAxe = (build) => (axeFailed ? axeDown() : build());
+
   // axe-backed parameters
-  const colorContrast = checkColorContrast(axeResults);
-  const focusOrder = checkFocusOrder(axeResults);
-  const focusableContent = checkFocusableContent(axeResults);
-  const tabindex = checkTabIndex(axeResults);
-  const ariaAllowedAttr = checkAriaAllowedAttr(axeResults);
-  const ariaRoles = checkAriaRoles(axeResults);
-  const ariaHiddenFocus = checkAriaHiddenFocus(axeResults);
-  const imageAlt = checkImageAlt(axeResults);
-  const linkName = checkLinkName(axeResults);
-  const buttonName = checkButtonName(axeResults);
-  const htmlHasLang = checkHtmlHasLang(axeResults);
-  const metaViewport = checkMetaViewport(axeResults);
-  const list = checkList(axeResults);
-  const headingOrder = checkHeadingOrder(axeResults);
-  const wcagAACompliance = checkWcagAACompliance(axeResults);
+  const colorContrast = viaAxe(() => checkColorContrast(axeResults));
+  const focusOrder = viaAxe(() => checkFocusOrder(axeResults));
+  const focusableContent = viaAxe(() => checkFocusableContent(axeResults));
+  const tabindex = viaAxe(() => checkTabIndex(axeResults));
+  const ariaAllowedAttr = viaAxe(() => checkAriaAllowedAttr(axeResults));
+  const ariaRoles = viaAxe(() => checkAriaRoles(axeResults));
+  const ariaHiddenFocus = viaAxe(() => checkAriaHiddenFocus(axeResults));
+  const imageAlt = viaAxe(() => checkImageAlt(axeResults));
+  const linkName = viaAxe(() => checkLinkName(axeResults));
+  const buttonName = viaAxe(() => checkButtonName(axeResults));
+  const htmlHasLang = viaAxe(() => checkHtmlHasLang(axeResults));
+  const metaViewport = viaAxe(() => checkMetaViewport(axeResults));
+  const list = viaAxe(() => checkList(axeResults));
+  const headingOrder = viaAxe(() => checkHeadingOrder(axeResults));
+  const wcagAACompliance = viaAxe(() => checkWcagAACompliance(axeResults));
 
   // async / DOM-probe parameters (each guarded so one failure can't sink the section)
   const safe = async (fn, fallbackReason) => {
@@ -941,8 +1036,10 @@ export default async function accessibilityMetrics(page) {
     }
   };
 
-  const label = await safe(() => checkLabel(axeResults, page), "Form-label check could not run");
-  const documentTitle = await safe(() => checkDocumentTitle(axeResults, page), "Document-title check could not run");
+  // Label and Document_Title score off axe rules (the DOM probe only handles
+  // N/A + PII escalation), so a crashed scan takes them down too.
+  const label = axeFailed ? axeDown() : await safe(() => checkLabel(axeResults, page), "Form-label check could not run");
+  const documentTitle = axeFailed ? axeDown() : await safe(() => checkDocumentTitle(axeResults, page), "Document-title check could not run");
   const skipLinks = await safe(() => checkSkipLinks(page), "Skip-link check could not run");
   const landMarks = await safe(() => checkLandmarks(page), "Landmark check could not run");
   const interactiveElementAffordance = await safe(() => checkInteractiveElementAffordance(page), "Affordance check could not run");
@@ -953,7 +1050,10 @@ export default async function accessibilityMetrics(page) {
   // Reflow resizes the viewport, so run it LAST and let it restore the size.
   const reflow = await safe(() => checkReflow(page), "Reflow check could not run");
 
-  const keyboardNavigation = checkKeyboardNavigation({ focusOrder, focusableContent, tabindex, ariaHiddenFocus });
+  // Composite of 4 axe sub-checks — meaningless when the scan didn't run.
+  const keyboardNavigation = axeFailed
+    ? axeDown()
+    : checkKeyboardNavigation({ focusOrder, focusableContent, tabindex, ariaHiddenFocus });
 
   // ── Severity-tiered weighting (spec rule 5): Critical ×3, Serious ×2, Moderate ×1.
   // Keyboard is weighted ONCE via the composite; its sub-parts are display-only.
@@ -998,19 +1098,166 @@ export default async function accessibilityMetrics(page) {
     }
   }
 
-  let pct = totalWeight > 0 ? parseFloat(((earned / totalWeight) * 100).toFixed(0)) : 0;
+  // Node-ratio graded roll-up (spec rules 1/5/6) — kept as the diagnostic
+  // "page-level pass rate". It answers "what share of the page's elements pass?"
+  // but reads far higher than industry checkers (Lighthouse,
+  // AccessibilityChecker.org), which treat a rule with ANY failing node as a
+  // failed rule. The headline Percentage below therefore uses a deduction
+  // model aligned with those tools; this graded value is preserved as
+  // Graded_Percentage for the detail view.
+  let graded = totalWeight > 0 ? parseFloat(((earned / totalWeight) * 100).toFixed(0)) : 0;
   // Rule 5 — a blocking failure must dominate cosmetics.
-  if (criticalFail) pct = Math.min(pct, 70);
-  else if (seriousFail) pct = Math.min(pct, 85);
+  if (criticalFail) graded = Math.min(graded, 70);
+  else if (seriousFail) graded = Math.min(graded, 85);
   // §2.3 — automated checks are ~30–40% of WCAG; never claim 100% accessible.
-  pct = Math.min(pct, 96);
+  graded = Math.min(graded, 96);
+
+  // ── Headline score: instance-weighted severity deductions from a 90-point
+  // automated ceiling (the last 10 points require the manual review automated
+  // tools can't do — mirroring AccessibilityChecker.org's model). Unlike the
+  // old per-rule flat model, each failing axe RULE deducts in proportion to how
+  // many elements fail (ruleDeduction = severity weight × saturating instance
+  // factor, capped per rule), so a rule with contrast failing on 69 nodes costs
+  // far more than one failing on 1 — the way instance-counting external
+  // checkers score. Non-axe DOM probes deduct on the same model using their
+  // offender counts (half on a soft/warning failure).
+  let deducted = 0;
+  const deductionLog = [];
+  const logDeduction = (rule, impact, nodes, amount) => {
+    if (deductionLog.length < 25) deductionLog.push({ rule, impact, nodes, deduction: parseFloat(amount.toFixed(1)) });
+  };
+
+  for (const v of axeResults.violations || []) {
+    const impact = ELEM_DEDUCTION[v.impact] !== undefined ? v.impact : "moderate";
+    const nodes = v.nodes?.length || 0;
+    const d = ruleDeduction(impact, nodes);
+    deducted += d;
+    logDeduction(v.id, impact, nodes, d);
+  }
+  // Unlabeled PII/finance fields are blocking (spec §2.3) — extra deduction on
+  // top of the axe label rule itself.
+  if (label?.status === "fail" && label?.meta?.pii) {
+    const d = ruleDeduction("critical", label.meta?.count || 1);
+    deducted += d;
+    logDeduction("label (PII/finance fields)", "critical", label.meta?.count || 0, d);
+  }
+  // DOM-probe checks axe can't see. Each uses its own offender count as the
+  // instance signal. Document_Title only counts its duplicate-title warning
+  // here — a missing <title> is already deducted via the axe document-title
+  // rule above.
+  const probeChecks = [
+    { key: "Target_Size", metric: targetSize, tier: "serious", nodes: (m) => m.meta?.small ?? 0 },
+    { key: "Reflow", metric: reflow, tier: "serious", nodes: (m) => (m.meta?.offenders?.length || 1) },
+    { key: "Landmarks", metric: landMarks, tier: "moderate", nodes: (m) => (m.meta?.missing?.length || 1) },
+    { key: "Skip_Links", metric: skipLinks, tier: "moderate", nodes: () => 1 },
+    { key: "Interactive_Element_Affordance", metric: interactiveElementAffordance, tier: "moderate", nodes: (m) => m.meta?.bad ?? 0 },
+  ];
+  for (const p of probeChecks) {
+    const m = p.metric;
+    if (!m || typeof m.score !== "number") continue; // N/A → no deduction
+    if (m.status === "fail" || m.status === "warning") {
+      const nodes = p.nodes(m);
+      // Halved + capped LOW (minor cap): these WCAG 2.2 probes are outside ACR's
+      // axe-only automated scan, so they nudge rather than dominate.
+      const d = Math.min(ruleDeduction(p.tier, nodes, m.status === "warning") * PROBE_WEIGHT_FACTOR, PER_RULE_CAP.minor);
+      deducted += d;
+      logDeduction(p.key, p.tier, nodes, d);
+    }
+  }
+  if (documentTitle?.status === "warning") {
+    const d = ruleDeduction("serious", 1, true);
+    deducted += d;
+    logDeduction("Document_Title (duplicate titles)", "serious", 0, d);
+  }
+
+  // Softened diminishing returns: past 55 points of deductions each extra point
+  // counts 0.7, so a catastrophically broken page still spreads across the low
+  // band (≈0–35) instead of every bad page clamping to 0 — external checkers
+  // (incl. AccessibilityChecker.org) rarely report a literal 0 either. Gentler
+  // and later-starting than the old 40/0.5 curve so the mid-band tracks the
+  // per-instance deductions faithfully.
+  const SOFT_KNEE = 55;
+  const effectiveDeduction = deducted <= SOFT_KNEE ? deducted : SOFT_KNEE + (deducted - SOFT_KNEE) * 0.7;
+  let pct = Math.max(0, Math.round(AUTOMATED_CEILING - effectiveDeduction));
+  // A crashed axe scan produces zero violations, which the deduction model
+  // would read as a near-perfect 90. With only the DOM probes evaluated
+  // (~a third of the checks), the page is unverified — cap the headline at 50
+  // so a failed scan can never demo as a good score.
+  if (axeFailed) pct = Math.min(pct, 50);
+
+  // Band labels mirror AccessibilityChecker.org exactly (0–49 Poor / 50–69
+  // Needs Improvement / 70–89 Fair / 90 Highly Accessible). An automated scan
+  // can't exceed 90, so "Fully Compliant" (100) is intentionally unreachable here.
+  const Band =
+    pct < 50 ? "Poor" :
+    pct < 70 ? "Needs Improvement" :
+    pct < 90 ? "Fair" :
+    "Highly Accessible (automated)";
+
+  // Surface EVERY failing axe rule that isn't already represented by a named
+  // parameter above (e.g. scrollable-region-focusable, label-content-name-mismatch,
+  // aria-prohibited-attr) as its own issue card — with axe's own cause + fix
+  // guidance and the failing elements — so the section explains what actually
+  // drove the score, exactly like the Technical/SEO sections list each issue.
+  // Display-only: the headline already counted these via the violations loop
+  // above, and the graded roll-up uses only the named params, so nothing is
+  // double-counted. Also makes the Passed/Warning/Failed tally reflect reality.
+  const NAMED_AXE_RULES = new Set([
+    "color-contrast",
+    "label", "label-title-only", "form-field-multiple-labels",
+    "html-has-lang", "html-lang-valid",
+    "focus-order-semantics", "focusable-content", "tabindex", "aria-hidden-focus",
+    "image-alt", "link-name", "button-name", "aria-roles", "aria-allowed-attr",
+    "document-title", "meta-viewport", "heading-order", "list",
+  ]);
+  const Other_Issues = [];
+  if (!axeFailed) {
+    for (const v of axeResults.violations || []) {
+      if (NAMED_AXE_RULES.has(v.id)) continue;
+      const nodes = v.nodes?.length || 0;
+      const impact = v.impact || "moderate";
+      const blocking = impact === "critical" || impact === "serious";
+      Other_Issues.push({
+        key: v.id,
+        title: v.help || v.id,
+        score: blocking ? 40 : 60,
+        status: blocking ? "fail" : "warning",
+        details: `${v.help} — ${nodes} element(s) affected.`,
+        meta: violationMeta(v, v.help, { count: nodes }),
+        analysis: {
+          cause: v.description || v.help,
+          recommendation: `${v.help}. Review the flagged element(s) and the linked WCAG guidance, then fix each occurrence.`,
+        },
+      });
+    }
+  }
 
   return {
     Percentage: pct,
+    Band,
+    // Failing axe rules not covered by a named parameter — rendered as their own
+    // issue cards (cause + recommendation + affected elements) so the section
+    // explains its score. Display-only; not re-weighted.
+    Other_Issues,
+    // Diagnostic: share of page elements passing (node-ratio graded model).
+    Graded_Percentage: graded,
+    Score_Breakdown: {
+      model: "per-failing-element severity deductions (AccessibilityChecker.org-aligned)",
+      base: AUTOMATED_CEILING,
+      totalDeduction: parseFloat(deducted.toFixed(1)),
+      effectiveDeduction: parseFloat(effectiveDeduction.toFixed(1)),
+      perElementDeduction: ELEM_DEDUCTION,
+      perRuleCap: PER_RULE_CAP,
+      softKnee: { threshold: SOFT_KNEE, factor: 0.7 },
+      items: deductionLog,
+      ...(axeFailed ? { axeFailed: true, cappedAt: 50, note: AXE_FAILURE_NOTE } : {}),
+    },
     // §0.5 — automated DOM/accessibility-tree inference (consistent with On-Page SEO).
     Confidence: "heuristic",
-    Coverage: "Automated WCAG 2.2 AA coverage (~30–40% of success criteria).",
-    Note: COVERAGE_NOTE,
+    Coverage: axeFailed
+      ? "Partial — axe-core scan failed; only DOM-probe checks ran."
+      : "Automated WCAG 2.2 AA coverage (~30–40% of success criteria).",
+    Note: axeFailed ? `${COVERAGE_NOTE} ${AXE_FAILURE_NOTE}` : COVERAGE_NOTE,
     WCAG_AA_Compliance: wcagAACompliance,
     // Critical
     Color_Contrast: colorContrast,

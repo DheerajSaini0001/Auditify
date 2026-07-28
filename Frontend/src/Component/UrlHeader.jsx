@@ -194,8 +194,8 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             </div>
           )}
 
-          {/* Download PDF Button */}
-          {data?.status === "success" && (
+          {/* Download PDF Button — temporarily hidden */}
+          {false && data?.status === "success" && (
             <button
               onClick={handleDownloadPDF}
               className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 bg-gradient-to-r from-[#16213E] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#16213E]/25"

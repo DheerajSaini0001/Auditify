@@ -169,6 +169,8 @@ const UserDashboard = () => {
                           >
                             <FileText size={18} />
                           </button>
+                          {/* Download PDF button — temporarily hidden */}
+                          {false && (
                           <button
                             onClick={() => {
                               if (!audit.reportId) return toast.error('PDF unavailable for this audit');
@@ -208,6 +210,7 @@ const UserDashboard = () => {
                           >
                             <Download size={18} />
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>

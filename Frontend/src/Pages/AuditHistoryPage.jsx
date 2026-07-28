@@ -566,6 +566,8 @@ const AuditHistoryPage = () => {
                                   <FileText size={18} />
                                 </button>
 
+                                {/* Download PDF button — temporarily hidden */}
+                                {false && (
                                 <button
                                   onClick={() => {
                                     // ONLY download PDF
@@ -645,6 +647,7 @@ const AuditHistoryPage = () => {
                                 >
                                   <Download size={18} />
                                 </button>
+                                )}
                               </>
                             )}
                           </div>

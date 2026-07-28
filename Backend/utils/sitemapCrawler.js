@@ -1,18 +1,14 @@
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
 import { newStealthPage, detectChallenge, waitForChallengeResolution } from "./puppeteer_cheerio.js";
-import { createLimiter } from "./concurrencyLimiter.js";
 
-// Page discovery's browser usage was previously COMPLETELY unthrottled —
-// unlike site-type detection (see siteTypeDetector.js's browserLimiter),
-// which meant N concurrent audits could all drive heavy multi-page crawls
-// against the one shared Chromium process (see getSharedBrowser in
-// puppeteer_cheerio.js) at once. Under load-tested concurrency this produced
-// exactly the kind of multi-tens-of-seconds stalls that made large, JS-heavy
-// corporate sites (ford.com, bmwusa.com) time out — not a real block, just
-// contention for the shared browser. Tunable via env var; default mirrors
-// the site-type detector's conservative default.
-const discoveryBrowserLimiter = createLimiter(Number(process.env.PAGE_DISCOVERY_BROWSER_CONCURRENCY) || 4);
+// Page-discovery browser usage is now bounded by the SINGLE global browser pool
+// (utils/browserManager.js, default MAX_CONCURRENT_BROWSERS=3) that every
+// headless-Chrome launch in the app shares. newStealthPage takes a permit from
+// that pool for the lifetime of its context, so concurrent discovery crawls
+// queue against the same cap as the audit browsers instead of contending with
+// them uncounted — which previously let total concurrent Chrome exceed the cap
+// and stall large JS-heavy corporate sites (ford.com, bmwusa.com).
 
 // Once the homepage ALONE yields at least this many same-origin links, stop —
 // a real dealer/OEM homepage nav almost always already links to every major
@@ -30,7 +26,7 @@ const HEALTHY_HOMEPAGE_LINK_COUNT = 20;
 const MAX_PAGES_TO_VISIT = 15;
 
 export default async function discoverPages(baseUrl, maxPages = 50) {
-    return discoveryBrowserLimiter.run(() => discoverPagesInner(baseUrl, maxPages));
+    return discoverPagesInner(baseUrl, maxPages);
 }
 
 async function discoverPagesInner(baseUrl, maxPages) {
@@ -88,10 +84,8 @@ async function discoverPagesInner(baseUrl, maxPages) {
                 console.error(`❌ Error crawling ${currentUrl}:`, error.message);
             }
 
-            // The homepage alone already gave us a healthy link set — stop
-            // rather than recursing into more pages that mostly re-discover
-            // the same site-wide nav (see HEALTHY_HOMEPAGE_LINK_COUNT above).
-            if (visitedUrls.size === 1 && discoveredUrls.size >= HEALTHY_HOMEPAGE_LINK_COUNT) break;
+            // Continue crawling secondary pages to ensure key automotive sections (VDP, Service, Trade) are found
+            if (visitedUrls.size >= 5 && discoveredUrls.size >= maxPages) break;
 
             if (visitedUrls.size >= MAX_PAGES_TO_VISIT) break;
         }
@@ -210,7 +204,7 @@ async function parseSitemap(page, xmlData, domain) {
  * client-side. Returns [] on any failure so callers can fall back gracefully.
  */
 export async function fetchRenderedPageLinks(url, maxLinks = 400) {
-  return discoveryBrowserLimiter.run(() => fetchRenderedPageLinksInner(url, maxLinks));
+  return fetchRenderedPageLinksInner(url, maxLinks);
 }
 
 async function fetchRenderedPageLinksInner(url, maxLinks) {

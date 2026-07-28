@@ -3,132 +3,137 @@ import ActivityLog from "../models/ActivityLog.js";
 import { chromium } from "playwright";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
+import { acquireBrowserSlot, releaseBrowserSlot } from "../utils/browserManager.js";
 
 export const generatePDFReport = async (req, res) => {
-  try {
-    const { id } = req.params;
-    let report;
+    try {
+        const { id } = req.params;
+        let report;
 
-    // A completed report may still be buffered in memory (not yet flushed to Mongo).
-    const live = auditStore.get(id);
-    if (live) {
-        const allowed = !(req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin')
-            || String(live.userId || "") === String(req.user.userId || "");
-        report = allowed ? live : null;
-    } else {
-        const query = { _id: id };
-        if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-            query.userId = req.user.userId;
+        // A completed report may still be buffered in memory (not yet flushed to Mongo).
+        const live = auditStore.get(id);
+        if (live) {
+            const allowed = !(req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin')
+                || String(live.userId || "") === String(req.user.userId || "");
+            report = allowed ? live : null;
+        } else {
+            const query = { _id: id };
+            if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+                query.userId = req.user.userId;
+            }
+            report = await SingleAuditReport.findOne(query);
         }
-        report = await SingleAuditReport.findOne(query);
-    }
 
-    if (!report) {
-      return res.status(404).json({ error: "Report not found or access denied" });
-    }
+        if (!report) {
+            return res.status(404).json({ error: "Report not found or access denied" });
+        }
 
-    if (report.status !== "completed") {
-      return res.status(400).json({ error: "Audit is not completed yet" });
-    }
+        if (report.status !== "completed") {
+            return res.status(400).json({ error: "Audit is not completed yet" });
+        }
 
-    const browser = await chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
+        let slotId = null;
+        let browser = null;
+        try {
+          slotId = await acquireBrowserSlot({ label: 'pdf-export' });
+          browser = await chromium.launch({
+              headless: true,
+              args: ["--no-sandbox", "--disable-setuid-sandbox"],
+          });
 
-    const context = await browser.newContext();
-    const page = await context.newPage();
+        const context = await browser.newContext();
+        const page = await context.newPage();
 
-    const sections = [
-        { key: 'technicalPerformance', title: 'Technical Performance' },
-        { key: 'onPageSEO', title: 'On-Page SEO' },
-        { key: 'accessibility', title: 'Accessibility' },
-        { key: 'securityOrCompliance', title: 'Security & Compliance' },
-        { key: 'UXOrContentStructure', title: 'UX & Content Structure' },
-        { key: 'conversionAndLeadFlow', title: 'Conversion & Lead Flow' },
-        { key: 'aioReadiness', title: 'AIO Readiness' }
-    ];
+        const sections = [
+            { key: 'technicalPerformance', title: 'Technical Performance' },
+            { key: 'onPageSEO', title: 'On-Page SEO' },
+            { key: 'accessibility', title: 'Accessibility' },
+            { key: 'securityOrCompliance', title: 'Security & Compliance' },
+            { key: 'UXOrContentStructure', title: 'UX & Content Structure' },
+            { key: 'conversionAndLeadFlow', title: 'Conversion & Lead Flow' },
+            { key: 'aioReadiness', title: 'AIO Readiness' }
+        ];
 
-    let dynamicContent = "";
-    let sectionNum = 0;
+        let dynamicContent = "";
+        let sectionNum = 0;
 
-    // Skip top-level non-metric keys; every parameter is included in the report.
-    const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade', 'Graded_Percentage', 'Score_Breakdown'];
-    const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey);
+        // Skip top-level non-metric keys; every parameter is included in the report.
+        const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade', 'Graded_Percentage', 'Score_Breakdown'];
+        const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey);
 
-    // Escape any value that ends up in the PDF HTML. Report fields derive from
-    // the scanned site's content (recommendations, causes, details) and the
-    // user-supplied URL, and the HTML is rendered by Chromium — so unescaped
-    // values are an HTML/script-injection vector.
-    const escapeHtml = (val) => String(val ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
+        // Escape any value that ends up in the PDF HTML. Report fields derive from
+        // the scanned site's content (recommendations, causes, details) and the
+        // user-supplied URL, and the HTML is rendered by Chromium — so unescaped
+        // values are an HTML/script-injection vector.
+        const escapeHtml = (val) => String(val ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
 
-    const formatValue = (val) => {
-        if (typeof val === 'object' && val !== null) return escapeHtml(JSON.stringify(val));
-        return escapeHtml(String(val || 'N/A'));
-    }
+        const formatValue = (val) => {
+            if (typeof val === 'object' && val !== null) return escapeHtml(JSON.stringify(val));
+            return escapeHtml(String(val || 'N/A'));
+        }
 
-    sections.forEach((sec) => {
-        const data = report[sec.key];
-        if (data && typeof data === 'object') {
-            // Skip a whole section that has no renderable metric keys.
-            const hasVisible = Object.keys(data).some(isMetricVisible);
-            if (!hasVisible) return;
+        sections.forEach((sec) => {
+            const data = report[sec.key];
+            if (data && typeof data === 'object') {
+                // Skip a whole section that has no renderable metric keys.
+                const hasVisible = Object.keys(data).some(isMetricVisible);
+                if (!hasVisible) return;
 
-            sectionNum += 1;
-            dynamicContent += `<div class="page-break"></div><h2 class="section-main-title">Section ${sectionNum}: ${sec.title}</h2>`;
+                sectionNum += 1;
+                dynamicContent += `<div class="page-break"></div><h2 class="section-main-title">Section ${sectionNum}: ${sec.title}</h2>`;
 
-            Object.entries(data).forEach(([mKey, mVal]) => {
-                if (!isMetricVisible(mKey)) return;
+                Object.entries(data).forEach(([mKey, mVal]) => {
+                    if (!isMetricVisible(mKey)) return;
 
-                const processMetric = (metric, subName = "") => {
-                   if (!metric || typeof metric !== 'object' || Array.isArray(metric)) return;
+                    const processMetric = (metric, subName = "") => {
+                        if (!metric || typeof metric !== 'object' || Array.isArray(metric)) return;
 
-                   let title = mKey.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
-                   if (subName) title += ` (${subName})`;
+                        let title = mKey.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
+                        if (subName) title += ` (${subName})`;
 
-                   const detailsObj = metric.description || metric.Description || metric.details || metric.Details || metric.value || "No detailed description provided by the scan.";
-                   let detailsStr = typeof detailsObj === 'object' ? JSON.stringify(detailsObj) : detailsObj;
-                   if (detailsStr.startsWith('{') && detailsStr.length > 50) detailsStr = "Complex Object Evaluated (See Advanced Diagnostic Data)";
+                        const detailsObj = metric.description || metric.Description || metric.details || metric.Details || metric.value || "No detailed description provided by the scan.";
+                        let detailsStr = typeof detailsObj === 'object' ? JSON.stringify(detailsObj) : detailsObj;
+                        if (detailsStr.startsWith('{') && detailsStr.length > 50) detailsStr = "Complex Object Evaluated (See Advanced Diagnostic Data)";
 
-                   const score = metric.score ?? metric.Score ?? 100;
-                   const status = metric.status || metric.Status || (score >= 90 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail');
-                   const cause = metric.cause || (metric.analysis && metric.analysis.cause) || (metric.meta && metric.meta.why_this_occurred) || metric.failureMessage || "";
-                   const recommendation = metric.recommendation || (metric.analysis && metric.analysis.recommendation) || (metric.meta && metric.meta.how_to_fix) || metric.suggestion || metric.Suggestion || "";
+                        const score = metric.score ?? metric.Score ?? 100;
+                        const status = metric.status || metric.Status || (score >= 90 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail');
+                        const cause = metric.cause || (metric.analysis && metric.analysis.cause) || (metric.meta && metric.meta.why_this_occurred) || metric.failureMessage || "";
+                        const recommendation = metric.recommendation || (metric.analysis && metric.analysis.recommendation) || (metric.meta && metric.meta.how_to_fix) || metric.suggestion || metric.Suggestion || "";
 
-                   const statusClass = status.toLowerCase().includes('pass') ? 'status-pass' : status.toLowerCase().includes('fail') ? 'status-fail' : 'status-warn';
+                        const statusClass = status.toLowerCase().includes('pass') ? 'status-pass' : status.toLowerCase().includes('fail') ? 'status-fail' : 'status-warn';
 
-                   let advancedDataHtml = "";
-                   
-                   if (!statusClass.includes('pass')) {
-                       let diagnosticData = {};
-                       // Safely collect diagnostic data specifically for errors
-                       if (metric.meta) diagnosticData = { ...diagnosticData, ...metric.meta };
-                       if (metric.details && typeof metric.details === 'object') diagnosticData = { ...diagnosticData, ...metric.details };
-                       if (metric.items) diagnosticData.items = metric.items;
-                       if (metric.nodes) diagnosticData.nodes = metric.nodes;
-                       
-                       // Remove redundant standard fields before dumping
-                       delete diagnosticData.cause;
-                       delete diagnosticData.recommendation;
-                       delete diagnosticData.score;
-                       delete diagnosticData.status;
+                        let advancedDataHtml = "";
 
-                       if (Object.keys(diagnosticData).length > 0) {
-                           const rawString = JSON.stringify(diagnosticData, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                           advancedDataHtml = `
+                        if (!statusClass.includes('pass')) {
+                            let diagnosticData = {};
+                            // Safely collect diagnostic data specifically for errors
+                            if (metric.meta) diagnosticData = { ...diagnosticData, ...metric.meta };
+                            if (metric.details && typeof metric.details === 'object') diagnosticData = { ...diagnosticData, ...metric.details };
+                            if (metric.items) diagnosticData.items = metric.items;
+                            if (metric.nodes) diagnosticData.nodes = metric.nodes;
+
+                            // Remove redundant standard fields before dumping
+                            delete diagnosticData.cause;
+                            delete diagnosticData.recommendation;
+                            delete diagnosticData.score;
+                            delete diagnosticData.status;
+
+                            if (Object.keys(diagnosticData).length > 0) {
+                                const rawString = JSON.stringify(diagnosticData, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                                advancedDataHtml = `
                            <div class="nodes-box mt-10" style="background:#f8fafc; padding: 20px; border-left: 6px solid #475569; border-radius: 0 12px 12px 0;">
                                 <strong style="color: var(--dark); font-size: 16px;">Advanced Diagnostic Data (All Contextual Metrics):</strong>
                                 <pre style="font-family: monospace; font-size: 11px; color: #334155; margin-top: 15px; background: #f1f5f9; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">${rawString}</pre>
                            </div>`;
-                       }
-                   }
+                            }
+                        }
 
-                   dynamicContent += `
+                        dynamicContent += `
                    <div class="metric-detailed-card">
                        <div class="metric-detailed-header">
                            <h3>${escapeHtml(title)}</h3>
@@ -149,16 +154,16 @@ export const generatePDFReport = async (req, res) => {
                        </div>
                    </div>
                    `;
-                };
+                    };
 
-                if (mVal && typeof mVal === 'object' && (mVal.lab || mVal.crux)) {
-                    if (mVal.lab) processMetric(mVal.lab, "Lab Data");
-                    if (mVal.crux) processMetric(mVal.crux, "Real-World Data");
-                } else if (mVal && typeof mVal === 'object' && ('details' in mVal || 'Details' in mVal || 'value' in mVal || 'score' in mVal || 'status' in mVal)) {
-                    processMetric(mVal);
-                } else {
-                    const title = mKey.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
-                    dynamicContent += `
+                    if (mVal && typeof mVal === 'object' && (mVal.lab || mVal.crux)) {
+                        if (mVal.lab) processMetric(mVal.lab, "Lab Data");
+                        if (mVal.crux) processMetric(mVal.crux, "Real-World Data");
+                    } else if (mVal && typeof mVal === 'object' && ('details' in mVal || 'Details' in mVal || 'value' in mVal || 'score' in mVal || 'status' in mVal)) {
+                        processMetric(mVal);
+                    } else {
+                        const title = mKey.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
+                        dynamicContent += `
                     <div class="metric-detailed-card">
                         <div class="metric-detailed-header">
                             <h3>${escapeHtml(title)}</h3>
@@ -169,13 +174,13 @@ export const generatePDFReport = async (req, res) => {
                         </div>
                     </div>
                     `;
-                }
-            });
-        }
-    });
+                    }
+                });
+            }
+        });
 
-    // Professional HTML Template for PDF
-    const htmlContent = `
+        // Professional HTML Template for PDF
+        const htmlContent = `
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -397,7 +402,7 @@ export const generatePDFReport = async (req, res) => {
     </head>
     <body>
         <div class="header">
-            <div class="logo">Dealer Pulse.</div>
+            <div class="logo">Site Audit.</div>
             <div class="url-info">
                 <h1>${escapeHtml(report.url)}</h1>
                 <p>Audit Date: ${new Date(report.createdAt).toLocaleDateString()}</p>
@@ -469,16 +474,16 @@ export const generatePDFReport = async (req, res) => {
                  2. Prioritize failing elements (Red metrics) immediately.<br/>
                  3. Remediate warning elements (Yellow metrics) within current sprint cycles.<br/>
                  4. Use the recorded recommendations to configure standard operating procedures.<br/>
-                 5. Re-run the Dealer Pulse tool after deployments to verify changes in Lab/Crux data.<br/>
+                 5. Re-run the Site Audit tool after deployments to verify changes in Lab/Crux data.<br/>
              </p>
              <div style="margin-top: 150px; text-align: center;">
-                 <div class="logo" style="font-size: 32px; opacity: 0.3;">Dealer Pulse.</div>
+                 <div class="logo" style="font-size: 32px; opacity: 0.3;">Site Audit.</div>
                  <p style="color: #94a3b8; margin-top: 10px;">End of Report</p>
              </div>
         </div>
 
         <div class="footer">
-            Generated by Dealer Pulse AI Engine. © 2026 Dealer Pulse. All Rights Reserved.
+            Generated by Site Audit AI Engine. © 2026 Site Audit. All Rights Reserved.
             <br/>
             This document is a technical analysis and should be used as a reference for website optimization.
         </div>
@@ -486,50 +491,53 @@ export const generatePDFReport = async (req, res) => {
     </html>
     `;
 
-    await page.setContent(htmlContent, { waitUntil: "networkidle" });
+        await page.setContent(htmlContent, { waitUntil: "networkidle" });
 
-    const pdfBuffer = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: {
-        top: "20px",
-        bottom: "20px",
-        left: "20px",
-        right: "20px",
-      },
-    });
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true,
+            margin: {
+                top: "20px",
+                bottom: "20px",
+                left: "20px",
+                right: "20px",
+            },
+        });
 
-    await browser.close();
+        res.contentType("application/pdf");
+        res.setHeader(
+            "Content-Disposition",
+            `attachment; filename=Site Audit-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}.pdf`
+        );
 
-    res.contentType("application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=Dealer Pulse-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}.pdf`
-    );
-
-    // Activity Log for analytics (Admin Dashboard)
-    if (req.user) {
-      await ActivityLog.create({
-        userId: req.user.userId,
-        sessionId: req.tracking?.sessionId || 'DOWNLOAD_SESSION',
-        ip: req.tracking?.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
-        device: req.tracking?.device || 'Desktop',
-        browser: req.tracking?.browser || 'Browser',
-        os: req.tracking?.os || 'OS',
-        action: 'REPORT_DOWNLOAD',
-        metadata: { 
-          reportId: id, 
-          url: report.url,
-          reportType: report.report,
-          deviceProfile: report.device
+        // Activity Log for analytics (Admin Dashboard)
+        if (req.user) {
+            await ActivityLog.create({
+                userId: req.user.userId,
+                sessionId: req.tracking?.sessionId || 'DOWNLOAD_SESSION',
+                ip: req.tracking?.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
+                device: req.tracking?.device || 'Desktop',
+                browser: req.tracking?.browser || 'Browser',
+                os: req.tracking?.os || 'OS',
+                action: 'REPORT_DOWNLOAD',
+                metadata: {
+                    reportId: id,
+                    url: report.url,
+                    reportType: report.report,
+                    deviceProfile: report.device
+                }
+            });
         }
-      });
+
+        res.send(Buffer.from(pdfBuffer));
+
+        } finally {
+            if (browser) await browser.close().catch(() => {});
+            if (slotId) await releaseBrowserSlot(slotId);
+        }
+
+    } catch (error) {
+        logger.error("PDF generation error", error);
+        res.status(500).json({ error: "Failed to generate PDF report" });
     }
-
-    res.send(Buffer.from(pdfBuffer));
-
-  } catch (error) {
-    logger.error("PDF generation error", error);
-    res.status(500).json({ error: "Failed to generate PDF report" });
-  }
 };

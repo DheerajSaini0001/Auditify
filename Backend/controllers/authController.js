@@ -70,11 +70,11 @@ export const register = async (req, res) => {
     // Send OTP email
     await sendEmail({
       to: email.toLowerCase(),
-      subject: `Verify your Dealerpulse account – OTP: ${rawOTP}`,
+      subject: `Verify your Site Audit account – OTP: ${rawOTP}`,
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
           <h2 style="color: #1e3a8a;">Verify your account</h2>
-          <p>Please enter the following 6-digit code to verify your Dealerpulse account. This code is valid for 10 minutes.</p>
+          <p>Please enter the following 6-digit code to verify your Site Audit account. This code is valid for 10 minutes.</p>
           <div style="background: #f3f4f6; color: #1e3a8a; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px; padding: 15px; margin: 20px 0; border-radius: 5px; font-family: monospace;">
             ${rawOTP}
           </div>
@@ -130,7 +130,7 @@ export const verifyOTP = async (req, res) => {
     await OTP.deleteOne({ _id: doc._id });
     const user = await User.findOneAndUpdate(
       { email: email.toLowerCase() },
-      { 
+      {
         isEmailVerified: true,
         lastLogin: new Date(),
         lastLoginIp: req.tracking?.ip || '0.0.0.0',
@@ -195,7 +195,7 @@ export const resendOTP = async (req, res) => {
     }
 
     await OTP.deleteMany({ email: email.toLowerCase() });
-    
+
     const rawOTP = generateOTP();
     const hashedOTP = await bcrypt.hash(rawOTP, 10);
 
@@ -207,7 +207,7 @@ export const resendOTP = async (req, res) => {
 
     await sendEmail({
       to: email.toLowerCase(),
-      subject: `Verify your Dealerpulse account – New OTP: ${rawOTP}`,
+      subject: `Verify your Site Audit account – New OTP: ${rawOTP}`,
       html: `<h2>Verify your account</h2><p>Your new code is: <b>${rawOTP}</b>. Expired in 10 minutes.</p>`
     });
 
@@ -299,12 +299,20 @@ export const login = async (req, res) => {
 export const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    
+
     // Safety rule: Always return 200 to prevent email enumeration
     res.status(200).json({ success: true, message: 'If that email is registered, a reset link has been sent.' });
 
     const user = await User.findOne({ email: email?.toLowerCase() });
-    if (!user || user.authProvider === 'google') return;
+    if (!user) return;
+
+    // A Google account has no password of its own. This used to return here, so the
+    // user waited for a mail that was never sent while the API still said one was on
+    // its way. Send the same secure link instead, worded as "set a password" —
+    // login() already accepts a Google account once it HAS one (it only blocks
+    // authProvider === 'google' && !user.password), so afterwards they can sign in
+    // either way.
+    const isFirstPassword = !user.password;
 
     const rawToken = uuidv4();
     const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
@@ -321,13 +329,16 @@ export const forgotPassword = async (req, res) => {
 
     await sendEmail({
       to: email.toLowerCase(),
-      subject: 'Reset your Dealerpulse password',
+      subject: isFirstPassword ? 'Set a password for your Site Audit account' : 'Reset your Site Audit password',
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; text-align: center;">
-          <h2>Reset Password</h2>
-          <p>We received a request to reset your password. Click the button below to proceed.</p>
-          <a href="${resetURL}" style="display: inline-block; background: #1e3a8a; color: white; padding: 12px 24px; border-radius: 5px; text-decoration: none; margin: 20px 0;">Reset Password</a>
+          <h2>${isFirstPassword ? 'Set a password' : 'Reset password'}</h2>
+          ${isFirstPassword
+            ? `<p>You signed up with Google, so your account has no password yet. Set one below if you would also like to sign in with your email address. You can keep using the Google button either way.</p>`
+            : `<p>We received a request to reset your password. Click the button below to proceed.</p>`}
+          <a href="${resetURL}" style="display: inline-block; background: #EA580C; color: white; padding: 12px 24px; border-radius: 5px; text-decoration: none; margin: 20px 0;">${isFirstPassword ? 'Set my password' : 'Reset password'}</a>
           <p>This link will expire in 1 hour.</p>
+          <p style="color:#64748B; font-size:13px;">If you did not ask for this, you can ignore this email — nothing changes until the link is used.</p>
         </div>
       `
     });

@@ -4,19 +4,16 @@ import { validateUrlSafety } from "./ssrfGuard.js";
 import { detectSiteType as classifySiteType } from "./dealershipDetector.js";
 import { classifyPageType, classifyCorporatePageType } from "./pageClassifier.js";
 import { fetchWithBotBypass } from "./puppeteer_cheerio.js";
-import { createLimiter } from "./concurrencyLimiter.js";
 import logger from "./logger.js";
 
-// Bounds how many stealth-browser escalations can run at once from this
-// process. Two problems this solves at once: (1) resource contention — each
-// Chromium launch is meaningfully expensive, so N simultaneous audits
-// shouldn't mean N simultaneous browsers; (2) several concurrent connections
-// to different Cloudflare-protected domains in a tight window resembles
-// scraper traffic and can trigger extra WAF scrutiny on domains that would
-// otherwise pass cleanly one at a time (observed directly while load-testing
-// this detector — honda.com/audiusa.com failed under 6-way concurrency and
-// passed cleanly in isolation). Tunable via env var; default is conservative.
-const browserLimiter = createLimiter(Number(process.env.SITE_TYPE_BROWSER_CONCURRENCY) || 3);
+// Stealth-browser escalations here are now bounded by the SINGLE global browser
+// pool (utils/browserManager.js, default MAX_CONCURRENT_BROWSERS=3) that every
+// headless-Chrome launch in the app shares — this used to keep its own separate
+// per-process limiter, which meant classification browsers weren't counted
+// against the audit browsers and total concurrent Chrome could exceed the cap.
+// fetchWithBotBypass takes a short-timeout permit and fails open if none is
+// free, so under load classification yields to real audits (it was always a
+// best-effort escalation that falls back to the plain-HTTP result anyway).
 
 // A plain HTTP GET (fastFetch) can miss the real page for two different
 // reasons a stealth browser can fix: (1) a Cloudflare/Turnstile/hCaptcha
@@ -43,8 +40,9 @@ const MAX_PROBE_PAGES = 2;
 // (never throws) on any failure — callers fall back to the original fast-path
 // result, which is exactly today's fail-open behavior. Also hands back the
 // cheerio doc + status so the caller can still run the subpage-probing step
-// below against the REAL (unblocked/rendered) homepage. Queues behind
-// browserLimiter so this process never runs more than N of these at once.
+// below against the REAL (unblocked/rendered) homepage. Bounded by the global
+// browser pool (browserManager) shared with every audit browser — with a short
+// acquire timeout, so under load it yields and falls back rather than queueing.
 //
 // No IP rotation / residential proxies here by design — routing traffic
 // through someone else's residential IP to get past a site's own bot defenses
@@ -55,7 +53,9 @@ const MAX_PROBE_PAGES = 2;
 // dealer taxonomy exactly like any other inconclusive result — see
 // dealershipDetector.js's unknownType()/inconclusive handling.
 async function detectViaBrowser(url) {
-  return browserLimiter.run(() => runBrowserFetch(url));
+  // Concurrency is now enforced globally inside fetchWithBotBypass's shared
+  // browser (via the browserManager permit) — no separate limiter needed here.
+  return runBrowserFetch(url);
 }
 
 async function runBrowserFetch(url) {

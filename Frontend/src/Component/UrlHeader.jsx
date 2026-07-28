@@ -1,5 +1,5 @@
 import React from "react";
-import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, Download, Lock } from "lucide-react";
+import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, Download, Lock, Loader2 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
@@ -44,7 +44,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Dealerpulse-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+        link.download = `Site Audit-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -103,6 +103,8 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
     ? (PAGE_TYPE_LABELS[data.pageType] || (String(data.pageType).charAt(0).toUpperCase() + String(data.pageType).slice(1)))
     : null;
 
+  const isAuditPending = data?.status === "pending" || (data?.rawStatus && data.rawStatus !== "completed" && data.rawStatus !== "success");
+
   return (
     <div className={`relative p-6 md:p-8 ${hideBorder ? "" : "border-b"} ${darkMode ? "border-slate-800 bg-slate-900/50" : "border-line bg-surface-2/80"}`}>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 min-w-0 w-full">
@@ -132,14 +134,23 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           )}
         </div>
 
-        {/* Middle: Average Score */}
-        {typeof data?.score === 'number' && (
+        {/* Middle: Average Score / Status */}
+        {isAuditPending ? (
+          <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
+            <div className={`flex items-center gap-3 px-5 py-2.5 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-card border-line/50"}`}>
+              <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+              <div className="flex flex-col">
+                <span className={`text-[10px] font-bold uppercase tracking-widest text-emerald-500`}>Audit Analysis</span>
+                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-inksoft"}`}>In Progress...</span>
+              </div>
+            </div>
+          </div>
+        ) : typeof data?.score === 'number' && (
           <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
             <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-card border-line/50"}`}>
-              <div className={`text-2xl font-black ${
-                data.score >= 90 ? "text-emerald-500" : 
-                data.score >= 50 ? "text-amber-500" : "text-red-500"
-              }`}>
+              <div className={`text-2xl font-black ${data.score >= 90 ? "text-emerald-500" :
+                  data.score >= 50 ? "text-amber-500" : "text-red-500"
+                }`}>
                 {data.score.toFixed(0)}%
               </div>
               <div className="flex flex-col">

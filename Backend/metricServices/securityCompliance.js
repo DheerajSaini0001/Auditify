@@ -885,8 +885,15 @@ async function checkCookieConsent(page) {
       }
     });
 
-    const cookiesUsed = document.cookie && document.cookie.length > 0;
-    const cookieString = cookiesUsed ? document.cookie : "";
+    // [FIX] document.cookie can THROW a SecurityError ("Access is denied for this
+    // document") when the document has an opaque origin — e.g. a WAF/bot-protection
+    // interstitial or frame served with CSP `sandbox` (Imperva/Incapsula does this;
+    // confirmed on lexusofnorthmiami.com), or cookies disabled for the document.
+    // Treat unreadable cookies as "no cookies visible" instead of letting the
+    // SecurityError abort the whole Security pillar — and with it the audit.
+    let cookieString = "";
+    try { cookieString = document.cookie || ""; } catch (_) { cookieString = ""; }
+    const cookiesUsed = cookieString.length > 0;
 
     return {
       hasTracking: detectedTrackers.length > 0 || cookiesUsed,

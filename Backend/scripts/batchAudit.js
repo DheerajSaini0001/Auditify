@@ -19,7 +19,7 @@
 import fs from "fs";
 import path from "path";
 import { Worker } from "worker_threads";
-import dotenv from "dotenv";
+import { registerWorkerWithManager } from "../utils/browserManager.js";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 
@@ -76,6 +76,8 @@ const runOne = (job) =>
     const worker = new Worker(workerPath, {
       workerData: { url: job.url, device, report: "All", auditId, pageType: job.pageType, siteType: "dealer" },
     });
+
+    registerWorkerWithManager(worker);
 
     let finished = false;
     const finalize = (status, extra = {}) => {

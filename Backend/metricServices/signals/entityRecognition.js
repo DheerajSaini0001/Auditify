@@ -20,7 +20,7 @@ import configService from '../../services/configService.js';
 
 const KG_TIMEOUT = 6000;
 const KG_BONUS = 20;            // points added when a KG entity is confirmed (capped at 100)
-const UA = 'Mozilla/5.0 (compatible; DealerPulseAudit/1.0; +https://dealerpulse.app)';
+const UA = 'Mozilla/5.0 (compatible; Site AuditAudit/1.0; +https://Site Audit.app)';
 
 const ORG_TYPE = (t) => {
     const s = String(t).toLowerCase();

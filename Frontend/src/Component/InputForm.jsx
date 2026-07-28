@@ -6,6 +6,7 @@ import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Assets from "../assets/Assets.js";
 import AuditEmailVerifyModal from "./AuditEmailVerifyModal.jsx";
+import { saveGuestGrant, getValidGuestGrant } from "../utils/guestGrant.js";
 import { useRef } from "react";
 
 // Custom Dropdown Component
@@ -110,10 +111,24 @@ export default function InputForm() {
           }
 
           isAuditStarting.current = true;
-          await fetchData(urlToFetch, device, report, null);
+          const result = await fetchData(urlToFetch, device, report, null);
           isAuditStarting.current = false;
+          if (result?.success && result?.id) {
+            navigate(`/report/${result.id}`);
+          }
+        } else if (getValidGuestGrant()) {
+          // Guest who already verified this session: reuse the stored grant (fetchData
+          // attaches it automatically) — no email/OTP again.
+          isAuditStarting.current = true;
+          const result = await fetchData(urlToFetch, device, report, null);
+          isAuditStarting.current = false;
+          if (result?.success && result?.id) {
+            navigate(`/report/${result.id}`);
+          } else if (/verify your email|email verification/i.test(result?.error || '')) {
+            setShowVerify(true); // grant expired mid-flight — verify once more
+          }
         } else {
-          // Guest user: ask them to verify their email before the audit runs.
+          // First-time guest: ask them to verify their email before the audit runs.
           setShowVerify(true);
         }
       };
@@ -150,7 +165,14 @@ export default function InputForm() {
       return;
     }
 
-    // Open the email-verification modal for guests
+    // Returning guest with a still-valid grant → run straight through (fetchData replays
+    // the stored token). Only a first-time / expired guest sees the email modal.
+    if (getValidGuestGrant()) {
+      runAudit(null);
+      return;
+    }
+
+    // Open the email-verification modal for first-time guests
     setShowVerify(true);
   };
 
@@ -165,7 +187,10 @@ export default function InputForm() {
 
     const result = await fetchData(urlToFetch, device, report, auditToken || null);
 
-    if (!result?.success) {
+    if (result?.success && result?.id) {
+      navigate(`/report/${result.id}`);
+      setInputValue("");
+    } else if (!result?.success) {
       // Grant missing/expired — re-open the email-verification modal.
       if (/verify your email|email verification/i.test(result?.error || '')) {
         setShowVerify(true);
@@ -178,16 +203,10 @@ export default function InputForm() {
   // Called by the modal once the OTP is confirmed; runs the audit with the grant.
   const handleVerified = (auditToken) => {
     setShowVerify(false);
+    // Persist the grant so subsequent audits this session skip the email/OTP step.
+    saveGuestGrant(auditToken);
     runAudit(auditToken);
   };
-
-  // ⭐ FINAL FIX → CLEAN NAVIGATION
-  useEffect(() => {
-    if (inputValue && data?._id && !loading) {
-      navigate(`/report/${data._id}`);
-      setInputValue("");
-    }
-  }, [data, loading, navigate]);
 
 
   // Styles

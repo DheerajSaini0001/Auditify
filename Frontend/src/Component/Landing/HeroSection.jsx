@@ -8,8 +8,10 @@ import {
     Building2, MapPin, Megaphone,
 } from 'lucide-react';
 import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
+import { saveGuestGrant, getValidGuestGrant } from "../../utils/guestGrant.js";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
+import { useData } from '../../context/DataContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
@@ -27,7 +29,9 @@ const PAGE_TYPES = [
     { key: 'srp', label: 'Inventory / SRP', desc: 'Search results page, filters', Icon: LayoutGrid },
     { key: 'vdp', label: 'Vehicle Detail / VDP', desc: 'Per-car detail + lead form', Icon: Car },
     { key: 'trade', label: 'Trade-In Tool', desc: 'KBB-style valuation, lead capture', Icon: Repeat },
-    { key: 'lease', label: 'Lease Specials', desc: 'Lease offers + calculator', Icon: Key },
+    { key: 'lease', label: 'Lease Deals', desc: 'Lease offers + calculator', Icon: Key },
+    { key: 'specials', label: 'Offers & Specials', desc: 'Deals, incentives, rebates', Icon: Tag },
+    { key: 'finance', label: 'Financing', desc: 'Credit application, payment tools', Icon: CreditCard },
     { key: 'service', label: 'Service & Parts', desc: 'Service, repair, parts & accessories', Icon: Wrench },
     { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
     { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
@@ -198,7 +202,11 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
     const allSelected = options.length > 0 && selectedInOptions.length === options.length;
     const label = getLabel
         ? getLabel(selectedInOptions, options)
-        : allSelected ? "All Pages" : selectedInOptions.length === 0 ? "No Pages" : `${selectedInOptions.length} Pages`;
+        : allSelected ? "All pages"
+            : selectedInOptions.length === 0 ? "No pages"
+                // Just the home page = only the URL the user typed, so say that outright.
+                : selectedInOptions.length === 1 && selectedInOptions[0] === 'home' ? "This page only"
+                    : `${selectedInOptions.length} page${selectedInOptions.length > 1 ? "s" : ""}`;
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -211,7 +219,7 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                     ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
             >
                 <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
-                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[110px] text-white">{label}</span>
+                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[190px] text-white">{label}</span>
                 <ChevronDown className={`w-3 h-3 transition-transform duration-300 text-white ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
@@ -442,75 +450,56 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     }, []);
 
 
+    const { fetchData } = useData();
     const location = useLocation();
     const navigate = useNavigate();
     const isAutoStarting = useRef(false);
-    // The discovery object the batch was auto-started for — so each completed
-    // scan auto-runs exactly once (a re-scan produces a new object and re-arms).
-    const autoAuditRanFor = useRef(null);
-
-    const catMap = useMemo(
-        () => Object.fromEntries((discovery?.categories || []).map((c) => [c.key, c])),
-        [discovery]
-    );
-
-    // Which catalog to render — swaps to the corporate one once a scan resolves
-    // siteType "corporate". Defaults to the dealer catalog before the first scan.
+    const urlInputRef = useRef(null);                 // the audit URL field (for "Check My Website")
     const visibleTypes = siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES;
 
-    // Run page discovery (sitemap → robots.txt → crawl) against the entered URL.
-    const detect = async (urlToScan, token) => {
-        setPhase('detecting');
-        setDiscovery(null);
-        setDetectError(null);
-        try {
-            const bearer = localStorage.getItem('dealerpulse_token');
-            const res = await fetch(`${API_URL}/single-audit/discover`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(bearer && { Authorization: `Bearer ${bearer}` }),
-                    ...(token && { 'x-audit-token': token }),
-                },
-                // Before the first scan `scopes` is the union of both catalogs (we
-                // don't yet know which applies), so nothing is prematurely excluded.
-                body: JSON.stringify({ url: urlToScan, scopes }),
-            });
-            let data = {};
-            try { data = await res.json(); } catch { /* empty */ }
-            if (!res.ok) {
-                setDetectError(data?.error || data?.message || `Detection failed (${res.status}).`);
-                // The backend hard-rejects sites that aren't a dealer or automotive
-                // corporate/OEM site (siteType "unknown") — distinct from a transient
-                // network/server error, where a retry might actually help.
-                setRejected(data?.siteType === 'unknown');
-                setBudgetBlocked(data?.code === 'REPORT_LIMIT_EXCEEDED');
-            } else {
-                setRejected(false);
-                setBudgetBlocked(false);
-                setDiscovery(data);
-                setSiteType(data?.siteType || null);
-                // Now that the catalog is known, drop any selected key that belongs
-                // only to the OTHER catalog so the scope dropdown doesn't show a
-                // stale cross-catalog selection.
-                const resolvedKeys = new Set(
-                    (data?.siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES).map((p) => p.key)
-                );
-                setScopes((prev) => prev.filter((k) => resolvedKeys.has(k)));
-            }
-        } catch {
-            setDetectError('Could not reach the server to detect pages.');
-        } finally {
-            setPhase('done');
-        }
-    };
+    // "Check My Website" (footer) navigates to "/" with state.focusAudit — scroll to the
+    // top and focus the URL field so the keyboard opens. Keyed on location.key so it fires
+    // every time the link is clicked, even when already on the home page.
+    useEffect(() => {
+        if (!location.state?.focusAudit) return;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // A short delay lets the smooth scroll begin and the field mount before focusing;
+        // focusing opens the on-screen keyboard on touch devices and the caret on desktop.
+        // Focus FIRST, then clear the flag — clearing it via navigate() changes
+        // location.key and re-runs this effect, whose cleanup would cancel a still-pending
+        // focus timeout. Doing it inside the timeout (after focus) avoids that.
+        const t = setTimeout(() => {
+            urlInputRef.current?.focus();
+            // Strip the flag so a refresh / back-nav doesn't re-trigger the jump.
+            navigate(location.pathname, { replace: true, state: {} });
+        }, 350);
+        return () => clearTimeout(t);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [location.key]);
 
-    // Step 1 — "Run Audit": validate, gate guests behind email verification, then detect.
-    const beginFlow = (token, rawUrl) => {
+    // Step 1 — "Run Audit": validate, gate guests behind email verification, then run audit.
+    const beginFlow = async (token, rawUrl) => {
         const urlToScan = normalizeUrl(rawUrl ?? url);
         auditTokenRef.current = token || null;
-        detect(urlToScan, token || null);
+        setPhase('detecting');
+        setLocalError(null);
+
+        // Only send the page types that exist in the catalog on screen — `scopes`
+        // defaults to the dealer+corporate union, and the backend treats the list as
+        // the allow-list for its key-page crawl.
+        // Nothing unticked → send no restriction at all, so the crawl behaves exactly
+        // as it did before this picker was wired up.
+        const activeScopes = scopes.filter((k) => visibleTypes.some((p) => p.key === k));
+        const scopesToSend = activeScopes.length === visibleTypes.length ? null : activeScopes;
+
+        const result = await fetchData(urlToScan, device, report, token || null, false, scopesToSend);
+        setPhase('idle');
+
+        if (result?.success && result?.id) {
+            navigate(`/report/${result.id}`);
+        } else {
+            setLocalError(result?.error || "Could not start audit.");
+        }
     };
 
     const handleRun = (e) => {
@@ -518,8 +507,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setLocalError(null);
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
         if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
-        if (selectedPageCount === 0) { setLocalError("Select at least one page type to audit."); return; }
-        if (user || SKIP_EMAIL_VERIFY) { beginFlow(null); return; }
+        // Logged-in / dev bypass, or a returning guest whose grant is still valid → run
+        // straight through (fetchData replays the stored grant). Only a first-time /
+        // expired guest sees the email modal.
+        if (user || SKIP_EMAIL_VERIFY || getValidGuestGrant()) { beginFlow(null); return; }
         setShowVerify(true);
     };
 
@@ -755,9 +746,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phase, discovery, rejected, budgetBlocked]);
 
-    // Modal success → store grant, then detect.
+    // Modal success → store grant so later audits skip the email/OTP step, then detect.
     const handleVerified = (auditToken) => {
         setShowVerify(false);
+        saveGuestGrant(auditToken);
         beginFlow(auditToken);
     };
 
@@ -789,7 +781,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         }
         isAutoStarting.current = true;
 
-        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token')) {
+        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token') || getValidGuestGrant()) {
             beginFlow(null, queryUrl);
             window.history.replaceState(null, '', window.location.pathname);
         } else {
@@ -898,32 +890,35 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
             className={`relative flex flex-col items-center pt-10 pb-16 px-5 sm:px-6 transition-colors duration-500 ${darkMode ? '' : 'bg-surface'}`}
             style={darkMode ? { background: 'linear-gradient(to bottom, #0B1120, #0A0520)' } : undefined}
         >
-            <div className="w-full max-w-6xl mx-auto">
+            <div className="w-full max-w-7xl mx-auto">
 
                 {/* ── Hero copy ── */}
-                <div className="text-center max-w-3xl mx-auto space-y-4">
-                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.22em] border bg-[#ea580c]/15 border-[#ea580c]/30 ${darkMode ? 'text-orange-200' : 'text-accent'}`}>
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c] animate-pulse inline-block" />
-                        Dealer Website Audit Platform
+                <div className="text-center max-w-4xl mx-auto space-y-4 flex flex-col items-center justify-center">
+
+                    <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border
+                        ${darkMode ? 'bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400' : 'bg-[#ea580c]/10 border-[#ea580c]/20 text-[#EA580B]'}`}>
+                        <Car size={13} /> For dealership &amp; automotive websites
                     </span>
 
-                    <h1 className={`text-[clamp(2rem,4.6vw,3.25rem)] font-extrabold leading-[1.05] tracking-[-0.03em] ${darkMode ? 'text-white' : 'text-ink'}`}>
-                        Audit any dealer site in{" "}
-                        <span className="text-[#EA580B]">48 hours</span>
+                    <h1 className={`text-center text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-[-0.03em] ${darkMode ? 'text-white' : 'text-ink'}`}>
+                        Your website, checked in{" "}
+                        <span className="text-[#EA580B]">minutes</span>
                     </h1>
 
-                    <p className={`text-[clamp(0.95rem,1.4vw,1.125rem)] font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
-                        Drop a URL. We crawl the right pages, score them on 8 dealer-specific parameters,
-                        and hand back a fix list ranked by impact.
+                    <p className={`text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
+                        Enter your web address. We open your site the way a customer does, then give
+                        you a clear list of what to fix first.
                     </p>
                 </div>
 
                 {/* ── URL input form ── */}
-                <form onSubmit={handleRun} className="relative max-w-3xl mx-auto mt-8 z-[60]">
+                <form onSubmit={handleRun} className="relative max-w-5xl mx-auto mt-8 z-[60]">
                     <div className={`rounded-[2rem] border p-4 sm:p-5 backdrop-blur-2xl shadow-2xl shadow-black/20 ${darkMode ? 'bg-[#111a33]/80 border-white/10' : 'bg-card border-line'}`}>
                         <div className="flex items-center px-3 h-12 gap-3">
                             <Globe className={`flex-shrink-0 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-muted'}`} />
                             <input
+                                ref={urlInputRef}
+                                id="audit-url-input"
                                 type="text"
                                 autoComplete="off"
                                 spellCheck="false"
@@ -948,9 +943,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                 onToggle={toggleSection}
                                 onSetAll={setAllSections}
                                 getLabel={(sel) =>
-                                    sel.length === SECTIONS.length ? "Full Audit (All 7)"
-                                        : sel.length === 0 ? "No Sections"
-                                            : `${sel.length} Section${sel.length > 1 ? "s" : ""}`}
+                                    sel.length === SECTIONS.length ? `Full audit (all ${SECTIONS.length})`
+                                        : sel.length === 0 ? "No sections"
+                                            : `${sel.length} section${sel.length > 1 ? "s" : ""}`}
                                 icon={<Settings />} darkMode={darkMode} disabled={isLoading || batchRunning}
                             />
                             <MultiSelectDropdown
@@ -990,12 +985,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                         </div>
                     </div>
 
-                    {/* Auto-detect callout */}
-                    <p className={`mt-3 flex items-center justify-center gap-2 text-xs font-medium ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-                        <Sparkles className="w-3.5 h-3.5 text-[#ea580c]" />
-                        One URL → we auto-detect all {visibleTypes.length} page types below.
-                    </p>
-
                     <AnimatePresence>
                         {error && (
                             <motion.div
@@ -1006,78 +995,22 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             </motion.div>
                         )}
                     </AnimatePresence>
-                </form>
 
-                {/* ── Auto-detect section ── */}
-                <div className="mt-12">
-                    <div className="mb-5">
-                        <div className="flex items-center gap-2.5 flex-wrap">
-                            <h3 className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-ink'}`}>
-                                {phase === 'done' && rejected
-                                    ? "This site isn't a dealership or automotive corporate/OEM website"
-                                    : phase === 'done'
-                                        ? `Detected ${foundCount} of ${visibleTypes.length} key pages on your site`
-                                        : "We'll auto-detect and audit these pages on your site"}
-                            </h3>
-                            {phase === 'done' && !rejected && siteType && (
-                                <span
-                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide border ${
-                                        siteType === 'corporate'
-                                            ? 'bg-sky-500/10 border-sky-500/30 text-sky-500'
-                                            : 'bg-[#ea580c]/10 border-[#ea580c]/30 text-[#ea580c]'
-                                    }`}
-                                >
-                                    {siteType === 'corporate' ? <Building2 size={12} /> : <Home size={12} />}
-                                    {siteType === 'corporate' ? 'Corporate / OEM site detected' : 'Dealer site detected'}
-                                </span>
-                            )}
-                        </div>
-                        {phase === 'done' && discovery && (
-                            <p className={`text-xs mt-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-                                via {sourceLabel[discovery.source] || discovery.source}
-                                {discovery.sitemapUrl ? ` · ${prettyPath(discovery.sitemapUrl)}` : ''}
-                            </p>
-                        )}
-                        {phase === 'done' && detectError && rejected && (
-                            <p className="text-xs mt-1 text-rose-400">
-                                {detectError} Try a different URL — Auditify only audits dealership and automotive corporate/OEM websites.
-                            </p>
-                        )}
-                        {phase === 'done' && detectError && !rejected && (
-                            <p className={`text-xs mt-1 ${budgetBlocked ? 'text-rose-400' : 'text-amber-500'}`}>
-                                {detectError}{!budgetBlocked && ' — you can still run the full audit.'}
-                            </p>
-                        )}
+                    {/* What to expect — answers the three questions people ask before typing a URL */}
+                    <div className={`mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-sm font-medium
+                        ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                        {[
+                            'No card needed',
+                            'Takes a few minutes',
+                            'Nothing on your site is changed',
+                        ].map((t) => (
+                            <span key={t} className="inline-flex items-center gap-2">
+                                <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                {t}
+                            </span>
+                        ))}
                     </div>
-
-                    {!rejected && (
-                        <motion.div
-                            initial="hidden" animate="show"
-                            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.04 } } }}
-                            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3"
-                        >
-                            {visibleTypes.map((def) => (
-                                <motion.div key={def.key} variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } }}>
-                                    <PageCard def={def} phase={phase} cat={catMap[def.key]} darkMode={darkMode} dimmed={!scopes.includes(def.key)} inScope={scopes.includes(def.key)} audit={auditByCat[def.key]} pageAudits={pageAuditsByCat[def.key]} />
-                                </motion.div>
-                            ))}
-                        </motion.div>
-                    )}
-
-                    {/* Bottom CTA once detected */}
-                    {phase === 'done' && !rejected && (
-                        <div className="flex justify-center mt-8">
-                            <button
-                                type="button"
-                                onClick={handleFullAudit}
-                                disabled={batchRunning || noSectionSelected || noPageSelected}
-                                className="flex items-center gap-2 px-8 py-3.5 rounded-xl font-semibold text-white shadow-lg transition-all bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 hover:shadow-emerald-500/25 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                                {batchRunning ? <><Loader2 className="w-5 h-5 animate-spin" /> Auditing pages…</> : <>Run Full Audit on These Pages <ArrowRight className="w-5 h-5" /></>}
-                            </button>
-                        </div>
-                    )}
-                </div>
+                </form>
             </div>
 
             <AuditEmailVerifyModal

@@ -13,7 +13,7 @@ const checkAudits = async () => {
         audits.forEach(a => {
             console.log(`ID: ${a._id}, URL: ${a.url}, Status: ${a.status}`);
             if (a.onPageSEO) {
-                console.log('onPageSEO.Contextual_Linking:', JSON.stringify(a.onPageSEO.Contextual_Linking, null, 2));
+                console.log('onPageSEO.Links:', JSON.stringify(a.onPageSEO.Links, null, 2));
             }
         });
         process.exit(0);

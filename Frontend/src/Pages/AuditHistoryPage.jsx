@@ -40,12 +40,11 @@ import { useNavigate } from 'react-router-dom';
 
 const AuditHistoryPage = () => {
   const { user } = useAuth();
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const navigate = useNavigate();
   const darkMode = theme === "dark";
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
 
   // Read starred IDs from the same localStorage key used by DashboardPage
@@ -61,30 +60,14 @@ const AuditHistoryPage = () => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full justify-between select-none">
       <div className="flex flex-col p-4 gap-4 overflow-y-auto">
-        {/* Create Project Button */}
-         <div className="relative">
-                 <button
-                   onClick={() => setCreateDropdownOpen(!createDropdownOpen)}
-                   className="w-full flex items-center justify-between px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
-                 >
-                   <div className="flex items-center gap-2">
-                     <Plus size={16} />
-                     <span>Create Project</span>
-                   </div>
-                   <ChevronDown size={14} className="opacity-80" />
-                 </button>
-       
-                 {createDropdownOpen && (
-                   <div className={`absolute top-full left-0 right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 animate-in fade-in slide-in-from-top-1 duration-150 border transition-all duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                     <button
-                       onClick={() => { setCreateDropdownOpen(false); navigate("/dashboard/add-website"); }}
-                       className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors ${darkMode ? 'text-slate-300 hover:bg-slate-700' : 'text-inksoft hover:bg-cardsoft'}`}
-                     >
-                       Add Google Search Console Site
-                     </button>
-                   </div>
-                 )}
-               </div>
+        {/* Add website — was a dropdown with a single item; same destination. */}
+        <button
+          onClick={() => navigate("/dashboard/add-website")}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-350 text-white rounded-xl font-semibold text-sm transition-all shadow-md shadow-orange-600/10 active:scale-[0.98]"
+        >
+          <Plus size={16} />
+          <span>Add website</span>
+        </button>
 
         {/* Search project box */}
         <div className="relative">
@@ -94,7 +77,7 @@ const AuditHistoryPage = () => {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search projects..."
+            placeholder="Search your websites"
             className={`w-full pl-9 pr-8 py-2 border rounded-xl text-xs font-medium focus:outline-none focus:border-emerald-500/50 transition-colors duration-300 ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-cardsoft border-line text-inksoft placeholder-faint'}`}
           />
           <span className={`absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px] font-black border px-1 py-0.5 rounded leading-none transition-colors duration-300 ${darkMode ? 'text-slate-400 bg-slate-800/80 border-slate-700/50' : 'text-muted bg-slate-200/50 border-slate-300/30'}`}>
@@ -119,7 +102,7 @@ const AuditHistoryPage = () => {
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 border-none ${darkMode ? 'bg-emerald-950/40 text-emerald-400' : 'bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 shadow-sm'}`}
           >
             <FileText size={16} />
-            <span>Report History</span>
+            <span>Past reports</span>
           </button>
 
 
@@ -156,44 +139,12 @@ const AuditHistoryPage = () => {
               <span>System Setup</span>
             </button>
           )}
-
-          <div className={`my-1.5 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}></div>
-
-          <button
-            onClick={() => toggleTheme()}
-            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-inksoft hover:bg-cardsoft'}`}
-          >
-            <div className="flex items-center gap-3">
-              {darkMode ? <Sun size={16} className="text-amber-400 shrink-0" /> : <Moon size={16} className="text-indigo-500 shrink-0" />}
-              <span>{darkMode ? "Light Mode" : "Dark Mode"}</span>
-            </div>
-            <div className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${darkMode ? "bg-amber-400/20" : "bg-slate-200"}`}>
-              <div className={`absolute top-0.5 w-3 h-3 rounded-full transition-all duration-300 ${darkMode ? "right-0.5 bg-amber-400" : "left-0.5 bg-slate-400"}`}></div>
-            </div>
-          </button>
         </nav>
 
 
       </div>
 
-      {/* Premium promotional block */}
-      <div className={`p-4 border-t transition-colors duration-300 ${darkMode ? 'border-slate-800' : 'border-line'}`}>
-        <div className={`p-4 rounded-2xl border flex flex-col gap-3 transition-colors duration-300 ${darkMode ? 'bg-emerald-950/20 border-emerald-900/30' : 'bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/5'}`}>
-          <div className={`flex items-center gap-2 transition-colors duration-300 ${darkMode ? 'text-emerald-400' : 'text-emerald-800'}`}>
-            <Lock size={14} className={`transition-colors duration-300 ${darkMode ? 'fill-emerald-400/20 text-emerald-400' : 'fill-emerald-600/20 text-emerald-700'}`} />
-            <span className="text-[11px] font-black uppercase tracking-wider">Unlock Advanced</span>
-          </div>
-          <p className={`text-[10px] font-semibold leading-relaxed transition-colors duration-300 ${darkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-            Get deeper insights, historical data, and AI-powered recommendations.
-          </p>
-          <button
-            onClick={() => toast.success('Premium checkout is launching soon!')}
-            className="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
-          >
-            Upgrade Now
-          </button>
-        </div>
-      </div>
+  
     </div>
   );
 
@@ -259,7 +210,7 @@ const AuditHistoryPage = () => {
 
   const getScoreColor = (score) => {
     if (score >= 90) return 'text-emerald-500';
-    if (score >= 70) return 'text-amber-500';
+    if (score >= 50) return 'text-amber-500';
     return 'text-rose-500';
   };
 
@@ -395,7 +346,7 @@ const AuditHistoryPage = () => {
                 </div>
                 <div className="flex items-center justify-between md:justify-start gap-4">
                   <h1 className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                    Audit <span className="text-indigo-600">History</span>
+                    Your <span className="text-indigo-600">past checks</span>
                   </h1>
                   {/* Mobile Sidebar Toggle Button */}
                   <button
@@ -407,7 +358,7 @@ const AuditHistoryPage = () => {
                   </button>
                 </div>
                 <p className={`text-lg mt-2 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                  Your complete performance tracking database.
+                  Every check you have run, newest first.
                 </p>
               </div>
 
@@ -417,7 +368,7 @@ const AuditHistoryPage = () => {
                 </div>
                 <input
                   type="text"
-                  placeholder="Search by URL..."
+                  placeholder="Search by website address"
                   className={`block w-full pl-12 pr-12 py-4 rounded-2xl border-none outline-none transition-all shadow-xl font-medium ${darkMode
                     ? "bg-slate-800/50 text-white placeholder-slate-500 focus:ring-2 focus:ring-indigo-500/50"
                     : "bg-card text-ink placeholder-faint focus:ring-2 focus:ring-indigo-500/30"
@@ -449,9 +400,9 @@ const AuditHistoryPage = () => {
                 <thead>
                   <tr className={`border-b transition-colors ${darkMode ? "border-slate-800 bg-slate-900/80" : "border-line bg-surface-2/50"}`}>
                     <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Date</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Website URL & Device</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Audit Type</th>
-                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Performance Score</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Website</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Type</th>
+                    <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Score</th>
                     <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted">Status</th>
                     <th className="px-8 py-6 text-xs font-semibold uppercase tracking-widest text-muted text-right">Actions</th>
                   </tr>
@@ -472,7 +423,7 @@ const AuditHistoryPage = () => {
                           <div className={`w-16 h-16 rounded-full flex items-center justify-center ${darkMode ? "bg-slate-800 text-slate-600" : "bg-cardsoft text-faint"}`}>
                             <Globe size={32} />
                           </div>
-                          <p className={`font-medium ${darkMode ? "text-slate-500" : "text-muted"}`}>No audits found matching your criteria.</p>
+                          <p className={`font-medium ${darkMode ? "text-slate-500" : "text-muted"}`}>No checks found.</p>
                         </div>
                       </td>
                     </tr>
@@ -505,7 +456,7 @@ const AuditHistoryPage = () => {
                               </span>
                             </div>
                             <span className={`text-[10px] font-black uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>
-                              {audit.device || 'Desktop'} Profile
+                              {audit.device || 'Desktop'}
                             </span>
                           </div>
                         </td>
@@ -527,7 +478,7 @@ const AuditHistoryPage = () => {
                                   initial={{ width: 0 }}
                                   animate={{ width: `${audit.score}%` }}
                                   transition={{ duration: 1, delay: index * 0.1 }}
-                                  className={`h-full rounded-full ${audit.score >= 90 ? 'bg-emerald-500' : audit.score >= 70 ? 'bg-amber-500' : 'bg-rose-500'
+                                  className={`h-full rounded-full ${audit.score >= 90 ? 'bg-emerald-500' : audit.score >= 50 ? 'bg-amber-500' : 'bg-rose-500'
                                     }`}
                                 />
                               </div>
@@ -537,7 +488,7 @@ const AuditHistoryPage = () => {
                             </div>
                           ) : (
                             <span className={`text-xs font-semibold uppercase ${darkMode ? "text-slate-600" : "text-faint"}`}>
-                              Data Pending
+                              Not scored yet
                             </span>
                           )}
                         </td>
@@ -548,8 +499,11 @@ const AuditHistoryPage = () => {
                               {audit.status === 'success' ? 'Completed' : audit.status === 'pending' ? 'Processing' : 'Failed'}
                             </span>
                             {audit.status === 'success' && isExpired(audit.createdAt) && (
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[8px] font-semibold uppercase tracking-widest self-start">
-                                <Clock size={8} /> Expired
+                              <span
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[8px] font-semibold uppercase tracking-widest self-start"
+                                title="Full reports are removed a few hours after the check. Run it again to get a fresh one."
+                              >
+                                <Clock size={8} /> Report removed
                               </span>
                             )}
                           </div>
@@ -606,7 +560,8 @@ const AuditHistoryPage = () => {
                                     ? "bg-slate-800 hover:bg-indigo-600 text-slate-400 hover:text-white border-slate-700"
                                     : "bg-card hover:bg-indigo-50 text-muted hover:text-indigo-600 border-line"
                                     }`}
-                                  title="View Report"
+                                  title="Open report"
+                                  aria-label="Open report"
                                 >
                                   <FileText size={18} />
                                 </button>
@@ -686,6 +641,7 @@ const AuditHistoryPage = () => {
                                     : "bg-card hover:bg-emerald-50 text-muted hover:text-emerald-600 border-line"
                                     }`}
                                   title="Download PDF"
+                                  aria-label="Download PDF"
                                 >
                                   <Download size={18} />
                                 </button>

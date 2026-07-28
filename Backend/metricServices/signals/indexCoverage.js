@@ -24,7 +24,7 @@ const gunzip = promisify(zlib.gunzip);
  * actually indexed the page — that requires authenticated Search Console access.
  */
 
-const UA = 'Mozilla/5.0 (compatible; DealerPulseAudit/1.0; +https://dealerpulse.app)';
+const UA = 'Mozilla/5.0 (compatible; Site AuditAudit/1.0; +https://Site Audit.app)';
 
 // Adaptive sampling: scale with sitemap size so the check is meaningful on large
 // sites without being wasteful on small ones, but never so big it slows the audit.

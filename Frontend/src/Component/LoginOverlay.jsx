@@ -37,8 +37,8 @@ export default function LoginPrompt({ darkMode }) {
       {/* Card */}
       <div
         className={`max-w-2xl rounded-3xl w-full p-12 lg:p-14 text-center transition-all duration-300 transform ${darkMode
-            ? "bg-slate-900 border border-slate-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)]"
-            : "bg-card/95 backdrop-blur border border-transparent shadow-[0_24px_60px_-18px_rgba(22,33,62,0.25)]"
+          ? "bg-slate-900 border border-slate-800 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)]"
+          : "bg-card/95 backdrop-blur border border-transparent shadow-[0_24px_60px_-18px_rgba(22,33,62,0.25)]"
           }`}
       >
 
@@ -48,8 +48,8 @@ export default function LoginPrompt({ darkMode }) {
 
           <div
             className={`relative p-6 rounded-full border shadow-inner ${darkMode
-                ? "bg-slate-800 border-slate-700"
-                : "bg-cardsoft border-line"
+              ? "bg-slate-800 border-slate-700"
+              : "bg-cardsoft border-line"
               }`}
           >
             <Lock
@@ -72,7 +72,7 @@ export default function LoginPrompt({ darkMode }) {
           className={`text-base leading-relaxed mb-10 opacity-70 ${darkMode ? "text-slate-400" : "text-muted"
             }`}
         >
-          Try out Dealerpulse for FREE and get full report details, more tests,
+          Try out Site Audit for FREE and get full report details, more tests,
           monitoring, locations, and more!
         </p>
 
@@ -83,8 +83,8 @@ export default function LoginPrompt({ darkMode }) {
           <button
             onClick={handleLogin}
             className={`flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl font-semibold transition-all duration-300 w-full sm:w-auto shadow-sm hover:shadow active:scale-95 ${darkMode
-                ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
-                : "bg-black text-white hover:bg-slate-900"
+              ? "bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
+              : "bg-black text-white hover:bg-slate-900"
               }`}
           >
             <LogIn size={18} />
@@ -115,7 +115,7 @@ export default function LoginPrompt({ darkMode }) {
           className={`text-[11px] font-semibold uppercase tracking-[0.2em] mt-4 ${darkMode ? "text-slate-400" : "text-muted"
             }`}
         >
-          Join 50,000+ businesses auditing with Dealerpulse
+          Join 50,000+ businesses auditing with Site Audit
         </p>
       </div>
     </>

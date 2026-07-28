@@ -9,6 +9,7 @@ import Footer from '../Component/Footer';
 import HeroSection from '../Component/Landing/HeroSection';
 import MetricsBanner from '../Component/Landing/MetricsBanner';
 import AuditPillarsSection from '../Component/Landing/AuditPillarsSection';
+import HowItWorksSection from '../Component/Landing/HowItWorksSection';
 
 const LandingPage = () => {
     const { theme } = useContext(ThemeContext);
@@ -58,6 +59,8 @@ const LandingPage = () => {
                 <MetricsBanner />
                 
                 <AuditPillarsSection />
+
+                <HowItWorksSection />
             </main>
         </div>
     );

@@ -67,7 +67,8 @@ const SCHEMA_FIELDS = [
   "_id", "url", "report", "device", "status", "pageType", "siteType", "siteSchema", "timeTaken",
   "score", "grade", "aioCompatibilityBadge", "sectionScore", "technicalPerformance",
   "onPageSEO", "accessibility", "securityOrCompliance", "UXOrContentStructure",
-  "conversionAndLeadFlow", "aioReadiness", "aeo", "isBotProtected", "isDealership",
+  "conversionAndLeadFlow", "aioReadiness", "aeo", "stage1Completed", "stage2Completed",
+  "stage2Progress", "crawledPagesCount", "crawledPagesSummary", "isBotProtected", "isDealership",
   "dealershipDetection", "error", "screenshot", "screenshotUrl", "userId", "createdAt",
 ];
 
@@ -106,6 +107,11 @@ function createInProgress({ _id, url, device, report, userId, pageType, siteType
     conversionAndLeadFlow: null,
     aioReadiness: null,
     aeo: null,
+    stage1Completed: false,
+    stage2Completed: false,
+    stage2Progress: null,
+    crawledPagesCount: 0,
+    crawledPagesSummary: [],
     isBotProtected: false,
     isDealership: null,
     dealershipDetection: null,
@@ -135,6 +141,9 @@ function applyPatch(id, patch) {
   }
   if (patch?.status && patch.status !== doc.status) {
     logger.debug(`[auditStore] audit ${idStr(id)} status: ${doc.status} → ${patch.status}`);
+  }
+  if (patch?.screenshot && !patch.screenshotUrl) {
+    patch.screenshotUrl = `/api/screenshot/view/${idStr(id)}`;
   }
   logMetricResults(idStr(id), patch); // basic "category fetched → stored" log, no payload
   Object.assign(doc, patch);

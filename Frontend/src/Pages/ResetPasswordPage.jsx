@@ -77,7 +77,7 @@ const ResetPasswordPage = () => {
                         <CheckCircle className="h-10 w-10 text-emerald-600" />
                     </div>
                     <h2 className="text-3xl font-black text-ink tracking-tight text-center">Password Updated!</h2>
-                    <p className="mt-4 text-muted leading-relaxed font-medium">You can now sign in to your Dealer Pulse account with your new credentials.</p>
+                    <p className="mt-4 text-muted leading-relaxed font-medium">You can now sign in to your Site Audit account with your new credentials.</p>
                     <div className="mt-8 pt-6 border-t border-line">
                         <Link to="/login" className="w-full flex items-center justify-center font-semibold text-emerald-600 hover:text-emerald-500 transition-colors uppercase tracking-[0.2em]">
                             Sign In Now <ArrowRight className="ml-2 h-4 w-4" />

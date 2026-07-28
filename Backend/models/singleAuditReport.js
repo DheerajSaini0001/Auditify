@@ -25,6 +25,12 @@ const SiteReportSchema = new mongoose.Schema(
     // Set only on merged (multi-sample averaged) reports: how many sample
     // reports were averaged in. Lets a repeat audit reuse the merged report
     // and still show the "avg of N" badge.
+    // Stage 2 Multi-Page Crawl fields
+    stage1Completed: { type: Boolean, default: false },
+    stage2Completed: { type: Boolean, default: false },
+    stage2Progress: { type: String, default: null },
+    crawledPagesCount: { type: Number, default: 0 },
+    crawledPagesSummary: { type: Array, default: [] },
     mergedFrom: { type: Number, default: null },
     isBotProtected: { type: Boolean, default: false },
     isDealership: { type: Boolean, default: null },

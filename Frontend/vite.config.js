@@ -24,8 +24,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), seoHeadersPlugin()],
   server: {
     fs: {
-      // Allow importing the repo-root ../shared modules (e.g. shared/linkSemantics.js)
-      // that are shared between the Frontend and Backend.
+      // Allow importing repo-root modules outside Frontend/ that are shared
+      // between the Frontend and Backend.
       allow: ['..'],
     },
   },

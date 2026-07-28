@@ -289,7 +289,7 @@ const GuestReportPage = () => {
                 Log in or Sign up to see the Report
               </h2>
               <p className={`text-sm leading-relaxed mb-8 opacity-70 max-w-sm mx-auto ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                Try Dealer Pulse for <strong>FREE</strong> and get full report details, detailed findings, monitoring, and more!
+                Try Site Audit for <strong>FREE</strong> and get full report details, detailed findings, monitoring, and more!
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -319,7 +319,7 @@ const GuestReportPage = () => {
 
               <div className={`mt-8 pt-6 border-t border-dashed ${darkMode ? "border-slate-700/60" : "border-line"}`} />
               <p className={`text-[10px] font-semibold uppercase tracking-[0.2em] opacity-30 mt-3 ${darkMode ? "text-slate-500" : "text-faint"}`}>
-                Join 50,000+ businesses auditing with Dealer Pulse
+                Join 50,000+ businesses auditing with Site Audit
               </p>
             </div>
           </div>

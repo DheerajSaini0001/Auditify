@@ -1,4 +1,4 @@
-import React, { useContext, useMemo } from "react";
+import React, { useContext } from "react";
 import UrlHeader from "../Component/UrlHeader";
 import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
 import CircularProgress from "../Component/CircularProgress";
@@ -53,52 +53,7 @@ const iconMap = {
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.AIO_Readiness_Methodologies;
 
-const AIOShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
 
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, status, details, meta, analysis, infoOnly } = data || {};
@@ -640,25 +595,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
   const [selectedParameterInfo, setSelectedParameterInfo] = React.useState(null);
   const { audienceMode } = useData();
 
-  const auditSteps = useMemo(() => [
-    { icon: <Database className="w-8 h-8 text-blue-500" />, title: "Structured Data", text: "Analyzing JSON-LD Schema markup and rich snippets eligibility..." },
-    { icon: <MessageSquare className="w-8 h-8 text-purple-500" />, title: "NLP Readiness", text: "Evaluating content structure and semantic clarity for AI models..." },
-    { icon: <Zap className="w-8 h-8 text-teal-500" />, title: "Crawl Efficiency", text: "Measuring page load speed and API accessibility for AI bots..." },
-    { icon: <Tag className="w-8 h-8 text-indigo-500" />, title: "Entity Recognition", text: "Scanning for named entities, keywords, and topic clusters..." },
-    { icon: <Brain className="w-8 h-8 text-amber-500" />, title: "AI Optimization", text: "Checking for voice search compatibility and answer engine readiness..." },
-    { icon: <Bot className="w-8 h-8 text-rose-500" />, title: "Agentic Browsing", text: "Evaluating agent-driven navigation and form-filling capabilities..." },
-  ], []);
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
-  React.useEffect(() => {
-    if (loading || !data || data.status === "pending") {
-      const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % auditSteps.length);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading, data, auditSteps.length]);
 
   const hasAioData = aio && Object.keys(aio).length > 0;
   const isAioLoading = loading || !data || data.status === "pending" || !hasAioData;
@@ -690,9 +627,10 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           {isAioLoading ? (
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
-              {/* Right Panel: Shimmer */}
-              <div className="flex-1 flex flex-col justify-center">
-                <AIOShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+              {/* Right Panel: Loading */}
+              <div className="flex-1 flex flex-col items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
+                <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>Analyzing AIO Readiness...</p>
               </div>
             </div>
           ) : (

@@ -2,14 +2,13 @@ import React, { useContext, useRef, useEffect } from "react";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { Menu, X, Sun, Moon, Home, NotebookPen, Plus, User, LogOut, LayoutDashboard, ShieldCheck, History, ChevronDown, Settings } from "lucide-react";
 import Assets from "../assets/Assets.js";
-import DarkLogoDealerPulse from "../assets/DarkLogoDealer_Pulse.png";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { savePostAuthIntent } from "../utils/intentStore";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
-  const { theme, toggleTheme } = useContext(ThemeContext);
+  const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
   const { data, clearData } = useData();
@@ -140,9 +139,9 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               <div className="relative">
                 <div className={`absolute opacity-0 rounded-full ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
                 <img
-                  src={darkMode ? Assets.Logo : DarkLogoDealerPulse}
-                  alt="DealerPulse Logo"
-                  title="DealerPulse Logo"
+                  src={darkMode ? Assets.Logo : Assets.DarkLogo}
+                  alt="Site Audit Logo"
+                  title="Site Audit Logo"
                   className="relative h-14 w-auto -hover:scale-105 transition-all duration-300"
                 />
               </div>
@@ -218,18 +217,6 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2">
-                    {/* Theme Toggle (Outside for guests) */}
-                    <button
-                      onClick={toggleTheme}
-                      className={`p-2 rounded-lg border transition-all duration-200 ${buttonClass} mr-1`}
-                      aria-label="Toggle Theme"
-                    >
-                      {darkMode ? (
-                        <Sun className="w-5 h-5 text-amber-400 fill-amber-400/20" />
-                      ) : (
-                        <Moon className="w-5 h-5 text-indigo-500 fill-indigo-500/20" />
-                      )}
-                    </button>
                     <button onClick={handleLogin} className={`px-4 py-1.5 rounded-lg text-sm font-semibold border ${buttonClass}`}>
                       Login
                     </button>

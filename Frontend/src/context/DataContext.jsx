@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import api from "../utils/api";
 import toast from "react-hot-toast";
+import { getValidGuestGrant, clearGuestGrant } from "../utils/guestGrant.js";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -98,11 +99,58 @@ export const DataProvider = ({ children }) => {
     return { success: true, status: res.status, data };
   };
 
+  const syncAuditSummaryStorage = (reportData) => {
+    if (!reportData) return;
+    // Only a PARENT (multi-page) report owns the summary's page list — it's the one
+    // that fanned out to key pages, so it carries crawledPagesSummary. A child/leaf
+    // page report has none; VIEWING one (clicking VDP, then "Back to Summary") must
+    // NOT overwrite the saved page list, otherwise the summary collapses to that one
+    // page. EXCEPTION: the ROOT audit (the one this session started) also has zero
+    // crawled pages before its Stage-2 rows land — it must still SEED the summary
+    // (home-only) or "/audit-summary" has nothing to render and bounces to "/".
+    const crawled = Array.isArray(reportData.crawledPagesSummary) ? reportData.crawledPagesSummary : [];
+    const isRootAudit = sessionStorage.getItem('auditRootId') === String(reportData._id);
+    if (crawled.length === 0 && !isRootAudit) return;
+    try {
+      const summaryPages = [];
+
+      summaryPages.push({
+        key: reportData.pageType || 'home',
+        label: 'Home Page',
+        url: reportData.url,
+        id: reportData._id,
+        status: 'done'
+      });
+
+      crawled.forEach((p) => {
+        if (p.url && !summaryPages.some((sp) => sp.url === p.url)) {
+          summaryPages.push({
+            key: p.pageType || 'generic',
+            label: p.label || 'Key Page',
+            url: p.url,
+            // Each key page now has its OWN full child report — open THAT, not the
+            // parent (falls back to the parent id only until the child id lands).
+            id: p.reportId || reportData._id,
+            status: p.isProcessing ? 'pending' : (p.success ? 'done' : 'pending')
+          });
+        }
+      });
+
+      sessionStorage.setItem("auditSummary", JSON.stringify({
+        siteUrl: reportData.url,
+        device: reportData.device || 'Desktop',
+        pages: summaryPages
+      }));
+    } catch (e) {
+      console.warn("Could not update audit summary storage:", e);
+    }
+  };
+
   // 🚀 FETCH DATA
   // `auditToken` is the short-lived grant a guest receives after verifying their
   // email via OTP (replaces the old captchaAnswer/captchaId). It's null for
   // logged-in users, whose audit is authorized by their Bearer token instead.
-  const fetchData = async (inputValue, device, report, auditToken = null, force = false) => {
+  const fetchData = async (inputValue, device, report, auditToken = null, force = false, pageScopes = null) => {
     if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -119,6 +167,12 @@ export const DataProvider = ({ children }) => {
       const token = localStorage.getItem('dealerpulse_token');
       const endpoint = token ? '/api/user/audit' : '/single-audit/audit';
 
+      // Guest grant reuse: after the first email/OTP verification we keep the signed grant
+      // (see utils/guestGrant.js). For every later guest audit, replay it so the user runs
+      // straight through without re-verifying — until it actually expires. An explicit
+      // `auditToken` (fresh from the modal) always wins; logged-in users need none.
+      const effectiveGuestToken = token ? null : (auditToken || getValidGuestGrant());
+
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         credentials: "include",
@@ -130,20 +184,39 @@ export const DataProvider = ({ children }) => {
           url: inputValue,
           device,
           report,
-          auditToken, // guest email-verification grant (null when logged in)
+          auditToken: effectiveGuestToken, // guest email-verification grant (null when logged in)
           screenResolution,
-          force
+          force,
+          // Page types the user kept ticked on the home page. ["home"] alone means
+          // "audit only the URL I entered" — the worker then skips the key-page crawl.
+          ...(Array.isArray(pageScopes) && pageScopes.length ? { pageScopes } : {}),
         })
       });
 
       const result = await handleResponse(res);
 
       if (!result.success) {
+        // Grant expired/invalid → drop the stored copy so the caller re-shows the modal.
+        if (/verify your email|email verification/i.test(result.error || '')) {
+          clearGuestGrant();
+        }
         return { success: false, error: result.error };
       }
 
       const auditData = withNormalizedStatus(result.data);
       setData(auditData);
+
+      // Remember WHICH audit this session started (the parent/root). Lets
+      // syncAuditSummaryStorage seed the summary before Stage-2 pages land, and
+      // lets /audit-summary rebuild its payload if sessionStorage was empty —
+      // instead of bouncing the user to "/". Set BEFORE the first sync below.
+      try {
+        sessionStorage.setItem('auditRootId', String(auditData._id));
+        sessionStorage.setItem('auditRootUrl', auditData.url || inputValue);
+        sessionStorage.setItem('auditRootDevice', auditData.device || device || 'Desktop');
+      } catch { /* storage full/blocked — non-fatal */ }
+
+      syncAuditSummaryStorage(auditData);
 
       if (auditData.status !== "success") {
         startLiveFetch(auditData._id);
@@ -211,6 +284,7 @@ export const DataProvider = ({ children }) => {
       if (result.success) {
         result.data = withNormalizedStatus(result.data);
         setData(result.data);
+        syncAuditSummaryStorage(result.data);
         safeLocalStorageSet(`dealerpulse_audit_${id}`, JSON.stringify(result.data));
       }
       return result;

@@ -1,6 +1,8 @@
 import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 
+import { acquireBrowserSlot, releaseBrowserSlot } from "./browserManager.js";
+
 chromium.use(StealthPlugin());
 
 /**
@@ -9,7 +11,15 @@ chromium.use(StealthPlugin());
  */
 export default async function Puppeteer_Simple(url) {
   let browser;
+  let slotId = null;
   try {
+    // This runs NESTED inside a held audit page browser (the AEO pillar's
+    // robots.txt / llms.txt escalations fire during Stage 1, while the main
+    // browser permit is still held). A nested acquire must be BOUNDED so it
+    // can't deadlock waiting on permits that only free when the parent finishes.
+    // On timeout it throws; the caller (botAccess/llmsTxt) already falls back to
+    // its plain-HTTP result, so no browser is spawned and nothing hangs.
+    slotId = await acquireBrowserSlot({ timeoutMs: 20000, label: 'simple-fetch' });
     browser = await chromium.launch({
       headless: true,
       args: [
@@ -19,6 +29,18 @@ export default async function Puppeteer_Simple(url) {
         "--disable-blink-features=AutomationControlled"
       ]
     });
+
+    const origClose = browser.close.bind(browser);
+    let released = false;
+    browser.close = async () => {
+      if (released) return;
+      released = true;
+      try {
+        await origClose();
+      } finally {
+        await releaseBrowserSlot(slotId);
+      }
+    };
     
     const context = await browser.newContext({
       userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
@@ -82,7 +104,11 @@ export default async function Puppeteer_Simple(url) {
     
     return { html, status, browser };
   } catch (error) {
-    if (browser) await browser.close();
+    if (browser) {
+      await browser.close().catch(() => {});
+    } else if (slotId) {
+      await releaseBrowserSlot(slotId);
+    }
     console.error(`❌ [Simple] Error for ${url}:`, error.message);
     throw error;
   }

@@ -18,7 +18,7 @@ import pLimit from 'p-limit';
  *   • Local authority       — locality/region, near-me, areaServed, directions (max 15)
  */
 
-const UA = 'Mozilla/5.0 (compatible; DealerPulseAudit/1.0; +https://dealerpulse.app)';
+const UA = 'Mozilla/5.0 (compatible; Site AuditAudit/1.0; +https://Site Audit.app)';
 const CRAWL_SAMPLE = 6;
 const CRAWL_CONCURRENCY = 4;
 const CRAWL_TIMEOUT = 6000;

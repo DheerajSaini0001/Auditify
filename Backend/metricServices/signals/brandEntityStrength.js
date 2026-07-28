@@ -19,7 +19,7 @@ import configService from '../../services/configService.js';
  */
 
 const KG_TIMEOUT = 6000;
-const UA = 'Mozilla/5.0 (compatible; DealerPulseAudit/1.0; +https://dealerpulse.app)';
+const UA = 'Mozilla/5.0 (compatible; Site AuditAudit/1.0; +https://Site Audit.app)';
 
 const ORG_TYPE = (t) => {
     const s = String(t).toLowerCase();

@@ -82,6 +82,7 @@ const AUDIT_DIMS = [
     { icon: <Activity size={11} />, label: 'UX & Content' },
     { icon: <Globe2 size={11} />, label: 'Lead Flow' },
     { icon: <Cpu size={11} />, label: 'AIO Readiness' },
+    { icon: <Zap size={11} />, label: 'AEO Readiness' },
 ];
 
 const MetricsBanner = () => {
@@ -89,11 +90,18 @@ const MetricsBanner = () => {
     const darkMode = theme === 'dark';
 
     const metrics = [
-        { value: '12', suffix: 'K+', label: 'Audits Run', sublabel: 'Websites analyzed across all 7 automotive dimensions', icon: Activity, accentColor: '#ea580c' },
-        { value: '7', suffix: null, label: 'Audit Types', sublabel: 'From local map pack SEO to AI search rankings', icon: Cpu, accentColor: '#3b82f6' },
-        { value: '98', suffix: '%', label: 'Risk Removed', sublabel: 'Average reduction in ADA lawsuit vulnerability', icon: Zap, accentColor: '#f97316' },
-        { value: '4.9', suffix: '/5', label: 'Dealer Rating', sublabel: 'Rated by general managers & marketing directors', icon: ShieldCheck, accentColor: '#6366f1' },
+        // { value: '12', suffix: 'K+', label: 'Audits Run', sublabel: 'Websites analyzed across all 7 automotive dimensions', icon: Activity, accentColor: '#ea580c' },
+        { value: '8', suffix: null, label: 'Check areas', sublabel: 'Speed, SEO, accessibility, mobile, security, AI readiness, answers and enquiries — each one scored on its own.', icon: Cpu, accentColor: '#3b82f6' },
+        { value: '100', suffix: '+', label: 'Checks run', sublabel: 'Every score comes from a real test on your live website, not a guess.', icon: Zap, accentColor: '#f97316' },
+        // { value: '4.9', suffix: '/5', label: 'Dealer Rating', sublabel: 'Rated by general managers & marketing directors', icon: ShieldCheck, accentColor: '#6366f1' },
     ];
+
+    // Full Tailwind class strings (never built by string concat — the JIT scanner
+    // only picks up literals it can see).
+    const cardGridCols =
+        metrics.length >= 4 ? 'lg:grid-cols-4'
+            : metrics.length === 3 ? 'lg:grid-cols-3'
+                : 'lg:grid-cols-2';
 
     const sectionRef = useRef(null);
     const isInView = useInView(sectionRef, { once: true, margin: '-80px' });
@@ -127,13 +135,13 @@ const MetricsBanner = () => {
                     <div className="space-y-3">
                         <p className={`text-xs font-semibold uppercase tracking-[0.25em]
                             ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
-                            DealerPulse at a Glance
+                            Website Overview
                         </p>
                         <h2 className={`text-3xl lg:text-4xl font-black tracking-tight leading-tight
                             ${darkMode ? 'text-white' : 'text-ink'}`}
                             style={{ fontFamily: "'Syne', sans-serif" }}>
-                            Built for dealers who take{' '}
-                            <span style={{ color: '#ea580c' }}>website performance seriously.</span>
+                           Built for dealers who care about their website.
+                            
                         </h2>
                     </div>
 
@@ -157,8 +165,11 @@ const MetricsBanner = () => {
                     </div>
                 </motion.div>
 
-                {/* Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Cards — column count follows how many metrics are ACTIVE, so the row
+                    always fills the container. (It was hard-coded to lg:grid-cols-4 for
+                    the original four; with two of them commented out the live pair sat in
+                    the left half and left an empty column-pair on the right.) */}
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 ${cardGridCols}`}>
                     {metrics.map((m, i) => (
                         <MetricCard key={i} {...m} delay={i * 0.08} darkMode={darkMode} />
                     ))}

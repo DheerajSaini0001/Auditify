@@ -37,12 +37,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                         style={{ background: c.bg, color: c.accent }}>
                         <Icon size={20} strokeWidth={2} />
                     </div>
-                    <span className={`text-[9px] font-semibold uppercase tracking-[0.2em] px-3 py-1 rounded-full border
-                        ${darkMode
-                            ? 'bg-white/4 border-white/8 text-slate-500'
-                            : 'bg-cardsoft border-line text-muted'}`}>
-                        {tag}
-                    </span>
+                   
                 </div>
 
                 {/* Text */}
@@ -59,34 +54,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                 </div>
             </div>
 
-            {/* Wide card right panel — simple stats */}
-            {isWide && (
-                <div className={`lg:w-72 flex flex-col justify-center gap-4 lg:pl-8
-                    ${darkMode ? 'lg:border-l border-white/6' : 'lg:border-l border-linesoft'}`}>
-                    {[
-                        { label: 'Form Completion Rate', value: '94%', bar: 94 },
-                        { label: 'CRM Webhook Health', value: '100%', bar: 100 },
-                        { label: 'Lead Response Time', value: '< 2min', bar: 78 },
-                    ].map((stat) => (
-                        <div key={stat.label} className="space-y-1.5">
-                            <div className="flex justify-between items-center">
-                                <span className={`text-xs ${darkMode ? 'text-slate-500' : 'text-muted'}`}>{stat.label}</span>
-                                <span className={`text-xs font-semibold ${c.text}`}>{stat.value}</span>
-                            </div>
-                            <div className={`h-1 rounded-full w-full ${darkMode ? 'bg-white/6' : 'bg-surface-2'}`}>
-                                <motion.div
-                                    initial={{ width: 0 }}
-                                    whileInView={{ width: `${stat.bar}%` }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.9, ease: 'easeOut' }}
-                                    className="h-full rounded-full"
-                                    style={{ backgroundColor: c.accent }}
-                                />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+        
         </motion.div>
     );
 };
@@ -96,13 +64,14 @@ const AuditPillarsSection = () => {
     const darkMode = theme === 'dark';
 
     const pillars = [
-        { icon: Zap, title: 'Website Performance', tag: 'Speed & Loading', description: 'We check how fast your website loads on mobile and desktop, including page speed, layout stability, and user interaction performance.', color: 'orange' },
-        { icon: Search, title: 'SEO Optimization', tag: 'Search Visibility', description: 'We analyze your SEO setup including page titles, keywords, indexing, schema markup, and search visibility to help rank better on Google.', color: 'blue' },
-        { icon: Accessibility, title: 'Accessibility Check', tag: 'WCAG Compliance', description: 'We test your website for accessibility issues to make sure it can be used by everyone, including people with disabilities.', color: 'purple' },
-        { icon: ShieldCheck, title: 'Website Security', tag: 'Security Audit', description: 'We scan for SSL issues, security risks, unsafe headers, firewall problems, and suspicious activity to keep your website secure.', color: 'red' },
-        { icon: LayoutDashboard, title: 'User Experience', tag: 'Layout & Navigation', description: 'We review your website design, navigation, spacing, mobile responsiveness, and button accessibility for easy browsing.', color: 'cyan' },
-        { icon: Cpu, title: 'AI Search Optimization', tag: 'AI & Smart Search', description: 'We check whether your content and structure are optimized for AI-based search platforms like ChatGPT, Gemini, and voice search.', color: 'amber' },
-        { icon: Target, title: 'Conversion Tracking', tag: 'Conversion Flow', description: 'We test contact forms, integrations, tracking systems, and lead flows to make sure users can submit inquiries without issues.', color: 'indigo', isWide: true },
+        { icon: Zap, title: 'Speed', tag: 'Website Performance', description: 'How quickly your pages open on a phone and on a computer, and what is slowing them down.', color: 'orange' },
+        { icon: Search, title: 'SEO', tag: 'Website SEO', description: 'Whether Google can find, read and rank your pages — titles, headings, links and broken pages.', color: 'blue' },
+        { icon: Accessibility, title: 'Accessibility', tag: 'Website Accessibility', description: 'Whether people with poor eyesight or other needs can use your site comfortably.', color: 'purple' },
+        { icon: ShieldCheck, title: 'Security', tag: 'Website Security', description: 'Whether your site and your customers\' details are protected, and where the gaps are.', color: 'red' },
+        { icon: LayoutDashboard, title: 'Mobile & design', tag: 'User Experience', description: 'Whether your pages are easy to use on a phone — buttons, text size and navigation.', color: 'cyan' },
+        { icon: Cpu, title: 'AI readiness', tag: 'AI Readiness', description: 'Whether AI tools like ChatGPT and Gemini can read your site and mention your business.', color: 'amber' },
+        { icon: Sparkles, title: 'Answers', tag: 'AEO', description: 'Whether your pages answer the questions customers actually search for.', color: 'orange' },
+        { icon: Target, title: 'Enquiries', tag: 'Conversion Flow', description: 'Whether a visitor can easily call you, book a service or send an enquiry without a problem.', color: 'indigo' },
     ];
 
     return (
@@ -115,16 +84,7 @@ const AuditPillarsSection = () => {
                 {/* Header */}
                 <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 mb-14">
                     <div className="space-y-4 max-w-xl">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 1 }}
-                            viewport={{ once: true }}
-                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-semibold uppercase tracking-[0.25em]
-                                ${darkMode ? 'bg-orange-350/8 border-orange-350/15 text-orange-400' : 'bg-orange-50 border-orange-200 text-orange-600'}`}
-                        >
-                            <Sparkles size={11} className="text-orange-350" />
-                            Powered by DealerSales.co
-                        </motion.div>
+                      
 
                         <motion.h2
                             initial={{ opacity: 0, y: 16 }}
@@ -135,8 +95,7 @@ const AuditPillarsSection = () => {
                                 ${darkMode ? 'text-white' : 'text-ink'}`}
                             style={{ fontFamily: "'Syne', sans-serif" }}
                         >
-                            The Dimensions of{' '}
-                            <span style={{ color: '#ea580c' }}>Dealership Intelligence.</span>
+                           Website Check Areas
                         </motion.h2>
                     </div>
 
@@ -148,18 +107,14 @@ const AuditPillarsSection = () => {
                         className={`lg:max-w-[240px] text-sm leading-relaxed
                             ${darkMode ? 'text-slate-400' : 'text-muted'}`}
                     >
-                        Comprehensive scanning across 7 critical channels to guarantee peak visibility.
+                        A complete website check across 8 important areas.
                     </motion.p>
                 </div>
 
-                {/* Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {/* Grid — 8 areas, so a clean 4 × 2 on a laptop */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     {pillars.map((p, i) => (
-                        <div key={p.title}
-                            className={p.isWide ? 'col-span-1 md:col-span-2 lg:col-span-3' : ''}
-                        >
-                            <PillarCard {...p} index={i} darkMode={darkMode} />
-                        </div>
+                        <PillarCard key={p.title} {...p} index={i} darkMode={darkMode} />
                     ))}
                 </div>
             </div>

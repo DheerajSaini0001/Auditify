@@ -11,6 +11,7 @@ import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
 import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
 import { detectSiteType } from "../utils/siteTypeDetector.js";
+import { registerWorkerWithManager } from "../utils/browserManager.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -82,7 +83,18 @@ const mergeScores = (base, siblings) => {
 export const startAudit = async (req, res) => {
 
   try {
-    let { url, device, report, force, pageType, siteType } = req.body;
+    let { url, device, report, force, pageType, siteType, pageScopes } = req.body;
+
+    // Page types the user kept ticked in the home-page picker. Stage 2 only audits
+    // these; ["home"] alone means "just the URL I entered". Unknown keys are dropped
+    // so a stale or hand-rolled client can't widen the crawl.
+    const VALID_PAGE_SCOPES = new Set([
+      "home", "srp", "vdp", "trade", "lease", "finance", "service", "specials",
+      "about", "content", "models", "locator", "press",
+    ]);
+    const normalizedScopes = Array.isArray(pageScopes)
+      ? [...new Set(pageScopes.filter((k) => VALID_PAGE_SCOPES.has(k)))]
+      : null;
 
     if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -383,8 +395,11 @@ export const startAudit = async (req, res) => {
         auditId: newReport._id.toString(),
         pageType: newReport.pageType || null,
         siteType: newReport.siteType || null,
+        pageScopes: normalizedScopes,
       },
     });
+
+    registerWorkerWithManager(worker);
 
     // The worker is DB-free: it streams progress and the final result here. The
     // main thread owns the in-memory store and batches the final write to Mongo.
@@ -399,8 +414,75 @@ export const startAudit = async (req, res) => {
       }
     };
 
+    // Insert or update ONE row in the parent report's crawledPagesSummary (keyed by
+    // reportId, falling back to url). Drives the summary page's per-page rows.
+    const upsertCrawledPage = (parentId, entry) => {
+      const parent = auditStore.get(parentId);
+      if (!parent) return;
+      const list = Array.isArray(parent.crawledPagesSummary) ? [...parent.crawledPagesSummary] : [];
+      const idx = list.findIndex(
+        (p) => (entry.reportId && p.reportId === entry.reportId) || (entry.url && p.url === entry.url)
+      );
+      if (idx >= 0) list[idx] = { ...list[idx], ...entry };
+      else list.push(entry);
+      auditStore.applyPatch(parentId, { crawledPagesSummary: list, crawledPagesCount: list.length });
+    };
+
     worker.on("message", async (msg) => {
       if (!msg || !msg.type) return;
+
+      // ── Multi-page fan-out ──
+      // Each key page is audited in its OWN browser and becomes its OWN child
+      // report. The worker streams these three messages; the main thread owns
+      // creating/patching the child reports and the parent's per-page summary rows
+      // (so each child is independently openable and the summary can roll them up).
+      if (msg.type === "childInit") {
+        const c = msg.child || {};
+        if (!c.childId || !c.url) return;
+        const childDevice = c.device || device;
+        // Clear any stale, NON-failed report for this exact {url,device,report} so
+        // the partial-unique index can't reject the child (and a forced re-audit
+        // refreshes the page). Memory is sync; the old Mongo doc (if any, e.g. from
+        // a prior forced run) is cleared best-effort, never touching the new child.
+        auditStore.removeMatching({ url: c.url, device: childDevice, report: "All", userId: newReport.userId || null });
+        auditStore.createInProgress({
+          _id: new mongoose.Types.ObjectId(c.childId),
+          url: c.url,
+          device: childDevice,
+          report: "All",
+          userId: newReport.userId || null,
+          pageType: c.pageType || null,
+          siteType: newReport.siteType || null,
+        });
+        upsertCrawledPage(newReport._id, {
+          url: c.url, pageType: c.pageType || "generic", label: c.label || "Key Page",
+          reportId: c.childId, isProcessing: true, success: false, status: 200, title: c.label || "Auditing…",
+        });
+        SingleAuditReport.deleteMany({
+          _id: { $ne: new mongoose.Types.ObjectId(c.childId) },
+          url: c.url, device: childDevice, report: "All",
+          userId: newReport.userId || null, status: { $ne: "failed" },
+        }).catch(() => { /* best-effort; the batch flush also tolerates dup-key */ });
+        return;
+      }
+
+      if (msg.type === "childProgress") {
+        if (msg.childId) auditStore.applyPatch(msg.childId, msg.patch || {});
+        return;
+      }
+
+      if (msg.type === "childDone") {
+        if (!msg.childId) return;
+        auditStore.complete(msg.childId, msg.patch || {});
+        const s = msg.summary || {};
+        upsertCrawledPage(newReport._id, {
+          url: s.url, pageType: s.pageType || "generic", label: s.label || "Key Page",
+          reportId: msg.childId, score: s.score ?? null, grade: s.grade ?? null,
+          isProcessing: false, success: s.success !== false, isBotProtected: !!s.isBotProtected,
+          status: s.status || 200, title: s.label || "",
+        });
+        return;
+      }
 
       if (msg.type === "progress") {
         // Live, in-memory update — served straight to polling clients, no DB hit.
@@ -541,7 +623,7 @@ export const getReportStatusById = async (req, res) => {
     const { doc: report, ok } = await resolveReport(
       req,
       id,
-      "_id status screenshotUrl error technicalPerformance.Percentage onPageSEO.Percentage " +
+      "_id status screenshotUrl error stage1Completed stage2Completed stage2Progress crawledPagesCount crawledPagesSummary technicalPerformance.Percentage onPageSEO.Percentage " +
       "accessibility.Percentage securityOrCompliance.Percentage UXOrContentStructure.Percentage " +
       "conversionAndLeadFlow.Percentage aioReadiness.Percentage aeo.Percentage"
     );
@@ -580,7 +662,7 @@ export const getReportStatusById = async (req, res) => {
       message = "Audit completed";
     } else if (completedSections > 0) {
       progress = Math.min(99, 45 + Math.round((completedSections / total) * 55));
-      message = `Analyzing your site — ${completedSections}/${total} sections scored`;
+      message = report.stage2Progress || `Analyzing your site — ${completedSections}/${total} sections scored`;
     } else if (PHASES[report.status]) {
       progress = PHASES[report.status][0];
       message = PHASES[report.status][1];
@@ -593,6 +675,11 @@ export const getReportStatusById = async (req, res) => {
       _id: report._id,
       status: report.status,
       screenshotUrl: report.screenshotUrl,
+      stage1Completed: report.stage1Completed,
+      stage2Completed: report.stage2Completed,
+      stage2Progress: report.stage2Progress,
+      crawledPagesCount: report.crawledPagesCount,
+      crawledPagesSummary: report.crawledPagesSummary || [],
       progress,
       message,
       completedSections,

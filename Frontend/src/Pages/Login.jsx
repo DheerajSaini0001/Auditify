@@ -64,7 +64,7 @@ const Login = () => {
             <LogIn className="text-white w-8 h-8" />
           </div>
           <h1 className={`text-3xl font-semibold mb-2 ${darkMode ? 'text-white' : 'text-ink'}`}>Welcome Back</h1>
-          <p className={darkMode ? 'text-gray-400' : 'text-muted'}>Sign in to your Dealer Pulse account</p>
+          <p className={darkMode ? 'text-gray-400' : 'text-muted'}>Sign in to your Site Audit account</p>
         </header>
 
         <form onSubmit={handleSubmit} className="space-y-6">

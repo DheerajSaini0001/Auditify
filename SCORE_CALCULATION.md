@@ -114,11 +114,10 @@ Weighted average. Common parameters:
 | Canonical | 0.11 | URL_Structure | 0.05 |
 | Robots_Txt | 0.08 | Semantic_Tags | 0.05 |
 | Image (alt/optimization) | 0.08 | Heading_Hierarchy | 0.04 |
-| Title | 0.10 | Contextual_Linking | 0.04 |
+| Title | 0.10 | Links | 0.07 |
 | H1 | 0.07 | Title_Uniqueness | 0.03 |
 | Meta_Description | 0.06 | Meta_Description_Uniqueness | 0.03 |
 | Content_Relevance | 0.06 | URL_Slugs | 0.03 |
-| | | Links | 0.03 |
 | | | Open_Graph | 0.03 |
 | | | Viewport | 0.03 |
 | | | Title_Location_Optimization | 0.02 |

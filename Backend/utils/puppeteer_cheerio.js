@@ -1,6 +1,7 @@
 import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import * as cheerio from "cheerio";
+import { acquireBrowserSlot, releaseBrowserSlot } from "./browserManager.js";
 
 // Use stealth plugin to evade common bot detection techniques
 // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
@@ -38,6 +39,92 @@ function isDetachedFrameError(error) {
     msg.includes('navigating') ||
     msg.includes('same javascript world')
   );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// [ADD] — Per-domain WAF clearance-cookie cache (purely additive; nothing removed).
+//
+// WHY: every audit stage opens its OWN fresh browser context (a clean cookie jar):
+// Stage 1 (homepage), discovery, and each of the ~6 Stage-2 key pages. On a
+// Cloudflare/WAF-protected site that means the "Just a moment…" JS challenge is
+// solved from scratch 8+ separate times — and each solve is an independent, timing-
+// sensitive coin-flip, so some key pages fail the bypass even when the homepage
+// passed. The result: the site is only PARTIALLY crawled.
+//
+// FIX: when ANY context clears the challenge, Cloudflare issues a `cf_clearance`
+// cookie (Imperva → `incap_ses`/`visid_incap`, DataDome → `datadome`, Akamai →
+// `ak_bmsc`/`bm_sv`) that is valid for the WHOLE domain for the cookie's lifetime
+// (cf_clearance ≈ 30 min). We cache that cookie family keyed by registrable domain,
+// and inject it into every later context for the same domain BEFORE its first
+// navigation — so those pages get served the real content immediately and skip the
+// challenge entirely. The whole site then crawls off a single solve.
+//
+// Fail-safe: if nothing is cached (or it expired) the injector is a no-op and the
+// existing solve-and-retry flow runs exactly as before. Nothing is bypassed that
+// the browser didn't already legitimately solve once.
+const WAF_CLEARANCE_COOKIE_RE = /^(cf_clearance|__cf_bm|cf_chl_|datadome|incap_ses|visid_incap|nlbi_|ak_bmsc|bm_sv|bm_mi|_abck)/i;
+// Fallback lifetime when a clearance cookie is a session cookie (no own expiry).
+// Conservative: shorter than cf_clearance's ~30 min so we never present a stale token.
+const CLEARANCE_FALLBACK_TTL_MS = 15 * 60 * 1000;
+// domain → { cookies: [...playwright cookie objects], expiresAt: epoch-ms }
+const wafClearanceCache = new Map();
+
+// Registrable-ish domain key: last two labels of the hostname (eTLD+1 approximation).
+// A cf_clearance issued on www.foo.com is scoped to .foo.com, so keying on foo.com
+// lets the www/apex/inventory subpaths all share one solve.
+function clearanceDomainKey(urlString) {
+  try {
+    const host = new URL(urlString).hostname.toLowerCase().replace(/^www\./, "");
+    const parts = host.split(".").filter(Boolean);
+    return parts.length <= 2 ? host : parts.slice(-2).join(".");
+  } catch {
+    return null;
+  }
+}
+
+// After a context has legitimately cleared a challenge, stash its clearance cookies
+// for the domain so sibling pages can reuse them. Best-effort; never throws.
+async function saveClearanceCookies(context, urlString) {
+  try {
+    const key = clearanceDomainKey(urlString);
+    if (!key || !context) return;
+    const cookies = await context.cookies();
+    const clearance = (cookies || []).filter((c) => c && c.value && WAF_CLEARANCE_COOKIE_RE.test(c.name));
+    if (!clearance.length) return;
+
+    // Expiry = the soonest REAL future cookie expiry in the set (use its full
+    // lifetime — a cf_clearance is good until it actually expires). Only when no
+    // cookie carries a usable expiry (all session cookies) do we fall back to the
+    // conservative TTL so we never present a token of unknown age indefinitely.
+    const now = Date.now();
+    const realExpiries = clearance
+      .map((c) => (typeof c.expires === "number" && c.expires > 0 ? c.expires * 1000 : 0))
+      .filter((ms) => ms > now);
+    const expiresAt = realExpiries.length ? Math.min(...realExpiries) : now + CLEARANCE_FALLBACK_TTL_MS;
+    wafClearanceCache.set(key, { cookies: clearance, expiresAt });
+    logger.info(`🍪 [WAF] Cached ${clearance.length} clearance cookie(s) for ${key} (reusable for ${Math.round((expiresAt - now) / 60000)} min)`);
+  } catch (_) { /* caching is best-effort */ }
+}
+
+// Before a context's first navigation, replay any cached clearance cookies for the
+// domain so its very first request already carries the token. Returns true if any
+// were injected. Best-effort; never throws.
+async function injectClearanceCookies(context, urlString) {
+  try {
+    const key = clearanceDomainKey(urlString);
+    if (!key || !context) return false;
+    const entry = wafClearanceCache.get(key);
+    if (!entry) return false;
+    if (entry.expiresAt <= Date.now()) { wafClearanceCache.delete(key); return false; }
+
+    // Re-add exactly as Playwright returned them (name/value/domain/path/expires/
+    // httpOnly/secure/sameSite are already in the shape addCookies expects).
+    await context.addCookies(entry.cookies);
+    logger.info(`🍪 [WAF] Injected ${entry.cookies.length} cached clearance cookie(s) for ${key} — skipping challenge if still valid`);
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 // [EXISTING] — Frame health check utility function
@@ -254,18 +341,33 @@ async function dismissOverlays(page) {
 
       // 1) Elements whose id/class/aria-label matches a known vendor hint.
       try {
+        // Guards so overlay-dismissal can NEVER blank the page: a consent widget
+        // injected near <body> (e.g. ComplyAuto's ca-cookieconsent on
+        // lexusofnorthmiami.com) must not take a big layout wrapper — or <body>
+        // itself — down with it. That exact bug made the screenshot come back pure
+        // white even though the DOM had fully loaded the real page.
+        const STRUCTURAL = new Set(["BODY", "HTML", "MAIN"]);
+        const tooBig = (node) => {
+          try {
+            const r = node.getBoundingClientRect();
+            return (r.width * r.height) > (window.innerWidth * window.innerHeight * 0.6);
+          } catch (_) { return false; }
+        };
         document.querySelectorAll("div, aside, section, iframe").forEach((el) => {
           if (matchesHint(el.id) || matchesHint(el.className) || matchesHint(el.getAttribute("aria-label")) ||
               (el.tagName === "IFRAME" && matchesHint(el.getAttribute("src")))) {
-            // hide the positioned overlay ancestor if there is one, else the node
+            // Walk up ONLY to find a fixed/sticky overlay ancestor. If none exists,
+            // do NOT hide any ancestor — walking into static layout (or <body>) is
+            // what blanked the page. And never hide a structural or viewport-sized node.
             let target = el;
+            let foundPositioned = false;
             for (let i = 0; i < 4 && target.parentElement; i++) {
               const pos = getComputedStyle(target).position;
-              if (pos === "fixed" || pos === "sticky") break;
+              if (pos === "fixed" || pos === "sticky") { foundPositioned = true; break; }
               target = target.parentElement;
             }
-            hide(el);
-            if (target !== el) hide(target);
+            if (!STRUCTURAL.has(el.tagName) && !tooBig(el)) hide(el);
+            if (foundPositioned && target !== el && !STRUCTURAL.has(target.tagName) && !tooBig(target)) hide(target);
           }
         });
       } catch (_) { /* ignore */ }
@@ -673,8 +775,33 @@ for (const signal of ["SIGINT", "SIGTERM", "beforeExit"]) {
 // instead of each maintaining its own separate, weaker-stealth, non-pooled
 // `chromium.launch()` — rather than duplicating this setup. Caller MUST close
 // the returned `context` when done (never the browser — it's shared).
-async function newStealthContext(device = 'Desktop') {
-  const browser = await getSharedBrowser();
+async function newStealthContext(device = 'Desktop', opts = {}) {
+  const { acquireTimeoutMs = 60000, label = 'shared-browser' } = opts;
+
+  // Take a GLOBAL browser permit before doing any work on the shared Chromium.
+  // The shared browser is one reused process, but each concurrent context on it
+  // is a real, CPU-costing browser workload — so it draws from the same pool as
+  // every dedicated audit browser, keeping total *active* headless work at or
+  // below MAX_CONCURRENT_BROWSERS. The permit is held for the whole context
+  // lifetime and returned when the context closes (or on any failure below).
+  // Degradable callers (site-type classification) pass a short acquireTimeoutMs
+  // and fall back to their plain-HTTP result if no permit is free — never
+  // forcing an extra browser, never deadlocking on a nested acquire.
+  const permitSlotId = await acquireBrowserSlot({ timeoutMs: acquireTimeoutMs, label });
+  let permitReleased = false;
+  const releasePermit = () => {
+    if (permitReleased) return;
+    permitReleased = true;
+    releaseBrowserSlot(permitSlotId);
+  };
+
+  let browser;
+  try {
+    browser = await getSharedBrowser();
+  } catch (err) {
+    releasePermit();
+    throw err;
+  }
   sharedBrowserUses++;
 
   const userAgent = device === "Mobile"
@@ -706,17 +833,27 @@ async function newStealthContext(device = 'Desktop') {
   if (device === "Mobile") { contextOptions.hasTouch = true; contextOptions.isMobile = true; }
   else { contextOptions.deviceScaleFactor = 2; }
 
-  const context = await browser.newContext(contextOptions);
+  let context;
+  try {
+    context = await browser.newContext(contextOptions);
+  } catch (err) {
+    releasePermit();
+    throw err;
+  }
   activeContexts++;
-  // Decrement on close REGARDLESS of who closes it (caller's own finally
-  // block, or a crash) — this is what lets getSharedBrowser() above know
-  // it's actually safe to recycle.
-  context.on('close', () => { activeContexts = Math.max(0, activeContexts - 1); });
+  // Decrement AND return the global browser permit on close, REGARDLESS of who
+  // closes it (caller's own finally block, or a crash) — this is what lets
+  // getSharedBrowser() know it's safe to recycle and keeps the pool accurate.
+  context.on('close', () => {
+    activeContexts = Math.max(0, activeContexts - 1);
+    releasePermit();
+  });
   let page;
   try {
     page = await context.newPage();
   } catch (err) {
     await context.close().catch(() => {});
+    releasePermit();
     throw err;
   }
 
@@ -727,6 +864,7 @@ async function newStealthContext(device = 'Desktop') {
   // site-type detection is the FIRST thing to touch a new domain and needs to
   // survive the same WAFs. Wrapped so a single evasion failing can't abort
   // the rest.
+  try {
   await page.addInitScript(() => {
     const safe = (fn) => { try { fn(); } catch (_) { /* evasion best-effort */ } };
 
@@ -795,6 +933,13 @@ async function newStealthContext(device = 'Desktop') {
       }
     });
   });
+  } catch (err) {
+    // Registering the evasion script failed (context/browser died mid-setup) —
+    // tear down cleanly so we never leak the context or its global browser permit.
+    await context.close().catch(() => {});
+    releasePermit();
+    throw err;
+  }
 
   return { context, page };
 }
@@ -808,8 +953,121 @@ async function newStealthContext(device = 'Desktop') {
  * @param {string} [device]
  * @returns {Promise<{context: object, page: object}>}
  */
-export async function newStealthPage(device = 'Desktop') {
-  return newStealthContext(device);
+export async function newStealthPage(device = 'Desktop', opts = {}) {
+  // Discovery/crawl callers (sitemapCrawler) run BETWEEN audit stages, not
+  // nested inside a held page browser, so they can wait for a permit. Default
+  // to a generous acquire timeout + a "discovery" label for the pool logs.
+  return newStealthContext(device, { acquireTimeoutMs: 60000, label: 'discovery', ...opts });
+}
+
+/**
+ * [ADD] — WAF clearance WARM-UP. Solve a site's bot challenge ONCE, up front, in a
+ * clean stealth context, and cache the resulting cf_clearance so every subsequent
+ * page of the domain (the Stage-2 key pages) injects it and is served real content
+ * on its FIRST request — no per-page challenge.
+ *
+ * Why a dedicated warm-up rather than relying on Stage 1: the full-audit render path
+ * carries a resource-blocking route and a reload-based solve loop that make challenge
+ * resolution timing-sensitive (some pages fail it). A plain navigate + quiet wait in a
+ * clean context solves Cloudflare's managed challenge reliably in ~7s and yields a
+ * long-lived cf_clearance — VERIFIED live: fresh context + injected cf_clearance loaded
+ * a page that returns 403 with no cookies in 2.6s at HTTP 200, no challenge.
+ *
+ * Cost control for the 95% of sites with NO bot protection: this returns immediately
+ * when clearance is already cached (Stage 1 got it), and otherwise gates the browser
+ * work behind a ~200ms plain fetch — it only launches a context if that fetch actually
+ * looks challenged (403/429/503 or a challenge marker in the body). Never throws;
+ * bounded time; returns true iff the domain now has usable clearance.
+ */
+export async function ensureDomainClearance(url, device = 'Desktop') {
+  try {
+    const key = clearanceDomainKey(url);
+    if (!key) return false;
+
+    // Fast path — a sibling context (e.g. Stage 1 or discovery) already solved it.
+    const cached = wafClearanceCache.get(key);
+    if (cached && cached.expiresAt > Date.now()) {
+      logger.info(`🍪 [WAF] Clearance for ${key} already cached — skipping warm-up.`);
+      return true;
+    }
+
+    // Cheap gate: a browserless GET. Only a genuine challenge response is worth the
+    // cost of launching a context — a normal 200 means the site isn't gating us.
+    let challenged = false;
+    try {
+      const controller = new AbortController();
+      const id = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(url, {
+        redirect: 'follow',
+        signal: controller.signal,
+        headers: {
+          'User-Agent': device === 'Mobile'
+            ? 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36'
+            : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+        },
+      });
+      clearTimeout(id);
+      let body = '';
+      try { body = (await res.text()).slice(0, 4000).toLowerCase(); } catch (_) { /* body optional */ }
+
+      // (a) An outright challenge in THIS response (status or body markers).
+      const challengeNow =
+        [403, 429, 503].includes(res.status) ||
+        /just a moment|cf-browser-verification|challenge-platform|_cf_chl|attention required|checking your browser|incapsula|imperva incapsula/.test(body);
+
+      // (b) The site sits behind a known WAF (Cloudflare/Imperva/DataDome/Akamai) even
+      // when THIS request got a 200. A cookieless plain fetch is often served the cached
+      // homepage at 200 while the real browser render — with JS, deep paths, and our
+      // automation — gets challenged (exactly the flaky Stage-1 bot-protection we saw).
+      // So if a WAF is fronting the domain and we have no clearance yet, warm up anyway:
+      // the browser solve is the reliable way to obtain a reusable cf_clearance.
+      const h = res.headers;
+      const wafFronted =
+        /cloudflare/i.test(h.get('server') || '') ||
+        h.get('cf-ray') || h.get('cf-mitigated') ||
+        h.get('x-datadome') || /datadome/i.test(h.get('set-cookie') || '') ||
+        h.get('x-iinfo') || /incap_ses|visid_incap/i.test(h.get('set-cookie') || '') ||
+        h.get('x-akamai-transformed') || /ak_bmsc|bm_sv/i.test(h.get('set-cookie') || '');
+
+      challenged = challengeNow || !!wafFronted;
+    } catch (_) {
+      // A hung/blocked fetch is itself a bot-protection signal — proceed to warm up.
+      challenged = true;
+    }
+    if (!challenged) return false; // No WAF / no challenge → nothing to warm up; audit runs as normal.
+
+    logger.info(`🛡️ [WAF] ${key} is WAF-fronted / challenging — solving once to seed a shared clearance for the crawl...`);
+
+    // Solve in a stealth context that does NOT carry the audit's resource-blocking
+    // route — exactly the clean setup that resolves the challenge reliably.
+    let context;
+    try {
+      const created = await newStealthContext(device, { acquireTimeoutMs: 60000, label: 'waf-warmup' });
+      context = created.context;
+      const page = created.page;
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
+      await waitForChallengeResolution(page, 25000);
+      // A reload once the clearance cookie exists lands on the real content.
+      let solved = !(await detectChallenge(page));
+      if (!solved) {
+        try { await page.reload({ waitUntil: 'domcontentloaded', timeout: 30000 }); } catch (_) {}
+        try { await page.waitForTimeout(3000); } catch (_) {}
+        solved = !(await detectChallenge(page));
+      }
+      if (solved) {
+        await saveClearanceCookies(context, url);
+        return (wafClearanceCache.get(key)?.expiresAt || 0) > Date.now();
+      }
+      logger.warn(`🛡️ [WAF] Warm-up could not clear ${key} — key pages will fall back to solving individually.`);
+      return false;
+    } finally {
+      if (context) { try { await context.close(); } catch (_) { /* already closed */ } }
+    }
+  } catch (_) {
+    return false;
+  }
 }
 
 /**
@@ -841,9 +1099,16 @@ export async function newStealthPage(device = 'Desktop') {
 export async function fetchWithBotBypass(url, device = 'Desktop') {
   let context;
   try {
-    const created = await newStealthContext(device);
+    // Classification is a low-priority, degradable escalation: it only runs when
+    // a plain HTTP fetch was inconclusive, and it already fails open. Give it a
+    // SHORT acquire timeout so under browser-pool pressure it yields to real
+    // audits and falls back to its plain-HTTP result instead of queueing.
+    const created = await newStealthContext(device, { acquireTimeoutMs: 15000, label: 'classify' });
     context = created.context;
     const page = created.page;
+
+    // [ADD] — Reuse a sibling page's WAF solve for this domain if one is cached.
+    await injectClearanceCookies(context, url);
 
     let response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 15000 }).catch(() => null);
     if (!response) {
@@ -867,8 +1132,8 @@ export async function fetchWithBotBypass(url, device = 'Desktop') {
 
     // Up to 2 reload retries — mirrors the full-audit path's proven approach,
     // scaled down to keep this lightweight path's worst case bounded (~60s
-    // total) so one blocked site can't monopolize a browserLimiter slot and
-    // back up the queue for other, likely-legitimate sites waiting behind it.
+    // total) so one blocked site can't monopolize a global browser-pool permit
+    // and back up the queue for other, likely-legitimate sites waiting behind it.
     let botRetries = 0;
     while (isBotProtected && botRetries < 2) {
       botRetries++;
@@ -884,6 +1149,10 @@ export async function fetchWithBotBypass(url, device = 'Desktop') {
         isBotProtected = await detectChallenge(page);
       }
     }
+
+    // [ADD] — If classification cleared the challenge, seed the domain cache so the
+    // audit that follows this escalation reuses the solve.
+    if (!isBotProtected) await saveClearanceCookies(context, url);
 
     const html = await safePageContent(page);
     const statusCode = response ? response.status() : (html ? 200 : 0);
@@ -917,7 +1186,15 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     if (typeof onProgress === "function") onProgress({ status, ...extraData });
   };
 
+  let slotId = null;
   try {
+    // Top-level page render: wait (no acquire timeout) for a permit — the whole
+    // point of the cap is that page renders queue rather than pile up. The label
+    // (site host) makes each acquire/release traceable in the pool logs.
+    let hostLabel = "audit";
+    try { hostLabel = `audit:${new URL(url).hostname.replace(/^www\./, "")}`; } catch { /* keep default */ }
+    slotId = await acquireBrowserSlot({ label: hostLabel });
+
     // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
     // [EXISTING PUPPETEER LAUNCH OPTIONS — DO NOT MODIFY]
     const launchOptions = {
@@ -950,6 +1227,17 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     await updateStatus("launching");
 
     browser = await chromium.launch(launchOptions);
+    const origClose = browser.close.bind(browser);
+    let released = false;
+    browser.close = async () => {
+      if (released) return;
+      released = true;
+      try {
+        await origClose();
+      } finally {
+        await releaseBrowserSlot(slotId);
+      }
+    };
 
     // [EXISTING — DO NOT MODIFY]
     const commonHeaders = {
@@ -993,6 +1281,12 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     }
 
     const context = await browser.newContext(contextOptions);
+
+    // [ADD] — If a sibling page already solved this domain's WAF challenge, replay its
+    // clearance cookies into this context BEFORE the first navigation so this page is
+    // served the real content and skips the challenge. No-op when nothing is cached.
+    await injectClearanceCookies(context, url);
+
     const page = await context.newPage();
 
     // [FIX] — Filter Chrome's internal frame warnings from browser console
@@ -1153,7 +1447,7 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     let pageTitle = await safeGetTitle(page);
     const hasContent = pageTitle && pageTitle.length > 0;
 
-    const statusCode = response ? response.status() : (hasContent ? 200 : "No Response");
+    let statusCode = response ? response.status() : (hasContent ? 200 : "No Response");
 
     if (statusCode === "No Response") {
       return {
@@ -1168,6 +1462,28 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     // auto-resolve with our stealthed browser, then retry with reloads if needed.
     let challengeResolved = await waitForChallengeResolution(page, 35000);
     let isBotProtected = await detectChallenge(page);
+
+    // [FIX] — WAF JS challenges (Imperva/Incapsula, and some Cloudflare) auto-clear
+    // in a few seconds and THEN render the real page. But the resource-blocking route
+    // set up above aborts requests the challenge itself needs — that's the
+    // net::ERR_BLOCKED_BY_CLIENT seen on challenge reloads — so it could never finish
+    // and the page stayed a blank 403. When a challenge is present, stop blocking
+    // resources, let the challenge JS run, then reload onto the cleared page.
+    // Confirmed live on lexusofnorthmiami.com (Imperva): blank 403 → after unroute +
+    // ~8s + reload, the FULL real homepage rendered and screenshotted from our own
+    // browser. Only runs when a challenge is actually detected, so normal (fast) audits
+    // keep their resource blocking untouched.
+    if (isBotProtected) {
+      try { await page.unroute('**/*'); } catch (_) { /* route already removed */ }
+      try { await page.waitForTimeout(8000); } catch (_) { /* let the challenge JS compute */ }
+      try {
+        const cleared = await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
+        if (cleared) { response = cleared; statusCode = cleared.status(); }
+      } catch (_) { /* keep the prior response */ }
+      try { await page.waitForTimeout(3000); } catch (_) {}
+      isBotProtected = await detectChallenge(page);
+      if (!isBotProtected) logger.info(`✅ WAF challenge auto-cleared after unblocking resources for ${url}`);
+    }
 
     // Positive signal: a Cloudflare clearance cookie means the challenge passed.
     const hasClearanceCookie = async () => {
@@ -1185,6 +1501,12 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     while (isBotProtected && botRetries < 2) {
       botRetries++;
       logger.info(`🛡️ Challenge still present — bypass retry ${botRetries}/2 for ${url}`);
+      // [ADD] — Replay any cached domain clearance before each retry reload. A sibling
+      // page (or the pre-crawl warm-up) may have solved the challenge AFTER this context
+      // was created, or the site re-challenged mid-session on a heavy page; re-injecting
+      // the cached cf_clearance lets the reload land on real content instead of solving
+      // from scratch again. No-op when nothing is cached.
+      await injectClearanceCookies(context, url);
       try {
         await page.reload({ waitUntil: "domcontentloaded", timeout: 30000 });
       } catch (reloadErr) {
@@ -1211,7 +1533,34 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
       return { browser, page, response, $, screenshot: null, isBotProtected: true };
     }
 
+    // [NEW] — Hard-block detection. Some WAFs (Imperva/Incapsula on dealer sites)
+    // don't serve a solvable JS challenge at all — they return 401/403/429/503
+    // whose body renders COMPLETELY BLANK. detectChallenge() finds no challenge
+    // markers on an empty page (score ~1 < 2), so such blocks sailed through as
+    // "not protected" and we went on to screenshot a pure-white page and audit an
+    // empty document (confirmed live on lexusofnorthmiami.com: HTTP 403, empty
+    // title, blank 18KB screenshot). Treat blocked-status + no-real-content as
+    // Bot Protected so the report says so instead of showing a white preview.
+    const blockedStatus = [401, 403, 429, 503].includes(Number(statusCode));
+    if (blockedStatus) {
+      const looksReal = await hasRealContent(page);
+      const blockTitle = await safeGetTitle(page);
+      if (!looksReal && (!blockTitle || blockTitle.trim().length < 2)) {
+        logger.warn(`🛡️ Hard block detected (HTTP ${statusCode}, blank/empty page) for ${url} — marking as Bot Protected.`);
+        const htmlData = await safePageContent(page);
+        const $ = cheerio.load(htmlData || "<html><body></body></html>");
+        return { browser, page, response, $, screenshot: null, isBotProtected: true };
+      }
+    }
+
     logger.info(`✅ Bot protection cleared (or none present) for ${url}`);
+
+    // [ADD] — This context is now cleared for the domain (either it solved the
+    // challenge, or none was present and it holds a valid __cf_bm). Cache its
+    // clearance cookies so the remaining key pages of this site reuse the solve
+    // instead of each re-running the flaky challenge. Best-effort; no-op if the
+    // site isn't behind a WAF.
+    await saveClearanceCookies(context, url);
 
     // [FIX] — wrapped mouse.move with detached frame protection
     try {
@@ -1460,7 +1809,11 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
       };
     }
 
-    if (browser) await browser.close();
+    if (browser) {
+      await browser.close().catch(() => {});
+    } else if (slotId) {
+      await releaseBrowserSlot(slotId);
+    }
     throw error;
   }
 }

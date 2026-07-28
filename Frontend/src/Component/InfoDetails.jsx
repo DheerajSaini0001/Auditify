@@ -943,27 +943,6 @@ export const InfoDetails = {
             "Replace generic <div>s with semantic elements where they convey structure"
         ]
     },
-    Contextual_Linking: {
-        title: "Contextual Linking",
-        whatThisParameterIs: "Contextual linking means adding helpful links within your text that point to other related pages on your website — and whether those links are topically related to the page they sit on.",
-        whatItCalculates: "We identify links in the main content area (excluding navigation), verify they aren't broken, and now measure topical relatedness: we derive this page's topic terms (title, headings, top body terms) and check what share of in-content links have anchor text or URL slugs that overlap that topic. A low related ratio (with enough links) signals weak topical clustering.",
-        whyItMatters: "Internal links help visitors and search bots discover more content. Links to topically related pages build 'topic clusters' that strengthen rankings; a wall of unrelated links does little for SEO.",
-        thresholds: {
-            good: "Contextual links present, valid, and topically related",
-            needsImprovement: "Few links related to the page topic, or some key links missing",
-            poor: "No contextual links, or broken links"
-        },
-        actualReasonsForFailure: [
-            "No links in main content",
-            "Most in-content links point to topically unrelated pages",
-            "Important pages only linked in navigation, or broken links present"
-        ],
-        howToOvercomeFailure: [
-            "Add internal links naturally within content body",
-            "Link to pages that share this page's topic (related models, services, guides) to build topic clusters",
-            "Use descriptive anchor text that reflects the linked page's subject"
-        ]
-    },
     Heading_Hierarchy: {
         title: "Heading Hierarchy",
         whatThisParameterIs: "Heading Hierarchy is the logical order of your titles (H1, H2, H3). It creates an easy-to-follow outline for your readers.",
@@ -1487,7 +1466,7 @@ export const InfoDetails = {
                     <span className="font-semibold">Prioritize High-Weight Content Signals:</span> Focus on unique Page Titles (15%), compelling H1 tags (10%), and high-quality, non-duplicate content (12%).
                 </li>
                 <li>
-                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure contextual links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
+                    <span className="font-semibold">Build Strong Internal Connectivity:</span> Ensure internal links (8%) point to key pages and your URL structure (3%) is clean and descriptive.
                 </li>
                 <li>
                     <span className="font-semibold">Technical Authority:</span> Implement correct Canonical tags (8%) to prevent duplication and valid Structured Data (6%) for rich snippets.
@@ -1513,7 +1492,7 @@ export const InfoDetails = {
             { param: "Meta Description", weight: "8%" },
             { param: "Image Optimization", weight: "8%" },
             { param: "Canonical Tag", weight: "8%" },
-            { param: "Contextual Linking", weight: "8%" },
+            { param: "Internal Linking", weight: "8%" },
             { param: "Structured Data", weight: "6%" },
             { param: "Sitemap & Robots.txt", weight: "9%" },
             { param: "Other Factors (Headings, Social, URLs)", weight: "16%" }

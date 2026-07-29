@@ -18,12 +18,16 @@ const guestAuditGate = (req, res, next) => {
   // Authenticated users bypass the email gate.
   if (req.user) return next();
 
-  // In non-production, skip the email-verification gate entirely so developers
-  // can run audits straight from a URL without the OTP step. Production (NODE_ENV
-  // === 'production') still enforces verification; this fails safe — anything that
-  // isn't explicitly production keeps the gate off, matching how the rest of the
-  // backend treats NODE_ENV (e.g. server.js IS_PROD, tracking.js secure cookies).
-  if (configService.getConfig('NODE_ENV', 'development') !== 'production') {
+  // The gate is ON everywhere by default — a dev environment should exercise the
+  // same email → OTP → grant path production does, or the flow only ever gets
+  // tested in production. (The old rule was the inverse: ANY non-production
+  // NODE_ENV disabled verification entirely, so a staging box or a mis-set
+  // NODE_ENV silently ran an open audit endpoint.)
+  //
+  // Escape hatch for local work, explicit and opt-in: SKIP_GUEST_EMAIL_GATE=true.
+  // It is ignored in production so the flag can never disable the gate there.
+  const isProd = configService.getConfig('NODE_ENV', 'development') === 'production';
+  if (!isProd && String(configService.getConfig('SKIP_GUEST_EMAIL_GATE', 'false')).toLowerCase() === 'true') {
     return next();
   }
 

@@ -10,6 +10,7 @@ import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
 import Puppeteer_Cheerio, { ensureDomainClearance } from "../utils/puppeteer_cheerio.js";
+import { prefetchPsiBatch, takePsiPrefetch, clearPsiPrefetch } from "../utils/psiPrefetch.js";
 import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
@@ -266,6 +267,16 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
   const startedAt = performance.now();
   const send = typeof emit === "function" ? emit : () => {};
   let pageBrowser;
+
+  // [PERF] Claim this page's PageSpeed call instead of starting it here. Stage 2a fired
+  // PSI for EVERY key page the moment discovery named them (see prefetchPsiBatch below),
+  // in parallel and while Stage 1 was still running — so for a key page this usually
+  // resolves instantly rather than costing the pillar its ~50–75s. When the URL was never
+  // prefetched (a page audited outside that flow) takePsiPrefetch just starts a fresh call
+  // right here, which is exactly the old behaviour: still ahead of the browser work, so
+  // the page-setup window (~2s clean, 10–30s behind a WAF) is still overlapped.
+  const psiPrefetch = takePsiPrefetch(pageUrl, dev);
+
   try {
     const { browser: b, page, response, $, screenshot, isBotProtected } =
       await Puppeteer_Cheerio(pageUrl, dev, { auditId: pageAuditId, onProgress: send });
@@ -296,7 +307,7 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
     // The 8 pillars, in parallel against this single page — same set + timeouts
     // as Stage 1. Each streams its own section the moment it lands.
     const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
-      (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })(),
+      (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })(),
       (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
       (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt), PILLAR_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
       (async () => { const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(pageUrl, page, response, pageBrowser, pt), SEC_TIMEOUT_MS, "Security/Compliance")); send({ securityOrCompliance: r }); return r; })(),
@@ -338,6 +349,46 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
 // it can still be in flight when the audit dies — this stops it from registering child
 // pages (which would sit "auditing…" forever) against an audit that already errored.
 let auditAborted = false;
+
+// ── Live key-page queue (Stage 2a producer → Stage 2b consumers) ──────────────
+//
+// [PERF] Discovery used to hand Stage 2b one finished array, so NOTHING could start
+// until the LAST key page was known. On a site with no usable sitemap that meant the
+// crawler had the full URL list after ~5s but the queue only opened ~23s later, because
+// job creation sat behind a second browser render (the missing-key lookup).
+//
+// Now discovery pushes pages the moment it identifies them and Stage 2b's slots pull
+// from here, so a page starts auditing as soon as a browser permit frees up. The global
+// browser pool still hard-caps how many actually run — a slot that pulls a job simply
+// blocks on its permit, which is exactly the "wait for a free browser" behaviour.
+const keyPageQueue = {
+  items: [],
+  closed: false,
+  waiters: [],
+  total: 0,
+  _wake() { this.waiters.splice(0).forEach((resolve) => resolve()); },
+  push(jobs) {
+    if (!jobs?.length || this.closed) return;
+    this.items.push(...jobs);
+    this.total += jobs.length;
+    this._wake();
+  },
+  // No more pages are coming (discovery finished, or the audit died).
+  close() { this.closed = true; this._wake(); },
+  // Next page to audit, or null once the queue is closed AND drained.
+  async next() {
+    for (;;) {
+      if (auditAborted) return null;
+      if (this.items.length) return this.items.shift();
+      if (this.closed) return null;
+      await new Promise((resolve) => this.waiters.push(resolve));
+    }
+  },
+};
+
+// Stage 1 died / was gated (bot wall, lost page context, hard error) → stop Stage 2
+// before it registers or audits pages for an audit that is already over.
+const abortKeyPages = () => { auditAborted = true; keyPageQueue.close(); };
 
 // 🔎 STAGE 2a — DISCOVERY. Find the site's key pages and register each one as an
 // in-progress child report (childInit), so the audit-summary matrix can list every
@@ -392,10 +443,63 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
       }
     }
 
+    // ── Release pages to Stage 2b AS THEY ARE IDENTIFIED ──────────────────────
+    // `release` is the single place that turns a {url,type} into a job: it caps the run
+    // at 6 pages, de-dupes, prefetches PageSpeed, registers the child report (so the row
+    // shows up on /audit-summary immediately) and hands the page to the audit queue.
+    // Called once here with everything the crawl already found, and again after the
+    // missing-key lookup — so nothing waits for the slowest discovery step.
+    const MAX_KEY_PAGES = 6;
+    const releasedUrls = new Set();
+    let releasedCount = 0;
+    const release = (entries) => {
+      if (auditAborted) return [];
+      const jobs = [];
+      for (const { url: pageUrl, type } of entries) {
+        if (releasedCount >= MAX_KEY_PAGES) break;
+        if (!pageUrl || releasedUrls.has(pageUrl)) continue;
+        releasedUrls.add(pageUrl);
+        releasedCount++;
+        jobs.push({
+          childId: new mongoose.Types.ObjectId().toString(),
+          url: pageUrl,
+          type,
+          label: PAGE_LABELS[type] || "Key Page",
+        });
+      }
+      if (!jobs.length) return [];
+
+      // PageSpeed needs nothing but the URL — fire before the browser work, as always.
+      prefetchPsiBatch(jobs.map((j) => j.url), device);
+
+      for (const j of jobs) {
+        parentPort.postMessage({
+          type: "childInit",
+          parentAuditId: currentAuditId,
+          child: { childId: j.childId, url: j.url, pageType: j.type, label: j.label, device },
+        });
+      }
+      keyPageQueue.push(jobs);
+      postProgress({
+        stage2Progress: `Found ${releasedCount} key page(s) — auditing as browsers free up`,
+        crawledPagesCount: releasedCount,
+      });
+      logger.info(`🔎 [Stage 2a] Released ${jobs.length} key page(s) to the audit queue (${releasedCount}/${MAX_KEY_PAGES} so far).`);
+      return jobs;
+    };
+
+    const allJobs = [];
+    allJobs.push(...release(Object.entries(categoryMap).map(([type, url]) => ({ url, type }))));
+
     // Ensure key automotive categories (VDP, Service, Trade, Specials) are present
     const missingKeys = ["vdp", "service", "trade", "specials"].filter((k) => !categoryMap[k] && inScope(k));
 
-    if (missingKeys.length > 0) {
+    // [PERF] …but only when there is still room for one. This lookup renders a whole
+    // extra page in its own browser (measured 22.6s on a sitemap-less site) and the
+    // categories it finds are appended LAST — so once 6 pages are already released,
+    // everything it could discover would be cut by the 6-page cap anyway. Skipping it
+    // then changes no result; it only stops us paying for a page we would discard.
+    if (missingKeys.length > 0 && releasedCount < MAX_KEY_PAGES) {
       try {
         const targetSearchUrl = categoryMap["srp"] || baseUrl;
         const { browser: mkBrowser, $ } = await Puppeteer_Cheerio(targetSearchUrl, device, { auditId: currentAuditId });
@@ -425,68 +529,25 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
       }
     }
 
-    // Combine selected wanted key page URLs
-    const selectedList = Object.entries(categoryMap).map(([type, url]) => ({
-      url,
-      type,
-      label: PAGE_LABELS[type] || "Key Page",
-    }));
+    // Anything the missing-key lookup just added (it appends to categoryMap, so the
+    // dedupe in `release` skips everything already queued).
+    allJobs.push(...release(Object.entries(categoryMap).map(([type, url]) => ({ url, type }))));
 
     // If still under 6 pages, backfill from remaining non-generic discovered pages.
     // Skipped once the user restricted the page types — backfilling would quietly
-    // pull back in the very pages they unticked.
-    if (selectedList.length < 6 && !scopeSet) {
-      for (const item of classified) {
-        if (!selectedList.some((s) => s.url === item.url)) {
-          selectedList.push({
-            url: item.url,
-            type: item.type,
-            label: PAGE_LABELS[item.type] || "Key Page",
-          });
-          if (selectedList.length >= 6) break;
-        }
-      }
+    // pull back in the very pages they unticked. Deliberately LAST: backfill depends on
+    // how many real categories exist, so it can only be decided once discovery is done.
+    if (releasedCount < MAX_KEY_PAGES && !scopeSet) {
+      allJobs.push(...release(classified.map((item) => ({ url: item.url, type: item.type }))));
     }
 
-    const urlsToCrawl = selectedList.slice(0, 6);
-
-    if (!urlsToCrawl || urlsToCrawl.length === 0) {
+    if (allJobs.length === 0) {
       logger.info(`📍 [Stage 2a] No additional internal URLs found for ${baseUrl}`);
       return [];
     }
 
-    // Give every key page a child report id up front and ask the main thread to
-    // create an in-progress child report + a parent summary row for each — so the
-    // audit-summary matrix shows ALL pages (as "auditing…") while Stage 1 is still
-    // running, instead of appearing only once the first page's report lands.
-    const jobs = urlsToCrawl.map((item) => ({
-      childId: new mongoose.Types.ObjectId().toString(),
-      url: item.url,
-      type: item.type,
-      label: item.label,
-    }));
-
-    // Stage 1 died while we were discovering → don't register pages for a dead audit.
-    if (auditAborted) {
-      logger.info(`🔎 [Stage 2a] Discovery finished after Stage 1 failed — dropping ${jobs.length} key pages.`);
-      return [];
-    }
-
-    for (const j of jobs) {
-      parentPort.postMessage({
-        type: "childInit",
-        parentAuditId: currentAuditId,
-        child: { childId: j.childId, url: j.url, pageType: j.type, label: j.label, device },
-      });
-    }
-
-    postProgress({
-      stage2Progress: `Found ${jobs.length} key pages — queued for full audit`,
-      crawledPagesCount: jobs.length,
-    });
-
-    logger.info(`🔎 [Stage 2a] Discovered ${jobs.length} key pages for ${baseUrl} — queued, will audit once Stage 1 frees its browser.`);
-    return jobs;
+    logger.info(`🔎 [Stage 2a] Discovery complete for ${baseUrl} — ${allJobs.length} key page(s) released.`);
+    return allJobs;
   } catch (err) {
     logger.warn(`⚠️ [Stage 2a] Key-page discovery warning (non-fatal):`, err);
     return [];
@@ -499,13 +560,14 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
 // finalized by childDone) so the summary page can list every page, roll them into a
 // site score, and open each page's full report independently.
 //
-// Starts only after Stage 1 has closed its browser, so the 3 pool permits are free.
-async function auditKeyPages(jobs, currentAuditId, device) {
+// [PERF] No longer waits for Stage 1, and no longer waits for discovery to FINISH: the
+// slots below start as soon as the worker does and block on `keyPageQueue.next()` until
+// discovery releases a page. What actually limits parallelism is the global browser pool
+// — a slot that has a page but no free permit simply waits for one, which is precisely
+// the "audit it when a browser frees up" behaviour we want.
+async function auditKeyPages(currentAuditId, device) {
   try {
-    if (!jobs || jobs.length === 0) return [];
-
-    logger.info(`📍 [Stage 2b] Full-auditing ${jobs.length} key pages — one browser per page, 3 in parallel (global cap ${process.env.MAX_CONCURRENT_BROWSERS || 3})...`);
-    postProgress({ stage2Progress: `Full-auditing ${jobs.length} key pages (3 in parallel)` });
+    logger.info(`📍 [Stage 2b] Key-page auditor started — one browser per page, pulling pages as discovery finds them (global cap ${process.env.MAX_CONCURRENT_BROWSERS || 3})...`);
 
     // One browser per page, CONCURRENCY pages IN FLIGHT at all times (rolling pool).
     // The global browser pool caps live browsers at MAX_CONCURRENT_BROWSERS regardless,
@@ -518,10 +580,38 @@ async function auditKeyPages(jobs, currentAuditId, device) {
     // until the queue drains.
     const CONCURRENCY = 3;
     let completed = 0;
-    let nextJob = 0;              // shared cursor; safe — no await between read & bump
-    const results = new Array(jobs.length);
+    const results = [];
 
-    const runJob = async (j, index) => {
+    // [KEEP] — If this domain is behind a bot challenge (Cloudflare/Imperva/etc.), solve
+    // it ONCE and cache the clearance cookie, so all the Stage-2 key pages inject it and
+    // skip their own challenge. Without this, each key page re-runs the timing-flaky
+    // solve independently and some come back "Bot Protected" even though the homepage
+    // passed — leaving the site only partially crawled. No-op (one ~200ms fetch) when the
+    // site isn't protected, or instant when the Stage 1 warm-up already cached it.
+    //
+    // Probe a DEEP key page, not the homepage: Cloudflare commonly serves a cached
+    // homepage at HTTP 200 while challenging deep paths (SRP/VDP/finance). Gating the
+    // warm-up on the homepage would see 200, conclude "not protected", and skip — leaving
+    // the deep pages to fail. cf_clearance is domain-scoped, so clearing ONE deep page
+    // covers the whole domain (homepage included).
+    //
+    // This used to run between discovery and Stage 2b. Now that pages stream in, it runs
+    // once against the first batch and EVERY slot awaits it before its first audit, so no
+    // page can race ahead of the clearance.
+    let clearanceOnce = null;
+    const ensureClearanceForCrawl = (firstJob) => {
+      if (!clearanceOnce) {
+        const deepFirst = ["srp", "vdp", "finance", "trade", "specials", "service"];
+        // Whatever else is already queued is fair game for picking a deep probe.
+        const candidates = [firstJob, ...keyPageQueue.items];
+        const probe = candidates.find((j) => deepFirst.includes(j.type)) || firstJob;
+        clearanceOnce = ensureDomainClearance(probe.url, device)
+          .catch((e) => { logger.warn(`⚠️ [WAF] Clearance warm-up skipped: ${e?.message || e}`); });
+      }
+      return clearanceOnce;
+    };
+
+    const runJob = async (j) => {
       // Stream this page's every status/section update straight to its own child report.
       const emit = (patch) => parentPort.postMessage({ type: "childProgress", childId: j.childId, patch });
       const res = await auditOnePage({ url: j.url, device, pageType: j.type, auditId: j.childId, emit });
@@ -548,32 +638,33 @@ async function auditKeyPages(jobs, currentAuditId, device) {
       });
 
       completed++;
-      postProgress({ stage2Progress: `Full-audited ${completed}/${jobs.length} key pages` });
-      results[index] = { url: j.url, pageType: j.type, score: res.score ?? null, status: res.status };
+      // `keyPageQueue.total` grows as discovery releases more pages, so this reads
+      // "3/5" and later "4/6" rather than pretending the final count is known up front.
+      postProgress({ stage2Progress: `Full-audited ${completed}/${keyPageQueue.total} key pages` });
+      results.push({ url: j.url, pageType: j.type, score: res.score ?? null, status: res.status });
     };
 
-    // One pool slot: take the next page, audit it, repeat until the queue is empty.
-    // auditOnePage never throws, but the guard keeps a messaging failure from killing
-    // a slot (which would silently shrink the pool for the rest of the run).
+    // One pool slot: wait for a page, audit it, repeat until discovery closes the queue
+    // and it is drained. auditOnePage never throws, but the guard keeps a messaging
+    // failure from killing a slot (which would silently shrink the pool for the run).
     const poolSlot = async () => {
-      for (let index = nextJob++; index < jobs.length; index = nextJob++) {
+      for (;;) {
+        const job = await keyPageQueue.next();
+        if (!job) return;
         try {
-          await runJob(jobs[index], index);
+          await ensureClearanceForCrawl(job);
+          if (auditAborted) return;
+          await runJob(job);
         } catch (e) {
-          logger.warn(`⚠️ [Stage 2b] Key page failed outright (${jobs[index]?.url}): ${e?.message || e}`);
+          logger.warn(`⚠️ [Stage 2b] Key page failed outright (${job?.url}): ${e?.message || e}`);
         }
       }
     };
 
-    await Promise.all(
-      Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, () => poolSlot())
-    );
+    await Promise.all(Array.from({ length: CONCURRENCY }, () => poolSlot()));
 
-    // Drop any slot that died before recording a result, so the caller only sees pages
-    // that actually reported.
-    const finalResults = results.filter(Boolean);
-    logger.info(`✅ [Stage 2b] Completed full 8-pillar audits of ${finalResults.length} key pages.`);
-    return finalResults;
+    logger.info(`✅ [Stage 2b] Completed full 8-pillar audits of ${results.length} key pages.`);
+    return results;
   } catch (err) {
     logger.warn(`⚠️ [Stage 2b] Full-audit crawl warning (non-fatal):`, err);
     return [];
@@ -613,6 +704,17 @@ async function auditKeyPages(jobs, currentAuditId, device) {
       dealershipDetection: null,
     });
 
+    // ⚡ [PERF] Same trick for the page the user actually typed: start its PageSpeed call
+    // HERE, before the WAF warm-up and the Chrome launch, rather than inside the Technical
+    // pillar minutes later. Stage 1 was the one path still paying the full ~50–75s PSI wait
+    // serially (auditOnePage already overlapped it for key pages). Only fired when Technical
+    // Performance is actually part of this audit — a subset that excludes it must not burn
+    // an API call.
+    const runsTechnical = report === "All" || (requestedSections || []).includes("Technical Performance");
+    // takePsiPrefetch (not startPsiPrefetch) so the call is owned by this scope and never
+    // parked in the shared registry — nothing else audits the entered URL.
+    const stage1Psi = runsTechnical ? takePsiPrefetch(url, device) : null;
+
     // [ADD] — Pre-solve any bot challenge on the landing page BEFORE the main render, so
     // even Stage 1 injects a cached clearance and passes reliably. The full render path's
     // resource-blocking + reload solve loop is timing-flaky and sometimes marks the
@@ -621,6 +723,27 @@ async function auditKeyPages(jobs, currentAuditId, device) {
     // clearance for every page that follows. No-op (one ~200ms fetch) on unprotected sites.
     try { await ensureDomainClearance(url, device); }
     catch (e) { logger.warn(`⚠️ [WAF] Pre-Stage-1 clearance warm-up skipped: ${e?.message || e}`); }
+
+    // 🔎 [PERF] Kick off key-page DISCOVERY + the Stage 2b auditor HERE — before Stage 1
+    // even launches its browser. Discovery only ever needed the URL (it crawls the
+    // sitemap/links itself), yet it used to start after Stage 1's render, and Stage 2b
+    // started only once discovery had FINISHED. Measured on a sitemap-less site: the
+    // crawler had the full URL list 4.8s in, but the first key page could not begin for
+    // another ~23s. Now both run from the top and the browser pool decides the pacing.
+    //
+    // Only for a full audit — a single-section or subset run never crawls key pages, so
+    // starting discovery there would burn a browser and a PageSpeed call for nothing.
+    // Neither promise is awaited here; Stage 1 owns the critical path and both are
+    // collected after it. `.catch` keeps a failure from surfacing as an unhandled
+    // rejection (discoverKeyPages already swallows its own errors and returns []).
+    const runsKeyPages = report === "All";
+    const discoveryPromise = runsKeyPages
+      ? discoverKeyPages(url, currentAuditId, device)
+        .catch((e) => { logger.warn(`⚠️ [Stage 2a] Discovery rejected: ${e?.message || e}`); return []; })
+        // Whatever happened, no more pages are coming — let the Stage 2b slots finish.
+        .finally(() => keyPageQueue.close())
+      : null;
+    const keyPagesPromise = runsKeyPages ? auditKeyPages(currentAuditId, device) : null;
 
     const { browser: b, page, response, $, screenshot, isBotProtected } = await Puppeteer_Cheerio(url, device, { auditId: currentAuditId, onProgress: postProgress });
     browser = b;
@@ -631,6 +754,9 @@ async function auditKeyPages(jobs, currentAuditId, device) {
     // a top-level detached frame), complete audit gracefully with zero scores
     if (!page) {
       logger.warn(`[Worker] page is null after Puppeteer_Cheerio — frame detached during crawl. Completing audit with partial data.`);
+      // Discovery/Stage 2b are already running (they start before this render). Stop them
+      // here or they would keep registering "auditing…" child pages under a dead audit.
+      abortKeyPages();
       finish({
         status: "completed",
         error: "Audit completed with partial data — page context was lost due to a frame detachment event.",
@@ -643,6 +769,7 @@ async function auditKeyPages(jobs, currentAuditId, device) {
 
     if (isBotProtected) {
       logger.info(`🛡️ Marking report as Bot Protected: ${url}`);
+      abortKeyPages();
       finish({
         status: "completed",
         error: "Bot Protected: This site is using advanced bot detection (CAPTCHA/Cloudflare). Only partial analysis was possible.",
@@ -671,7 +798,7 @@ async function auditKeyPages(jobs, currentAuditId, device) {
       // field name + percentage so we can build the final patch + score rollup.
       const sectionRunners = {
         "Technical Performance": async () => {
-          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
+          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType, stage1Psi));
           postProgress({ technicalPerformance: r });
           return { field: "technicalPerformance", value: r, pct: r?.Percentage ?? null };
         },
@@ -776,7 +903,7 @@ async function auditKeyPages(jobs, currentAuditId, device) {
       // [NEW] — Each metric wrapped in safeMetric() to catch detached frame errors
       switch (report) {
         case "Technical Performance":
-          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType));
+          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType, stage1Psi));
           break;
         case "On Page SEO":
           result = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
@@ -841,22 +968,13 @@ async function auditKeyPages(jobs, currentAuditId, device) {
       return;
     }
 
-    // 🔎 Kick off key-page DISCOVERY now, so it overlaps with Stage 1's 8 pillars
-    // instead of starting only after they finish. Discovery is sitemap/link crawling
-    // — it never needs Stage 1's scores — so the key pages land in the audit-summary
-    // matrix (as "auditing…") while the first page is still being scored. Deliberately
-    // NOT awaited here; Stage 2b awaits it below once Stage 1 frees its browser.
-    // `.catch` keeps a discovery failure from surfacing as an unhandled rejection —
-    // discoverKeyPages already swallows its own errors and returns [].
-    const keyPagesPromise = discoverKeyPages(url, currentAuditId, device)
-      .catch((e) => { logger.warn(`⚠️ [Stage 2a] Discovery rejected: ${e?.message || e}`); return []; });
-
+    // (Discovery + the Stage 2b auditor were started before this render — see above.)
     logger.info(`⚡ [Stage 1] Running all 8 audit pillars concurrently in parallel against single browser instance for: ${url}`);
     logWorkerMetrics("Stage 1 Start");
 
     const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => {
-        const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType), TECH_TIMEOUT_MS, "Technical Performance"));
+        const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi), TECH_TIMEOUT_MS, "Technical Performance"));
         postProgress({ technicalPerformance: r });
         return r;
       })(),
@@ -937,34 +1055,13 @@ async function auditKeyPages(jobs, currentAuditId, device) {
       browser = null;
     }
 
-    logger.info(`🧠 [Stage 1] Completed for URL: ${url}. Triggering Stage 2 3-Puppeteer Parallel Crawl...`);
+    logger.info(`🧠 [Stage 1] Completed for URL: ${url}. Stage 2 key pages have been auditing alongside it...`);
 
-    // 🚀 Stage 2b: full audits of the key pages. Discovery (Stage 2a) has been running
-    // alongside Stage 1, so this usually resolves instantly — the pages are already
-    // discovered and sitting in the summary. Only a site whose discovery is slower than
-    // the whole of Stage 1 waits here at all.
-    const jobs = await keyPagesPromise;
-
-    // [ADD] — If this domain is behind a bot challenge (Cloudflare/Imperva/etc.), solve
-    // it ONCE now and cache the clearance cookie, so all the Stage-2 key pages inject it
-    // and skip their own challenge. Without this, each key page re-runs the timing-flaky
-    // solve independently and some come back "Bot Protected" even though the homepage
-    // passed — leaving the site only partially crawled. No-op (one ~200ms fetch) when the
-    // site isn't protected, or instant when Stage 1 already cached the clearance.
-    //
-    // Probe a DEEP key page, not the homepage: Cloudflare commonly serves a cached
-    // homepage at HTTP 200 while challenging deep paths (SRP/VDP/finance). Gating the
-    // warm-up on the homepage would see 200, conclude "not protected", and skip — leaving
-    // the deep pages to fail. cf_clearance is domain-scoped, so clearing ONE deep page
-    // covers the whole domain (homepage included). Prefer an SRP/VDP/finance/trade job.
-    if (jobs && jobs.length) {
-      const deepFirst = ["srp", "vdp", "finance", "trade", "specials", "service"];
-      const probeJob = jobs.find((j) => deepFirst.includes(j.type)) || jobs[0];
-      try { await ensureDomainClearance(probeJob.url, device); }
-      catch (e) { logger.warn(`⚠️ [WAF] Clearance warm-up skipped: ${e?.message || e}`); }
-    }
-
-    const stage2Results = await auditKeyPages(jobs, currentAuditId, device);
+    // 🚀 Stage 2b has been pulling pages since the top of the run; Stage 1 releasing its
+    // browser just widens the pool. Wait for discovery to name every page, then for the
+    // auditor to drain the queue.
+    await discoveryPromise;
+    const stage2Results = (await keyPagesPromise) || [];
 
     const finalTimeTaken = ((performance.now() - start) / 1000).toFixed(0);
 
@@ -983,9 +1080,9 @@ async function auditKeyPages(jobs, currentAuditId, device) {
     });
 
   } catch (err) {
-    // Tell any still-running background discovery to drop its findings before it
-    // registers key pages against an audit that just failed.
-    auditAborted = true;
+    // Tell any still-running background discovery to drop its findings — and the Stage 2b
+    // slots to stop pulling — before they register key pages under an audit that failed.
+    abortKeyPages();
     // Report the failure to the main thread; it owns persistence.
     parentPort.postMessage({ type: "error", auditId: currentAuditId, error: err.message });
 
@@ -993,5 +1090,8 @@ async function auditKeyPages(jobs, currentAuditId, device) {
     if (browser) {
       try { await browser.close(); } catch { }
     }
+    // Any PSI response prefetched for a page that never got audited (audit failed
+    // mid-flight, page skipped) is a multi-MB Lighthouse JSON pinned in memory — drop it.
+    clearPsiPrefetch();
   }
 })();

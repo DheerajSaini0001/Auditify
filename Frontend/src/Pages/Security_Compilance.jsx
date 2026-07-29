@@ -1088,7 +1088,15 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
         <ReportRestrictionWrapper>
           <div className="space-y-8">
             {(() => {
-              const visible = (keys) => keys.filter((k) => metric[k] && isVisibleForAudience(k, audienceMode));
+              // Params that don't apply to this page are hidden outright rather than
+              // rendered as an "N/A" card — e.g. XSS / SQLi_Exposure on a URL with no
+              // query params, or Finance_Form_Security on a non-finance page. They are
+              // already dropped from the score denominator server-side, so an N/A card
+              // is pure noise. `infoOnly` params still render (they carry a real
+              // reading, just uncounted) — only a true not_applicable is dropped.
+              const visible = (keys) => keys.filter(
+                (k) => metric[k] && metric[k].status !== "not_applicable" && isVisibleForAudience(k, audienceMode)
+              );
               const networkKeys = visible(["HTTPS", "SSL", "SSL_Expiry", "TLS_Version", "HSTS"]);
               const vulnKeys = visible(["Reputation", "SQLi_Exposure", "XSS"]);
               const accessKeys = visible(["Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"]);

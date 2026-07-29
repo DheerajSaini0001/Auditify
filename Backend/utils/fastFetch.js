@@ -1,4 +1,4 @@
-import axios from "axios";
+import { guardedGet } from "./wafGuard.js";
 
 // Error codes that mean the TLS/SSL handshake itself failed — the server
 // never got far enough to send an HTTP response. This is a common real-world
@@ -20,7 +20,13 @@ const TLS_HANDSHAKE_ERROR_CODES = new Set([
 ]);
 
 async function rawGet(url, timeout) {
-  const res = await axios.get(url, {
+  // [CHANGED] — goes through the WAF guard (utils/wafGuard.js) instead of raw
+  // axios: browser-shaped headers, the browser's own clearance cookies, per-host
+  // pacing, and a hard stop while a host is blocking us. A curl-shaped GET at a
+  // Cloudflare-fronted dealer site is answered with a 403 block page every time,
+  // and enough of those escalate into an IP block that then blinds the real page
+  // render — the "Bot Protected" preview on a site we can actually screenshot.
+  const res = await guardedGet(url, {
     timeout,
     maxRedirects: 5,
     // Treat any status as resolved — a 403/503 block page is still useful
@@ -29,14 +35,6 @@ async function rawGet(url, timeout) {
     responseType: "text",
     // Cap the body so a multi-MB page can't stall the gate.
     maxContentLength: 5 * 1024 * 1024,
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
-      "Accept":
-        "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "Accept-Language": "en-US,en;q=0.9",
-      "Referer": "https://www.google.com/",
-    },
   });
 
   const contentType = String(res.headers?.["content-type"] || "").toLowerCase();
@@ -48,7 +46,12 @@ async function rawGet(url, timeout) {
         : ""
       : "";
 
-  return { html, status: res.status || 200, errorCode: null };
+  // The guard refused to send (host is actively blocking browserless requests).
+  // Report it as "server is there, but blocked" so callers stay on the fail-open
+  // path and escalate to the browser instead of treating it as a dead domain.
+  if (res.wafSkipped) return { html: "", status: 403, errorCode: "WAF_COOLDOWN" };
+
+  return { html, status: res.status || 200, errorCode: res.wafBlocked ? "WAF_BLOCKED" : null };
 }
 
 /**

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { guardedGet } from '../../utils/wafGuard.js';
 import * as cheerio from 'cheerio';
 import pLimit from 'p-limit';
 
@@ -51,7 +51,7 @@ const wordCount = ($) => {
 };
 
 const fetchHtml = async (u) => {
-    const res = await axios.get(u, {
+    const res = await guardedGet(u, {
         timeout: CRAWL_TIMEOUT,
         maxRedirects: 4,
         maxContentLength: MAX_BYTES,

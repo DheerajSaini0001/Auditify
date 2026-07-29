@@ -23,6 +23,12 @@ export default async function googleAPI(url, device) {
   // over a hiccup. A 400 (bad URL) is permanent, so we don't burn retries on it.
   const MAX_ATTEMPTS = 3;
   const RETRY_DELAY_MS = 1500;
+  // [FIX] Per-attempt deadline. `fetch` had no timeout, so a PageSpeed request that
+  // hung could burn the whole retry budget on one attempt — and 3 unbounded attempts
+  // blow straight past PILLAR_TECH_TIMEOUT_MS (150s), which then kills Technical
+  // wholesale instead of letting a retry succeed. 45s × 3 + 2 backoffs = 138s, so the
+  // full ladder now fits INSIDE the pillar timeout with headroom.
+  const ATTEMPT_TIMEOUT_MS = parseInt(process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '45000', 10);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // Consistent [PageSpeed] tag on every line so the whole retry→outcome trail is one
@@ -31,8 +37,10 @@ export default async function googleAPI(url, device) {
   const tag = `[PageSpeed] ${device}`;
   let lastData = {};
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
     try {
-      const response = await fetch(endpoint);
+      const response = await fetch(endpoint, { signal: controller.signal });
       const data = await response.json();
       lastData = data;
 
@@ -54,14 +62,19 @@ export default async function googleAPI(url, device) {
         return data;
       }
     } catch (error) {
-      // Network/transport error — retryable.
+      // Network/transport error — retryable. An AbortError here is our own
+      // per-attempt deadline firing, not a server fault, so name it as such.
+      const isTimeout = error.name === 'AbortError';
+      const what = isTimeout ? `timed out after ${ATTEMPT_TIMEOUT_MS}ms` : `network: ${error.message}`;
       const canRetry = attempt < MAX_ATTEMPTS;
       if (canRetry) {
-        logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} network error (${error.message}) — retrying in ${RETRY_DELAY_MS}ms — ${url}`);
+        logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} ${what} — retrying in ${RETRY_DELAY_MS}ms — ${url}`);
       } else {
-        logger.error(`${tag} ✗ giving up after ${attempt} attempt(s) (network: ${error.message}) — Technical will be "Not Run" — ${url}`);
+        logger.error(`${tag} ✗ giving up after ${attempt} attempt(s) (${what}) — Technical will be "Not Run" — ${url}`);
         return {};
       }
+    } finally {
+      clearTimeout(timer);
     }
     await sleep(RETRY_DELAY_MS);
   }

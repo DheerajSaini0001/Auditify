@@ -1,4 +1,4 @@
-import axios from "axios";
+import { guardedGet, guardedHead } from "./wafGuard.js";
 import * as cheerio from "cheerio";
 import { parseStringPromise } from "xml2js";
 import { validateUrlSafety } from "./ssrfGuard.js";
@@ -32,18 +32,20 @@ import { classifyPageType, classifyCorporatePageType } from "./pageClassifier.js
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36";
 
+// [CHANGED] — Discovery is the audit's single biggest source of browserless
+// requests (sitemap candidates, robots.txt, then a HEAD/GET status check per
+// candidate page). On a WAF-fronted site each one is answered with a 403 block
+// page, and that volume is what escalates into the IP-level block that later
+// makes the real page render come back blank — i.e. what surfaced in the UI as
+// "Bot Protected". These now go through the WAF guard (browser-shaped headers,
+// the browser's clearance cookies, per-host pacing, cooldown when blocked); the
+// header set lives there, so only the transport options remain here.
 const AXIOS_OPTS = {
   timeout: 12000,
   maxRedirects: 5,
   validateStatus: () => true, // a 403/503 block page is still useful signal
   responseType: "text",
   maxContentLength: 12 * 1024 * 1024,
-  headers: {
-    "User-Agent": UA,
-    Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    Referer: "https://www.google.com/",
-  },
 };
 
 // Bounds so a giant sitemap or a crawl trap can't stall / blow up memory.
@@ -272,7 +274,7 @@ async function safeGet(url) {
   const safe = await validateUrlSafety(url);
   if (!safe.ok) return { ok: false, blocked: true };
   try {
-    const res = await axios.get(url, AXIOS_OPTS);
+    const res = await guardedGet(url, AXIOS_OPTS);
     const data = typeof res.data === "string" ? res.data : "";
     return {
       ok: res.status >= 200 && res.status < 400,
@@ -376,15 +378,15 @@ async function checkStatus(url) {
   if (!safe.ok) return 0;
   const opts = { ...AXIOS_OPTS, timeout: 7000 };
   try {
-    const res = await axios.head(url, opts);
+    const res = await guardedHead(url, opts);
     if (res.status === 405 || res.status === 501) {
-      const g = await axios.get(url, opts); // server rejects HEAD → confirm with GET
+      const g = await guardedGet(url, opts); // server rejects HEAD → confirm with GET
       return g.status;
     }
     return res.status;
   } catch {
     try {
-      const g = await axios.get(url, opts);
+      const g = await guardedGet(url, opts);
       return g.status;
     } catch {
       return 0;

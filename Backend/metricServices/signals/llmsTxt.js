@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { guardedGet } from '../../utils/wafGuard.js';
 import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
@@ -61,7 +61,7 @@ const analyzeLlmsTxt = async (url, $ = null) => {
         let status = 0;
         let body = '';
         try {
-            const resp = await axios.get(llmsUrl, {
+            const resp = await guardedGet(llmsUrl, {
                 timeout: 6000,
                 maxRedirects: 3,
                 responseType: 'text',

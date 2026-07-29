@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { guardedGet } from '../../utils/wafGuard.js';
 import { parseStringPromise } from 'xml2js';
 import * as cheerio from 'cheerio';
 import pLimit from 'p-limit';
@@ -50,7 +50,7 @@ const computeSampleSize = (submitted) =>
     Math.min(submitted, Math.max(MIN_SAMPLE, Math.min(MAX_SAMPLE, Math.round(submitted * SAMPLE_FRACTION))));
 
 const fetchUrl = async (u, timeout = SITEMAP_TIMEOUT) => {
-    const res = await axios.get(u, {
+    const res = await guardedGet(u, {
         timeout,
         maxRedirects: 5,
         maxContentLength: MAX_BYTES,
@@ -77,7 +77,7 @@ const isSameSite = (u, host) => {
 // Content-Encoding: gzip), which axios does NOT auto-decompress — so reading them
 // as text yields binary garbage that xml2js can't parse (→ 0 URLs found).
 const fetchSitemapText = async (u, timeout = SITEMAP_TIMEOUT) => {
-    const res = await axios.get(u, {
+    const res = await guardedGet(u, {
         timeout,
         maxRedirects: 5,
         maxContentLength: MAX_BYTES,

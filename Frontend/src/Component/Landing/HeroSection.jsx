@@ -15,10 +15,20 @@ import { useData } from '../../context/DataContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
-// In dev, guests skip the email-verification modal and run straight from the URL.
-// The backend mirrors this (guestAuditGate bypasses when NODE_ENV !== 'production').
-// Production builds set import.meta.env.DEV = false, so the gate stays on there.
-const SKIP_EMAIL_VERIFY = import.meta.env.DEV;
+// Guests verify their email with an OTP before an audit runs — the SAME flow in
+// every environment, so what you test locally is what ships.
+//
+// This used to be `import.meta.env.DEV`, i.e. the modal was silently skipped on
+// localhost. That didn't remove the gate, it just moved it: the backend still
+// answered the audit request with 401 EMAIL_VERIFICATION_REQUIRED and the modal
+// popped up AFTER a wasted round-trip (and only because of the error-watching
+// effect below) — so dev exercised a different, worse path than production.
+//
+// The bypass is now explicit and opt-in: set VITE_SKIP_EMAIL_VERIFY=true in
+// Frontend/.env only if you deliberately want to skip verification locally, and
+// pair it with SKIP_GUEST_EMAIL_GATE=true on the backend or the audit call will
+// simply be rejected.
+const SKIP_EMAIL_VERIFY = import.meta.env.VITE_SKIP_EMAIL_VERIFY === "true";
 
 /* ─────────────────────────────────────────
    Fixed dealership page-type catalog (Screen 01).
@@ -480,7 +490,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     // Step 1 — "Run Audit": validate, gate guests behind email verification, then run audit.
     const beginFlow = async (token, rawUrl) => {
         const urlToScan = normalizeUrl(rawUrl ?? url);
-        auditTokenRef.current = token || null;
+        // A returning guest arrives here with token === null (their grant is already
+        // stored from an earlier verification this session). fetchData replays the
+        // stored grant on its own, but the raw batch calls below — per-page /audit and
+        // /merge — read this ref, so without the fallback they'd post auditToken:null
+        // and get 401'd for a guest who is in fact verified.
+        auditTokenRef.current = token || getValidGuestGrant() || null;
         setPhase('detecting');
         setLocalError(null);
 

@@ -1,0 +1,11 @@
+node_modules
+.env
+.env.*
+logs
+sessions
+chrome-cache
+*.log
+bypass_screenshot.jpg
+start-mongo.ps1
+Dockerfile
+.dockerignore

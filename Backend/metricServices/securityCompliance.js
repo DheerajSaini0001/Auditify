@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import fetch from "node-fetch";
 import { URL } from "url";
 import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
+import { BROWSER_HEADERS, isWafCoolingDown } from "../utils/wafGuard.js";
 import configService from "../services/configService.js";
 import { classifyPageType } from "../utils/pageClassifier.js";
 
@@ -638,7 +639,7 @@ async function checkVirusTotal(domain) {
 
 // SQL Injection
 async function checkSQLiExposure(urlString, options = {}) {
-  const { timeout = 15000, lengthDiffThreshold = 0.25 } = options;
+  const { timeout = 6000, lengthDiffThreshold = 0.25 } = options;
 
   const payloads = [
     `' OR '1'='1`,
@@ -671,7 +672,33 @@ async function checkSQLiExposure(urlString, options = {}) {
   }
 
   const url = new URL(urlString);
+  const testParams = Array.from(url.searchParams.keys());
 
+  // [PERF] Gate on a REAL injectable surface. This used to fall back to
+  // synthesised ["q","id","search"] params when the URL had none — which is the
+  // usual case for a homepage/marketing page. The app never reads those params,
+  // so the server returns the identical page and no sqlErrorPattern can ever
+  // match; the ONLY branch that could fire was the 25% length-diff heuristic,
+  // which rotating banners / live inventory counts trip on their own. That cost
+  // 19 sequential full-page GETs (15s timeout each) to manufacture a false
+  // positive. N/A drops out of the denominator per rule 6 — it does not score 0.
+  if (!testParams.length) {
+    return {
+      score: null,
+      status: "not_applicable",
+      infoOnly: true,
+      confidence: "heuristic",
+      details: "No query parameters on this URL — there is no injectable surface to test",
+      meta: { testedParams: [], payloadCount: 0, reason: "no-query-params" },
+      analysis: null
+    };
+  }
+
+  // NOTE: deliberately raw fetch, NOT utils/wafGuard.js. These requests carry SQL
+  // payloads in the query string, so a WAF answering 403 is the CORRECT outcome —
+  // routing them through guardedGet would call noteWafBlock() and park the host in
+  // a shared cooldown, starving page discovery / llms.txt / index coverage of
+  // their legitimate probes.
   async function fetchBody(u) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -694,62 +721,70 @@ async function checkSQLiExposure(urlString, options = {}) {
   const baselineText = baseline.text || "";
   const baselineLength = baselineText.length || 0;
 
-  // Identify parameters to test
-  const params = Array.from(url.searchParams.keys());
-  const testParams = params.length ? params : ["q", "id", "search"]; // added generic params
-
+  // [PERF] Probes fire concurrently instead of in a sequential double loop, so
+  // wall time is one round trip rather than params × payloads of them.
+  const probes = [];
   for (const param of testParams) {
-    for (const p of payloads) {
-      const testUrl = new URL(url);
-      testUrl.searchParams.set(param, p);
+    for (const p of payloads) probes.push({ param, payload: p });
+  }
 
-      const res = await fetchBody(testUrl);
-      const body = res.text || "";
-      const length = body.length || 0;
+  const findings = await Promise.all(probes.map(async ({ param, payload: p }) => {
+    const testUrl = new URL(url);
+    testUrl.searchParams.set(param, p);
 
-      // Check for SQL error messages in response
-      if (looksLikeSQLError(body)) {
+    const res = await fetchBody(testUrl);
+    const body = res.text || "";
+    const length = body.length || 0;
+
+    // Check for SQL error messages in response
+    if (looksLikeSQLError(body)) {
+      return {
+        score: 0,
+        status: "fail",
+        confidence: "heuristic",
+        details: `Possible SQL injection surface — database error echoed for payload: ${p}`,
+        meta: {
+          payload: p,
+          param: param,
+          indicator: "sql-error-message"
+        },
+        analysis: {
+          cause: "The application echoed a database error message in response to an injected payload — a strong surface indicator of SQL injection (not a confirmed exploit).",
+          recommendation: "Ensure all user inputs are sanitized, use parameterized queries (prepared statements), and never expose raw database errors to clients."
+        }
+      };
+    }
+
+    // Check for significant content length difference (heuristic for blind SQLi)
+    if (baselineLength > 0 && length > 0) {
+      const diff = Math.abs(length - baselineLength) / baselineLength;
+      if (diff >= lengthDiffThreshold && res.status >= 200 && res.status < 400) {
         return {
-          score: 0,
-          status: "fail",
+          score: 40,
+          status: "warning",
           confidence: "heuristic",
-          details: `Possible SQL injection surface — database error echoed for payload: ${p}`,
+          details: `Response length changed notably with payload: ${p} (weak blind-SQLi surface indicator)`,
           meta: {
             payload: p,
             param: param,
-            indicator: "sql-error-message"
+            diff: diff,
+            indicator: "response-length-diff"
           },
           analysis: {
-            cause: "The application echoed a database error message in response to an injected payload — a strong surface indicator of SQL injection (not a confirmed exploit).",
-            recommendation: "Ensure all user inputs are sanitized, use parameterized queries (prepared statements), and never expose raw database errors to clients."
+            cause: "Response length changed significantly with an injected payload. This is a weak surface indicator of possible blind SQL injection — not a confirmed vulnerability (content can also vary for benign reasons).",
+            recommendation: "Verify the endpoint with manual testing; ensure the application handles invalid input gracefully and uses parameterized queries."
           }
         };
       }
-
-      // Check for significant content length difference (heuristic for blind SQLi)
-      if (baselineLength > 0 && length > 0) {
-        const diff = Math.abs(length - baselineLength) / baselineLength;
-        if (diff >= lengthDiffThreshold && res.status >= 200 && res.status < 400) {
-          return {
-            score: 40,
-            status: "warning",
-            confidence: "heuristic",
-            details: `Response length changed notably with payload: ${p} (weak blind-SQLi surface indicator)`,
-            meta: {
-              payload: p,
-              param: param,
-              diff: diff,
-              indicator: "response-length-diff"
-            },
-            analysis: {
-              cause: "Response length changed significantly with an injected payload. This is a weak surface indicator of possible blind SQL injection — not a confirmed vulnerability (content can also vary for benign reasons).",
-              recommendation: "Verify the endpoint with manual testing; ensure the application handles invalid input gracefully and uses parameterized queries."
-            }
-          };
-        }
-      }
     }
-  }
+
+    return null;
+  }));
+
+  // Same precedence the old early-return loop had: a hard SQL-error finding wins
+  // over the weak length-diff one.
+  const hit = findings.find((f) => f && f.status === "fail") || findings.find(Boolean);
+  if (hit) return hit;
 
   return {
     score: 100,
@@ -769,6 +804,28 @@ async function checkXSS(url, browser) {
   let page = null;
   let xssTriggered = false;
 
+  // [PERF] Same gate as checkSQLiExposure — a page that reads no query parameters
+  // cannot reflect one, so appending ?xss_test=<payload> to a paramless marketing
+  // page spent a whole browser tab (goto 30s + challenge wait) to prove nothing.
+  // The tab is the expensive part, so this must be checked BEFORE newPage().
+  let testUrl;
+  try {
+    testUrl = new URL(url);
+  } catch {
+    return { score: null, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "Invalid URL for XSS check", meta: {}, analysis: null };
+  }
+  if (!Array.from(testUrl.searchParams.keys()).length) {
+    return {
+      score: null,
+      status: "not_applicable",
+      infoOnly: true,
+      confidence: "heuristic",
+      details: "No query parameters on this URL — there is no reflection surface to test",
+      meta: { payload, reason: "no-query-params" },
+      analysis: null
+    };
+  }
+
   try {
     page = await browser.newPage();
 
@@ -780,14 +837,15 @@ async function checkXSS(url, browser) {
       await dialog.dismiss();
     });
 
-    const testUrl = new URL(url);
     testUrl.searchParams.set("xss_test", payload);
 
     // Navigate with a reasonable timeout
-    await page.goto(testUrl.toString(), { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.goto(testUrl.toString(), { waitUntil: "domcontentloaded", timeout: 15000 });
 
-    // Handle bot verification if it appears during XSS test
-    await waitForChallengeResolution(page, 20000);
+    // Handle bot verification if it appears during XSS test. [PERF] 20s → 8s: the
+    // shared audit page already solved this host's challenge before any pillar ran,
+    // so this tab either inherits the clearance quickly or is not getting it at all.
+    await waitForChallengeResolution(page, 8000);
 
     // Also check for raw payload reflection combined with execution status
     const content = await page.content();
@@ -1357,10 +1415,14 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
     return { score: 100, status: "error", details: "Invalid Base URL for Admin Check", meta: {}, analysis: null };
   }
 
+  // [PERF] 13 paths → 6. Thirteen simultaneous 404-hunting GETs from one IP is a
+  // textbook scanner fingerprint and was a main trigger for the self-inflicted WAF
+  // blocks. These six cover the platforms that actually ship an exposed panel;
+  // the dropped ones (/cms, /backend, /controlpanel, /sqladmin/, /dashboard,
+  // /login.php, /admin/login) are either soft-404 noise or already implied by /admin.
   const adminPaths = [
-    "/admin", "/admin/login", "/administrator", "/wp-admin/", "/wp-login.php",
-    "/cms", "/backend", "/controlpanel", "/admin.php", "/phpmyadmin/",
-    "/sqladmin/", "/dashboard", "/login.php"
+    "/admin", "/administrator", "/admin.php",
+    "/wp-admin/", "/wp-login.php", "/phpmyadmin/"
   ];
 
   const adminKeywords = [
@@ -1368,13 +1430,32 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
     "admin panel", "control panel", "dashboard", "administration", "admin area"
   ];
 
+  // [PERF] Don't add to the pile while the host is already refusing browserless
+  // traffic — every probe sent during a cooldown is a guaranteed 403 that deepens
+  // the IP-level block the other pillars are waiting out. (Raw fetch, not
+  // guardedGet: a 403 on /phpmyadmin is the correct answer, not a WAF verdict, so
+  // it must not call noteWafBlock() and park the host in a shared cooldown.)
+  if (isWafCoolingDown(origin)) {
+    return {
+      score: null,
+      status: "not_applicable",
+      infoOnly: true,
+      confidence: "heuristic",
+      details: "Skipped — the host is currently rate-limiting automated requests",
+      meta: { reason: "waf-cooldown" },
+      analysis: null
+    };
+  }
+
   const checkPath = async (path) => {
     const tryUrl = new URL(path, origin).toString();
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
 
     try {
-      const res = await fetch(tryUrl, { method: 'GET', redirect: "follow", signal: controller.signal });
+      // Browser-shaped headers: a curl-shaped UA is the single easiest thing for a
+      // WAF to score as automation (see utils/wafGuard.js).
+      const res = await fetch(tryUrl, { method: 'GET', redirect: "follow", signal: controller.signal, headers: BROWSER_HEADERS });
 
       // 401/403 means it exists but is protected -> Pass
       if (res.status === 401 || res.status === 403) return null;

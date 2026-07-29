@@ -4,6 +4,8 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
+import MongoStore from "connect-mongo";
+import mongoose from "mongoose";
 import logger from "./utils/logger.js";
 import passport from "passport";
 
@@ -115,14 +117,35 @@ const startServer = async () => {
   app.use(trackingMiddleware);
 
   // ── 7. Session ──
+  // [FIX] Sessions live in Mongo, not in process memory. The default MemoryStore kept
+  // every session in one process's RAM, so an App Service restart / recycle / scale-out
+  // silently wiped every pending CAPTCHA — the user got "CAPTCHA session expired" through
+  // no fault of their own, and express-session itself warns MemoryStore is not for
+  // production (it also leaks). Reuses the mongoose connection opened by connectDB()
+  // above rather than dialing a second pool.
   app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      client: mongoose.connection.getClient(),
+      collectionName: "sessions",
+      // Mongo drops the document itself once the session's own maxAge elapses.
+      ttl: 24 * 60 * 60,
+      // Don't rewrite the doc on every single request — only once per 24h of activity.
+      touchAfter: 24 * 3600,
+    }),
     cookie: {
       secure: IS_PROD, // HTTPS-only in production
       httpOnly: true,
-      sameSite: "lax",
+      // [FIX] In production the frontend (dealersiteaudit.com) and this API
+      // (…azurewebsites.net) are different SITES, so "lax" meant the browser never
+      // attached connect.sid to a cross-site fetch — every request landed on a brand-new
+      // empty session and the CAPTCHA lookup always missed. "none" is what allows a
+      // cross-site XHR to carry the cookie, and it is only valid alongside Secure (which
+      // IS_PROD already sets). Dev stays on "lax" because localhost is plain http, where
+      // Secure — and therefore "none" — would be rejected by the browser.
+      sameSite: IS_PROD ? "none" : "lax",
       maxAge: 24 * 60 * 60 * 1000
     }
   }));

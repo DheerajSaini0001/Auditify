@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { guardedGet, guardedHead } from '../../utils/wafGuard.js';
 import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
@@ -55,7 +55,7 @@ const OPENAI_BOTS = ['GPTBot', 'ChatGPT-User', 'OAI-SearchBot'];
 // clean 404 (which just means "no robots.txt", i.e. everything allowed).
 const fetchRobots = async (robotsUrl) => {
     try {
-        const resp = await axios.get(robotsUrl, {
+        const resp = await guardedGet(robotsUrl, {
             timeout: 6000,
             maxRedirects: 3,
             responseType: 'text',
@@ -240,7 +240,7 @@ const analyzeBotAccess = async (url, $) => {
 
         let xRobotsNoindex = false;
         try {
-            const head = await axios.head(url, { timeout: 5000, maxRedirects: 3, headers: { 'User-Agent': UA }, validateStatus: () => true });
+            const head = await guardedHead(url, { timeout: 5000, maxRedirects: 3, headers: { 'User-Agent': UA }, validateStatus: () => true });
             const xr = String(head.headers['x-robots-tag'] || '').toLowerCase();
             if (xr.includes('noindex') || xr.includes('none')) xRobotsNoindex = true;
         } catch { /* HEAD unsupported/blocked — rely on meta only */ }

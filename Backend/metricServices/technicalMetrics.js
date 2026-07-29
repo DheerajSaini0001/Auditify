@@ -2342,12 +2342,22 @@ async function evaluateSoldVehicleHandling(url, pageType) {
 //     Mobile Usability, Inventory/Service page-load, Rendering/Lazy/Third-party/JS)
 //     are no longer computed or returned — they double-counted CWV or were retired.
 //   • §0.5 confidence flag surfaced per-CWV and as a section-level summary.
-export default async function technicalMetrics(url, device, page, response, browser, pageType = null) {
+export default async function technicalMetrics(url, device, page, response, browser, pageType = null, psiPrefetch = null) {
 
   // Only call PageSpeed for the user-selected device strategy (1 API call, not 2).
   const wantDevice = String(device || "mobile").toLowerCase() === "desktop" ? "desktop" : "mobile";
 
-  const data = await googleAPI(url, wantDevice);
+  // [PERF] PageSpeed needs nothing but the URL, yet this pillar only starts after the
+  // browser has launched, rendered and cleared bot protection. The worker can therefore
+  // fire the call up-front and hand us the in-flight promise (see auditOnePage), which
+  // buys back the whole page-setup window — ~2s on a clean site, 10–30s on one with a
+  // challenge. `device` is carried alongside so a strategy mismatch falls back to a
+  // fresh call rather than silently scoring the wrong viewport.
+  const data = await (
+    psiPrefetch?.device === wantDevice && psiPrefetch?.promise
+      ? psiPrefetch.promise
+      : googleAPI(url, wantDevice)
+  );
   const audits = data?.lighthouseResult?.audits || {};
   const cruxMetrics = data?.loadingExperience?.metrics || {};
 

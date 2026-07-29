@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft } from "lucide-react";
+import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../Component/CircularProgress";
+import LivePreview from "../Component/LivePreview";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
@@ -77,56 +78,115 @@ const gradeFor = (score) => {
     return s >= 90 ? "A+" : s >= 80 ? "A" : s >= 70 ? "B" : s >= 60 ? "C" : s >= 50 ? "D" : "F";
 };
 
-// Skeleton shown while the per-page reports are still auditing (or loading). The
-// page polls in the background and swaps this for the real cards/heatmap the
-// moment any page score lands — so data appears without a manual refresh.
-const Bar = ({ w = "w-24", h = "h-3", darkMode }) => (
-    <div className={`${w} ${h} rounded-md animate-pulse ${darkMode ? "bg-slate-800/70" : "bg-slate-200/80"}`} />
-);
-const SummaryShimmer = ({ darkMode }) => {
+// Audit phases → progress checkpoint + plain-language copy. Same vocabulary the
+// single-report view uses (Dashboard2), driven by the report's raw `status`, so
+// the two screens narrate the run identically.
+const PHASES = {
+    launching: { base: 8, title: "Launching browser", desc: "Spinning up a secure headless browser to load your website." },
+    navigating: { base: 18, title: "Opening your website", desc: "Navigating to the target URL." },
+    waiting_for_render: { base: 30, title: "Rendering the page", desc: "Waiting for the page and its dynamic content to fully load." },
+    screenshot_ready: { base: 40, title: "Capturing the page", desc: "Page loaded — capturing a snapshot and crawling the content." },
+    extracting_data: { base: 45, title: "Analyzing your site", desc: "Extracting page data and scoring the report sections." },
+};
+
+const isTerminalStatus = (s) => s === "completed" || s === "success" || s === "failed";
+
+// Shown while the per-page reports are still auditing, INSTEAD of a full-page
+// shimmer. A skeleton of a heatmap that doesn't exist yet tells the user nothing
+// (and on a slow site it reads as a broken screen) — the live screenshot of the
+// page being rendered, the current step, and the page-by-page checklist are the
+// same information the single-report view already streams, so the summary shows
+// that until the first real scores land.
+const SummaryInProgress = ({ darkMode, leadReport, device, rows, siteUrl }) => {
     const cardClass = darkMode ? "bg-slate-900 border border-slate-800" : "bg-card border border-line";
-    const block = darkMode ? "bg-slate-800/70" : "bg-slate-200/80";
+    const rawStatus = leadReport?.status;
+
+    const done = rows.filter((r) => !r.loading).length;
+    const total = rows.length || 1;
+    const phase = PHASES[rawStatus];
+    const stage = rawStatus === "failed"
+        ? { progress: 100, title: "Audit failed", desc: leadReport?.error || "Something went wrong while auditing this site." }
+        : done > 0
+            // Once pages start finishing, the bar tracks page completion (45% → 99%).
+            ? { progress: Math.min(99, 45 + Math.round((done / total) * 55)), title: "Auditing key pages", desc: `${done} of ${total} page types scored — the heatmap fills in as each one lands.` }
+            : phase
+                ? { progress: phase.base, title: phase.title, desc: phase.desc }
+                : { progress: 8, title: "Auditing your site", desc: "Running checks across every report section." };
+
+    // LivePreview reads a normalized status: while the run is live we want its
+    // scan animation, not its "preview unavailable" terminal state.
+    const previewData = {
+        screenshot: leadReport?.screenshot || null,
+        screenshotUrl: leadReport?.screenshotUrl || null,
+        device: leadReport?.device || device || "Desktop",
+        isBotProtected: leadReport?.isBotProtected,
+        status: isTerminalStatus(rawStatus) ? rawStatus : "inprogress",
+    };
+
     return (
-        <div className="space-y-6" aria-busy="true" aria-label="Loading audit summary">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className={`rounded-3xl p-7 ${cardClass}`}>
-                    <Bar w="w-24" darkMode={darkMode} />
-                    <div className="flex items-center gap-6 mt-6">
-                        <div className={`w-[130px] h-[130px] rounded-full animate-pulse ${block}`} />
-                        <div className="space-y-3">
-                            <Bar w="w-16" h="h-10" darkMode={darkMode} />
-                            <Bar w="w-40" darkMode={darkMode} />
-                        </div>
-                    </div>
+        <div className="space-y-6" aria-busy="true" aria-label="Audit in progress">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Live screenshot of the page currently being rendered */}
+                <div className={`rounded-3xl p-6 sm:p-7 ${cardClass}`}>
+                    <LivePreview data={previewData} variant="card" />
                 </div>
-                <div className={`rounded-3xl p-7 lg:col-span-2 ${cardClass}`}>
-                    <Bar w="w-32" darkMode={darkMode} />
-                    <div className="grid grid-cols-3 gap-4 mt-4">
-                        {[0, 1, 2].map((i) => (
-                            <div key={i} className={`rounded-2xl p-5 ${darkMode ? "bg-slate-800/40" : "bg-cardsoft"}`}>
-                                <Bar w="w-20" darkMode={darkMode} />
-                                <div className="mt-3"><Bar w="w-12" h="h-8" darkMode={darkMode} /></div>
-                            </div>
-                        ))}
+
+                {/* Current step + per-page checklist */}
+                <div className={`rounded-3xl p-6 sm:p-7 flex flex-col ${cardClass}`}>
+                    <div className="flex items-center justify-between">
+                        <span className={`text-[10px] font-semibold uppercase tracking-widest ${darkMode ? "text-slate-500" : "text-faint"}`}>
+                            Audit in progress
+                        </span>
+                        <span className={`text-sm font-bold ${darkMode ? "text-white" : "text-ink"}`}>{stage.progress}%</span>
                     </div>
-                </div>
-            </div>
-            <div className={`rounded-3xl p-6 sm:p-8 ${cardClass}`}>
-                <Bar w="w-48" h="h-5" darkMode={darkMode} />
-                <div className="mt-2"><Bar w="w-72" darkMode={darkMode} /></div>
-                <div className="space-y-2 mt-6">
-                    {[0, 1, 2, 3, 4].map((r) => (
-                        <div key={r} className="flex items-center gap-1.5">
-                            <div className="mr-2"><Bar w="w-24" h="h-4" darkMode={darkMode} /></div>
-                            {[...Array(9)].map((_, c) => (
-                                <div key={c} className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl animate-pulse ${block}`} />
+                    <div className={`mt-2 h-2 w-full rounded-full overflow-hidden ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}>
+                        <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#ea580c] transition-all duration-700"
+                            style={{ width: `${stage.progress}%` }}
+                        />
+                    </div>
+
+                    <div className="mt-5">
+                        <h3 className={`text-lg font-bold ${darkMode ? "text-white" : "text-ink"}`}>{stage.title}</h3>
+                        <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>{stage.desc}</p>
+                    </div>
+
+                    <div className={`mt-5 pt-5 border-t flex-1 ${darkMode ? "border-slate-800" : "border-line"}`}>
+                        <span className={`block text-[10px] font-semibold uppercase tracking-widest mb-3 ${darkMode ? "text-slate-500" : "text-faint"}`}>
+                            Pages ({done}/{total})
+                        </span>
+                        <ul className="space-y-2 max-h-[260px] overflow-y-auto pr-1">
+                            {rows.map((r) => (
+                                <li key={r.key} className="flex items-center justify-between gap-3">
+                                    <span className="flex items-center gap-2 min-w-0">
+                                        {r.loading
+                                            ? <Loader2 className="w-3.5 h-3.5 shrink-0 animate-spin text-amber-500" />
+                                            : r.excluded
+                                                ? <ShieldAlert className="w-3.5 h-3.5 shrink-0 text-amber-500" />
+                                                : <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-500" />}
+                                        <span className={`text-sm truncate ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{r.label}</span>
+                                    </span>
+                                    {!r.excluded && typeof r.overall === "number" ? (
+                                        <span className={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-md ${TIER_BG[tierOf(r.overall)]}`}>{r.overall}</span>
+                                    ) : (
+                                        <span className={`shrink-0 text-[11px] font-medium ${darkMode ? "text-slate-500" : "text-faint"}`}>
+                                            {r.loading ? "auditing…" : r.excluded ? (r.blocked ? "blocked" : "failed") : "—"}
+                                        </span>
+                                    )}
+                                </li>
                             ))}
-                        </div>
-                    ))}
+                            {rows.length === 0 && (
+                                <li className={`flex items-center gap-2 text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                                    <Circle className="w-3.5 h-3.5" /> Discovering key pages on {prettyHost(siteUrl)}…
+                                </li>
+                            )}
+                        </ul>
+                    </div>
+
+                    <p className={`mt-4 text-xs ${darkMode ? "text-slate-500" : "text-muted"}`}>
+                        Scores and the page-type heatmap appear here automatically — no need to refresh.
+                    </p>
                 </div>
-                <p className={`mt-5 text-xs text-center font-medium ${darkMode ? "text-slate-500" : "text-muted"}`}>
-                    Auditing pages… results appear automatically as each page finishes.
-                </p>
             </div>
         </div>
     );
@@ -228,12 +288,24 @@ const AuditSummaryPage = () => {
             setLoading(false);
             rounds += 1;
 
-            // Done when the fan-out parent finished Stage 2 AND every fetched report is
-            // terminal. A single-page audit (no parent) is done once its report is terminal.
+            // Done when the fan-out parent finished Stage 2 AND every page we know about
+            // has a FETCHED, terminal report. Checking only the docs we happen to hold
+            // was wrong: when the parent is already terminal on the very first fetch
+            // (opening/refreshing the summary after the run finished), its key pages had
+            // only just been discovered from crawledPagesSummary and never been fetched —
+            // polling stopped on round 1 and those rows stayed "auditing…" forever. So the
+            // page list is re-collected from THIS round's results and every entry must
+            // have landed.
             const docs = Object.values(map).filter(Boolean);
             const parent = docs.find((r) => Array.isArray(r?.crawledPagesSummary) && r.crawledPagesSummary.length > 0);
             const parentFanningOut = parent && !(parent.stage2Completed === true || parent.status === "completed" || parent.status === "failed");
-            const allTerminal = docs.length > 0 && docs.every((r) => r.status === "completed" || r.status === "failed");
+            const nextPages = collectPages(map);
+            const allTerminal =
+                nextPages.length > 0 &&
+                nextPages.every((p) => {
+                    const r = map[p.id];
+                    return r && (r.status === "completed" || r.status === "failed");
+                });
             const done = allTerminal && !parentFanningOut;
 
             if (done || rounds >= MAX_ROUNDS) {
@@ -320,7 +392,26 @@ const AuditSummaryPage = () => {
 
             const scores = {};
             SECTIONS.forEach((s) => { scores[s.key] = meanOf(reps.map((r) => r?.[s.key]?.Percentage)); });
-            const overall = meanOf(reps.map((r) => r?.score));
+            // The "Overall Score" cell is the AVERAGE OF THE ROW'S OWN DIMENSION CELLS,
+            // not the report's stored `score`. In this grid the overall sits directly
+            // beside the eight numbers it summarizes, so it has to reconcile with them —
+            // the stored score is a WEIGHTED pillar rollup, so it can read higher or
+            // lower than the cells next to it and look wrong. Sections that didn't run
+            // (null) are averaged out rather than counted as zero.
+            // A page whose audit never produced data — bot-protected (WAF blocked the
+            // render) or outright failed — is NOT a zero. Zero means "we measured it and
+            // it scored nothing"; this means "we couldn't measure it". Counting such a
+            // page as 0 dragged the whole site score down (two blocked pages turned a
+            // ~66 site into a ~44). These rows are marked `excluded`: no overall, and
+            // the site rollup below skips them entirely.
+            const terminalReps = reps.filter((r) => r.status === "completed" || r.status === "failed");
+            const excluded =
+                terminalReps.length > 0 &&
+                terminalReps.every((r) => r.status === "failed" || r.isBotProtected === true);
+            const blocked = excluded && terminalReps.some((r) => r.isBotProtected === true);
+
+            const sectionVals = SECTIONS.map((s) => scores[s.key]);
+            const overall = excluded ? null : meanOf(sectionVals);
             // Still auditing? — a member report hasn't been fetched yet, or its status
             // is not terminal. Drives the per-cell loading spinner so an in-progress
             // page reads as "loading" instead of a genuine "—" (N/A).
@@ -328,6 +419,19 @@ const AuditSummaryPage = () => {
                 const r = reports[m.id];
                 return !r || (r.status !== "completed" && r.status !== "failed");
             });
+            // [FIX] The overall cell used to be gated on `loading`, i.e. on the report's
+            // STATUS. Sections stream in one at a time and the status only flips to
+            // "completed" after the run finishes saving, so a row could show all eight
+            // dimension numbers next to a still-spinning overall — which is what the user
+            // sees as "overall never arrives". Gate it on the DATA instead: the overall is
+            // the mean of the eight cells beside it, so the moment all eight have scored
+            // it is final and can render. This keeps the original intent (never show a
+            // partial overall that would shift under the user) because a missing section
+            // still holds it back. Once the report does go terminal, `loading` is false and
+            // the overall renders regardless — so a legitimately N/A section (e.g. Technical
+            // "Not Run" when PageSpeed fails) can never leave it spinning forever.
+            const allSectionsScored = sectionVals.every((v) => typeof v === "number");
+            const overallPending = loading && !allSectionsScored;
             // Strip the "— Used 1 / New" sample suffix so the merged row reads cleanly.
             const baseLabel = (members[0].label || "").split(" — ")[0] || members[0].label;
             // When the backend merged the samples, there's one entry carrying `mergedFrom`;
@@ -347,19 +451,43 @@ const AuditSummaryPage = () => {
                 scores,
                 overall,
                 loading,
+                overallPending,
+                excluded,
+                blocked,
             };
         });
     }, [rows, reports]);
 
+    // Is the run still producing results? Either a page type is mid-audit, or the
+    // fan-out parent hasn't finished discovering + auditing its key pages (so page
+    // types we haven't even seen yet are still to come).
+    const auditPending = useMemo(() => {
+        if (displayRows.some((r) => r.loading)) return true;
+        const parent = Object.values(reports).find((r) => r?.crawledPagesSummary?.length > 0);
+        if (parent) return !(parent.stage2Completed === true || parent.status === "completed" || parent.status === "failed");
+        return false;
+    }, [displayRows, reports]);
+
     // Aggregate site score = importance-weighted site rollup math (§5.6), over the
     // collapsed rows (so a multi-car VDP counts ONCE, as its average).
-    const { siteScore, siteGrade } = useMemo(() => {
+    //
+    // NO SCORE WHILE ANYTHING IS PENDING. A partial rollup is not a smaller version
+    // of the real answer — it's a different one: averaging the 1 page type that has
+    // landed (or a page whose sections are still scoring) produced a confident
+    // "57 / D" that then moved once the rest arrived. The score only appears when
+    // every page type in the run is terminal.
+    const { siteScore, siteGrade, scoredPages, excludedPages } = useMemo(() => {
+        // Pages we couldn't measure at all (bot-protected / failed) never enter the
+        // rollup — they carry no `overall`, so the filter below drops them.
+        const excludedCount = displayRows.filter((r) => r.excluded).length;
+        if (auditPending) return { siteScore: null, siteGrade: "—", scoredPages: 0, excludedPages: excludedCount };
+
         let totalImportance = 0;
         let weightedScoreSum = 0;
         let validPagesCount = 0;
 
         displayRows.forEach((r) => {
-            if (typeof r.overall === "number") {
+            if (!r.excluded && typeof r.overall === "number") {
                 const importance = PAGE_IMPORTANCE[r.key] ?? 1.0;
                 weightedScoreSum += r.overall * importance;
                 totalImportance += importance;
@@ -368,12 +496,12 @@ const AuditSummaryPage = () => {
         });
 
         if (validPagesCount === 0 || totalImportance === 0) {
-            return { siteScore: null, siteGrade: "—" };
+            return { siteScore: null, siteGrade: "—", scoredPages: 0, excludedPages: excludedCount };
         }
 
         const avg = Math.round(weightedScoreSum / totalImportance);
-        return { siteScore: avg, siteGrade: gradeFor(avg) };
-    }, [displayRows]);
+        return { siteScore: avg, siteGrade: gradeFor(avg), scoredPages: validPagesCount, excludedPages: excludedCount };
+    }, [displayRows, auditPending]);
 
     // Issue breakdown derived from every cell across the (collapsed) grid.
     const breakdown = useMemo(() => {
@@ -401,10 +529,22 @@ const AuditSummaryPage = () => {
         () => displayRows.some((r) => typeof r.overall === "number" || SECTIONS.some((s) => typeof r.scores[s.key] === "number")),
         [displayRows]
     );
-    // Any page still auditing → drives the "Auditing…" badge in the heatmap header.
-    const anyLoading = useMemo(() => displayRows.some((r) => r.loading), [displayRows]);
-    // Show the skeleton until the first real data lands (or polling gives up).
+    // Show the live in-progress view until the first real data lands (or polling gives up).
     const showShimmer = !hasData && !settled;
+
+    // The report the in-progress view narrates: the fan-out parent (it carries the
+    // key-page list and the homepage screenshot), else the page we started from,
+    // else whichever report already has a screenshot to show.
+    const leadReport = useMemo(() => {
+        const docs = Object.values(reports).filter(Boolean);
+        return (
+            docs.find((r) => r?.crawledPagesSummary?.length > 0) ||
+            reports[payload?.pages?.[0]?.id] ||
+            docs.find((r) => r?.screenshot || r?.screenshotUrl) ||
+            docs[0] ||
+            null
+        );
+    }, [reports, payload]);
 
     if (!payload?.pages?.length) return null;
 
@@ -432,7 +572,13 @@ const AuditSummaryPage = () => {
                 </div>
 
                 {showShimmer ? (
-                    <SummaryShimmer darkMode={darkMode} />
+                    <SummaryInProgress
+                        darkMode={darkMode}
+                        leadReport={leadReport}
+                        device={payload.device}
+                        rows={displayRows}
+                        siteUrl={payload.siteUrl}
+                    />
                 ) : (
                 <>
                 {/* ── Top cards: overall score + issue breakdown ── */}
@@ -442,17 +588,41 @@ const AuditSummaryPage = () => {
                         <span className={`block text-[10px] font-semibold uppercase tracking-widest mb-4 ${darkMode ? "text-slate-500" : "text-faint"}`}>Overall score</span>
                         <div className="flex items-center gap-6">
                             <div className="relative flex-shrink-0">
-                                <CircularProgress value={siteScore ?? 0} size={130} stroke={12} />
+                                {/* While pages are still auditing the ring stays empty — a partial
+                                    rollup shown as a real score reads as the final verdict. */}
+                                <CircularProgress value={auditPending ? 0 : (siteScore ?? 0)} size={130} stroke={12} />
                                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className={`text-3xl font-black ${darkMode ? "text-white" : "text-ink"}`}>{siteScore ?? "—"}</span>
-                                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-faint"}`}>out of 100</span>
+                                    {auditPending ? (
+                                        <Loader2 className={`w-8 h-8 animate-spin ${darkMode ? "text-slate-600" : "text-slate-300"}`} />
+                                    ) : (
+                                        <>
+                                            <span className={`text-3xl font-black ${darkMode ? "text-white" : "text-ink"}`}>{siteScore ?? "—"}</span>
+                                            <span className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "text-slate-500" : "text-faint"}`}>out of 100</span>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                             <div>
-                                <div className={`text-5xl font-black leading-none ${siteScore >= 75 ? "text-emerald-500" : siteScore >= 55 ? "text-amber-500" : "text-red-500"}`}>{siteGrade}</div>
-                                <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                                    Averaged across {displayRows.length} audited page type{displayRows.length === 1 ? "" : "s"}.
-                                </p>
+                                {auditPending ? (
+                                    <>
+                                        <div className={`text-2xl font-black leading-tight ${darkMode ? "text-slate-300" : "text-inksoft"}`}>Calculating…</div>
+                                        <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                                            The site score appears once every page type has finished auditing.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className={`text-5xl font-black leading-none ${siteScore >= 75 ? "text-emerald-500" : siteScore >= 55 ? "text-amber-500" : "text-red-500"}`}>{siteGrade}</div>
+                                        <p className={`mt-2 text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                                            Averaged across {scoredPages} audited page type{scoredPages === 1 ? "" : "s"}.
+                                        </p>
+                                        {excludedPages > 0 && (
+                                            <p className={`mt-1 text-xs ${darkMode ? "text-slate-500" : "text-faint"}`}>
+                                                {excludedPages} page type{excludedPages === 1 ? "" : "s"} couldn't be measured (blocked or failed) — not counted in this score.
+                                            </p>
+                                        )}
+                                    </>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -484,7 +654,7 @@ const AuditSummaryPage = () => {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-ink"}`}>Page-Type Heatmap</h2>
-                                {anyLoading && (
+                                {auditPending && (
                                     <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/20">
                                         <Loader2 className="w-3 h-3 animate-spin" /> Auditing…
                                     </span>
@@ -534,7 +704,19 @@ const AuditSummaryPage = () => {
                                             <th
                                                 className={`sticky left-0 z-10 pr-3 text-right text-sm font-semibold whitespace-nowrap align-middle ${darkMode ? "bg-slate-900 text-slate-200" : "bg-card text-ink"}`}
                                             >
-                                                <div>{row.label}</div>
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    <span>{row.label}</span>
+                                                    {row.excluded && (
+                                                        <span
+                                                            title={row.blocked
+                                                                ? "Bot protection blocked this page — excluded from the site score"
+                                                                : "This page's audit failed — excluded from the site score"}
+                                                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${darkMode ? "bg-amber-500/15 text-amber-400 border border-amber-500/20" : "bg-amber-50 text-amber-700 border border-amber-200"}`}
+                                                        >
+                                                            {row.blocked ? "Blocked" : "Failed"}
+                                                        </span>
+                                                    )}
+                                                </div>
                                                 {row.url && (
                                                     <a
                                                         href={row.url}
@@ -548,21 +730,34 @@ const AuditSummaryPage = () => {
                                                 )}
                                             </th>
 
-                                            {/* All-sections cell first → the page's overall score, opens full report */}
+                                            {/* All-sections cell first → the page's overall score, opens full report.
+                                                Gated on `overallPending`, not on `loading`: the overall is the mean
+                                                of the eight cells to its right, so it becomes final the moment all
+                                                eight have scored — waiting for the report's status to flip left it
+                                                spinning next to a fully populated row. It still never shows a partial
+                                                overall (that's how a mid-run page read "57 / D" while one of its
+                                                dimensions was still spinning) because any unscored section holds it. */}
                                             {(() => {
-                                                const tier = tierOf(row.overall);
+                                                const tier = row.overallPending || row.excluded ? "na" : tierOf(row.overall);
+                                                const excludedNote = row.blocked
+                                                    ? " — blocked by bot protection, not counted in the site score"
+                                                    : " — audit failed, not counted in the site score";
                                                 return (
                                                     <td className="p-0">
                                                         <button
                                                             onClick={() => openAll(row.id)}
-                                                            title={`${row.label} · full report${row.overall != null ? ` — ${row.overall}` : ""}`}
+                                                            title={`${row.label} · full report${row.overallPending ? " — still auditing" : row.excluded ? excludedNote : row.overall != null ? ` — ${row.overall}` : ""}`}
                                                             className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
                                                                 ${darkMode ? "ring-offset-slate-900" : "ring-offset-card"}
                                                                 ${tier === "na"
                                                                     ? (darkMode ? "bg-slate-700/60 text-slate-500" : "bg-slate-200 text-slate-400")
                                                                     : TIER_BG[tier]}`}
                                                         >
-                                                            {row.overall != null ? row.overall : (row.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "—")}
+                                                            {row.overallPending
+                                                                ? <Loader2 className="w-4 h-4 animate-spin" />
+                                                                : row.excluded
+                                                                    ? <ShieldAlert className="w-4 h-4" />
+                                                                    : (row.overall != null ? row.overall : "—")}
                                                         </button>
                                                     </td>
                                                 );

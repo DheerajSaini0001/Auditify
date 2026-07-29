@@ -1,0 +1,17 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": [
+      "/assets/*",
+      "/fonts/*",
+      "/*.{png,jpg,jpeg,gif,svg,ico,webp,txt,xml,json,woff,woff2,ttf,eot,map}"
+    ]
+  },
+  "globalHeaders": {
+    "X-Robots-Tag": "index, follow"
+  },
+  "mimeTypes": {
+    ".json": "application/json",
+    ".webmanifest": "application/manifest+json"
+  }
+}

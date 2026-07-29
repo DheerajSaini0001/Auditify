@@ -2,6 +2,12 @@ import { chromium } from "playwright-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import * as cheerio from "cheerio";
 import { acquireBrowserSlot, releaseBrowserSlot } from "./browserManager.js";
+import {
+  registerClearanceCookies,
+  noteWafBlock,
+  noteWafOk,
+  isWafCoolingDown,
+} from "./wafGuard.js";
 
 // Use stealth plugin to evade common bot detection techniques
 // [EXISTING STEALTH CONFIG — DO NOT MODIFY]
@@ -102,6 +108,12 @@ async function saveClearanceCookies(context, urlString) {
       .filter((ms) => ms > now);
     const expiresAt = realExpiries.length ? Math.min(...realExpiries) : now + CLEARANCE_FALLBACK_TTL_MS;
     wafClearanceCache.set(key, { cookies: clearance, expiresAt });
+    // [ADD] — Share the solve with the BROWSERLESS layer too. Every axios probe
+    // the audit makes (page discovery, robots.txt, llms.txt, link checks) can now
+    // ride this same clearance instead of being answered with a 403 block page —
+    // which is what used to escalate a WAF into an IP-level block and blind the
+    // page render itself. See utils/wafGuard.js.
+    registerClearanceCookies(urlString, clearance, expiresAt);
     logger.info(`🍪 [WAF] Cached ${clearance.length} clearance cookie(s) for ${key} (reusable for ${Math.round((expiresAt - now) / 60000)} min)`);
   } catch (_) { /* caching is best-effort */ }
 }
@@ -535,6 +547,113 @@ export async function detectChallenge(page) {
     }
     return false;
   }
+}
+
+/**
+ * [NEW] — Tell a SOLVABLE challenge apart from a HARD block.
+ *
+ * detectChallenge() answers "are we being gated?" but not "can we do anything
+ * about it?", and the two need opposite handling:
+ *
+ *   • "challenge"  — Cloudflare/Turnstile interstitial ("Just a moment…",
+ *     #challenge-form, a challenges.cloudflare.com iframe). Its JS computes an
+ *     answer and issues cf_clearance, so WAITING and RELOADING is exactly right.
+ *
+ *   • "hardblock"  — a WAF rule said no: HTTP 403/429 with Cloudflare's
+ *     "Sorry, you have been blocked" / "Attention Required!" error page (or a
+ *     blank body). There is NO challenge script on that page, so reloading can
+ *     never clear it — each retry is just one more blocked request teaching the
+ *     WAF that this IP is a bot. Measured on fusz.com: the block is IP-scoped
+ *     and decays on its own in a couple of minutes, so the only thing that helps
+ *     is backing off, not retrying harder.
+ *
+ * @returns {Promise<"none"|"challenge"|"hardblock">}
+ */
+export async function classifyBlock(page, statusCode) {
+  const gated = await detectChallenge(page);
+  const status = Number(statusCode);
+  const blockedStatus = [401, 403, 406, 429, 503].includes(status);
+
+  let title = "";
+  let body = "";
+  let html = "";
+  try {
+    title = await safeGetTitle(page);
+    html = (await safePageContent(page)) || "";
+    body = await page.evaluate(() => document.body?.innerText || "").catch(() => "");
+  } catch {
+    /* best-effort — fall through on whatever we did read */
+  }
+
+  const probe = `${title}\n${body}\n${html.slice(0, 8000)}`;
+  const hardMarkers =
+    /sorry, you have been blocked|attention required|you are unable to access|cf-error-details|error code:\s*10\d\d|access denied|request unsuccessful|_incapsula_resource|reference #\d/i.test(probe);
+  const solvableMarkers =
+    /just a moment|checking your browser|cf-browser-verification|challenge-platform|_cf_chl|verifying you are human|challenges\.cloudflare\.com|hcaptcha|turnstile/i.test(probe);
+
+  if (hardMarkers && !solvableMarkers) return "hardblock";
+
+  // Blocked status with nothing renderable on the page is the silent variant of
+  // the same wall (Imperva serves a completely empty 403 body).
+  if (blockedStatus && !solvableMarkers) {
+    const looksReal = await hasRealContent(page);
+    if (!looksReal) return "hardblock";
+  }
+
+  if (gated || solvableMarkers) return "challenge";
+  return "none";
+}
+
+/**
+ * [NEW] — Recover from a hard WAF block by BACKING OFF, not by retrying harder.
+ *
+ * A Cloudflare IP-reputation block lifts on its own; what keeps it alive is more
+ * blocked traffic. So: sit out a cool-off, drop the (worthless, possibly
+ * flagged) cookie jar, re-inject any clearance a sibling context earned, land on
+ * the origin root the way a person arriving from Google would, and only then go
+ * back to the target URL. One attempt — if the wall is still there it is a real
+ * block and the report should say so.
+ *
+ * @returns {Promise<{recovered: boolean, response: object|null, statusCode: number|string}>}
+ */
+const HARD_BLOCK_COOLOFF_MS = Number(process.env.WAF_HARD_BLOCK_COOLOFF_MS || 20000);
+
+// The module-level `delay()` is a deliberate no-op (all the "human-like" pauses
+// were zeroed out for speed), so the cool-off — the one wait whose whole purpose
+// is to burn wall-clock while the WAF's block decays — needs a real timer.
+const realSleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function recoverFromHardBlock(page, context, url, statusCode) {
+  const waitMs = HARD_BLOCK_COOLOFF_MS;
+  logger.warn(`🛡️ Hard WAF block (HTTP ${statusCode}) on ${url} — reloading is useless here; cooling off ${Math.round(waitMs / 1000)}s before one clean retry.`);
+
+  try { await context.clearCookies(); } catch (_) { /* jar may already be empty */ }
+  await realSleep(waitMs);
+  await injectClearanceCookies(context, url);
+
+  // Warm-up hop: a real visitor hits the origin root first, and the root is far
+  // less likely to be rule-blocked than a deep path.
+  try {
+    const origin = new URL(url).origin;
+    if (origin !== url.replace(/\/$/, "")) {
+      await page.goto(origin, { waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => null);
+      await realSleep(randInt(1200, 2500));
+    }
+  } catch (_) { /* warm-up is optional */ }
+
+  let response = null;
+  try {
+    response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+  } catch (_) {
+    return { recovered: false, response: null, statusCode };
+  }
+
+  const newStatus = response ? response.status() : statusCode;
+  const verdict = await classifyBlock(page, newStatus);
+  if (verdict === "hardblock") return { recovered: false, response, statusCode: newStatus };
+
+  logger.info(`✅ Hard block cleared after cool-off for ${url} (HTTP ${newStatus}).`);
+  return { recovered: true, response, statusCode: newStatus };
 }
 
 // [EXISTING — DO NOT MODIFY]
@@ -979,7 +1098,11 @@ export async function newStealthPage(device = 'Desktop', opts = {}) {
  * looks challenged (403/429/503 or a challenge marker in the body). Never throws;
  * bounded time; returns true iff the domain now has usable clearance.
  */
-export async function ensureDomainClearance(url, device = 'Desktop') {
+export async function ensureDomainClearance(url, device = 'Desktop', opts = {}) {
+  // [ADD] — acquireTimeoutMs lets a degradable caller (the WAF guard's browserless
+  // fallback) bound how long it will wait for a browser permit instead of queueing
+  // behind real page renders. Default keeps the original behaviour.
+  const { acquireTimeoutMs = 60000 } = opts;
   try {
     const key = clearanceDomainKey(url);
     if (!key) return false;
@@ -994,7 +1117,12 @@ export async function ensureDomainClearance(url, device = 'Desktop') {
     // Cheap gate: a browserless GET. Only a genuine challenge response is worth the
     // cost of launching a context — a normal 200 means the site isn't gating us.
     let challenged = false;
-    try {
+    // [ADD] — If the host is already known to be blocking our browserless requests,
+    // skip the gate fetch entirely: we know the answer, and sending it would only
+    // add one more blocked request to the reputation the browser has to survive.
+    if (isWafCoolingDown(url)) {
+      challenged = true;
+    } else try {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 8000);
       const res = await fetch(url, {
@@ -1044,7 +1172,7 @@ export async function ensureDomainClearance(url, device = 'Desktop') {
     // route — exactly the clean setup that resolves the challenge reliably.
     let context;
     try {
-      const created = await newStealthContext(device, { acquireTimeoutMs: 60000, label: 'waf-warmup' });
+      const created = await newStealthContext(device, { acquireTimeoutMs, label: 'waf-warmup' });
       context = created.context;
       const page = created.page;
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 }).catch(() => {});
@@ -1485,6 +1613,38 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
       if (!isBotProtected) logger.info(`✅ WAF challenge auto-cleared after unblocking resources for ${url}`);
     }
 
+    // [NEW] — Split "gated" into SOLVABLE CHALLENGE vs HARD WAF BLOCK before
+    // spending any retries. Reloading a hard block (Cloudflare's "Sorry, you have
+    // been blocked" page, or a blank 403) cannot possibly clear it — the page
+    // carries no challenge script — and every extra blocked request deepens the
+    // IP-reputation block that caused it. Measured on fusz.com: our browser loads
+    // the site fine on a clean reputation, and only 403s after the audit's own
+    // browserless probes have been blocked a few times. So a hard block gets one
+    // backed-off retry, not a retry storm.
+    let hardBlockRecoveryTried = false;
+    const attemptHardBlockRecovery = async () => {
+      hardBlockRecoveryTried = true;
+      try { await page.unroute('**/*'); } catch (_) { /* route already removed */ }
+      const rec = await recoverFromHardBlock(page, context, url, statusCode);
+      if (rec.recovered) {
+        if (rec.response) response = rec.response;
+        statusCode = rec.statusCode;
+        isBotProtected = false;
+        return true;
+      }
+      statusCode = rec.statusCode;
+      return false;
+    };
+
+    if ((await classifyBlock(page, statusCode)) === "hardblock") {
+      if (!(await attemptHardBlockRecovery())) {
+        noteWafBlock(url, "browser");
+        const htmlData = await safePageContent(page);
+        const $ = cheerio.load(htmlData || "<html><body></body></html>");
+        return { browser, page, response, $, screenshot: null, isBotProtected: true };
+      }
+    }
+
     // Positive signal: a Cloudflare clearance cookie means the challenge passed.
     const hasClearanceCookie = async () => {
       try {
@@ -1527,10 +1687,19 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
     }
 
     if (isBotProtected) {
-      logger.warn(`🛡️ Bot protection could not be bypassed after ${botRetries} retries: ${url}`);
-      const htmlData = await safePageContent(page);
-      const $ = cheerio.load(htmlData);
-      return { browser, page, response, $, screenshot: null, isBotProtected: true };
+      // [NEW] — The challenge never cleared. If what we are actually looking at is
+      // a hard WAF block (the site re-blocked us mid-solve), the cool-off retry is
+      // the one thing left that can recover it — try it once before giving up.
+      if (!hardBlockRecoveryTried && (await classifyBlock(page, statusCode)) === "hardblock") {
+        await attemptHardBlockRecovery();
+      }
+      if (isBotProtected) {
+        logger.warn(`🛡️ Bot protection could not be bypassed after ${botRetries} retries: ${url}`);
+        noteWafBlock(url, "browser");
+        const htmlData = await safePageContent(page);
+        const $ = cheerio.load(htmlData);
+        return { browser, page, response, $, screenshot: null, isBotProtected: true };
+      }
     }
 
     // [NEW] — Hard-block detection. Some WAFs (Imperva/Incapsula on dealer sites)
@@ -1546,14 +1715,25 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
       const looksReal = await hasRealContent(page);
       const blockTitle = await safeGetTitle(page);
       if (!looksReal && (!blockTitle || blockTitle.trim().length < 2)) {
-        logger.warn(`🛡️ Hard block detected (HTTP ${statusCode}, blank/empty page) for ${url} — marking as Bot Protected.`);
-        const htmlData = await safePageContent(page);
-        const $ = cheerio.load(htmlData || "<html><body></body></html>");
-        return { browser, page, response, $, screenshot: null, isBotProtected: true };
+        logger.warn(`🛡️ Hard block detected (HTTP ${statusCode}, blank/empty page) for ${url}.`);
+        // [NEW] — Don't report it until the backed-off retry has had its one go:
+        // this silent, body-less 403 is the same IP-reputation block that lifts by
+        // itself, and recovering it is the difference between a real audit and a
+        // "Bot Protected" card on a site we can actually render.
+        const recovered = hardBlockRecoveryTried ? false : await attemptHardBlockRecovery();
+        if (!recovered) {
+          noteWafBlock(url, "browser");
+          const htmlData = await safePageContent(page);
+          const $ = cheerio.load(htmlData || "<html><body></body></html>");
+          return { browser, page, response, $, screenshot: null, isBotProtected: true };
+        }
       }
     }
 
     logger.info(`✅ Bot protection cleared (or none present) for ${url}`);
+    // The host is serving us real content — lift any browserless cooldown so the
+    // rest of the audit's probes are allowed to run again.
+    noteWafOk(url, "browser");
 
     // [ADD] — This context is now cleared for the domain (either it solved the
     // challenge, or none was present and it holds a valid __cf_bm). Cache its

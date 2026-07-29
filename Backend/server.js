@@ -39,6 +39,13 @@ const startServer = async () => {
   await configService.initialize();
 
   const FRONTEND_URL = configService.getConfig("FRONTEND_URL", "http://localhost:5173");
+  // ALLOWED_ORIGINS is a comma-separated list of extra CORS origins (e.g. apex + www +
+  // default azurestaticapps.net host) that all serve the same frontend. FRONTEND_URL
+  // itself stays single-valued since it's also used to build redirect/email links.
+  const ALLOWED_ORIGINS = configService.getConfig("ALLOWED_ORIGINS", "")
+    .split(",")
+    .map(url => url.trim())
+    .filter(Boolean);
   const SESSION_SECRET = configService.getConfig("SESSION_SECRET");
   const PORT = configService.getConfig("PORT", "2000");
   const IS_PROD = process.env.NODE_ENV === "production";
@@ -52,6 +59,7 @@ const startServer = async () => {
   app.use(cors({
     origin: [
       FRONTEND_URL,
+      ...ALLOWED_ORIGINS,
       "http://localhost:5173",
       "http://localhost:3000"
     ].filter(Boolean),

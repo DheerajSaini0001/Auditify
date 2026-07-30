@@ -59,16 +59,28 @@ const GuestRouteWrapper = ({ children }) => {
   const { data, fetchSingleReport } = useData();
   const { id } = useParams();
   const [isFetching, setIsFetching] = React.useState(false);
+  // Last id we kicked a restore fetch for. This effect watches `data`, and the live
+  // poll swaps `data` for a fresh object every few seconds — without this guard a
+  // single mismatch turned into a fetch on every single tick.
+  const requestedIdRef = React.useRef(null);
 
   React.useEffect(() => {
-    // If we have an ID in URL but no data (or mismatch), fetch it to restore state on refresh
-    if (id && (!data || data._id !== id)) {
-      setIsFetching(true);
-      fetchSingleReport(id).finally(() => setIsFetching(false));
-    }
+    if (!id) return;
+    if (data?._id === id) { requestedIdRef.current = id; return; } // already loaded
+    if (requestedIdRef.current === id) return;                     // restore in flight / already tried
+    requestedIdRef.current = id;
+    setIsFetching(true);
+    fetchSingleReport(id).finally(() => setIsFetching(false));
   }, [id, data, fetchSingleReport]);
 
-  if (isLoading || isFetching) return null; // Wait silently for auth resolution
+  if (isLoading) return null; // Wait silently for auth resolution
+
+  // Blank ONLY while the report we hold is a DIFFERENT one than the URL asks for.
+  // Never blank a page that's already showing the right report: unmounting the
+  // subtree collapses the document height, so the browser clamps scrollY to 0 and
+  // the reader gets yanked back to the top — which is exactly what happened on
+  // every poll while a parent audit was still running in the background.
+  if (isFetching && data && data._id !== id) return null;
 
   // Reports are open to everyone — guests included. No auth lock. The report pages
   // render their own loading shimmer until the data fetched above arrives.

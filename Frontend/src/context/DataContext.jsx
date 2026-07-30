@@ -1,7 +1,7 @@
-import { createContext, useState, useContext, useEffect, useCallback } from "react";
+import { createContext, useState, useContext, useEffect, useCallback, useRef } from "react";
 import api from "../utils/api";
 import toast from "react-hot-toast";
-import { getValidGuestGrant, clearGuestGrant } from "../utils/guestGrant.js";
+import { getValidGuestGrant, clearGuestGrant, NEEDS_VERIFY_RE } from "../utils/guestGrant.js";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -23,7 +23,12 @@ export const DataProvider = ({ children }) => {
   // ⭐ DATA STATE (Persist in LocalStorage to handle refresh)
   // ⭐ DATA STATE
   const [data, setData] = useState(null);
-  
+
+  // Mirror of `data` for the poll callbacks: each one captures its report id when it
+  // starts, and needs to know which report is on screen RIGHT NOW before writing.
+  const dataRef = useRef(null);
+  useEffect(() => { dataRef.current = data; }, [data]);
+
   // 🔄 ISOLATED POLLING STATE
   const [pollingState, setPollingState] = useState({}); // { [auditId]: "inprogress" | "completed" | "failed" }
 
@@ -78,7 +83,21 @@ export const DataProvider = ({ children }) => {
   }, [data?._id]);
 
   const [loading, setLoading] = useState(false);
-  const [intervalId, setIntervalId] = useState(null);
+  // One live-poll interval PER report id. This used to be a single slot, so drilling
+  // from a parent audit into one of its key pages replaced the parent's poll — and
+  // once that child settled, nothing was polling at all. A map lets a parent audit
+  // keep tracking itself while the page you're reading tracks itself.
+  const intervalsRef = useRef({}); // { [reportId]: intervalId }
+
+  const stopLiveFetch = (id) => {
+    if (!intervalsRef.current[id]) return;
+    clearInterval(intervalsRef.current[id]);
+    delete intervalsRef.current[id];
+  };
+
+  const stopAllLiveFetch = () => {
+    Object.keys(intervalsRef.current).forEach(stopLiveFetch);
+  };
 
   // ️ HELPER: Standardized Response Handler
   const handleResponse = async (res) => {
@@ -90,10 +109,12 @@ export const DataProvider = ({ children }) => {
     }
 
     if (!res.ok) {
+      // `code` is the machine-readable reason (e.g. VERIFICATION_REQUIRED,
+      // RATE_LIMIT_EXCEEDED) — callers branch on it instead of pattern-matching prose.
       if (res.status === 429) {
-        return { success: false, status: 429, error: data.error || "Too many requests. Please wait 15 minutes." };
+        return { success: false, status: 429, code: data.code, error: data.error || "Too many requests. Please wait 15 minutes." };
       }
-      return { success: false, status: res.status, error: data.error || data.message || `Request failed with status ${res.status}` };
+      return { success: false, status: res.status, code: data.code, error: data.error || data.message || `Request failed with status ${res.status}` };
     }
 
     return { success: true, status: res.status, data };
@@ -197,10 +218,10 @@ export const DataProvider = ({ children }) => {
 
       if (!result.success) {
         // Grant expired/invalid → drop the stored copy so the caller re-shows the modal.
-        if (/verify your email|email verification/i.test(result.error || '')) {
+        if (result.code === 'VERIFICATION_REQUIRED' || NEEDS_VERIFY_RE.test(result.error || '')) {
           clearGuestGrant();
         }
-        return { success: false, error: result.error };
+        return { success: false, error: result.error, code: result.code };
       }
 
       const auditData = withNormalizedStatus(result.data);
@@ -234,42 +255,50 @@ export const DataProvider = ({ children }) => {
 
   // 🔄 LIVE UPDATES (Status-Only)
   const startLiveFetch = (id) => {
-    if (intervalId) clearInterval(intervalId);
+    if (!id || intervalsRef.current[id]) return; // already polling this report
 
     setPollingState(prev => ({ ...prev, [id]: "pending" }));
 
-    const newInterval = setInterval(async () => {
+    intervalsRef.current[id] = setInterval(async () => {
       try {
-        const result = await fetchSingleReport(id);
+        // `silent` → this poll only owns the report it was started for. A parent
+        // audit polling in the background must never write its own doc over the
+        // child page report the user is currently reading.
+        const result = await fetchSingleReport(id, { silent: true });
 
         if (result && result.success && result.data) {
           const newStatus = result.data.status;
           setPollingState(prev => ({ ...prev, [id]: newStatus }));
 
           if (newStatus === "success" || newStatus === "failed") {
-            clearInterval(newInterval);
-            setIntervalId(null);
+            stopLiveFetch(id);
 
-            if (newStatus === "success") {
-              toast.success("Audit complete!");
-            } else if (newStatus === "failed") {
-              toast.error("Audit run failed.");
+            // Only announce the report the user is actually looking at, so a
+            // background parent audit doesn't fire a second "Audit complete!".
+            if (dataRef.current?._id === id) {
+              if (newStatus === "success") {
+                toast.success("Audit complete!");
+              } else {
+                toast.error("Audit run failed.");
+              }
             }
           }
         } else {
-          clearInterval(newInterval);
-          setIntervalId(null);
+          stopLiveFetch(id);
         }
       } catch (err) {
         console.error("Error polling audit:", err);
       }
     }, 3000);
-
-    setIntervalId(newInterval);
   };
 
   // 🚀 SINGLE AUDIT: GET BY ID
-  const fetchSingleReport = useCallback(async (id) => {
+  // `silent: true` is for the background live poll — it refreshes ITS report, but
+  // refuses to take over the shared `data` slot when a different report is on screen.
+  // Without that guard a still-running parent audit swapped its own doc in every 3s
+  // while you were reading one of its key pages, which blanked and re-mounted the
+  // page (and threw your scroll position back to the top) on every tick.
+  const fetchSingleReport = useCallback(async (id, { silent = false } = {}) => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
       const token = localStorage.getItem('dealerpulse_token');
@@ -283,7 +312,11 @@ export const DataProvider = ({ children }) => {
       const result = await handleResponse(res);
       if (result.success) {
         result.data = withNormalizedStatus(result.data);
-        setData(result.data);
+        if (!silent || !dataRef.current || dataRef.current._id === id) {
+          setData(result.data);
+        }
+        // The summary's page list + the cached copy are keyed by id, so they're
+        // always safe to refresh — only the shared `data` slot is contended.
         syncAuditSummaryStorage(result.data);
         safeLocalStorageSet(`dealerpulse_audit_${id}`, JSON.stringify(result.data));
       }
@@ -297,21 +330,22 @@ export const DataProvider = ({ children }) => {
   const clearData = () => {
     setData(null);
     // LocalStorage removal not needed as we don't store it anymore
-    if (intervalId) clearInterval(intervalId);
+    stopAllLiveFetch();
   };
 
   // 🔄 RESTART POLLING ON REFRESH
+  // startLiveFetch de-dupes per id, so this can safely fire on every data change.
   useEffect(() => {
-    if (data && data.status === "pending" && !intervalId) {
+    if (data && data.status === "pending") {
       startLiveFetch(data._id);
     }
-  }, [data, intervalId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   useEffect(() => {
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [intervalId]);
+    return () => stopAllLiveFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const getAuditById = async (id) => {
     // 1. Check current state

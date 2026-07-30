@@ -1,12 +1,12 @@
 import express from "express";
 import { startAudit, getReportById, getReportStatusById, mergeReports, findMergedReport } from "../controllers/singleAuditController.js";
 import { discover } from "../controllers/discoveryController.js";
-import { requestAuditOTP, verifyAuditOTP } from "../controllers/guestAuditController.js";
+import { getAuditCaptcha, verifyAuditCaptcha } from "../controllers/guestVerifyController.js";
 import { generatePDFReport } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
 import guestAuditGate from "../middleware/auditGate.js";
 import { tryAuthenticate } from "../middleware/auth.js";
-import { auditOtpRequestLimiter, otpLimiter } from "../middleware/rateLimiter.js";
+import { guestChallengeLimiter, guestVerifyLimiter } from "../middleware/rateLimiter.js";
 import { chargeReportBudget, enforceReportBudget } from "../middleware/reportBudget.js";
 
 const router = express.Router();
@@ -27,25 +27,23 @@ const mergeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ── Guest email-verification gate (replaces CAPTCHA for not-logged-in users) ──
-// Step 1: send a verification code to the entered email.
-router.post("/request-otp", auditOtpRequestLimiter, requestAuditOTP);
-// Step 1b: resend the code (same handler; per-email cooldown applies).
-router.post("/resend-otp", auditOtpRequestLimiter, requestAuditOTP);
-// Step 2: verify the code → returns a short-lived audit grant token.
-router.post("/verify-otp", otpLimiter, verifyAuditOTP);
+// ── Guest verification gate (one single-digit addition, no email involved) ──
+// Step 1: get a question + its signed challenge.
+router.get("/captcha", guestChallengeLimiter, getAuditCaptcha);
+// Step 2: answer it → returns the audit grant (default 2h) the gate accepts.
+router.post("/verify-captcha", guestVerifyLimiter, verifyAuditCaptcha);
 
 // Discover the dealer's main pages (sitemap → robots.txt → crawl). Same gate as
-// /audit, so guests reuse the email-verification grant they already hold.
+// /audit, so guests reuse the verification grant they already hold.
 // Discovery never charges the report budget, but a maxed-out IP is turned away.
 router.post("/discover", enforceReportBudget, tryAuthenticate, guestAuditGate, discover);
 
-// Start Audit — logged-in users pass; guests must present a verified-email grant.
+// Start Audit — logged-in users pass; guests must present a verification grant.
 // The first audit of a site opens a run (1 report); its batch-mates ride free.
 router.post("/audit", chargeReportBudget, tryAuthenticate, guestAuditGate, startAudit);
 
 // Merge several sample reports (e.g. the VDP samples) into ONE averaged report.
-// Same gate as /audit so guests reuse their email-verification grant.
+// Same gate as /audit so guests reuse their verification grant.
 router.post("/merge", mergeLimiter, tryAuthenticate, guestAuditGate, mergeReports);
 
 // Look up an existing merged report for a site + pageType so a repeat audit can

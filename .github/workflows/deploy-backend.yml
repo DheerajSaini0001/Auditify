@@ -12,9 +12,15 @@ concurrency:
   group: deploy-backend
   cancel-in-progress: false
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
   REGISTRY: siteauditacr.azurecr.io
   IMAGE: site-audit-backend
+  RESOURCE_GROUP: SLT
+  APP_NAME: site-audit-backend
 
 jobs:
   build-and-deploy:
@@ -22,25 +28,45 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
       - name: Log in to ACR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+        run: az acr login -n siteauditacr
 
+      # App Service runs amd64; an arm64 image pushes fine then 503s on start.
       - name: Build and push image
-        uses: docker/build-push-action@v6
-        with:
-          context: Backend
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE }}:latest
+        run: |
+          docker build --platform linux/amd64 \
+            -t "$REGISTRY/$IMAGE:${{ github.sha }}" Backend
+          docker push "$REGISTRY/$IMAGE:${{ github.sha }}"
 
-      - name: Deploy to App Service
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: site-audit-backend
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE }}:${{ github.sha }}
+      - name: Point App Service at the new image
+        run: |
+          az webapp config container set \
+            -g "$RESOURCE_GROUP" -n "$APP_NAME" \
+            --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} \
+            --container-image-name "$REGISTRY/$IMAGE:${{ github.sha }}"
+
+      - name: Restart
+        run: |
+          az webapp restart \
+            -g "$RESOURCE_GROUP" -n "$APP_NAME" \
+            --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      # Root is the only 200 — there is no /health endpoint.
+      - name: Smoke test
+        run: |
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w "%{http_code}" \
+              https://site-audit-backend.azurewebsites.net/ || true)
+            echo "attempt $i: HTTP $code"
+            [ "$code" = "200" ] && exit 0
+            sleep 15
+          done
+          echo "Backend never returned 200 after restart"
+          exit 1

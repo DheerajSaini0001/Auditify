@@ -1,13 +1,20 @@
 // Guest audit grant — persistence + reuse.
 //
-// A guest verifies their email via OTP ONCE; verify-otp returns a short-lived signed
-// JWT grant (default 30 min, GUEST_AUDIT_TOKEN_TTL_MIN). Previously the frontend never
-// stored that grant, so every new audit re-opened the email modal. We now keep the grant
-// in localStorage and replay it on subsequent audits so the guest re-verifies only after
-// it actually expires — matching the backend, which already accepts the same token (and a
-// session-cookie fallback) for the whole TTL window.
+// A guest clears ONE single-digit addition; /single-audit/verify-captcha returns a
+// signed JWT grant (default 2 hours, GUEST_AUDIT_TOKEN_TTL_MIN). We keep that grant in
+// localStorage and replay it on subsequent audits, so the guest is asked again only
+// once it actually expires — matching the backend, which accepts the same token (and a
+// session-cookie fallback) for the whole TTL window. It's localStorage, not session
+// storage, on purpose: the grant has to survive a refresh and a new tab to be worth
+// anything.
 
 const KEY = 'dealerpulse_guest_grant';
+
+// The backend's "you still need to verify" rejection. Callers that kept only the
+// message string test it against this; the 401 also carries code VERIFICATION_REQUIRED.
+// The retired email/OTP wording is matched too — the gate still honors grants that flow
+// minted, so a stale message must not leave the user stuck on a dead form.
+export const NEEDS_VERIFY_RE = /verification|verify your email/i;
 // Don't send a token that's about to expire mid-request — treat the last 30s as expired.
 const EXPIRY_SKEW_MS = 30 * 1000;
 
@@ -26,14 +33,14 @@ function jwtExpiryMs(token) {
   }
 }
 
-// Persist the grant returned by verify-otp.
+// Persist the grant returned by verify-captcha.
 export function saveGuestGrant(token) {
   if (!token) return;
   try { localStorage.setItem(KEY, token); } catch { /* storage unavailable */ }
 }
 
 // Return the stored grant only while it's still comfortably valid; otherwise drop it and
-// return null (caller then shows the email modal again).
+// return null (caller then shows the verify modal again).
 export function getValidGuestGrant() {
   try {
     const token = localStorage.getItem(KEY);

@@ -7,28 +7,28 @@ import {
     Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
     Building2, MapPin, Megaphone,
 } from 'lucide-react';
-import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
-import { saveGuestGrant, getValidGuestGrant } from "../../utils/guestGrant.js";
+import AuditVerifyModal from "../../Component/AuditVerifyModal.jsx";
+import { saveGuestGrant, getValidGuestGrant, NEEDS_VERIFY_RE } from "../../utils/guestGrant.js";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useData } from '../../context/DataContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
-// Guests verify their email with an OTP before an audit runs — the SAME flow in
-// every environment, so what you test locally is what ships.
+// Guests clear one single-digit addition before an audit runs, and the grant it
+// returns lasts 2 hours — the SAME flow in every environment, so what you test
+// locally is what ships. (It used to be email + OTP, which parked every guest and
+// every tester on an inbox round-trip.)
 //
-// This used to be `import.meta.env.DEV`, i.e. the modal was silently skipped on
-// localhost. That didn't remove the gate, it just moved it: the backend still
-// answered the audit request with 401 EMAIL_VERIFICATION_REQUIRED and the modal
-// popped up AFTER a wasted round-trip (and only because of the error-watching
-// effect below) — so dev exercised a different, worse path than production.
+// The modal is never silently skipped either: that only moved the gate, because the
+// backend still answered the audit request with 401 and the modal popped up AFTER a
+// wasted round-trip — so dev exercised a different, worse path than production.
 //
-// The bypass is now explicit and opt-in: set VITE_SKIP_EMAIL_VERIFY=true in
+// The bypass is explicit and opt-in: set VITE_SKIP_AUDIT_VERIFY=true in
 // Frontend/.env only if you deliberately want to skip verification locally, and
-// pair it with SKIP_GUEST_EMAIL_GATE=true on the backend or the audit call will
+// pair it with SKIP_GUEST_AUDIT_GATE=true on the backend or the audit call will
 // simply be rejected.
-const SKIP_EMAIL_VERIFY = import.meta.env.VITE_SKIP_EMAIL_VERIFY === "true";
+const SKIP_AUDIT_VERIFY = import.meta.env.VITE_SKIP_AUDIT_VERIFY === "true";
 
 /* ─────────────────────────────────────────
    Fixed dealership page-type catalog (Screen 01).
@@ -464,6 +464,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const location = useLocation();
     const navigate = useNavigate();
     const isAutoStarting = useRef(false);
+    // Which completed discovery we've already auto-started the full audit for. This was
+    // referenced by the auto-start effect below but never declared, so the effect threw
+    // a ReferenceError the moment a scan finished — exactly when it was supposed to fire.
+    const autoAuditRanFor = useRef(null);
     const urlInputRef = useRef(null);                 // the audit URL field (for "Check My Website")
     const visibleTypes = siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES;
 
@@ -487,7 +491,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.key]);
 
-    // Step 1 — "Run Audit": validate, gate guests behind email verification, then run audit.
+    // Step 1 — "Run Audit": validate, gate guests behind the quick check, then run audit.
     const beginFlow = async (token, rawUrl) => {
         const urlToScan = normalizeUrl(rawUrl ?? url);
         // A returning guest arrives here with token === null (their grant is already
@@ -523,9 +527,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
         if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
         // Logged-in / dev bypass, or a returning guest whose grant is still valid → run
-        // straight through (fetchData replays the stored grant). Only a first-time /
-        // expired guest sees the email modal.
-        if (user || SKIP_EMAIL_VERIFY || getValidGuestGrant()) { beginFlow(null); return; }
+        // straight through (fetchData replays the stored grant). Only a first-time guest,
+        // or one whose 2-hour grant has lapsed, sees the verify modal.
+        if (user || SKIP_AUDIT_VERIFY || getValidGuestGrant()) { beginFlow(null); return; }
         setShowVerify(true);
     };
 
@@ -761,7 +765,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phase, discovery, rejected, budgetBlocked]);
 
-    // Modal success → store grant so later audits skip the email/OTP step, then detect.
+    // Modal success → store the 2h grant so later audits skip the check, then detect.
     const handleVerified = (auditToken) => {
         setShowVerify(false);
         saveGuestGrant(auditToken);
@@ -774,7 +778,8 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         if (phase !== 'idle') { setPhase('idle'); setDiscovery(null); setDetectError(null); }
     };
 
-    // Deep link: ?url= auto-starts the flow (logged-in detect immediately; guests verify first).
+    // Deep link: ?url= auto-starts the flow (logged-in detect immediately; unverified guests
+    // clear the quick check first).
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const queryUrl = params.get("url");
@@ -796,7 +801,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         }
         isAutoStarting.current = true;
 
-        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token') || getValidGuestGrant()) {
+        if (user || SKIP_AUDIT_VERIFY || localStorage.getItem('dealerpulse_token') || getValidGuestGrant()) {
             beginFlow(null, queryUrl);
             window.history.replaceState(null, '', window.location.pathname);
         } else {
@@ -807,7 +812,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
 
     // Audit rejected for a missing/expired grant → re-open the verify modal.
     useEffect(() => {
-        if (externalError && /verify your email|email verification/i.test(externalError)) setShowVerify(true);
+        if (externalError && NEEDS_VERIFY_RE.test(externalError)) setShowVerify(true);
     }, [externalError]);
 
     const error = externalError || localError;
@@ -1028,7 +1033,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 </form>
             </div>
 
-            <AuditEmailVerifyModal
+            <AuditVerifyModal
                 isOpen={showVerify}
                 onClose={() => setShowVerify(false)}
                 onVerified={handleVerified}

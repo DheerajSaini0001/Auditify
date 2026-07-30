@@ -55,12 +55,21 @@ const otpLimiter = makeLimiter(
   'Too many OTP requests from this IP. Please wait a few minutes.'
 );
 
-// Guest-audit OTP send — the email-verification gate that replaces CAPTCHA for
-// anonymous audits. Stricter than otpLimiter because each hit sends a real email,
-// so this is the anti email-bombing cap (per-email cooldown is enforced separately).
-const auditOtpRequestLimiter = makeLimiter(
-  15 * 60 * 1000, 8,
-  'Too many verification code requests from this IP. Please wait a few minutes.'
+// Guest-audit verification (the single-digit addition challenge). Both endpoints
+// are cheap — a JWT sign and a JWT verify, no email, no database — so these caps
+// are deliberately generous: a whole office behind one NAT'd IP must not lock
+// itself out of running audits. The real abuse ceiling is the per-IP report budget
+// in middleware/reportBudget.js, not these.
+const guestChallengeLimiter = makeLimiter(
+  15 * 60 * 1000, 120,
+  'Too many verification requests from this IP. Please wait a few minutes.'
+);
+
+// Answering is capped tighter than asking, since this is the guessable side —
+// still ~20x more tries than a human needs for a 1-digit sum.
+const guestVerifyLimiter = makeLimiter(
+  15 * 60 * 1000, 60,
+  'Too many verification attempts from this IP. Please wait a few minutes.'
 );
 
 // ── Global backstop: a generous per-IP ceiling on state-changing requests. ──
@@ -82,6 +91,7 @@ export {
   passwordResetLimiter,
   registerLimiter,
   otpLimiter,
-  auditOtpRequestLimiter,
+  guestChallengeLimiter,
+  guestVerifyLimiter,
   globalLimiter,
 };

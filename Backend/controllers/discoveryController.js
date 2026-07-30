@@ -20,7 +20,7 @@ import logger from "../utils/logger.js";
  * depth backstop for direct API callers.
  *
  * Sits behind the same gate as /audit (tryAuthenticate + guestAuditGate), so
- * guests reuse the short-lived email-verification grant they already hold
+ * guests reuse the verification grant they already hold
  * (body `auditToken` or the `x-audit-token` header).
  */
 export const discover = async (req, res) => {

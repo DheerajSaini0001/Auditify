@@ -1,5 +1,7 @@
 name: Deploy Backend
 
+# Azure auth is federated to refs/heads/main only — runs from any other branch
+# fail at the login step by design.
 on:
   push:
     branches: [main]

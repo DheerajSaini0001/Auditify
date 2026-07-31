@@ -8,6 +8,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -148,6 +149,12 @@ const startServer = async () => {
 
     noSniff: true
   }));
+
+  // ── 4b. Compression ──
+  // A finished report is one large JSON doc (8 pillar objects, ~150 params);
+  // gzip cuts those responses 5-10x. compression() only compresses compressible
+  // content-types, so the base64/binary screenshot route is left alone.
+  app.use(compression());
 
   // ── 5. Parsers ──
   app.use(express.json({ limit: "5mb" }));

@@ -1,7 +1,13 @@
+// Load .env BEFORE anything else: ESM hoists and evaluates the whole static import
+// graph before the first statement of this file runs, so a `dotenv.config()` call
+// placed below the imports executed AFTER modules like utils/browserManager.js had
+// already read process.env at module scope — every module-level tunable in .env
+// (MAX_CONCURRENT_BROWSERS, MAX_KEY_PAGES, …) was silently ignored. The
+// side-effect import form is the one way to guarantee env vars exist first.
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -26,8 +32,6 @@ import trackingMiddleware from "./middleware/tracking.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import configService from "./services/configService.js";
 import auditStore from "./utils/auditStore.js";
-
-dotenv.config();
 
 const app = express();
 app.set("trust proxy", 1);

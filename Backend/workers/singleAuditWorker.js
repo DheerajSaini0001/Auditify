@@ -9,7 +9,7 @@ import uxContentStructure from "../metricServices/uxContentStructure.js";
 import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
-import Puppeteer_Cheerio, { ensureDomainClearance } from "../utils/puppeteer_cheerio.js";
+import Puppeteer_Cheerio, { ensureDomainClearance, closeSharedBrowser } from "../utils/puppeteer_cheerio.js";
 import { prefetchPsiBatch, takePsiPrefetch, clearPsiPrefetch } from "../utils/psiPrefetch.js";
 import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
@@ -451,12 +451,12 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
     // the missing-key lookup — so nothing waits for the slowest discovery step.
     //
     // MAX_KEY_PAGES is the single biggest lever on audit cost: every key page is a
-    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Default 10 covers the
-    // full dealer page-type set (was hard-coded 6). On small servers set the
-    // MAX_KEY_PAGES env var lower (e.g. 3 on a 1-vCPU box — 11 renders serialize
-    // brutally there), or 0 to skip key pages entirely (Stage 1 / homepage only).
+    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Default 6 — the core
+    // dealer page set. On small servers set the MAX_KEY_PAGES env var lower
+    // (e.g. 3 on a 1-vCPU box — 7 renders serialize brutally there), or 0 to skip
+    // key pages entirely (Stage 1 / homepage only).
     const envKeyPages = parseInt(process.env.MAX_KEY_PAGES ?? "", 10);
-    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 10;
+    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 6;
     // Valid 24-hex ObjectId string (4-byte unix time + 8 random bytes — the same
     // shape Mongo itself generates, so mongoose casts it losslessly). Hand-rolled
     // because this id was the worker's ONLY use of mongoose, and importing all of
@@ -1104,6 +1104,11 @@ async function auditKeyPages(currentAuditId, device) {
     if (browser) {
       try { await browser.close(); } catch { }
     }
+    // This worker's shared stealth browser (spawned lazily for site-type/robots
+    // fetches) lives in THIS thread's module instance — left open it leaks a
+    // ~120-250MB Chromium tree past the audit, since thread exit doesn't kill
+    // the child process. No-ops safely if a context is still active.
+    try { await closeSharedBrowser(); } catch { }
     // Any PSI response prefetched for a page that never got audited (audit failed
     // mid-flight, page skipped) is a multi-MB Lighthouse JSON pinned in memory — drop it.
     clearPsiPrefetch();

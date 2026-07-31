@@ -77,13 +77,6 @@ const CircularProgress = ({ score, size = 66, strokeWidth = 4, color = "#3b82f6"
   );
 };
 
-// GSC auto-sync throttle — module-level so it survives the dashboard unmounting on
-// every route switch. Without this, a Google user's mount effect re-ran the sync
-// (POST /api/websites/sync + a full cache-busting refetch, and a "Successfully
-// synced N properties" toast) on every single visit to the dashboard.
-let lastGscSyncAt = 0;
-const GSC_SYNC_TTL = 10 * 60 * 1000; // at most one background sync per 10 minutes
-
 const DashboardPage = () => {
   const { user, apiFetch, logout } = useAuth();
   const { theme } = useContext(ThemeContext);
@@ -173,10 +166,9 @@ const DashboardPage = () => {
       refresh();
     }
 
-    // Auto GSC Sync on mount for Google Account users — throttled + silent so it
-    // doesn't re-sync (and re-toast) on every route switch.
+    // Auto GSC Sync on mount for Google Account users
     if (user?.authProvider === 'google' && user?.googleAccessToken) {
-      handleSync({ auto: true });
+      handleSync();
     }
   }, [refresh, location.state]);
 
@@ -320,28 +312,17 @@ const DashboardPage = () => {
     };
   }, [apiSearchInput, apiFetch]);
 
-  // `auto` = the on-mount background sync (throttled + silent). A manual trigger
-  // (auto:false) always runs and announces its result with a toast.
-  const handleSync = async ({ auto = false } = {}) => {
-    if (auto && Date.now() - lastGscSyncAt < GSC_SYNC_TTL) return; // already synced recently
-    lastGscSyncAt = Date.now(); // stamp up front so overlapping mounts don't double-fire
-
+  const handleSync = async () => {
     setSyncing(true);
-    try {
-      const { ok, data } = await apiFetch('/api/websites/sync', { method: 'POST' });
-      if (ok) {
-        // The inline "Getting your sites from Google Search Console…" loader already
-        // shows the background sync — only a manual sync pops a success toast. This
-        // was the "Successfully synced N properties" message firing on every switch.
-        if (!auto) toast.success(data.message || 'Properties synchronized successfully');
-        invalidateCache();
-        refresh(true);
-      } else if (!auto) {
-        toast.error(data.message || 'Synchronization failed');
-      }
-    } finally {
-      setSyncing(false);
+    const { ok, data } = await apiFetch('/api/websites/sync', { method: 'POST' });
+    if (ok) {
+      toast.success(data.message || 'Properties synchronized successfully');
+      invalidateCache();
+      refresh(true);
+    } else {
+      toast.error(data.message || 'Synchronization failed');
     }
+    setSyncing(false);
   };
 
   const handleDelete = async (id, url) => {

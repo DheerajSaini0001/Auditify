@@ -5,8 +5,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Assets from "../assets/Assets.js";
-import AuditVerifyModal from "./AuditVerifyModal.jsx";
-import { saveGuestGrant, getValidGuestGrant, NEEDS_VERIFY_RE } from "../utils/guestGrant.js";
+import AuditEmailVerifyModal from "./AuditEmailVerifyModal.jsx";
+import { saveGuestGrant, getValidGuestGrant } from "../utils/guestGrant.js";
 import { useRef } from "react";
 
 // Custom Dropdown Component
@@ -103,17 +103,13 @@ export default function InputForm() {
 
       // Auto-trigger audit logic
       const runDirectly = async () => {
-        // Normalize ONCE, before the branches. This used to live inside the logged-in
-        // branch only, so the guest branch below read an out-of-scope `urlToFetch` and
-        // threw a ReferenceError — a verified guest arriving on a ?url= link got no
-        // audit at all.
-        let urlToFetch = queryUrl.trim();
-        if (!/^https?:\/\//i.test(urlToFetch)) {
-          urlToFetch = `https://${urlToFetch}`;
-        }
-
-        // Logged in → straight to the audit, no verification.
+        // If logged in, skip captcha and run
         if (localStorage.getItem('dealerpulse_token')) {
+          let urlToFetch = queryUrl.trim();
+          if (!/^https?:\/\//i.test(urlToFetch)) {
+            urlToFetch = `https://${urlToFetch}`;
+          }
+
           isAuditStarting.current = true;
           const result = await fetchData(urlToFetch, device, report, null);
           isAuditStarting.current = false;
@@ -121,18 +117,18 @@ export default function InputForm() {
             navigate(`/report/${result.id}`);
           }
         } else if (getValidGuestGrant()) {
-          // Guest who already verified: reuse the stored grant (fetchData attaches it
-          // automatically) — no second challenge inside the 2-hour window.
+          // Guest who already verified this session: reuse the stored grant (fetchData
+          // attaches it automatically) — no email/OTP again.
           isAuditStarting.current = true;
           const result = await fetchData(urlToFetch, device, report, null);
           isAuditStarting.current = false;
           if (result?.success && result?.id) {
             navigate(`/report/${result.id}`);
-          } else if (NEEDS_VERIFY_RE.test(result?.error || '')) {
+          } else if (/verify your email|email verification/i.test(result?.error || '')) {
             setShowVerify(true); // grant expired mid-flight — verify once more
           }
         } else {
-          // First-time guest: one quick sum before the audit runs.
+          // First-time guest: ask them to verify their email before the audit runs.
           setShowVerify(true);
         }
       };
@@ -163,21 +159,20 @@ export default function InputForm() {
       return;
     }
 
-    // Skip verification for authenticated users
+    // Skip email verification for authenticated users
     if (user) {
       runAudit(null);
       return;
     }
 
     // Returning guest with a still-valid grant → run straight through (fetchData replays
-    // the stored token). Only a first-time guest, or one whose 2-hour grant has lapsed,
-    // sees the modal.
+    // the stored token). Only a first-time / expired guest sees the email modal.
     if (getValidGuestGrant()) {
       runAudit(null);
       return;
     }
 
-    // Open the verification modal for first-time guests
+    // Open the email-verification modal for first-time guests
     setShowVerify(true);
   };
 
@@ -196,8 +191,8 @@ export default function InputForm() {
       navigate(`/report/${result.id}`);
       setInputValue("");
     } else if (!result?.success) {
-      // Grant missing/expired — re-open the verification modal.
-      if (NEEDS_VERIFY_RE.test(result?.error || '')) {
+      // Grant missing/expired — re-open the email-verification modal.
+      if (/verify your email|email verification/i.test(result?.error || '')) {
         setShowVerify(true);
       } else {
         setError(result?.error || "An unknown error occurred.");
@@ -205,10 +200,10 @@ export default function InputForm() {
     }
   };
 
-  // Called by the modal once the sum is confirmed; runs the audit with the grant.
+  // Called by the modal once the OTP is confirmed; runs the audit with the grant.
   const handleVerified = (auditToken) => {
     setShowVerify(false);
-    // Persist the grant so audits in the next 2 hours skip the check entirely.
+    // Persist the grant so subsequent audits this session skip the email/OTP step.
     saveGuestGrant(auditToken);
     runAudit(auditToken);
   };
@@ -360,8 +355,8 @@ export default function InputForm() {
 
       </div>
 
-      {/* Guest verification: one single-digit addition, grant lasts 2 hours */}
-      <AuditVerifyModal
+      {/* Email-verification modal (replaces CAPTCHA for guest audits) */}
+      <AuditEmailVerifyModal
         isOpen={showVerify}
         onClose={() => setShowVerify(false)}
         onVerified={handleVerified}

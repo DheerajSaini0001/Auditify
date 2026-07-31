@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert, Globe, ExternalLink } from "lucide-react";
+import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../Component/CircularProgress";
 import LivePreview from "../Component/LivePreview";
@@ -552,43 +552,23 @@ const AuditSummaryPage = () => {
         <div className={`w-full min-h-screen ${darkMode ? "bg-[#0B1120] text-slate-200" : "bg-surface text-ink"}`}>
             <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-                {/* ── Header: Breadcrumb + Big Audited Domain Title ── */}
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                        <button
-                            onClick={() => navigate("/")}
-                            className={`inline-flex items-center gap-1.5 text-xs font-semibold transition-colors ${darkMode ? "text-slate-400 hover:text-white" : "text-muted hover:text-ink"}`}
-                        >
-                            <ChevronLeft className="w-4 h-4" /> New audit
-                        </button>
-                        {payload?.device && (
-                            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${darkMode ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-slate-100 text-slate-700 border border-slate-200"}`}>
-                                <Globe className="w-3.5 h-3.5 text-[#ea580c]" /> {payload.device} Audit
-                            </span>
-                        )}
-                    </div>
-
-                    <div>
-                        <span className={`block text-xs font-bold uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-slate-500"}`}>
-                            Audit Summary Report
-                        </span>
-                        <div className="mt-1 flex items-center gap-3 flex-wrap">
-                            <a
-                                href={payload?.siteUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="group inline-flex items-center gap-2.5 transition-all"
-                                title={`Visit ${payload?.siteUrl}`}
-                            >
-                                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-[#ea580c] group-hover:opacity-90">
-                                    {prettyHost(payload?.siteUrl) || "Website Audit"}
-                                </h1>
-                                {payload?.siteUrl && (
-                                    <ExternalLink className="w-6 h-6 sm:w-8 sm:h-8 text-[#ea580c]/60 group-hover:text-[#ea580c] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all shrink-0" />
-                                )}
-                            </a>
-                        </div>
-                    </div>
+                {/* ── Breadcrumb + heading ── */}
+                <div className="flex flex-col gap-1">
+                    <button
+                        onClick={() => navigate("/")}
+                        className={`inline-flex items-center gap-1 text-xs font-semibold w-fit mb-1 transition-colors ${darkMode ? "text-slate-400 hover:text-white" : "text-muted hover:text-ink"}`}
+                    >
+                        <ChevronLeft className="w-3.5 h-3.5" /> New audit
+                    </button>
+                    <h1 className={`text-3xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>Audit Summary</h1>
+                    <a
+                        href={payload.siteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-[#ea580c] hover:underline w-fit"
+                    >
+                        {prettyHost(payload.siteUrl)}
+                    </a>
                 </div>
 
                 {showShimmer ? (

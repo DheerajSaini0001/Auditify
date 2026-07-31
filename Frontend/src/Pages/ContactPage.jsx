@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import { Link } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
-import { Mail, MapPin, MessagesSquare, Clock, BookOpen, LifeBuoy, ArrowRight } from "lucide-react";
+import { Mail, MapPin, MessagesSquare, Phone, Clock, BookOpen, LifeBuoy, ArrowRight } from "lucide-react";
 
 const SUPPORT_EMAIL = "support@sltechsoft.com";
 
@@ -46,6 +46,12 @@ export default function ContactPage() {
       value: SUPPORT_EMAIL,
       href: `mailto:${SUPPORT_EMAIL}`,
       note: "Best way to reach us. We reply within 24 hours.",
+    },
+    {
+      icon: Phone,
+      title: "Call us",
+      value: "+91 XX-XXXX-XXXX",
+      note: "For customers on a paid support plan.",
     },
     {
       icon: MapPin,

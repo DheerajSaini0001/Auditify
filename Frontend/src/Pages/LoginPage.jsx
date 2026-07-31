@@ -5,7 +5,6 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { savePostAuthIntent } from '../utils/intentStore';
-import CaptchaModal from '../Component/CaptchaModal';
 import './LoginPage.css';
 
 // Note: post-auth redirect is handled by GuestRoute which wraps this page.
@@ -15,13 +14,9 @@ const LoginPage = () => {
   const darkMode = theme === "dark";
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaId, setCaptchaId] = useState('');
-  const [captchaKey, setCaptchaKey] = useState(0); 
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { apiFetch, login } = useAuth();
@@ -34,25 +29,16 @@ const LoginPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setIsCaptchaModalOpen(true);
+    performLogin();
   };
 
-  const handleCaptchaVerify = async (verifiedAnswer, verifiedId) => {
-    setCaptchaAnswer(verifiedAnswer);
-    setCaptchaId(verifiedId);
-    setIsCaptchaModalOpen(false);
-    
-    // Now perform the actual login
-    performLogin(verifiedAnswer, verifiedId);
-  };
-
-  const performLogin = async (ans, id) => {
+  const performLogin = async () => {
 
     setLoading(true);
 
     const { ok, data, status } = await apiFetch('/api/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password, captchaAnswer: ans, captchaId: id }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (ok) {
@@ -69,8 +55,6 @@ const LoginPage = () => {
         });
       } else {
         toast.error(data.message || 'Invalid email or password');
-        setCaptchaKey(prev => prev + 1);
-        setCaptchaAnswer('');
       }
     }
     setLoading(false);
@@ -183,19 +167,6 @@ const LoginPage = () => {
           <Link to="/register" state={{ from: location.state?.from }}>Register Now</Link>
         </p>
       </div>
-
-      {isCaptchaModalOpen && (
-        <CaptchaModal 
-          isOpen={isCaptchaModalOpen}
-          onClose={() => setIsCaptchaModalOpen(false)}
-          onVerify={handleCaptchaVerify}
-          darkMode={darkMode}
-          apiFetch={apiFetch}
-          title="Security Check"
-          description="Please solve the challenge to securely sign in to your account."
-          buttonText="Verify & Sign In"
-        />
-      )}
     </div>
   );
 };

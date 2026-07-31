@@ -5,8 +5,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import Assets from "../assets/Assets.js";
-import AuditEmailVerifyModal from "./AuditEmailVerifyModal.jsx";
-import { saveGuestGrant, getValidGuestGrant } from "../utils/guestGrant.js";
 import { useRef } from "react";
 
 // Custom Dropdown Component
@@ -83,9 +81,6 @@ export default function InputForm() {
   const [report, setReport] = useState("All");
   const [error, setError] = useState(null);
 
-  // Email-verification gate state (replaces CAPTCHA for guests)
-  const [showVerify, setShowVerify] = useState(false);
-
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -101,35 +96,18 @@ export default function InputForm() {
       setInputValue(queryUrl);
       processedUrlRef.current = queryUrl;
 
-      // Auto-trigger audit logic
+      // Auto-trigger audit logic — no verification for anyone, guest or not.
       const runDirectly = async () => {
-        // If logged in, skip captcha and run
-        if (localStorage.getItem('dealerpulse_token')) {
-          let urlToFetch = queryUrl.trim();
-          if (!/^https?:\/\//i.test(urlToFetch)) {
-            urlToFetch = `https://${urlToFetch}`;
-          }
+        let urlToFetch = queryUrl.trim();
+        if (!/^https?:\/\//i.test(urlToFetch)) {
+          urlToFetch = `https://${urlToFetch}`;
+        }
 
-          isAuditStarting.current = true;
-          const result = await fetchData(urlToFetch, device, report, null);
-          isAuditStarting.current = false;
-          if (result?.success && result?.id) {
-            navigate(`/report/${result.id}`);
-          }
-        } else if (getValidGuestGrant()) {
-          // Guest who already verified this session: reuse the stored grant (fetchData
-          // attaches it automatically) — no email/OTP again.
-          isAuditStarting.current = true;
-          const result = await fetchData(urlToFetch, device, report, null);
-          isAuditStarting.current = false;
-          if (result?.success && result?.id) {
-            navigate(`/report/${result.id}`);
-          } else if (/verify your email|email verification/i.test(result?.error || '')) {
-            setShowVerify(true); // grant expired mid-flight — verify once more
-          }
-        } else {
-          // First-time guest: ask them to verify their email before the audit runs.
-          setShowVerify(true);
+        isAuditStarting.current = true;
+        const result = await fetchData(urlToFetch, device, report);
+        isAuditStarting.current = false;
+        if (result?.success && result?.id) {
+          navigate(`/report/${result.id}`);
         }
       };
 
@@ -142,14 +120,13 @@ export default function InputForm() {
       setDevice(location.state.device);
       setReport(location.state.report);
       setError("This specific audit record is no longer available. Re-run it now.");
-      setShowVerify(true);
 
       // Clear state to prevent loop if user reloads
       window.history.replaceState({}, document.title);
     }
   }, [location.search, location.state, navigate, device, report, fetchData]);
 
-  // Handle submit (v2 Click → Trigger Modal)
+  // Handle submit — straight to the audit, no verification step.
   const handleClick = (e) => {
     e.preventDefault();
     setError(null);
@@ -159,24 +136,10 @@ export default function InputForm() {
       return;
     }
 
-    // Skip email verification for authenticated users
-    if (user) {
-      runAudit(null);
-      return;
-    }
-
-    // Returning guest with a still-valid grant → run straight through (fetchData replays
-    // the stored token). Only a first-time / expired guest sees the email modal.
-    if (getValidGuestGrant()) {
-      runAudit(null);
-      return;
-    }
-
-    // Open the email-verification modal for first-time guests
-    setShowVerify(true);
+    runAudit();
   };
 
-  const runAudit = async (auditToken) => {
+  const runAudit = async () => {
     setError(null);
 
     // Auto-prefix protocol if missing
@@ -185,27 +148,14 @@ export default function InputForm() {
       urlToFetch = `https://${urlToFetch}`;
     }
 
-    const result = await fetchData(urlToFetch, device, report, auditToken || null);
+    const result = await fetchData(urlToFetch, device, report);
 
     if (result?.success && result?.id) {
       navigate(`/report/${result.id}`);
       setInputValue("");
     } else if (!result?.success) {
-      // Grant missing/expired — re-open the email-verification modal.
-      if (/verify your email|email verification/i.test(result?.error || '')) {
-        setShowVerify(true);
-      } else {
-        setError(result?.error || "An unknown error occurred.");
-      }
+      setError(result?.error || "An unknown error occurred.");
     }
-  };
-
-  // Called by the modal once the OTP is confirmed; runs the audit with the grant.
-  const handleVerified = (auditToken) => {
-    setShowVerify(false);
-    // Persist the grant so subsequent audits this session skip the email/OTP step.
-    saveGuestGrant(auditToken);
-    runAudit(auditToken);
   };
 
 
@@ -354,15 +304,6 @@ export default function InputForm() {
         </form>
 
       </div>
-
-      {/* Email-verification modal (replaces CAPTCHA for guest audits) */}
-      <AuditEmailVerifyModal
-        isOpen={showVerify}
-        onClose={() => setShowVerify(false)}
-        onVerified={handleVerified}
-        darkMode={darkMode}
-        isLoading={loading}
-      />
     </div>
   );
 }

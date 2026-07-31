@@ -7,28 +7,15 @@ import {
     Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
     Building2, MapPin, Megaphone,
 } from 'lucide-react';
-import AuditEmailVerifyModal from "../../Component/AuditEmailVerifyModal.jsx";
-import { saveGuestGrant, getValidGuestGrant } from "../../utils/guestGrant.js";
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useData } from '../../context/DataContext.jsx';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
-// Guests verify their email with an OTP before an audit runs — the SAME flow in
-// every environment, so what you test locally is what ships.
-//
-// This used to be `import.meta.env.DEV`, i.e. the modal was silently skipped on
-// localhost. That didn't remove the gate, it just moved it: the backend still
-// answered the audit request with 401 EMAIL_VERIFICATION_REQUIRED and the modal
-// popped up AFTER a wasted round-trip (and only because of the error-watching
-// effect below) — so dev exercised a different, worse path than production.
-//
-// The bypass is now explicit and opt-in: set VITE_SKIP_EMAIL_VERIFY=true in
-// Frontend/.env only if you deliberately want to skip verification locally, and
-// pair it with SKIP_GUEST_EMAIL_GATE=true on the backend or the audit call will
-// simply be rejected.
-const SKIP_EMAIL_VERIFY = import.meta.env.VITE_SKIP_EMAIL_VERIFY === "true";
+// Guests run audits with no verification at all. The email/OTP step and the
+// captcha that replaced it are both gone; the per-IP report budget on the
+// backend is what limits abuse now.
 
 /* ─────────────────────────────────────────
    Fixed dealership page-type catalog (Screen 01).
@@ -419,7 +406,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     // checklist drives this; `report` is the backend value derived from it.
     const [reportSections, setReportSections] = useState(() => SECTIONS.map((s) => s.value));
     const report = useMemo(() => sectionsToReport(reportSections), [reportSections]);
-    const [showVerify, setShowVerify] = useState(false);
     const [localError, setLocalError] = useState(null);
 
     // Which page types to include in the audit (defaults to all, across BOTH
@@ -443,7 +429,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     // True when the per-IP report budget is exhausted (429 REPORT_LIMIT_EXCEEDED)
     // — nothing can run until the window rolls over, so don't imply otherwise.
     const [budgetBlocked, setBudgetBlocked] = useState(false);
-    const auditTokenRef = useRef(null);               // guest grant, reused for the audit
+    // Guards the auto-start effect below so a completed scan kicks off the full
+    // audit exactly once. This was referenced there but never declared, which
+    // threw a ReferenceError the moment discovery finished.
+    const autoAuditRanFor = useRef(null);
 
     // Parallel per-page audit state. `auditState[pageKey] = { status, id, progress, url, error }`
     // where status is pending | success | failed. `batchRunning` guards re-entry; once the
@@ -487,15 +476,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.key]);
 
-    // Step 1 — "Run Audit": validate, gate guests behind email verification, then run audit.
-    const beginFlow = async (token, rawUrl) => {
+    // Step 1 — "Run Audit": validate, then run. No verification gate for anyone.
+    const beginFlow = async (rawUrl) => {
         const urlToScan = normalizeUrl(rawUrl ?? url);
-        // A returning guest arrives here with token === null (their grant is already
-        // stored from an earlier verification this session). fetchData replays the
-        // stored grant on its own, but the raw batch calls below — per-page /audit and
-        // /merge — read this ref, so without the fallback they'd post auditToken:null
-        // and get 401'd for a guest who is in fact verified.
-        auditTokenRef.current = token || getValidGuestGrant() || null;
         setPhase('detecting');
         setLocalError(null);
 
@@ -507,7 +490,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         const activeScopes = scopes.filter((k) => visibleTypes.some((p) => p.key === k));
         const scopesToSend = activeScopes.length === visibleTypes.length ? null : activeScopes;
 
-        const result = await fetchData(urlToScan, device, report, token || null, false, scopesToSend);
+        const result = await fetchData(urlToScan, device, report, false, scopesToSend);
         setPhase('idle');
 
         if (result?.success && result?.id) {
@@ -522,11 +505,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setLocalError(null);
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
         if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
-        // Logged-in / dev bypass, or a returning guest whose grant is still valid → run
-        // straight through (fetchData replays the stored grant). Only a first-time /
-        // expired guest sees the email modal.
-        if (user || SKIP_EMAIL_VERIFY || getValidGuestGrant()) { beginFlow(null); return; }
-        setShowVerify(true);
+        beginFlow();
     };
 
     // Collapse the backend's many in-flight stages to the 3 states a card cares about.
@@ -575,7 +554,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     url: targetUrl,
                     device,
                     report,
-                    auditToken: auditTokenRef.current,
                     screenResolution: `${window.screen.width}x${window.screen.height}`,
                     pageType: catKey,
                     // Reuse the siteType this same /discover scan already resolved —
@@ -669,7 +647,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             method: 'POST',
                             credentials: 'include',
                             headers: lookupHeaders,
-                            body: JSON.stringify({ url: normalizeUrl(url), pageType: catKey, device, auditToken: auditTokenRef.current }),
+                            body: JSON.stringify({ url: normalizeUrl(url), pageType: catKey, device }),
                         });
                         const data = await res.json().catch(() => ({}));
                         if (res.ok && data._id) {
@@ -720,7 +698,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     method: 'POST',
                     credentials: 'include',
                     headers: mergeHeaders,
-                    body: JSON.stringify({ ids: items.map((it) => it.id), pageType: catKey, auditToken: auditTokenRef.current }),
+                    body: JSON.stringify({ ids: items.map((it) => it.id), pageType: catKey }),
                 });
                 const mdata = await mres.json().catch(() => ({}));
                 if (mres.ok && mdata._id) {
@@ -761,20 +739,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phase, discovery, rejected, budgetBlocked]);
 
-    // Modal success → store grant so later audits skip the email/OTP step, then detect.
-    const handleVerified = (auditToken) => {
-        setShowVerify(false);
-        saveGuestGrant(auditToken);
-        beginFlow(auditToken);
-    };
-
     // Changing the URL invalidates a previous scan.
     const onUrlChange = (v) => {
         setUrl(v);
         if (phase !== 'idle') { setPhase('idle'); setDiscovery(null); setDetectError(null); }
     };
 
-    // Deep link: ?url= auto-starts the flow (logged-in detect immediately; guests verify first).
+    // Deep link: ?url= auto-starts the flow immediately, for guests and users alike.
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         const queryUrl = params.get("url");
@@ -796,19 +767,10 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         }
         isAutoStarting.current = true;
 
-        if (user || SKIP_EMAIL_VERIFY || localStorage.getItem('dealerpulse_token') || getValidGuestGrant()) {
-            beginFlow(null, queryUrl);
-            window.history.replaceState(null, '', window.location.pathname);
-        } else {
-            setShowVerify(true);
-        }
+        beginFlow(queryUrl);
+        window.history.replaceState(null, '', window.location.pathname);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [location.search, user]);
-
-    // Audit rejected for a missing/expired grant → re-open the verify modal.
-    useEffect(() => {
-        if (externalError && /verify your email|email verification/i.test(externalError)) setShowVerify(true);
-    }, [externalError]);
 
     const error = externalError || localError;
 
@@ -1027,14 +989,6 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     </div>
                 </form>
             </div>
-
-            <AuditEmailVerifyModal
-                isOpen={showVerify}
-                onClose={() => setShowVerify(false)}
-                onVerified={handleVerified}
-                darkMode={darkMode}
-                isLoading={phase === 'detecting'}
-            />
         </section>
     );
 };

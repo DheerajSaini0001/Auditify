@@ -1,7 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import api from "../utils/api";
 import toast from "react-hot-toast";
-import { getValidGuestGrant, clearGuestGrant } from "../utils/guestGrant.js";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -147,10 +146,9 @@ export const DataProvider = ({ children }) => {
   };
 
   // 🚀 FETCH DATA
-  // `auditToken` is the short-lived grant a guest receives after verifying their
-  // email via OTP (replaces the old captchaAnswer/captchaId). It's null for
-  // logged-in users, whose audit is authorized by their Bearer token instead.
-  const fetchData = async (inputValue, device, report, auditToken = null, force = false, pageScopes = null) => {
+  // Audits need no guest verification — no captcha, no emailed OTP, no grant.
+  // Logged-in users still hit /api/user/audit with their Bearer token.
+  const fetchData = async (inputValue, device, report, force = false, pageScopes = null) => {
     if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -167,12 +165,6 @@ export const DataProvider = ({ children }) => {
       const token = localStorage.getItem('dealerpulse_token');
       const endpoint = token ? '/api/user/audit' : '/single-audit/audit';
 
-      // Guest grant reuse: after the first email/OTP verification we keep the signed grant
-      // (see utils/guestGrant.js). For every later guest audit, replay it so the user runs
-      // straight through without re-verifying — until it actually expires. An explicit
-      // `auditToken` (fresh from the modal) always wins; logged-in users need none.
-      const effectiveGuestToken = token ? null : (auditToken || getValidGuestGrant());
-
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
         credentials: "include",
@@ -184,7 +176,6 @@ export const DataProvider = ({ children }) => {
           url: inputValue,
           device,
           report,
-          auditToken: effectiveGuestToken, // guest email-verification grant (null when logged in)
           screenResolution,
           force,
           // Page types the user kept ticked on the home page. ["home"] alone means
@@ -196,10 +187,6 @@ export const DataProvider = ({ children }) => {
       const result = await handleResponse(res);
 
       if (!result.success) {
-        // Grant expired/invalid → drop the stored copy so the caller re-shows the modal.
-        if (/verify your email|email verification/i.test(result.error || '')) {
-          clearGuestGrant();
-        }
         return { success: false, error: result.error };
       }
 

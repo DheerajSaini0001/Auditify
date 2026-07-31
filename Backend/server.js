@@ -17,7 +17,6 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import adminConfigRoutes from "./routes/adminConfigRoutes.js";
 import aeoRoutes from "./routes/aeoRoutes.js";
-import captchaRoutes from "./routes/captchaRoutes.js";
 import { captureScreenshot, getScreenshotImage } from "./controllers/singleAuditController.js";
 import { tryAuthenticate } from "./middleware/auth.js";
 
@@ -165,7 +164,6 @@ const startServer = async () => {
   app.use("/api/admin/config", adminConfigRoutes);
   app.use("/api/websites", websiteRoutes);
   app.use("/api/aeo", aeoRoutes);
-  app.use("/api/captcha", captchaRoutes);
   app.post("/api/screenshot", tryAuthenticate, captureScreenshot);
   app.get("/api/screenshot/view/:auditId", getScreenshotImage);
 

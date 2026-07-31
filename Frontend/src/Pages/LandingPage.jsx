@@ -27,11 +27,11 @@ const LandingPage = () => {
         restDelta: 0.001
     });
 
-    const handleAuditSubmit = React.useCallback(async (url, device, report = "All", auditToken = null) => {
+    const handleAuditSubmit = React.useCallback(async (url, device, report = "All") => {
         if (loading) return;
         setError(null);
 
-        const result = await fetchData(url, device, report, auditToken);
+        const result = await fetchData(url, device, report);
         if (result?.success) {
             navigate(`/report/${result.id}`);
         } else {

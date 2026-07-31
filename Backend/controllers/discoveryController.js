@@ -19,9 +19,8 @@ import logger from "../utils/logger.js";
  * gate — singleAuditController's /audit has the same check as a defense-in-
  * depth backstop for direct API callers.
  *
- * Sits behind the same gate as /audit (tryAuthenticate + guestAuditGate), so
- * guests reuse the verification grant they already hold
- * (body `auditToken` or the `x-audit-token` header).
+ * Open to guests, like /audit — there is no verification gate. The per-IP
+ * report budget is what limits abuse of this surface.
  */
 export const discover = async (req, res) => {
   try {

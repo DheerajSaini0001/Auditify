@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, Lock, LogIn, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
-import MathCaptcha from '../Component/MathCaptcha';
 import toast from 'react-hot-toast';
 
 import { getRedirectPath } from '../utils/roleRedirect';
@@ -15,7 +14,6 @@ const Login = () => {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,13 +23,8 @@ const Login = () => {
 
 
   const handleSubmit = async (e) => {
-    if (!captchaAnswer) {
-      toast.error('Please complete the CAPTCHA');
-      return;
-    }
-
     setLoading(true);
-    const result = await login(email, password, captchaAnswer);
+    const result = await login(email, password);
 
     if (result.success) {
       // Determine origin page, fallback based on role
@@ -126,7 +119,6 @@ const Login = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-            <MathCaptcha onAnswerChange={setCaptchaAnswer} />
 
             <button
               type="submit"

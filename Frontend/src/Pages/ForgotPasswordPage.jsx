@@ -4,17 +4,13 @@ import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Mail, ArrowLeft, Send, CheckCircle, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import CaptchaModal from '../Component/CaptchaModal';
 
 const ForgotPasswordPage = () => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const [email, setEmail] = useState('');
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaId, setCaptchaId] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const { apiFetch } = useAuth();
 
   const handleSubmit = (e) => {
@@ -23,34 +19,17 @@ const ForgotPasswordPage = () => {
       toast.error('Please enter your email address');
       return;
     }
-    setIsCaptchaModalOpen(true);
+    performForgotPassword();
   };
 
-  const handleCaptchaVerify = async (ans, id) => {
-    setCaptchaAnswer(ans);
-    setCaptchaId(id);
-    setIsCaptchaModalOpen(false);
-
-    // Now perform the actual forgot password initiation
-    performForgotPassword(ans, id);
-  };
-
-  const performForgotPassword = async (ans, id) => {
+  const performForgotPassword = async () => {
     setLoading(true);
 
     try {
-      const { ok, data } = await apiFetch('/api/auth/forgot-password', {
+      await apiFetch('/api/auth/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email, captchaAnswer: ans, captchaId: id }),
+        body: JSON.stringify({ email }),
       });
-
-      if (!ok) {
-        if (data.error && data.error.includes('CAPTCHA')) {
-          toast.error(data.error);
-          setLoading(false);
-          return;
-        }
-      }
     } catch (err) {
       console.error('Request failed:', err);
     } finally {
@@ -125,19 +104,6 @@ const ForgotPasswordPage = () => {
           </div>
         </form>
       </div>
-
-      {isCaptchaModalOpen && (
-        <CaptchaModal
-          isOpen={isCaptchaModalOpen}
-          onClose={() => setIsCaptchaModalOpen(false)}
-          onVerify={handleCaptchaVerify}
-          darkMode={darkMode}
-          apiFetch={apiFetch}
-          title="Security Verification"
-          description="Please solve the challenge to securely reset your password."
-          buttonText="Verify & Send Link"
-        />
-      )}
     </div>
   );
 };

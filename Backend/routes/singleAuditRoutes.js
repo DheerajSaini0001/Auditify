@@ -1,12 +1,9 @@
 import express from "express";
 import { startAudit, getReportById, getReportStatusById, mergeReports, findMergedReport } from "../controllers/singleAuditController.js";
 import { discover } from "../controllers/discoveryController.js";
-import { getAuditCaptcha, verifyAuditCaptcha } from "../controllers/guestVerifyController.js";
 import { generatePDFReport } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
-import guestAuditGate from "../middleware/auditGate.js";
 import { tryAuthenticate } from "../middleware/auth.js";
-import { guestChallengeLimiter, guestVerifyLimiter } from "../middleware/rateLimiter.js";
 import { chargeReportBudget, enforceReportBudget } from "../middleware/reportBudget.js";
 
 const router = express.Router();
@@ -27,29 +24,28 @@ const mergeLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ── Guest verification gate (one single-digit addition, no email involved) ──
-// Step 1: get a question + its signed challenge.
-router.get("/captcha", guestChallengeLimiter, getAuditCaptcha);
-// Step 2: answer it → returns the audit grant (default 2h) the gate accepts.
-router.post("/verify-captcha", guestVerifyLimiter, verifyAuditCaptcha);
+// ── No guest verification ──
+// Guests once had to clear a gate before auditing: first an emailed OTP, then a
+// one-sum captcha. Both are gone — a visitor now goes straight from the URL box
+// to a running audit. What still protects this surface is the per-IP report
+// budget (5 site runs / 15 min, see middleware/reportBudget.js), which is the
+// limit that actually matters given each run costs a headless Chrome session.
 
-// Discover the dealer's main pages (sitemap → robots.txt → crawl). Same gate as
-// /audit, so guests reuse the verification grant they already hold.
+// Discover the dealer's main pages (sitemap → robots.txt → crawl).
 // Discovery never charges the report budget, but a maxed-out IP is turned away.
-router.post("/discover", enforceReportBudget, tryAuthenticate, guestAuditGate, discover);
+router.post("/discover", enforceReportBudget, tryAuthenticate, discover);
 
-// Start Audit — logged-in users pass; guests must present a verification grant.
+// Start Audit — open to everyone.
 // The first audit of a site opens a run (1 report); its batch-mates ride free.
-router.post("/audit", chargeReportBudget, tryAuthenticate, guestAuditGate, startAudit);
+router.post("/audit", chargeReportBudget, tryAuthenticate, startAudit);
 
 // Merge several sample reports (e.g. the VDP samples) into ONE averaged report.
-// Same gate as /audit so guests reuse their verification grant.
-router.post("/merge", mergeLimiter, tryAuthenticate, guestAuditGate, mergeReports);
+router.post("/merge", mergeLimiter, tryAuthenticate, mergeReports);
 
 // Look up an existing merged report for a site + pageType so a repeat audit can
 // reuse the VDP/SRP average instead of re-auditing every sample. Cheap read —
-// same gate as /merge, never charges the report budget.
-router.post("/find-merged", mergeLimiter, tryAuthenticate, guestAuditGate, findMergedReport);
+// never charges the report budget.
+router.post("/find-merged", mergeLimiter, tryAuthenticate, findMergedReport);
 
 // Export PDF — guests may export their own report (the controller scopes access
 // by report id when there's no authenticated user); logged-in users are scoped

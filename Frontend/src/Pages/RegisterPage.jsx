@@ -5,7 +5,6 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Assets from '../assets/Assets.js';
-import CaptchaModal from '../Component/CaptchaModal';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
@@ -17,12 +16,8 @@ const RegisterPage = () => {
     password: '',
     confirmPassword: '',
   });
-  const [captchaAnswer, setCaptchaAnswer] = useState('');
-  const [captchaId, setCaptchaId] = useState('');
-  const [captchaKey, setCaptchaKey] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isCaptchaModalOpen, setIsCaptchaModalOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { apiFetch } = useAuth();
@@ -48,20 +43,10 @@ const RegisterPage = () => {
       return;
     }
 
-    // Open CAPTCHA modal instead of submitting directly
-    setIsCaptchaModalOpen(true);
+    performRegistration();
   };
 
-  const handleCaptchaVerify = async (verifiedAnswer, verifiedId) => {
-    setCaptchaAnswer(verifiedAnswer);
-    setCaptchaId(verifiedId);
-    setIsCaptchaModalOpen(false);
-
-    // Now perform the actual registration
-    performRegistration(verifiedAnswer, verifiedId);
-  };
-
-  const performRegistration = async (ans, id) => {
+  const performRegistration = async () => {
     setLoading(true);
     const { ok, data } = await apiFetch('/api/auth/register', {
       method: 'POST',
@@ -69,8 +54,6 @@ const RegisterPage = () => {
         name: formData.name,
         email: formData.email,
         password: formData.password,
-        captchaAnswer: ans,
-        captchaId: id
       }),
     });
 
@@ -84,8 +67,6 @@ const RegisterPage = () => {
       });
     } else {
       toast.error(data.message || 'Registration failed');
-      setCaptchaKey(prev => prev + 1);
-      setCaptchaAnswer('');
     }
     setLoading(false);
   };
@@ -246,19 +227,6 @@ const RegisterPage = () => {
           </p>
         </div>
       </div>
-
-      {isCaptchaModalOpen && (
-        <CaptchaModal
-          isOpen={isCaptchaModalOpen}
-          onClose={() => setIsCaptchaModalOpen(false)}
-          onVerify={handleCaptchaVerify}
-          darkMode={darkMode}
-          apiFetch={apiFetch}
-          title="Verify Registration"
-          description="Please solve this challenge to complete your account creation."
-          buttonText="Verify & Create Account"
-        />
-      )}
     </div>
   );
 };

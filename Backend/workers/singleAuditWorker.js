@@ -592,7 +592,11 @@ async function auditKeyPages(currentAuditId, device) {
     // permits stayed free — while the third finished. Now each slot pulls the next
     // queued page the instant its current page closes, so 3 audits are always running
     // until the queue drains.
-    const CONCURRENCY = 3;
+    // Follow the pool cap instead of a hard-coded 3: with MAX_CONCURRENT_BROWSERS
+    // raised (e.g. 6 on an 8-core dev box) the old constant became a silent SECOND
+    // cap that left pool permits idle through Stage 2 — 6 key pages ran as 2 waves
+    // when they could run as 1. Env unset → 3, identical to the pool's own default.
+    const CONCURRENCY = Math.max(1, parseInt(process.env.MAX_CONCURRENT_BROWSERS || "3", 10) || 3);
     let completed = 0;
     const results = [];
 

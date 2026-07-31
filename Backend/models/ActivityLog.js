@@ -10,7 +10,7 @@ const ActivityLogSchema = new mongoose.Schema({
   action: {
     type: String,
     enum: ['LOGIN','LOGOUT','REGISTER','AUDIT_RUN','AUDIT_RUN_CACHED','REPORT_DOWNLOAD',
-           'PROFILE_UPDATE','FAILED_LOGIN','BLOCKED','UNBLOCKED'],
+           'PROFILE_UPDATE','FAILED_LOGIN','BLOCKED','UNBLOCKED','ROLE_CHANGED'],
     required: true
   },
   metadata:  { type: mongoose.Schema.Types.Mixed },  // extra context per action

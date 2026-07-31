@@ -1,11 +1,12 @@
 import express from 'express';
 import { param, body, query, validationResult } from 'express-validator';
 import { 
-  getAllUsers, 
-  getUserById, 
-  blockUser, 
-  unblockUser, 
-  deleteUser, 
+  getAllUsers,
+  getUserById,
+  blockUser,
+  unblockUser,
+  deleteUser,
+  updateUserRole,
   getAuditLogs, 
   getStats,
   getOverviewStats,
@@ -56,6 +57,16 @@ router.delete('/users/:id', [
   param('id').isMongoId().withMessage('Invalid user ID format'),
   validate
 ], deleteUser);
+
+// Appoint / remove an admin. SUPER-ADMIN ONLY — note the router-level
+// checkRole('admin') above also admits super_admins (see middleware/auth.js), so
+// this route needs its own stricter gate or any admin could appoint peers.
+router.patch('/users/:id/role', [
+  checkRole('super_admin'),
+  param('id').isMongoId().withMessage('Invalid user ID format'),
+  body('role').isIn(['user', 'admin']).withMessage("Role must be 'user' or 'admin'"),
+  validate
+], updateUserRole);
 
 router.get('/audit-logs', [
   query('page').optional().isInt({ min: 1 }),

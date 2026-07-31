@@ -396,6 +396,26 @@ const AdminDashboard = () => {
     }
   };
 
+  // Appoint / remove an admin. Super-admin only — the button that calls this is
+  // rendered only for super_admins, and the API enforces the same rule server-side
+  // (a super_admin cannot be demoted here, and nobody can change their own role).
+  const handleRoleChange = async (target, e) => {
+    e.stopPropagation();
+    const promoting = target.role !== 'admin';
+    const verb = promoting ? 'make an admin' : 'remove admin rights from';
+    if (!window.confirm(`Are you sure you want to ${verb} ${target.email}?`)) return;
+    try {
+      const { data } = await api.patch(`/api/admin/users/${target._id}/role`, {
+        role: promoting ? 'admin' : 'user',
+      });
+      fetchUsers();
+      fetchStats();
+      toast.success(data.message || 'Role updated');
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to update role');
+    }
+  };
+
   const handleDelete = async (userId, e) => {
     e.stopPropagation();
     if (!window.confirm('PERMANENT DELETE! Are you sure?')) return;
@@ -970,9 +990,21 @@ const AdminDashboard = () => {
                                   </div>
                                 </td>
                                 <td className="px-8 py-5">
-                                  <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${item.isBlocked ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
-                                    {item.isBlocked ? 'Suspended' : 'Verified'}
-                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${item.isBlocked ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
+                                      {item.isBlocked ? 'Suspended' : 'Verified'}
+                                    </span>
+                                    {/* Role is only worth a badge when it is elevated — plain users stay unlabelled. */}
+                                    {item.role === 'super_admin' ? (
+                                      <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                                        Super Admin
+                                      </span>
+                                    ) : item.role === 'admin' ? (
+                                      <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                        Admin
+                                      </span>
+                                    ) : null}
+                                  </div>
                                 </td>
                                 <td className="px-8 py-5">
                                   <div className="flex flex-col">
@@ -983,6 +1015,22 @@ const AdminDashboard = () => {
                                 <td className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-tighter">{formatTimestamp(item.createdAt)}</td>
                                 <td className="px-8 py-5 text-right">
                                   <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    {/* Appoint / remove admin — super-admins only. Hidden for other
+                                        super-admins and for your own row, mirroring the API's guards
+                                        so the UI never offers an action the server will reject. */}
+                                    {/* `user` carries _id after login but userId when rehydrated
+                                        from /api/auth/me (the JWT payload), so check both. */}
+                                    {user?.role === 'super_admin' && item.role !== 'super_admin' && item._id !== (user?._id || user?.userId) && (
+                                      <button
+                                        onClick={(e) => handleRoleChange(item, e)}
+                                        title={item.role === 'admin' ? 'Remove admin rights' : 'Make admin'}
+                                        className={`p-2.5 rounded-xl transition-colors ${item.role === 'admin'
+                                          ? 'text-purple-500 bg-purple-500/10 hover:bg-purple-500/20'
+                                          : 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20'}`}
+                                      >
+                                        {item.role === 'admin' ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
+                                      </button>
+                                    )}
                                     {item.isBlocked ? (
                                       <button onClick={(e) => handleUnblock(item._id, e)} className="p-2.5 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl transition-colors"><Unlock size={14} /></button>
                                     ) : (

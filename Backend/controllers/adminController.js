@@ -156,6 +156,89 @@ export const deleteUser = async (req, res) => {
   }
 };
 
+/**
+ * Promote a user to `admin`, or demote an admin back to `user`.
+ * SUPER-ADMIN ONLY — enforced at the route (adminRoutes.js), because the router's
+ * blanket checkRole('admin') deliberately also admits super_admins, so a plain
+ * admin would otherwise reach this and be able to appoint peers.
+ *
+ * Deliberate limits, each one closing a privilege-escalation path:
+ *  1. `super_admin` is not an assignable value. The panel can mint admins, never
+ *     another super-admin — that grant stays a deploy/DB-level operation.
+ *  2. An existing super_admin can never be demoted here, so the last super-admin
+ *     cannot be stripped by a peer and lock everyone out.
+ *  3. You cannot change your own role — no self-demotion lockout, and no
+ *     self-promotion if this is ever reachable by a lesser role in future.
+ */
+const ASSIGNABLE_ROLES = ['user', 'admin'];
+
+export const updateUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body;
+
+    if (!ASSIGNABLE_ROLES.includes(role)) {
+      return res.status(400).json({
+        error: `Role must be one of: ${ASSIGNABLE_ROLES.join(', ')}`,
+        code: 'INVALID_ROLE',
+      });
+    }
+
+    if (String(id) === String(req.user.userId)) {
+      return res.status(400).json({
+        error: 'You cannot change your own role',
+        code: 'SELF_ROLE_CHANGE',
+      });
+    }
+
+    const user = await User.findById(id).select('name email role');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found', code: 'USER_NOT_FOUND' });
+    }
+
+    if (user.role === 'super_admin') {
+      return res.status(403).json({
+        error: 'A super admin\'s role cannot be changed from the panel',
+        code: 'SUPER_ADMIN_IMMUTABLE',
+      });
+    }
+
+    if (user.role === role) {
+      return res.status(200).json({ message: `User is already ${role}`, user });
+    }
+
+    const previousRole = user.role;
+    // updateOne, not save(): the doc was fetched with a projection, and save()
+    // would validate/rewrite fields that were never loaded.
+    await User.updateOne({ _id: user._id }, { $set: { role } });
+
+    logger.info(
+      `[Admin] Role change: ${user.email} ${previousRole} → ${role} (by super_admin ${req.user.userId})`
+    );
+
+    // Audit trail — who changed whose role, from what, to what.
+    await ActivityLog.create({
+      userId: req.user.userId,
+      sessionId: 'ADMIN_ACTION',
+      ip: req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
+      action: 'ROLE_CHANGED',
+      metadata: { targetUserId: String(user._id), targetEmail: user.email, previousRole, newRole: role },
+    }).catch((err) => logger.error('[Admin] Failed to log ROLE_CHANGED', err));
+
+    // The role the client should now render — the in-memory doc still holds the old one.
+    res.json({
+      message: role === 'admin'
+        ? `${user.email} is now an admin`
+        : `${user.email} is no longer an admin`,
+      user: { _id: user._id, name: user.name, email: user.email, role },
+      previousRole,
+    });
+  } catch (error) {
+    logger.error('[Admin] updateUserRole failed', error);
+    res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
+  }
+};
+
 export const getAuditLogs = async (req, res) => {
   try {
     const { 

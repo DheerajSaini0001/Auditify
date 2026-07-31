@@ -852,6 +852,24 @@ let activeContexts = 0;
 // another still believes the old browser is fine to reuse).
 let browserSetupPromise = null;
 
+/**
+ * Close the shared stealth browser if (and only if) nothing is using it.
+ * Called from the audit worker's final cleanup: every worker_thread gets its own
+ * instance of this module, so a shared browser spawned inside the worker (site-type
+ * classification, robots/llms.txt fetches) outlives the audit as a leaked
+ * ~120-250MB Chromium tree — thread exit does not kill the child process.
+ * Safe-by-default: if a concurrent caller still holds a context, leave it alone
+ * (closing under them crashes their session — see the activeContexts note above).
+ */
+export async function closeSharedBrowser() {
+  if (!sharedBrowser || activeContexts > 0) return false;
+  const b = sharedBrowser;
+  sharedBrowser = null;
+  sharedBrowserUses = 0;
+  try { await b.close(); } catch (_) { /* already gone */ }
+  return true;
+}
+
 async function getSharedBrowser() {
   if (browserSetupPromise) return browserSetupPromise;
 

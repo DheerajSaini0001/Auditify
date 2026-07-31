@@ -50,12 +50,36 @@ const startServer = async () => {
   }
 
   // ── 3. CORS ──
-  app.use(cors({
-    origin: [
-      FRONTEND_URL,
+  // FRONTEND_URL may hold several origins, comma-separated. For each one we also
+  // allow its www/apex counterpart: the site answers on BOTH dealersiteaudit.com
+  // and www.dealersiteaudit.com with no redirect between them, so pinning the
+  // allowlist to whichever form happens to be configured silently breaks every
+  // visitor who reaches the other one — the browser blocks the audit call and the
+  // UI can only report "Server connection failed. Is the backend running?".
+  const originVariants = (raw) => {
+    const cleaned = String(raw || "").trim().replace(/\/+$/, "");
+    if (!cleaned) return [];
+    try {
+      const u = new URL(cleaned);
+      const bare = u.host.replace(/^www\./i, "");
+      return [`${u.protocol}//${bare}`, `${u.protocol}//www.${bare}`];
+    } catch {
+      return [cleaned]; // not a parseable URL — pass through untouched
+    }
+  };
+
+  const allowedOrigins = [
+    ...new Set([
+      ...String(FRONTEND_URL || "").split(",").flatMap(originVariants),
       "http://localhost:5173",
-      "http://localhost:3000"
-    ].filter(Boolean),
+      "http://localhost:3000",
+    ]),
+  ].filter(Boolean);
+
+  logger.info(`[CORS] Allowed origins: ${allowedOrigins.join(", ")}`);
+
+  app.use(cors({
+    origin: allowedOrigins,
     credentials: true
   }));
 

@@ -1,5 +1,5 @@
 import { workerData, parentPort } from "worker_threads";
-import mongoose from "mongoose";
+import crypto from "crypto";
 
 import technicalMetrics from "../metricServices/technicalMetrics.js";
 import seoMetrics from "../metricServices/seoMetrics.js";
@@ -456,6 +456,13 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
     // breadth, or 0 to skip key pages entirely (Stage 1 / homepage only).
     const envKeyPages = parseInt(process.env.MAX_KEY_PAGES ?? "", 10);
     const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 3;
+    // Valid 24-hex ObjectId string (4-byte unix time + 8 random bytes — the same
+    // shape Mongo itself generates, so mongoose casts it losslessly). Hand-rolled
+    // because this id was the worker's ONLY use of mongoose, and importing all of
+    // mongoose costs ~100ms of module load on every audit in this DB-FREE worker.
+    const newChildId = () =>
+      Math.floor(Date.now() / 1000).toString(16).padStart(8, "0") +
+      crypto.randomBytes(8).toString("hex");
     const releasedUrls = new Set();
     let releasedCount = 0;
     const release = (entries) => {
@@ -467,7 +474,7 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
         releasedUrls.add(pageUrl);
         releasedCount++;
         jobs.push({
-          childId: new mongoose.Types.ObjectId().toString(),
+          childId: newChildId(),
           url: pageUrl,
           type,
           label: PAGE_LABELS[type] || "Key Page",

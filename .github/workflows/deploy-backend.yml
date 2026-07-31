@@ -2,6 +2,9 @@ name: Deploy Backend
 
 # Azure auth is federated to refs/heads/main only — runs from any other branch
 # fail at the login step by design.
+#
+# Re-trigger: production was still serving pre-bcdd6241 code (the removed guest
+# email/OTP gate was live), so the earlier run did not reach App Service.
 on:
   push:
     branches: [main]

@@ -1,4 +1,5 @@
 import { guardedGet, guardedHead } from '../../utils/wafGuard.js';
+import cachedStaticFetch from '../../utils/staticFileCache.js';
 import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
@@ -53,7 +54,7 @@ const OPENAI_BOTS = ['GPTBot', 'ChatGPT-User', 'OAI-SearchBot'];
 // robots.txt is a static text file. Fetch it fast with axios; only escalate to the
 // stealth browser (slow) if a WAF appears to block the plain request — never for a
 // clean 404 (which just means "no robots.txt", i.e. everything allowed).
-const fetchRobots = async (robotsUrl) => {
+const fetchRobotsUncached = async (robotsUrl) => {
     try {
         const resp = await guardedGet(robotsUrl, {
             timeout: 6000,
@@ -76,6 +77,13 @@ const fetchRobots = async (robotsUrl) => {
         return { status: 0, content: '' };
     }
 };
+
+// Cached + in-flight-deduped per URL (utils/staticFileCache.js): every audited page's
+// AEO pillar wants the SAME origin's robots.txt, so a full audit fired the fetch —
+// and, on WAF-fronted sites, the full Chromium escalation above — up to 7 times.
+const fetchRobots = (robotsUrl) =>
+    cachedStaticFetch(robotsUrl, () => fetchRobotsUncached(robotsUrl),
+        (r) => r.status === 200 || r.status === 404);
 
 // Convert a robots.txt path pattern (supports * wildcard and $ end-anchor) to a regex.
 const robotsToRegex = (pattern) => {

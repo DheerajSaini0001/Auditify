@@ -24,7 +24,9 @@ import logger from "./logger.js";
  *   - In memory: MEM_TTL_MS (1 hour). A stuck/abandoned in-progress entry is dropped.
  *     A completed-but-still-unflushed entry is FLUSHED before eviction so finished
  *     work is never silently lost.
- *   - In Mongo: 3 hours, enforced by the `expires: 10800` TTL index on the model.
+ *   - In Mongo: REPORT_TTL_SECONDS (default 24h, env AUDIT_REPORT_TTL_SECONDS) via the
+ *     TTL index on the model — this is also the reuse window for startAudit's
+ *     completed-report dedup, so a repeat audit inside it is served without a worker.
  *
  * IMPORTANT: this is per-process state. It assumes a SINGLE backend instance. If the
  * app is ever run in cluster mode / multiple pods, this must move to Redis, otherwise

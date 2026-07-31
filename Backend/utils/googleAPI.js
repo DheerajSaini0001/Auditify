@@ -1,8 +1,20 @@
 import fetch from 'node-fetch'
 import configService from '../services/configService.js';
 import logger from './logger.js';
+import { getCachedPsi, setCachedPsi } from './psiCache.js';
 
 export default async function googleAPI(url, device) {
+  // Cache first — a PSI result is ~50-75s to fetch and barely changes hour to
+  // hour, so within PSI_CACHE_TTL_MS (default 12h) a re-audit of the same
+  // url+device serves the stored Lighthouse JSON in milliseconds. Checked even
+  // before the API_KEY guard: a hit needs no key at all.
+  const cached = await getCachedPsi(url, device);
+  if (cached) {
+    const ageMin = Math.round((Date.now() - cached.cachedAt) / 60000);
+    logger.info(`[PageSpeed] ${device} ✓ served from cache (${ageMin}m old) — ${url}`);
+    return cached.data;
+  }
+
   const API_KEY = configService.getConfig('API_KEY');
   if (!API_KEY) {
     logger.error('[PageSpeed] API_KEY is not configured — Technical Performance data will be empty.');
@@ -48,6 +60,8 @@ export default async function googleAPI(url, device) {
       if (response.ok && !data?.error && data?.lighthouseResult) {
         // Only log when a retry actually saved us — a clean first-try success stays quiet.
         if (attempt > 1) logger.info(`${tag} ✓ recovered on attempt ${attempt}/${MAX_ATTEMPTS} — ${url}`);
+        // Fire-and-forget: never let a cache-write hiccup slow or fail the audit.
+        setCachedPsi(url, device, data).catch(() => {});
         return data;
       }
 

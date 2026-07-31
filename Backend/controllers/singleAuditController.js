@@ -818,7 +818,8 @@ export const mergeReports = async (req, res) => {
 // deleted after merging, so startAudit's {url,device,report} dedupe can never
 // find them — this endpoint matches by site HOST + pageType + device instead,
 // scoped per user exactly like the startAudit dedupe (guests share the
-// null-user pool). TTL expiry keeps hits fresh (reports self-delete after 3h).
+// null-user pool). TTL expiry keeps hits fresh (reports self-delete after
+// REPORT_TTL_SECONDS — default 24h, see models/singleAuditReport.js).
 export const findMergedReport = async (req, res) => {
   try {
     const { url, pageType, device } = req.body || {};

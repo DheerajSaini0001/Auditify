@@ -852,6 +852,24 @@ let activeContexts = 0;
 // another still believes the old browser is fine to reuse).
 let browserSetupPromise = null;
 
+/**
+ * Close the shared stealth browser if (and only if) nothing is using it.
+ * Called from the audit worker's final cleanup: every worker_thread gets its own
+ * instance of this module, so a shared browser spawned inside the worker (site-type
+ * classification, robots/llms.txt fetches) outlives the audit as a leaked
+ * ~120-250MB Chromium tree — thread exit does not kill the child process.
+ * Safe-by-default: if a concurrent caller still holds a context, leave it alone
+ * (closing under them crashes their session — see the activeContexts note above).
+ */
+export async function closeSharedBrowser() {
+  if (!sharedBrowser || activeContexts > 0) return false;
+  const b = sharedBrowser;
+  sharedBrowser = null;
+  sharedBrowserUses = 0;
+  try { await b.close(); } catch (_) { /* already gone */ }
+  return true;
+}
+
 async function getSharedBrowser() {
   if (browserSetupPromise) return browserSetupPromise;
 
@@ -1902,6 +1920,14 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
           type: "jpeg",
           quality: 50,
           fullPage: false,
+          // [PERF] Capture at CSS-pixel size, not device-pixel size. The context runs
+          // at deviceScaleFactor 2 (desktop) / 3 (mobile) so that the site serves its
+          // retina srcset and lays out like a real device — the default "device" scale
+          // then encoded that as a 3840x2160 (desktop) or 1179x2556 (mobile) JPEG, and
+          // every one of those is base64'd into a report document. "css" gives a
+          // 1920x1080 image — 4x fewer pixels to encode and store — while changing
+          // NOTHING about how the page rendered, so no metric is affected.
+          scale: "css",
           clip: {
             x: 0, y: 0,
             width: device === "Mobile" ? 393 : 1920,

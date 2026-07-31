@@ -1,4 +1,5 @@
 import { guardedGet } from '../../utils/wafGuard.js';
+import cachedStaticFetch from '../../utils/staticFileCache.js';
 import Puppeteer_Simple from '../../utils/puppeteer_simple.js';
 
 /**
@@ -58,29 +59,35 @@ const analyzeLlmsTxt = async (url, $ = null) => {
     try {
         // /llms.txt is a static text file — fetch fast with axios; escalate to the
         // stealth browser only if a WAF blocks the plain request (not on a clean 404).
-        let status = 0;
-        let body = '';
-        try {
-            const resp = await guardedGet(llmsUrl, {
-                timeout: 6000,
-                maxRedirects: 3,
-                responseType: 'text',
-                transformResponse: [(d) => d],
-                headers: { 'User-Agent': UA, Accept: 'text/plain,*/*' },
-                validateStatus: () => true,
-            });
-            status = resp.status;
-            body = typeof resp.data === 'string' ? resp.data : '';
-        } catch { status = 0; }
-
-        if (status !== 200 && status !== 404) {
+        // Cached + in-flight-deduped per URL (utils/staticFileCache.js): every audited
+        // page's AEO pillar wants the SAME origin's /llms.txt, so a full audit fired
+        // this fetch (and its browser escalation, on WAF sites) up to 7 times.
+        const { status, body } = await cachedStaticFetch(llmsUrl, async () => {
+            let status = 0;
+            let body = '';
             try {
-                const r = await Puppeteer_Simple(llmsUrl);
-                if (r.browser) await r.browser.close();
-                status = r.status;
-                body = r.html;
-            } catch { /* keep axios result */ }
-        }
+                const resp = await guardedGet(llmsUrl, {
+                    timeout: 6000,
+                    maxRedirects: 3,
+                    responseType: 'text',
+                    transformResponse: [(d) => d],
+                    headers: { 'User-Agent': UA, Accept: 'text/plain,*/*' },
+                    validateStatus: () => true,
+                });
+                status = resp.status;
+                body = typeof resp.data === 'string' ? resp.data : '';
+            } catch { status = 0; }
+
+            if (status !== 200 && status !== 404) {
+                try {
+                    const r = await Puppeteer_Simple(llmsUrl);
+                    if (r.browser) await r.browser.close();
+                    status = r.status;
+                    body = r.html;
+                } catch { /* keep axios result */ }
+            }
+            return { status, body };
+        }, (r) => r.status === 200 || r.status === 404);
 
         // ── Not found ──
         if (status !== 200) {

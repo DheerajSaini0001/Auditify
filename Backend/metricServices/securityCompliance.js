@@ -2373,43 +2373,74 @@ export default async function securityCompliance(url, page, response, browser, p
   const domain = Domain(url);
   const resolvedPageType = pageType || classifyPageType(url);
 
-  // Transport
-  const httpsResult = await checkHTTPS(url, page);
-  const sslResult = await checkSSLConnection(response);
-  const sslExpiryResult = await checkSSLExpiry(response);
-  const tlsVersionResult = await checkTLSVersion(response);
+  // ── Header checks: pure `response` reads, no I/O ──
   const hstsResult = checkHSTS(response);
-
-  // Headers
   const xFrameOptionsResult = checkXFrameOptions(response);
   const cspResult = checkCSP(response);
   const xContentTypeOptionsResult = checkXContentTypeOptions(response);
   const referrerPolicyResult = checkReferrerPolicy(response);
   const permissionsPolicyResult = checkPermissionsPolicy(response);
 
-  // Cookies
-  const cookieFlagsResult = await checkCookieFlags(page);
+  // ── Wave 1: every independent check, concurrently ──
+  // [PERF] These ran as ~20 sequential awaits, so the pillar's wall-clock was the
+  // SUM of every network round trip (reputation APIs, admin-path probing, cert
+  // lookups) and every own-tab probe. They are mutually independent: none of them
+  // navigates, clicks or otherwise mutates the shared `page` (verified — the
+  // probes that DO navigate, checkXSS / checkWeakDefaultCredentials /
+  // checkFinanceFormSecurity / checkLegalDisclaimers, each open their own tab),
+  // and concurrent reads on one Playwright page are multiplexed over CDP. So the
+  // pillar now costs its SLOWEST check instead of their sum.
+  //
+  // No timeout is imposed here — every check runs to completion, exactly as before.
+  // Promise.all propagates a rejection just like the sequential version did.
+  const [
+    httpsResult,
+    sslResult,
+    sslExpiryResult,
+    tlsVersionResult,
+    cookieFlagsResult,
+    reputationResult,
+    sqliExposureResult,
+    xssVulnerabilityResult,
+    formsUseHTTPSResult,
+    weakDefaultCredsResult,
+    mfaEnabledResult,
+    adminPanelPublicResult,
+    cookieConsentResult,
+    privacyPolicyResult,
+    privacyComplianceResult,
+    financeFormSecurityResult,
+    legalDisclaimersResult,
+  ] = await Promise.all([
+    // Transport
+    checkHTTPS(url, page),
+    checkSSLConnection(response),
+    checkSSLExpiry(response),
+    checkTLSVersion(response),
+    // Cookies
+    checkCookieFlags(page),
+    // Reputation — composite gate (Safe Browsing + VirusTotal folded into one; spec §4.4)
+    checkReputation(domain, url),
+    // App-exposure (heuristic surface indicators)
+    checkSQLiExposure(url),
+    checkXSS(url, browser),
+    checkFormsUseHTTPS(page),
+    checkWeakDefaultCredentials(page, browser),
+    checkMFAEnabled(page),
+    checkAdminPanelPublic(url),
+    // Privacy / legal
+    checkCookieConsent(page),
+    checkPrivacyPolicy(page),
+    checkPrivacyCompliance(page),
+    // Page-specific
+    checkFinanceFormSecurity(url, page, browser, resolvedPageType),
+    checkLegalDisclaimers(url, page, browser, resolvedPageType),
+  ]);
 
-  // Reputation — composite gate (Safe Browsing + VirusTotal folded into one; spec §4.4)
-  const reputationResult = await checkReputation(domain, url);
-
-  // App-exposure (heuristic surface indicators)
-  const sqliExposureResult = await checkSQLiExposure(url);
-  const xssVulnerabilityResult = await checkXSS(url, browser);
-  const formsUseHTTPSResult = await checkFormsUseHTTPS(page);
-  const weakDefaultCredsResult = await checkWeakDefaultCredentials(page, browser);
-  const mfaEnabledResult = await checkMFAEnabled(page);
-  const adminPanelPublicResult = await checkAdminPanelPublic(url);
-
-  // Privacy / legal
-  const cookieConsentResult = await checkCookieConsent(page);
-  const privacyPolicyResult = await checkPrivacyPolicy(page);
+  // ── Wave 2: the one genuine data dependency ──
+  // Third-party cookies are scored in the context of the consent banner and the
+  // privacy policy, so this must observe both results.
   const thirdPartyCookiesResult = await checkThirdPartyCookies(url, page, cookieConsentResult, privacyPolicyResult);
-  const privacyComplianceResult = await checkPrivacyCompliance(page);
-
-  // Page-specific
-  const financeFormSecurityResult = await checkFinanceFormSecurity(url, page, browser, resolvedPageType);
-  const legalDisclaimersResult = await checkLegalDisclaimers(url, page, browser, resolvedPageType);
 
   // NOTE: GA4 / GTM / Conversion Tracking and CRM lead-transfer are NOT part of the
   // Security section (spec §2.4 relocates them to Conversion Flow). They are no longer

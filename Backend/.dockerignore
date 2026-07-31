@@ -9,3 +9,4 @@ bypass_screenshot.jpg
 start-mongo.ps1
 Dockerfile
 .dockerignore
+.psi-cache

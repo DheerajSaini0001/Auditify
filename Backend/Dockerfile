@@ -11,6 +11,10 @@ RUN npm ci
 COPY . .
 
 ENV NODE_ENV=production
+# Persist V8's compile cache across worker spawns: every audit boots a fresh
+# worker_thread that re-compiles the whole metric-service module graph; with
+# this set, recompiles hit the on-disk cache instead (~0.3-1s saved per audit).
+ENV NODE_COMPILE_CACHE=/tmp/node-compile-cache
 EXPOSE 2000
 
 CMD ["node", "server.js"]

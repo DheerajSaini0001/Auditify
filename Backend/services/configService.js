@@ -63,8 +63,14 @@ class ConfigService {
     ];
 
     try {
+      // One round trip instead of one findOne per key — this ran ~28 serial
+      // queries against Mongo on every boot before the server could listen.
+      const existingKeys = new Set(
+        (await PlatformConfig.find({ key: { $in: defaultKeys.map((c) => c.key.toUpperCase()) } })
+          .select("key").lean()).map((d) => d.key)
+      );
       for (const config of defaultKeys) {
-        const exists = await PlatformConfig.findOne({ key: config.key.toUpperCase() });
+        const exists = existingKeys.has(config.key.toUpperCase());
         
         if (!exists && process.env[config.key]) {
           const rawValue = process.env[config.key];

@@ -1,5 +1,5 @@
 import { workerData, parentPort } from "worker_threads";
-import mongoose from "mongoose";
+import crypto from "crypto";
 
 import technicalMetrics from "../metricServices/technicalMetrics.js";
 import seoMetrics from "../metricServices/seoMetrics.js";
@@ -9,7 +9,7 @@ import uxContentStructure from "../metricServices/uxContentStructure.js";
 import conversionLeadFlow from "../metricServices/conversionLeadFlow.js";
 import aioReadiness from "../metricServices/aioReadiness.js";
 import AEOService from "../metricServices/aeoService.js";
-import Puppeteer_Cheerio, { ensureDomainClearance } from "../utils/puppeteer_cheerio.js";
+import Puppeteer_Cheerio, { ensureDomainClearance, closeSharedBrowser } from "../utils/puppeteer_cheerio.js";
 import { prefetchPsiBatch, takePsiPrefetch, clearPsiPrefetch } from "../utils/psiPrefetch.js";
 import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
@@ -445,11 +445,25 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
 
     // ── Release pages to Stage 2b AS THEY ARE IDENTIFIED ──────────────────────
     // `release` is the single place that turns a {url,type} into a job: it caps the run
-    // at 6 pages, de-dupes, prefetches PageSpeed, registers the child report (so the row
-    // shows up on /audit-summary immediately) and hands the page to the audit queue.
-    // Called once here with everything the crawl already found, and again after the
-    // missing-key lookup — so nothing waits for the slowest discovery step.
-    const MAX_KEY_PAGES = 6;
+    // at MAX_KEY_PAGES, de-dupes, prefetches PageSpeed, registers the child report (so
+    // the row shows up on /audit-summary immediately) and hands the page to the audit
+    // queue. Called once here with everything the crawl already found, and again after
+    // the missing-key lookup — so nothing waits for the slowest discovery step.
+    //
+    // MAX_KEY_PAGES is the single biggest lever on audit cost: every key page is a
+    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Default 6 — the core
+    // dealer page set. On small servers set the MAX_KEY_PAGES env var lower
+    // (e.g. 3 on a 1-vCPU box — 7 renders serialize brutally there), or 0 to skip
+    // key pages entirely (Stage 1 / homepage only).
+    const envKeyPages = parseInt(process.env.MAX_KEY_PAGES ?? "", 10);
+    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 6;
+    // Valid 24-hex ObjectId string (4-byte unix time + 8 random bytes — the same
+    // shape Mongo itself generates, so mongoose casts it losslessly). Hand-rolled
+    // because this id was the worker's ONLY use of mongoose, and importing all of
+    // mongoose costs ~100ms of module load on every audit in this DB-FREE worker.
+    const newChildId = () =>
+      Math.floor(Date.now() / 1000).toString(16).padStart(8, "0") +
+      crypto.randomBytes(8).toString("hex");
     const releasedUrls = new Set();
     let releasedCount = 0;
     const release = (entries) => {
@@ -461,7 +475,7 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
         releasedUrls.add(pageUrl);
         releasedCount++;
         jobs.push({
-          childId: new mongoose.Types.ObjectId().toString(),
+          childId: newChildId(),
           url: pageUrl,
           type,
           label: PAGE_LABELS[type] || "Key Page",
@@ -578,7 +592,11 @@ async function auditKeyPages(currentAuditId, device) {
     // permits stayed free — while the third finished. Now each slot pulls the next
     // queued page the instant its current page closes, so 3 audits are always running
     // until the queue drains.
-    const CONCURRENCY = 3;
+    // Follow the pool cap instead of a hard-coded 3: with MAX_CONCURRENT_BROWSERS
+    // raised (e.g. 6 on an 8-core dev box) the old constant became a silent SECOND
+    // cap that left pool permits idle through Stage 2 — 6 key pages ran as 2 waves
+    // when they could run as 1. Env unset → 3, identical to the pool's own default.
+    const CONCURRENCY = Math.max(1, parseInt(process.env.MAX_CONCURRENT_BROWSERS || "3", 10) || 3);
     let completed = 0;
     const results = [];
 
@@ -1090,6 +1108,11 @@ async function auditKeyPages(currentAuditId, device) {
     if (browser) {
       try { await browser.close(); } catch { }
     }
+    // This worker's shared stealth browser (spawned lazily for site-type/robots
+    // fetches) lives in THIS thread's module instance — left open it leaks a
+    // ~120-250MB Chromium tree past the audit, since thread exit doesn't kill
+    // the child process. No-ops safely if a context is still active.
+    try { await closeSharedBrowser(); } catch { }
     // Any PSI response prefetched for a page that never got audited (audit failed
     // mid-flight, page skipped) is a multi-MB Lighthouse JSON pinned in memory — drop it.
     clearPsiPrefetch();

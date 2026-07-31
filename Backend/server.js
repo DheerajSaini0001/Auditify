@@ -1,7 +1,14 @@
+// Load .env BEFORE anything else: ESM hoists and evaluates the whole static import
+// graph before the first statement of this file runs, so a `dotenv.config()` call
+// placed below the imports executed AFTER modules like utils/browserManager.js had
+// already read process.env at module scope — every module-level tunable in .env
+// (MAX_CONCURRENT_BROWSERS, MAX_KEY_PAGES, …) was silently ignored. The
+// side-effect import form is the one way to guarantee env vars exist first.
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
-import dotenv from "dotenv";
+import compression from "compression";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
@@ -26,8 +33,8 @@ import trackingMiddleware from "./middleware/tracking.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import configService from "./services/configService.js";
 import auditStore from "./utils/auditStore.js";
-
-dotenv.config();
+import SingleAuditReport, { REPORT_TTL_SECONDS } from "./models/singleAuditReport.js";
+import bootstrapSuperAdmin from "./utils/bootstrapSuperAdmin.js"; // ⚠️ TEMPORARY — remove with the file
 
 const app = express();
 app.set("trust proxy", 1);
@@ -35,6 +42,23 @@ app.set("trust proxy", 1);
 const startServer = async () => {
   // ── 1. DB ──
   await connectDB();
+
+  // ── 1b. Index migration ──
+  // The report TTL moved from field-level `expires` (3h) to an explicit index with
+  // REPORT_TTL_SECONDS (default 24h). Mongo keeps whatever expireAfterSeconds the
+  // existing index was created with, so syncIndexes() must drop and recreate it once.
+  // Never fatal: on failure the old TTL simply stays in effect until the next boot.
+  try {
+    await SingleAuditReport.syncIndexes();
+    logger.info(`[DB] Report indexes synced — TTL ${REPORT_TTL_SECONDS}s (${(REPORT_TTL_SECONDS / 3600).toFixed(1)}h reuse window)`);
+  } catch (err) {
+    logger.error("[DB] Report index sync failed (old TTL stays in effect)", err);
+  }
+
+  // ── 1c. One-time super-admin grant ──
+  // ⚠️ TEMPORARY — see utils/bootstrapSuperAdmin.js. Delete this call and the file
+  // once the grant is confirmed. Self-contained and never throws.
+  await bootstrapSuperAdmin();
 
   // ── 2. Load Config ──
   await configService.initialize();
@@ -131,6 +155,12 @@ const startServer = async () => {
 
     noSniff: true
   }));
+
+  // ── 4b. Compression ──
+  // A finished report is one large JSON doc (8 pillar objects, ~150 params);
+  // gzip cuts those responses 5-10x. compression() only compresses compressible
+  // content-types, so the base64/binary screenshot route is left alone.
+  app.use(compression());
 
   // ── 5. Parsers ──
   app.use(express.json({ limit: "5mb" }));

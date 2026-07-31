@@ -835,8 +835,28 @@ async function collectPageLinks(page) {
 }
 
 async function checkBrokenLinks(uniqueMap) {
-  // Check all unique links
-  const urlsToCheck = Array.from(uniqueMap.keys());
+  // [PERF] Bounded sweep. This was `Array.from(uniqueMap.keys())` with no cap: a
+  // dealer homepage carries 300-700 anchors, so one page could fire 150-400 HEAD
+  // requests (each with an 8s timeout, plus a confirming GET on any >= 400) — and
+  // that ran on EVERY audited page. It is both the audit's largest source of
+  // outbound traffic and a reliable way to get rate-limited by the site's own WAF,
+  // which then surfaces as "Bot Protected" in unrelated pillars.
+  //
+  // Internal links first: they are what a site owner can actually fix, and they
+  // are the ones whose breakage costs SEO. Third-party links fill the remainder.
+  // Nothing is skipped silently — `checkedCount`/`totalCount` are reported so the
+  // UI can say "checked 150 of 412". UX_MAX_LINK_CHECKS=0 restores the old
+  // unbounded behaviour.
+  const envMaxLinks = parseInt(process.env.UX_MAX_LINK_CHECKS ?? "", 10);
+  const MAX_LINK_CHECKS = Number.isFinite(envMaxLinks) && envMaxLinks >= 0 ? envMaxLinks : 150;
+
+  const allUrls = Array.from(uniqueMap.keys());
+  const urlsToCheck = MAX_LINK_CHECKS === 0
+    ? allUrls
+    : [
+        ...allUrls.filter((u) => uniqueMap.get(u)?.isInternal),
+        ...allUrls.filter((u) => !uniqueMap.get(u)?.isInternal),
+      ].slice(0, MAX_LINK_CHECKS);
   // Indexed, not push()ed: the rolling pool below finishes links out of order, and the
   // reported list must stay in page order exactly as the serial version produced it.
   const brokenSlots = new Array(urlsToCheck.length);
@@ -1001,6 +1021,10 @@ async function checkBrokenLinks(uniqueMap) {
       brokenCount: brokenLinks.length,
       brokenLinks: brokenLinks,
       totalChecked: urlsToCheck.length,
+      // Links found on the page vs links actually probed. Equal unless the sweep
+      // hit MAX_LINK_CHECKS — never let a capped sweep read as "all links pass".
+      totalFound: allUrls.length,
+      notChecked: allUrls.length - urlsToCheck.length,
       totalInternal,
       totalExternal
     }

@@ -34,6 +34,7 @@ import { globalLimiter } from "./middleware/rateLimiter.js";
 import configService from "./services/configService.js";
 import auditStore from "./utils/auditStore.js";
 import SingleAuditReport, { REPORT_TTL_SECONDS } from "./models/singleAuditReport.js";
+import bootstrapSuperAdmin from "./utils/bootstrapSuperAdmin.js"; // ⚠️ TEMPORARY — remove with the file
 
 const app = express();
 app.set("trust proxy", 1);
@@ -53,6 +54,11 @@ const startServer = async () => {
   } catch (err) {
     logger.error("[DB] Report index sync failed (old TTL stays in effect)", err);
   }
+
+  // ── 1c. One-time super-admin grant ──
+  // ⚠️ TEMPORARY — see utils/bootstrapSuperAdmin.js. Delete this call and the file
+  // once the grant is confirmed. Self-contained and never throws.
+  await bootstrapSuperAdmin();
 
   // ── 2. Load Config ──
   await configService.initialize();

@@ -451,11 +451,12 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
     // the missing-key lookup — so nothing waits for the slowest discovery step.
     //
     // MAX_KEY_PAGES is the single biggest lever on audit cost: every key page is a
-    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Was hard-coded 6; the
-    // default is now 3 (halves Stage 2 work). Set MAX_KEY_PAGES=6 to restore the old
-    // breadth, or 0 to skip key pages entirely (Stage 1 / homepage only).
+    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Default 10 covers the
+    // full dealer page-type set (was hard-coded 6). On small servers set the
+    // MAX_KEY_PAGES env var lower (e.g. 3 on a 1-vCPU box — 11 renders serialize
+    // brutally there), or 0 to skip key pages entirely (Stage 1 / homepage only).
     const envKeyPages = parseInt(process.env.MAX_KEY_PAGES ?? "", 10);
-    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 3;
+    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 10;
     // Valid 24-hex ObjectId string (4-byte unix time + 8 random bytes — the same
     // shape Mongo itself generates, so mongoose casts it losslessly). Hand-rolled
     // because this id was the worker's ONLY use of mongoose, and importing all of

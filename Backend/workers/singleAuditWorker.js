@@ -445,11 +445,17 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
 
     // ── Release pages to Stage 2b AS THEY ARE IDENTIFIED ──────────────────────
     // `release` is the single place that turns a {url,type} into a job: it caps the run
-    // at 6 pages, de-dupes, prefetches PageSpeed, registers the child report (so the row
-    // shows up on /audit-summary immediately) and hands the page to the audit queue.
-    // Called once here with everything the crawl already found, and again after the
-    // missing-key lookup — so nothing waits for the slowest discovery step.
-    const MAX_KEY_PAGES = 6;
+    // at MAX_KEY_PAGES, de-dupes, prefetches PageSpeed, registers the child report (so
+    // the row shows up on /audit-summary immediately) and hands the page to the audit
+    // queue. Called once here with everything the crawl already found, and again after
+    // the missing-key lookup — so nothing waits for the slowest discovery step.
+    //
+    // MAX_KEY_PAGES is the single biggest lever on audit cost: every key page is a
+    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Was hard-coded 6; the
+    // default is now 3 (halves Stage 2 work). Set MAX_KEY_PAGES=6 to restore the old
+    // breadth, or 0 to skip key pages entirely (Stage 1 / homepage only).
+    const envKeyPages = parseInt(process.env.MAX_KEY_PAGES ?? "", 10);
+    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 3;
     const releasedUrls = new Set();
     let releasedCount = 0;
     const release = (entries) => {

@@ -32,6 +32,7 @@ import trackingMiddleware from "./middleware/tracking.js";
 import { globalLimiter } from "./middleware/rateLimiter.js";
 import configService from "./services/configService.js";
 import auditStore from "./utils/auditStore.js";
+import SingleAuditReport, { REPORT_TTL_SECONDS } from "./models/singleAuditReport.js";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -39,6 +40,18 @@ app.set("trust proxy", 1);
 const startServer = async () => {
   // ── 1. DB ──
   await connectDB();
+
+  // ── 1b. Index migration ──
+  // The report TTL moved from field-level `expires` (3h) to an explicit index with
+  // REPORT_TTL_SECONDS (default 24h). Mongo keeps whatever expireAfterSeconds the
+  // existing index was created with, so syncIndexes() must drop and recreate it once.
+  // Never fatal: on failure the old TTL simply stays in effect until the next boot.
+  try {
+    await SingleAuditReport.syncIndexes();
+    logger.info(`[DB] Report indexes synced — TTL ${REPORT_TTL_SECONDS}s (${(REPORT_TTL_SECONDS / 3600).toFixed(1)}h reuse window)`);
+  } catch (err) {
+    logger.error("[DB] Report index sync failed (old TTL stays in effect)", err);
+  }
 
   // ── 2. Load Config ──
   await configService.initialize();

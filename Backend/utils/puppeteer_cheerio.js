@@ -1920,6 +1920,14 @@ export default async function Puppeteer_Cheerio(url, device = 'Desktop', opts = 
           type: "jpeg",
           quality: 50,
           fullPage: false,
+          // [PERF] Capture at CSS-pixel size, not device-pixel size. The context runs
+          // at deviceScaleFactor 2 (desktop) / 3 (mobile) so that the site serves its
+          // retina srcset and lays out like a real device — the default "device" scale
+          // then encoded that as a 3840x2160 (desktop) or 1179x2556 (mobile) JPEG, and
+          // every one of those is base64'd into a report document. "css" gives a
+          // 1920x1080 image — 4x fewer pixels to encode and store — while changing
+          // NOTHING about how the page rendered, so no metric is affected.
+          scale: "css",
           clip: {
             x: 0, y: 0,
             width: device === "Mobile" ? 393 : 1920,

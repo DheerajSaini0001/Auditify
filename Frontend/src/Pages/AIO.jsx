@@ -645,23 +645,13 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
                     {/* Text Content */}
                     <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-indigo-100/50 text-indigo-600 border border-indigo-200"}`}>
-                          <Brain className="w-3.5 h-3.5" />
-                          <span>AIO Readiness Report</span>
-                        </div>
+                       
                         <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                           AIO <span className="text-indigo-500">Readiness</span>
                         </h3>
                         <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                           Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
                         </p>
-                        <span
-                          title="This score is Auditify's own composite index for AI-readiness. No industry-standard external tool produces a comparable AIO score to cross-check against."
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                          Auditify Index · no external equivalent
-                        </span>
                       </div>
 
                       {/* Stats & Tools */}
@@ -707,10 +697,10 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
                         <button
                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-700"}`}
+                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-accentsoft border-accent/20 hover:border-accent/40 text-accent shadow-sm"}`}
                         >
-                          <Info size={16} />
-                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                          <Info size={14} className="transition-transform group-hover:rotate-12" />
+                          <span>Methodology</span>
                         </button>
                       </div>
                     </div>

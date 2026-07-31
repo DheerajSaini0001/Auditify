@@ -168,10 +168,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                     {/* Text Content */}
                     <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                          <Activity className="w-3.5 h-3.5 animate-pulse" />
-                          <span>Performance Audit</span>
-                        </div>
+                       
                         <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight animate-in fade-in slide-in-from-left-6 duration-700 delay-75 ${darkMode ? "text-white" : "text-ink"}`}>
                           Technical <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500">Performance</span>
                         </h3>
@@ -189,40 +186,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                         {/* Confidence (spec §0.5): tell the user whether Core Web Vitals came
                             from real users (CrUX field) or are a lab estimate, so the score is
                             never over-claimed as real-world when it isn't. */}
-                        {!notRun && tech.Confidence && (
-                          <span
-                            title={tech.Confidence === "field"
-                              ? "Core Web Vitals scored from real-user field data (Chrome UX Report, p75)."
-                              : "No real-user field data for this site — Core Web Vitals are scored from a single lab run (estimate)."}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
-                              tech.Confidence === "field"
-                                ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100")
-                                : (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100")
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${tech.Confidence === "field" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                            {tech.Confidence === "field" ? "Real-user field data" : "Lab estimate · no field data"}
-                          </span>
-                        )}
-                        {!notRun && tech.Score_Breakdown && (
-                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
-                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>
-                              Score uses the official Lighthouse Performance formula (FCP 10% · SI 10% · LCP 25% · TBT 30% · CLS 25%) — directly comparable to PageSpeed Insights (±10 between runs is normal).
-                              {typeof tech?.Delivery_Hygiene?.score === "number" && (
-                                <> Delivery hygiene (not scored by Lighthouse): {tech.Delivery_Hygiene.score}%.</>
-                              )}
-                            </span>
-                          </div>
-                        )}
-                        {notRun && (
-                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-amber-900/20 text-amber-300 border border-amber-800/50" : "bg-amber-50 text-amber-700 border border-amber-100"}`}>
-                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>
-                              Google PageSpeed returned no data for this URL (after retries), so Core Web Vitals could not be measured. This section is excluded from the overall score rather than counted as 0. The delivery checks below still ran on the live page.
-                            </span>
-                          </div>
-                        )}
+                    
                       </div>
 
                       {/* Stats & Tools */}

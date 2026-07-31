@@ -604,10 +604,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                     {/* Text Content */}
                     <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                       <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accentsoft"}`}>
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>WCAG 2.2 AA Audit</span>
-                        </div>
+                        
                         <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                           Accessibility <span className="text-blue-500">Health</span>
                         </h3>
@@ -642,13 +639,13 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
                           </div>
                         </div>
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-surface-2 hidden md:block"}`}></div>
+                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
                         <button
                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
+                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-accentsoft border-accent/20 hover:border-accent/40 text-accent shadow-sm"}`}
                         >
-                          <Info size={16} />
-                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                          <Info size={14} className="transition-transform group-hover:rotate-12" />
+                          <span>Methodology</span>
                         </button>
                       </div>
                     </div>

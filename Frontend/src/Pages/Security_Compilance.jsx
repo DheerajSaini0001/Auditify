@@ -1019,28 +1019,14 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                 <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
                   <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
                     <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accentsoft"}`}>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Security Audit</span>
-                      </div>
+                      
                       <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                         Security & <span className="text-accent">Compliance</span>
                       </h3>
                       <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
                         Comprehensive analysis of your web application's security posture.
                       </p>
-                      {metric?.Confidence && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1" title={metric?.Note || ""}>
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${darkMode ? "text-slate-300 border-slate-700 bg-slate-800/60" : "text-slate-600 border-slate-200 bg-slate-100"}`}>
-                            <Info className="w-3 h-3" /> Confidence: {metric.Confidence}
-                          </span>
-                          {metric?.Coverage && (
-                            <span className={`text-[10px] leading-snug opacity-70 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                              {metric.Coverage}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                     
                     </div>
 
                     <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
@@ -1063,10 +1049,10 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
                       <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
                       <button
                         onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
+                        className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-accentsoft border-accent/20 hover:border-accent/40 text-accent shadow-sm"}`}
                       >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
+                        <Info size={14} className="transition-transform group-hover:rotate-12" />
+                        <span>Methodology</span>
                       </button>
                     </div>
                   </div>

@@ -34,7 +34,7 @@ export default function Footer() {
 
           {/* Get Started */}
           <div className="space-y-5">
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Get Started</h4>
+            <h2 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Get Started</h2>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/" state={{ focusAudit: true }} className="hover:text-emerald-500 transition-colors">Check My Website</Link></li>
               {isAuthenticated && (
@@ -45,7 +45,7 @@ export default function Footer() {
 
           {/* About */}
           <div className="space-y-5">
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>About</h4>
+            <h2 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>About</h2>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/about" className="hover:text-emerald-500 transition-colors">About Us</Link></li>
               <li><Link to="/services" className="hover:text-emerald-500 transition-colors">What We Do</Link></li>
@@ -55,7 +55,7 @@ export default function Footer() {
 
           {/* Help */}
           <div className="space-y-5">
-            <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Help</h4>
+            <h2 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Help</h2>
             <ul className="space-y-4 text-sm font-semibold">
               <li><Link to="/documentation" className="hover:text-emerald-500 transition-colors">How It Works</Link></li>
               <li><Link to="/help" className="hover:text-emerald-500 transition-colors">Help Center</Link></li>

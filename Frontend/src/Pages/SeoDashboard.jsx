@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import {
   Plus, FileText, Hash, Share2, Braces, Eye, ExternalLink, CheckCircle2, AlertCircle,
+  SlidersHorizontal, History as HistoryIcon, DownloadCloud,
 } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { Card, Button, Skeleton, EmptyState, StatusPill } from '../Component/seo/SeoUI.jsx';
@@ -12,6 +13,8 @@ import KeywordsTab from '../Component/seo/tabs/KeywordsTab.jsx';
 import SocialTab from '../Component/seo/tabs/SocialTab.jsx';
 import SchemaTab from '../Component/seo/tabs/SchemaTab.jsx';
 import PreviewTab from '../Component/seo/tabs/PreviewTab.jsx';
+import AdvancedTab from '../Component/seo/tabs/AdvancedTab.jsx';
+import HistoryTab from '../Component/seo/tabs/HistoryTab.jsx';
 import { useSeoDashboard } from '../hooks/useSeoDashboard.js';
 import { computeClientScore } from '../utils/seoScore.js';
 
@@ -20,7 +23,9 @@ const TABS = [
   { id: 'keywords', label: 'Keywords', icon: Hash, View: KeywordsTab },
   { id: 'social', label: 'Social', icon: Share2, View: SocialTab },
   { id: 'schema', label: 'Schema', icon: Braces, View: SchemaTab },
+  { id: 'advanced', label: 'Advanced', icon: SlidersHorizontal, View: AdvancedTab },
   { id: 'preview', label: 'Preview', icon: Eye, View: PreviewTab },
+  { id: 'history', label: 'History', icon: HistoryIcon, View: HistoryTab },
 ];
 
 const KpiStrip = ({ summary, loading, darkMode }) => {
@@ -86,9 +91,20 @@ const SeoDashboard = () => {
               Titles, meta descriptions, keywords, social cards and structured data — per page.
             </p>
           </div>
-          <Button darkMode={darkMode} onClick={() => setShowNew(true)}>
-            <Plus size={16} /> New page
-          </Button>
+          <div className="flex items-center gap-2.5">
+            <Button
+              variant="ghost"
+              darkMode={darkMode}
+              onClick={dash.importSitePages}
+              disabled={dash.importing}
+              title="Create a CMS page for every route in the site's route table"
+            >
+              <DownloadCloud size={15} /> {dash.importing ? 'Importing…' : 'Import site pages'}
+            </Button>
+            <Button darkMode={darkMode} onClick={() => setShowNew(true)}>
+              <Plus size={16} /> New page
+            </Button>
+          </div>
         </div>
 
         {dash.notice && (
@@ -166,11 +182,15 @@ const SeoDashboard = () => {
                     })}
                   </div>
                   <div className="p-5">
-                    <ActiveTab draft={draft} setSeo={dash.setSeo} darkMode={darkMode} />
+                    {activeTab === 'history'
+                      ? <HistoryTab dash={dash} darkMode={darkMode} />
+                      : <ActiveTab draft={draft} setSeo={dash.setSeo} darkMode={darkMode} />}
                   </div>
                 </Card>
 
                 <SeoRightRail
+                  onDelete={dash.removePage}
+                  pageTitle={draft.title}
                   live={live}
                   dirty={dash.dirty}
                   saving={dash.saving}

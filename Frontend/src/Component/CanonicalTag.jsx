@@ -53,6 +53,25 @@ const setJsonLd = (id, data) => {
 const labelFor = (segment) =>
   segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
+/**
+ * Ask the CMS whether this path has managed metadata. Returns null for the common
+ * case — most routes are not CMS-managed — so the static route table stays the
+ * fallback rather than being replaced by it.
+ */
+const fetchCmsMeta = async (path, signal) => {
+  try {
+    const base = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+    const res = await fetch(`${base}/api/cms/seo/public/page-meta?path=${encodeURIComponent(path)}`, { signal });
+    if (!res.ok) return null;
+    const body = await res.json();
+    return body?.data?.meta || null;
+  } catch {
+    // Never let an SEO lookup break navigation: on any failure the static config
+    // has already been applied and simply stays.
+    return null;
+  }
+};
+
 const CanonicalTag = () => {
   const location = useLocation();
 
@@ -136,6 +155,61 @@ const CanonicalTag = () => {
     } else {
       setJsonLd('ld-breadcrumb', null);
     }
+
+    // ── 7. CMS override ──
+    // The static table above is applied first and synchronously, so the head is
+    // always correct immediately. If this path is CMS-managed, those values then
+    // win — that is what makes the SEO dashboard actually reach visitors instead of
+    // writing to a store nothing reads.
+    const controller = new AbortController();
+    fetchCmsMeta(path, controller.signal).then((meta) => {
+      if (!meta) return;
+      if (meta.title) { document.title = meta.title; setMeta('name', 'title', meta.title); setMeta('property', 'og:title', meta.title); setMeta('name', 'twitter:title', meta.title); }
+      if (meta.description) {
+        setMeta('name', 'description', meta.description);
+        setMeta('property', 'og:description', meta.description);
+        setMeta('name', 'twitter:description', meta.description);
+      }
+      if (meta.keywords) setMeta('name', 'keywords', meta.keywords);
+      if (meta.canonicalUrl) {
+        setLink('canonical', meta.canonicalUrl);
+        setMeta('property', 'og:url', meta.canonicalUrl);
+      }
+      if (meta.ogTitle) setMeta('property', 'og:title', meta.ogTitle);
+      if (meta.ogDescription) setMeta('property', 'og:description', meta.ogDescription);
+      if (meta.ogType) setMeta('property', 'og:type', meta.ogType);
+      if (meta.twitterCard) setMeta('name', 'twitter:card', meta.twitterCard);
+
+      // An editor's noindex must be able to take a page OUT of the index, so this
+      // tightens the directive but never loosens one the route table already set.
+      if (meta.noIndex || meta.noFollow) {
+        const directive = `${meta.noIndex ? 'noindex' : 'index'}, ${meta.noFollow ? 'nofollow' : 'follow'}`;
+        setMeta('name', 'robots', directive);
+        setMeta('name', 'googlebot', directive);
+      }
+
+      if (Array.isArray(meta.schemas) && meta.schemas.length) {
+        setJsonLd('ld-cms', meta.schemas.length === 1 ? meta.schemas[0] : meta.schemas);
+      } else {
+        setJsonLd('ld-cms', null);
+      }
+
+      // hreflang alternates, replaced wholesale so a removed one disappears.
+      document.head.querySelectorAll('link[rel="alternate"][data-cms]').forEach((el) => el.remove());
+      (meta.hreflang || []).forEach(({ lang, url }) => {
+        if (!lang || !url) return;
+        const el = document.createElement('link');
+        el.setAttribute('rel', 'alternate');
+        el.setAttribute('hreflang', lang);
+        el.setAttribute('href', url);
+        el.setAttribute('data-cms', 'true');
+        document.head.appendChild(el);
+      });
+
+      if (meta.language) document.documentElement.setAttribute('lang', meta.language);
+    });
+
+    return () => controller.abort();
   }, [location.pathname]);
 
   return null;

@@ -20,11 +20,12 @@ const contains = (text, keyword) => {
 };
 
 /**
- * The first keyword is treated as the focus keyword — the CMS seo block stores a
- * flat `keywords` array rather than a separate focusKeyword field, and ordering is
- * the only signal of intent we have.
+ * The focus keyword. keywordSeo.primaryKeyword wins when set; otherwise the first
+ * entry of the flat `keywords` list. The controller keeps the two in step on save,
+ * so this fallback only matters for entries written before that field existed.
  */
 export const focusKeywordOf = (seo) => {
+  if (has(seo?.keywordSeo?.primaryKeyword)) return seo.keywordSeo.primaryKeyword;
   const list = Array.isArray(seo?.keywords) ? seo.keywords : [];
   return list.find((k) => has(k)) || '';
 };
@@ -125,7 +126,9 @@ export const computeSeoScore = (entry) => {
       id: 'structured-data',
       label: 'Structured data (JSON-LD) is present',
       weight: 8,
-      passed: !!seo.structuredData && Object.keys(seo.structuredData || {}).length > 0,
+      passed:
+        (Array.isArray(seo.schemas) && seo.schemas.some((s) => s && s.isActive))
+        || (!!seo.structuredData && Object.keys(seo.structuredData || {}).length > 0),
     },
   ];
 

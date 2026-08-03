@@ -5,6 +5,21 @@ import { FIELD_TYPES, COLOR_KEYS } from '../../config/cmsConstants.js';
 // points, and the shape matches what Component/CanonicalTag.jsx already consumes
 // ({ path, title, description }) so a CMS lookup can be added there as a first
 // branch with the existing SEO_CONFIGS left intact as the fallback.
+// A single applied JSON-LD block. `structuredData` below still holds one free-form
+// object; this array is the typed, toggleable form — a page usually needs several
+// (Organization AND BreadcrumbList AND FAQPage), which one Mixed field cannot express.
+const schemaBlockSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ['Organization', 'WebSite', 'FAQPage', 'Article', 'Product', 'BreadcrumbList',
+      'Review', 'VideoObject', 'Person', 'Event', 'LocalBusiness'],
+    required: true,
+  },
+  jsonLd:      { type: mongoose.Schema.Types.Mixed, default: {} },
+  isActive:    { type: Boolean, default: true },
+  generatedBy: { type: String, enum: ['manual', 'ai'], default: 'manual' },
+}, { _id: true, timestamps: true });
+
 export const seoSchema = new mongoose.Schema({
   title:        { type: String, trim: true, maxlength: 70 },
   description:  { type: String, trim: true, maxlength: 200 },
@@ -18,6 +33,49 @@ export const seoSchema = new mongoose.Schema({
   ogType:        { type: String, trim: true, default: 'website' },
   twitterCard:   { type: String, enum: ['summary', 'summary_large_image'], default: 'summary_large_image' },
   structuredData: { type: mongoose.Schema.Types.Mixed, default: null }, // JSON-LD
+
+  // Per-page keyword work. `keywords` above stays the flat list the head tag is
+  // built from; this is the analysis around it. primaryKeyword mirrors keywords[0]
+  // and the controller keeps the two in step, so neither can silently disagree.
+  keywordSeo: {
+    primaryKeyword:    { type: String, trim: true, default: '' },
+    secondaryKeywords: { type: [String], default: [] },
+    relatedKeywords:   { type: [String], default: [] },
+    density:           { type: Number, default: 0, min: 0, max: 100 },
+    position:          { type: Number, default: 0 },
+    searchIntent: {
+      type: String,
+      enum: ['informational', 'navigational', 'transactional', 'commercial', ''],
+      default: '',
+    },
+    // Derived server-side on every save — never accepted from the client.
+    presence: {
+      title:       { type: Boolean, default: false },
+      description: { type: Boolean, default: false },
+      slug:        { type: Boolean, default: false },
+      excerpt:     { type: Boolean, default: false },
+    },
+  },
+
+  schemas: { type: [schemaBlockSchema], default: [] },
+
+  advanced: {
+    // Alternate-language versions of this page.
+    hreflang: { type: [{ _id: false, lang: String, url: String }], default: [] },
+    language: { type: String, trim: true, default: 'en' },
+    pageRedirect: {
+      type:   { type: Number, enum: [301, 302, null], default: null },
+      target: { type: String, trim: true, default: '' },
+    },
+    // SECURITY: raw script text is stored but MUST NOT be injected into the DOM.
+    // Rendering these would be stored XSS with an author-supplied payload. Nothing
+    // reads them today; the CSP in server.js (script-src 'self') is the second line
+    // of defence. If a future change ever renders them, that change owns the problem
+    // and needs sanitisation plus a narrowed write path — writes are already
+    // restricted to super_admin.
+    headerScripts: { type: String, default: '' },
+    footerScripts: { type: String, default: '' },
+  },
 }, { _id: false });
 
 const validationRuleSchema = new mongoose.Schema({

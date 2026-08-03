@@ -1,118 +1,149 @@
-import React, { useEffect, useState } from 'react';
-import { AlertCircle, Check, Wand2 } from 'lucide-react';
-import { Button } from '../SeoUI.jsx';
+import React, { useState } from 'react';
+import { AlertCircle, Check, Plus, Trash2, Braces } from 'lucide-react';
+import { Button, Select, Toggle, EmptyState } from '../SeoUI.jsx';
 
-/** Starting points, so the common cases don't require writing JSON-LD from memory. */
+const SCHEMA_TYPES = [
+  'Organization', 'WebSite', 'FAQPage', 'Article', 'Product',
+  'BreadcrumbList', 'Review', 'VideoObject', 'Person', 'Event', 'LocalBusiness',
+];
+
+/** Sensible starting shapes, so a block doesn't have to be typed from memory. */
 const TEMPLATES = {
-  Organization: {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: '',
-    url: '',
-    logo: '',
-  },
-  WebSite: {
-    '@context': 'https://schema.org',
-    '@type': 'WebSite',
-    name: '',
-    url: '',
-  },
+  Organization: { '@context': 'https://schema.org', '@type': 'Organization', name: '', url: '', logo: '' },
+  WebSite: { '@context': 'https://schema.org', '@type': 'WebSite', name: '', url: '' },
   FAQPage: {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
+    '@context': 'https://schema.org', '@type': 'FAQPage',
     mainEntity: [{ '@type': 'Question', name: '', acceptedAnswer: { '@type': 'Answer', text: '' } }],
   },
-  LocalBusiness: {
-    '@context': 'https://schema.org',
-    '@type': 'LocalBusiness',
-    name: '',
-    address: { '@type': 'PostalAddress', streetAddress: '', addressLocality: '', postalCode: '' },
-    telephone: '',
-  },
+  Article: { '@context': 'https://schema.org', '@type': 'Article', headline: '', author: { '@type': 'Person', name: '' }, datePublished: '' },
+  Product: { '@context': 'https://schema.org', '@type': 'Product', name: '', description: '', offers: { '@type': 'Offer', price: '', priceCurrency: 'AUD' } },
   BreadcrumbList: {
-    '@context': 'https://schema.org',
-    '@type': 'BreadcrumbList',
+    '@context': 'https://schema.org', '@type': 'BreadcrumbList',
     itemListElement: [{ '@type': 'ListItem', position: 1, name: '', item: '' }],
+  },
+  Review: { '@context': 'https://schema.org', '@type': 'Review', reviewRating: { '@type': 'Rating', ratingValue: '' }, author: { '@type': 'Person', name: '' } },
+  VideoObject: { '@context': 'https://schema.org', '@type': 'VideoObject', name: '', description: '', thumbnailUrl: '', uploadDate: '' },
+  Person: { '@context': 'https://schema.org', '@type': 'Person', name: '', jobTitle: '' },
+  Event: { '@context': 'https://schema.org', '@type': 'Event', name: '', startDate: '', location: { '@type': 'Place', name: '' } },
+  LocalBusiness: {
+    '@context': 'https://schema.org', '@type': 'LocalBusiness', name: '', telephone: '',
+    address: { '@type': 'PostalAddress', streetAddress: '', addressLocality: '', postalCode: '' },
   },
 };
 
 /**
- * Raw JSON-LD editing. The text is kept as local state rather than parsed on every
- * keystroke — parsing as you type makes the field impossible to edit, because any
- * half-finished object is invalid JSON. It commits to the draft only when it parses.
+ * One editor per JSON-LD block. Text is held locally and only committed to the draft
+ * when it parses — parsing on every keystroke makes the field impossible to edit,
+ * because a half-typed object is never valid JSON.
  */
-const SchemaTab = ({ draft, setSeo, darkMode }) => {
-  const [text, setText] = useState('');
+const BlockEditor = ({ block, index, onChange, onRemove, darkMode }) => {
+  const [text, setText] = useState(() => JSON.stringify(block.jsonLd ?? {}, null, 2));
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const sd = draft.seo?.structuredData;
-    setText(sd ? JSON.stringify(sd, null, 2) : '');
-    setError(null);
-    // Re-seed only when switching pages, not on every draft mutation.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft._id]);
 
   const commit = (next) => {
     setText(next);
-    if (!next.trim()) {
-      setError(null);
-      setSeo('structuredData', null);
-      return;
-    }
+    if (!next.trim()) { setError(null); onChange({ ...block, jsonLd: {} }); return; }
     try {
-      setSeo('structuredData', JSON.parse(next));
+      onChange({ ...block, jsonLd: JSON.parse(next) });
       setError(null);
     } catch (err) {
       setError(err.message);
     }
   };
 
+  const changeType = (type) => {
+    const tpl = TEMPLATES[type] || { '@context': 'https://schema.org', '@type': type };
+    setText(JSON.stringify(tpl, null, 2));
+    setError(null);
+    onChange({ ...block, type, jsonLd: tpl });
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <span className={`text-xs font-semibold uppercase tracking-wide mr-1 ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
-          Insert template
-        </span>
-        {Object.keys(TEMPLATES).map((key) => (
-          <Button
-            key={key}
-            variant="ghost"
-            darkMode={darkMode}
-            className="!px-2.5 !py-1 !text-[11px]"
-            onClick={() => commit(JSON.stringify(TEMPLATES[key], null, 2))}
-          >
-            <Wand2 size={12} /> {key}
-          </Button>
-        ))}
+    <div className={`rounded-xl border overflow-hidden ${darkMode ? 'border-slate-800' : 'border-line'}`}>
+      <div className={`flex flex-wrap items-center gap-3 px-3 py-2.5 border-b ${darkMode ? 'border-slate-800 bg-white/[0.02]' : 'border-line bg-cardsoft'}`}>
+        <Select darkMode={darkMode} value={block.type} onChange={(e) => changeType(e.target.value)} className="!w-auto !py-1.5 !text-xs">
+          {SCHEMA_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+        </Select>
+        <Toggle
+          darkMode={darkMode}
+          checked={block.isActive !== false}
+          onChange={(v) => onChange({ ...block, isActive: v })}
+          label={block.isActive !== false ? 'Active' : 'Inactive'}
+        />
+        <button
+          type="button"
+          onClick={onRemove}
+          aria-label={`Remove ${block.type} block`}
+          className={`ml-auto ${darkMode ? 'text-slate-500 hover:text-rose-400' : 'text-muted hover:text-rose-500'}`}
+        >
+          <Trash2 size={15} />
+        </button>
       </div>
 
       <textarea
         value={text}
         onChange={(e) => commit(e.target.value)}
-        rows={16}
+        rows={10}
         spellCheck={false}
-        placeholder='{ "@context": "https://schema.org", "@type": "WebSite" }'
-        className={`w-full rounded-xl px-3.5 py-3 text-[13px] font-mono leading-relaxed outline-none border transition-colors resize-y ${
-          darkMode
-            ? 'bg-[#0B1120] border-slate-700 text-slate-100 placeholder:text-slate-600'
-            : 'bg-cardsoft border-line text-ink placeholder:text-faint'
-        } ${error ? 'border-rose-500 focus:border-rose-500' : 'focus:border-accent'} focus:ring-2 focus:ring-accent/20`}
+        aria-label={`${block.type} JSON-LD, block ${index + 1}`}
+        className={`w-full px-3.5 py-3 text-[13px] font-mono leading-relaxed outline-none resize-y border-0 ${
+          darkMode ? 'bg-[#0B1120] text-slate-100' : 'bg-card text-ink'
+        } ${error ? 'ring-1 ring-inset ring-rose-500' : ''}`}
       />
 
-      {error ? (
-        <p className="flex items-start gap-2 text-[12px] font-medium text-rose-500">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
-          <span>Invalid JSON — not saved yet: {error}</span>
-        </p>
-      ) : text.trim() ? (
-        <p className="flex items-center gap-2 text-[12px] font-medium text-emerald-600">
-          <Check size={14} /> Valid JSON-LD.
-        </p>
-      ) : (
+      <div className={`px-3.5 py-2 text-[11px] font-medium border-t ${darkMode ? 'border-slate-800' : 'border-line'}`}>
+        {error ? (
+          <span className="flex items-center gap-1.5 text-rose-500"><AlertCircle size={12} /> Invalid JSON — this block is not saved: {error}</span>
+        ) : block.isActive === false ? (
+          <span className={darkMode ? 'text-slate-500' : 'text-muted'}>Valid, but inactive — it will not be served.</span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-emerald-600"><Check size={12} /> Valid and active.</span>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const SchemaTab = ({ draft, setSeo, darkMode }) => {
+  const blocks = draft.seo?.schemas || [];
+
+  const setBlocks = (next) => setSeo('schemas', next);
+  const addBlock = () => setBlocks([...blocks, {
+    type: 'Organization', jsonLd: TEMPLATES.Organization, isActive: true, generatedBy: 'manual',
+  }]);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-3">
         <p className={`text-[12px] ${darkMode ? 'text-slate-500' : 'text-muted'}`}>
-          No structured data on this page. Pick a template above to start.
+          Active blocks are served on the page as JSON-LD. A page commonly needs several.
         </p>
+        <Button darkMode={darkMode} onClick={addBlock} className="shrink-0">
+          <Plus size={15} /> Add block
+        </Button>
+      </div>
+
+      {blocks.length === 0 ? (
+        <EmptyState
+          darkMode={darkMode}
+          icon={Braces}
+          title="No structured data"
+          subtitle="Add a block to describe this page to search engines. Organization and WebSite are the usual sitewide pair."
+          action={<Button darkMode={darkMode} onClick={addBlock}><Plus size={15} /> Add block</Button>}
+        />
+      ) : (
+        <div className="space-y-3">
+          {blocks.map((block, i) => (
+            <BlockEditor
+              key={block._id || `block-${i}`}
+              block={block}
+              index={i}
+              darkMode={darkMode}
+              onChange={(next) => setBlocks(blocks.map((b, j) => (j === i ? next : b)))}
+              onRemove={() => setBlocks(blocks.filter((_, j) => j !== i))}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

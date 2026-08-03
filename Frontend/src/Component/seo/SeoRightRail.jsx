@@ -1,5 +1,5 @@
-import React from 'react';
-import { Check, X, Save, RotateCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, X, Save, RotateCcw, Trash2 } from 'lucide-react';
 import { Card, Button } from './SeoUI.jsx';
 import ScoreRing from './ScoreRing.jsx';
 
@@ -10,9 +10,12 @@ import ScoreRing from './ScoreRing.jsx';
  * do next, so every failed check is a specific, actionable line. Failures sort to
  * the top for the same reason.
  */
-const SeoRightRail = ({ live, dirty, saving, onSave, onRevert, darkMode }) => {
+const SeoRightRail = ({ live, dirty, saving, onSave, onRevert, onDelete, pageTitle, darkMode }) => {
   const checks = [...(live.checks || [])].sort((a, b) => Number(a.passed) - Number(b.passed));
   const passedCount = checks.filter((c) => c.passed).length;
+  // Two-step rather than a window.confirm: the second click is the confirmation, so
+  // deleting is never one stray click away but also never blocks on a modal.
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -33,6 +36,36 @@ const SeoRightRail = ({ live, dirty, saving, onSave, onRevert, darkMode }) => {
           )}
         </div>
       </Card>
+
+      {onDelete && (
+        <Card darkMode={darkMode} className="p-4">
+          {confirmingDelete ? (
+            <div className="space-y-2.5">
+              <p className={`text-[12px] leading-relaxed ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                Delete <strong className={darkMode ? 'text-slate-200' : 'text-ink'}>{pageTitle}</strong>?
+                It stops being served and frees its slug. The revision history is kept, so it can be recovered.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="danger" darkMode={darkMode} className="flex-1" onClick={onDelete}>
+                  <Trash2 size={14} /> Delete
+                </Button>
+                <Button variant="ghost" darkMode={darkMode} onClick={() => setConfirmingDelete(false)}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Button
+              variant="subtle"
+              darkMode={darkMode}
+              className="w-full !text-rose-500 hover:!bg-rose-500/10"
+              onClick={() => setConfirmingDelete(true)}
+            >
+              <Trash2 size={14} /> Delete page
+            </Button>
+          )}
+        </Card>
+      )}
 
       <Card darkMode={darkMode} className="overflow-hidden">
         <div className={`px-4 py-2.5 text-xs font-semibold uppercase tracking-wide border-b ${

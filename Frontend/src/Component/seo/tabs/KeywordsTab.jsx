@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { Check, X } from 'lucide-react';
-import { Field, TagInput } from '../SeoUI.jsx';
+import { Field, TagInput, Select } from '../SeoUI.jsx';
 import { derivePresence, focusKeywordOf } from '../../../utils/seoScore.js';
 
 const PRESENCE_ROWS = [
@@ -17,8 +17,11 @@ const PRESENCE_ROWS = [
  */
 const KeywordsTab = ({ draft, setSeo, darkMode }) => {
   const seo = draft.seo || {};
+  const kw = seo.keywordSeo || {};
   const focus = focusKeywordOf(seo);
   const presence = useMemo(() => derivePresence(draft), [draft]);
+
+  const patchKw = (partial) => setSeo('keywordSeo', { ...kw, ...partial });
 
   return (
     <div className="space-y-5">
@@ -32,6 +35,51 @@ const KeywordsTab = ({ draft, setSeo, darkMode }) => {
           value={seo.keywords || []}
           onChange={(v) => setSeo('keywords', v)}
           placeholder="Add a keyword and press Enter"
+        />
+      </Field>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <Field label="Search intent" darkMode={darkMode} hint="What the searcher is actually trying to do.">
+          <Select darkMode={darkMode} value={kw.searchIntent || ''} onChange={(e) => patchKw({ searchIntent: e.target.value })}>
+            <option value="">Not set</option>
+            <option value="informational">Informational — wants to learn</option>
+            <option value="navigational">Navigational — wants a specific site</option>
+            <option value="commercial">Commercial — comparing options</option>
+            <option value="transactional">Transactional — ready to act</option>
+          </Select>
+        </Field>
+
+        <Field label="Current position" darkMode={darkMode} hint="Tracked manually. 0 means unranked or unknown.">
+          <Select darkMode={darkMode} value={String(kw.position ?? 0)} onChange={(e) => patchKw({ position: Number(e.target.value) })}>
+            <option value="0">Unranked / unknown</option>
+            <option value="1">Position 1</option>
+            <option value="3">Top 3</option>
+            <option value="10">Top 10</option>
+            <option value="20">Top 20</option>
+            <option value="50">Beyond 20</option>
+          </Select>
+        </Field>
+      </div>
+
+      <Field
+        label="Secondary keywords"
+        darkMode={darkMode}
+        hint="Supporting terms this page should also cover. Not scored — they document intent."
+      >
+        <TagInput
+          darkMode={darkMode}
+          value={kw.secondaryKeywords || []}
+          onChange={(v) => patchKw({ secondaryKeywords: v })}
+          placeholder="Add a secondary keyword"
+        />
+      </Field>
+
+      <Field label="Related keywords" darkMode={darkMode} hint="Adjacent terms worth a future page of their own.">
+        <TagInput
+          darkMode={darkMode}
+          value={kw.relatedKeywords || []}
+          onChange={(v) => patchKw({ relatedKeywords: v })}
+          placeholder="Add a related keyword"
         />
       </Field>
 

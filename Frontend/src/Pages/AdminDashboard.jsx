@@ -239,6 +239,16 @@ const AdminDashboard = () => {
 
           {user?.role === 'super_admin' && (
             <button
+              onClick={() => navigate("/seo")}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
+            >
+              <Search size={16} className="text-accent shrink-0" />
+              <span>SEO Management</span>
+            </button>
+          )}
+
+          {user?.role === 'super_admin' && (
+            <button
               onClick={() => navigate("/admin/setup")}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'text-slate-400 hover:text-white hover:bg-slate-800' : 'text-muted hover:text-ink hover:bg-cardsoft'}`}
             >

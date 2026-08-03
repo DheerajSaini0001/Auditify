@@ -10,11 +10,14 @@ import { verifyToken, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Authenticated surface only — there is no guest path into content editing.
-// The controller narrows further: a plain 'user' sees and edits only entries they
-// authored, while admin/super_admin see every entry.
+// super_admin only, matching the sidebar entry and the /seo route guard. Gating the
+// UI alone would be cosmetic — the API is the real boundary, and anyone can type a
+// URL or curl an endpoint.
+//
+// To open this up to admins or editors later, widen this one line; the controller
+// already scopes a non-privileged caller to the entries they authored.
 router.use(verifyToken);
-router.use(checkRole('user', 'admin', 'super_admin'));
+router.use(checkRole('super_admin'));
 
 router.get('/summary', getSummary);
 

@@ -111,9 +111,10 @@ function AppContentInner() {
           } />
           <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
 
-          {/* SEO management for CMS pages — edits CmsContentEntry.seo, not the audit pipeline. */}
+          {/* SEO management for CMS pages — edits CmsContentEntry.seo, not the audit pipeline.
+              super_admin only, matching the sidebar entry and the API guard. */}
           <Route path="/seo" element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="super_admin">
               <SeoDashboard />
             </ProtectedRoute>
           } />

@@ -123,9 +123,11 @@ export const useSeoDashboard = () => {
   const save = useCallback(async () => {
     if (!draft || saving) return;
     setSaving(true);
+    // presence is derived server-side on save; the strict API schema rejects it.
+    const { presence: _presence, ...keywordSeo } = draft.seo.keywordSeo || {};
     const { ok, data } = await apiFetch(`/api/v1/seo/pages/${draft._id}`, {
       method: 'PUT',
-      body: JSON.stringify({ seo: draft.seo }),
+      body: JSON.stringify({ seo: { ...draft.seo, keywordSeo } }),
     });
     if (ok) {
       const page = { ...data.data.page, seo: hydrateSeo(data.data.page.seo) };

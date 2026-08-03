@@ -29,6 +29,18 @@ so a threshold in code and its justification here should always agree.
 | [README_metric.md](specs/README_metric.md) | Per-metric reference |
 | [SPEC_VS_CODE_RECONCILIATION.md](specs/SPEC_VS_CODE_RECONCILIATION.md) | Where the spec and the implementation differ |
 
+## `reference/` — source material and working notes
+
+Original documents the audit framework was built from, plus working notes. These are
+inputs to read, not anything the code loads: Word/PDF briefs, the parameter-status
+sheets, the June work log, and `to-do.txt`.
+
+## `reports/` — generated output
+
+Artefacts from past runs, kept for comparison: the audit-parameter and pipeline
+timing reports, and a sample dealership PDF report. Nothing regenerates these on
+build; they are snapshots.
+
 ## `prompts/` — implementation briefs
 
 Requirement documents handed to the team, kept because the code cites them and

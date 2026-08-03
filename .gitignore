@@ -1,3 +1,7 @@
 
 # PSI (PageSpeed) result cache — machine-local, regenerated on demand
 .psi-cache/
+
+# macOS Finder metadata
+.DS_Store
+**/.DS_Store

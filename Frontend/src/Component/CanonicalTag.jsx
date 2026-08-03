@@ -111,6 +111,12 @@ const SEO_CONFIGS = [
     description: 'Browse your complete history of website audit scans. Compare historical scores, track improvements over time, and re-run audits with a single click today.'
   },
   {
+    path: '/seo',
+    exact: true,
+    title: 'SEO Management - Edit Page Titles, Meta & Schema',
+    description: 'Manage the SEO of every page from one place. Edit titles, meta descriptions, keywords, social share cards and JSON-LD structured data, with a live score.'
+  },
+  {
     path: '/audit-summary',
     exact: true,
     title: 'Audit Summary - Full Multi-Page SEO Audit Scan Data',

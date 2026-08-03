@@ -24,6 +24,8 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import adminConfigRoutes from "./routes/adminConfigRoutes.js";
 import aeoRoutes from "./routes/aeoRoutes.js";
+import cmsSeoRoutes from "./routes/cmsSeoRoutes.js";
+import { syncCmsIndexes } from "./models/cms/index.js";
 import { captureScreenshot, getScreenshotImage } from "./controllers/singleAuditController.js";
 import { tryAuthenticate } from "./middleware/auth.js";
 
@@ -54,6 +56,10 @@ const startServer = async () => {
   } catch (err) {
     logger.error("[DB] Report index sync failed (old TTL stays in effect)", err);
   }
+
+  // The CMS collections are new, so syncing them is additive — see the warning in
+  // models/cms/index.js about never adding a pre-existing model to that list.
+  await syncCmsIndexes();
 
   // ── 1c. One-time super-admin grant ──
   // ⚠️ TEMPORARY — see utils/bootstrapSuperAdmin.js. Delete this call and the file
@@ -218,6 +224,7 @@ const startServer = async () => {
   app.use("/api/admin/config", adminConfigRoutes);
   app.use("/api/websites", websiteRoutes);
   app.use("/api/aeo", aeoRoutes);
+  app.use("/api/cms/seo", cmsSeoRoutes);
   app.post("/api/screenshot", tryAuthenticate, captureScreenshot);
   app.get("/api/screenshot/view/:auditId", getScreenshotImage);
 

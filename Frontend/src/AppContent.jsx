@@ -48,6 +48,7 @@ import { useAuth } from "./context/AuthContext.jsx";
 import { useData } from "./context/DataContext.jsx";
 import CanonicalTag from "./Component/CanonicalTag.jsx";
 import GuestRoute from "./Component/GuestRoute";
+import SeoDashboard from "./Pages/SeoDashboard.jsx";
 
 /**
  * Wraps a report route. Reports are open to everyone — guests included, with no
@@ -109,6 +110,13 @@ function AppContentInner() {
             </ProtectedRoute>
           } />
           <Route path="/dashboard/add-website" element={<AddWebsitePage />} />
+
+          {/* SEO management for CMS pages — edits CmsContentEntry.seo, not the audit pipeline. */}
+          <Route path="/seo" element={
+            <ProtectedRoute>
+              <SeoDashboard />
+            </ProtectedRoute>
+          } />
 
           <Route path="/audit-history" element={<AuditHistoryPage />} />
 

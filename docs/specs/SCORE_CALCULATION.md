@@ -26,8 +26,8 @@ Level 4  OVERALL site score            e.g. dealer site = 71 → grade "B"
 |---|---|---|
 | Parameter | binary / graded / ratio / probe (0–100 each) | each `Backend/metricServices/*.js` check function |
 | Section | weighted average **or** deduction model (per section, below) | end-of-file aggregator in each metric service |
-| Page | `Σ(section% × w_section(pageType)) / Σw` | [sectionWeights.js:95](Backend/utils/sectionWeights.js:95) `computePageScore`, [singleAuditWorker.js:146](Backend/workers/singleAuditWorker.js:146) `OverAll` |
-| Overall | `Σ(page_score × importance) / Σ(importance)` | [AuditSummaryPage.jsx:179](Frontend/src/Pages/AuditSummaryPage.jsx:179) |
+| Page | `Σ(section% × w_section(pageType)) / Σw` | [sectionWeights.js:95](../../Backend/utils/sectionWeights.js:95) `computePageScore`, [singleAuditWorker.js:146](../../Backend/workers/singleAuditWorker.js:146) `OverAll` |
+| Overall | `Σ(page_score × importance) / Σ(importance)` | [AuditSummaryPage.jsx:179](../../Frontend/src/pages/AuditSummaryPage.jsx:179) |
 
 **Grade bands** (used at page and overall level):
 
@@ -91,7 +91,7 @@ The section-by-section detail (with each parameter's exact weight) is in **§3**
 
 A parameter's effective contribution is `its weight ÷ Σ(weights applicable on that page)`. On pages where page-specific parameters activate (e.g. VDP add-ons), every other parameter's share shrinks proportionally.
 
-### 3.A Technical Performance — [technicalMetrics.js](Backend/metricServices/technicalMetrics.js)
+### 3.A Technical Performance — [technicalMetrics.js](../../Backend/metricServices/technicalMetrics.js)
 
 Headline = the **official PSI Lighthouse performance category score** for the audited device. Fallback (when PSI's category score is unavailable) = official Lighthouse metric weights over per-metric scores:
 
@@ -105,7 +105,7 @@ Headline = the **official PSI Lighthouse performance category score** for the au
 
 **Info-only (0 weight):** `Delivery_Hygiene` composite (compression, caching, redirects, render-blocking, resource optimization, sold-vehicle pages) and the CrUX field-data panel. They are dealer insights, deliberately kept out of the number people compare to PSI.
 
-### 3.B On-Page SEO — [seoMetrics.js:4634](Backend/metricServices/seoMetrics.js:4634)
+### 3.B On-Page SEO — [seoMetrics.js:4634](../../Backend/metricServices/seoMetrics.js:4634)
 
 Weighted average. Common parameters:
 
@@ -132,7 +132,7 @@ Page-type add-ons (only weighted on the relevant page; common params renormalize
 | SRP_Index_Control (pagination / faceted URLs) | SRP | 0.08 |
 | SRP_To_VDP_Links (crawl depth) | SRP | 0.06 |
 
-### 3.C Accessibility — [accessibilityMetrics.js](Backend/metricServices/accessibilityMetrics.js) (deduction model)
+### 3.C Accessibility — [accessibilityMetrics.js](../../Backend/metricServices/accessibilityMetrics.js) (deduction model)
 
 ```
 Percentage = max(0, round(90 − effective deductions))
@@ -151,7 +151,7 @@ DOM probes axe can't see: Target Size / Reflow −6 (fail) / −3 (warn); Landma
 
 **Diagnostic field:** `Graded_Percentage` keeps the old node-ratio model (Critical ×3 / Serious ×2 / Moderate ×1 tier weights, caps 70/85/96) for tracking fix progress.
 
-### 3.D Security/Compliance — [securityCompliance.js:2334](Backend/metricServices/securityCompliance.js:2334) (deduction model)
+### 3.D Security/Compliance — [securityCompliance.js:2334](../../Backend/metricServices/securityCompliance.js:2334) (deduction model)
 
 Each control deducts its **spec weight × (1 − score/100)** from 100 — a passing control deducts nothing, a total failure deducts its full weight:
 
@@ -190,7 +190,7 @@ Percentage = max(0, 100 − Σ deductions)   then apply gates:
 
 N/A controls cannot deduct. **Info-only:** `Header_Security` Observatory-style sub-grade (baseline 100, per-test deductions, letter grade A+–F) — the externally comparable number. `Graded_Percentage` keeps the old renormalized weighted average. GA4/GTM/CRM belong to Conversion, not Security.
 
-### 3.E UX & Content Structure — [uxContentStructure.js:2272](Backend/metricServices/uxContentStructure.js:2272)
+### 3.E UX & Content Structure — [uxContentStructure.js:2272](../../Backend/metricServices/uxContentStructure.js:2272)
 
 Weighted average (Auditify Index — no external equivalent). Common parameters:
 
@@ -216,7 +216,7 @@ Page-specific add-ons (weight only on their page type; N/A elsewhere):
 
 Pricing / Vehicle-History / Staff / Certifications checks were moved to Conversion (hidden here).
 
-### 3.F Conversion & Lead Flow — [conversionLeadFlow.js:2189](Backend/metricServices/conversionLeadFlow.js:2189)
+### 3.F Conversion & Lead Flow — [conversionLeadFlow.js:2189](../../Backend/metricServices/conversionLeadFlow.js:2189)
 
 Weighted average with page-type gating (`classifyPageType` on the post-redirect URL). Sub-cards split a spec parameter's weight so they **sum to the spec value** (e.g. CTA effectiveness 0.18 = Presence 0.07 + Clarity 0.05 + Flow 0.06).
 
@@ -258,7 +258,7 @@ Weighted average with page-type gating (`classifyPageType` on the post-redirect 
 
 **Hidden (double-counted elsewhere):** Link_Relevance, Progress_Indicators.
 
-### 3.G AIO Readiness — [aioReadiness.js:974](Backend/metricServices/aioReadiness.js:974)
+### 3.G AIO Readiness — [aioReadiness.js:974](../../Backend/metricServices/aioReadiness.js:974)
 
 Weighted average of 8 parameters (no page-type gating; weights sum to 1.0):
 
@@ -275,7 +275,7 @@ Weighted average of 8 parameters (no page-type gating; weights sum to 1.0):
 
 **Info-only:** Duplicate_Content_Detection_Ready (owned by On-Page SEO), Structured_Content (chunking + lists), Terminology_Consistency. **Hidden:** Author, Fact-density, Completeness (double-counted). Badge: "AIO-compatible" when Percentage ≥ 50.
 
-### 3.H AEO — [aeoService.js:54](Backend/metricServices/aeoService.js:54)
+### 3.H AEO — [aeoService.js:54](../../Backend/metricServices/aeoService.js:54)
 
 Headline = weighted average over the applicable spec parameters (`computeSectionScore`):
 
@@ -309,7 +309,7 @@ The page score is **not** a flat average of the 8 sections. Each page type tilts
 page_score = Σ(section Percentage × w_section(pageType)) ÷ Σ(w of applicable sections)
 ```
 
-Code: [sectionWeights.js:95](Backend/utils/sectionWeights.js:95) (`computePageScore`, renormalizes N/A sections out) and [singleAuditWorker.js:146](Backend/workers/singleAuditWorker.js:146) (`OverAll`, full 8-section audits). The page type comes from the URL classifier ([sectionWeights.js:61](Backend/utils/sectionWeights.js:61)), most-specific pattern first (VDP before SRP, finance before lease).
+Code: [sectionWeights.js:95](../../Backend/utils/sectionWeights.js:95) (`computePageScore`, renormalizes N/A sections out) and [singleAuditWorker.js:146](../../Backend/workers/singleAuditWorker.js:146) (`OverAll`, full 8-section audits). The page type comes from the URL classifier ([sectionWeights.js:61](../../Backend/utils/sectionWeights.js:61)), most-specific pattern first (VDP before SRP, finance before lease).
 
 **Section weights per page type** (each row sums to 100 — i.e. the % contribution of each section to that page's score):
 
@@ -353,7 +353,7 @@ Two steps happen before the site rollup:
 overall = Σ(page_score × importance) ÷ Σ(importance of audited pages)
 ```
 
-**Page importance weights** ([AuditSummaryPage.jsx:24](Frontend/src/Pages/AuditSummaryPage.jsx:24)):
+**Page importance weights** ([AuditSummaryPage.jsx:24](../../Frontend/src/pages/AuditSummaryPage.jsx:24)):
 
 | Page type | Importance | Share of overall (all 10 rows audited, Σ = 12.5) |
 |---|---|---|

@@ -1,7 +1,7 @@
 # Architecture
 
 How this codebase is laid out, and — where it diverges from
-[`mern-architecture-implementation-prompt.md`](../mern-architecture-implementation-prompt.md) —
+[`mern-architecture-implementation-prompt.md`](prompts/mern-architecture-implementation-prompt.md) —
 why.
 
 ## Where we are against the document
@@ -15,7 +15,8 @@ was adopted rather than applied literally. What that means concretely:
 | `server/` and `client/` | `Backend/` and `Frontend/` | Both deploy workflows filter on the exact paths `Backend/**` and `Frontend/**`. Renaming the folders silently stops all deploys — the precise failure we spent a day diagnosing. Not worth it for a directory name. |
 | Every module in `src/modules/<m>/` × 6 files | `modules/seo/`, `modules/health/` are; `controllers/` + `routes/` are not yet | New work uses the layered pattern. Existing controllers migrate when touched. Both styles coexist deliberately during migration. |
 | One response shape everywhere | `/api/v1/*` yes; legacy mounts not yet | ~208 response sites answer in three shapes. Rewriting them at once breaks a deployed frontend. |
-| `client/src/features/*` | `Frontend/src/Pages` + `Component` | A 110-component restructure with no functional gain. Deferred, not refused. |
+| Folders lowercase, no PascalCase | ✅ done in the client | `Component/`→`components/`, `Pages/`→`pages/`, `Layout/`→`layouts/` |
+| `client/src/features/*` | `Frontend/src/components` + `pages` | Folders are lowercase now, but not reorganised into per-feature packages. `components/seo/` is the one feature-shaped folder; the rest stay flat until there is a second feature to justify the split. |
 
 The audit engine (`Backend/metricServices/`, 25 files) is deliberately **exempt** from
 the layering rules. It is a measurement pipeline, not CRUD — there is no repository
@@ -61,13 +62,20 @@ Backend/
 └── workers/          audit pipeline workers
 
 Frontend/src/
-├── Component/        shared components (+ Component/seo/ feature folder)
-├── Pages/            route-level pages
+├── components/       shared components (+ components/seo/ — feature-shaped)
+├── pages/            route-level pages
+├── layouts/          page shells
 ├── config/           seoConfig.js — the SEO source of truth
 ├── context/          Auth, Data, Theme
 ├── hooks/            data hooks (useSeoDashboard …)
-└── utils/            helpers
+├── assets/           images — every one under 150KB, enforced at build
+├── styles/
+└── utils/            helpers (seoScore.js mirrors the server's scoring)
 ```
+
+`Frontend/scripts/` holds the build-time SEO gate: `generate-seo-assets.mjs` writes
+robots.txt and sitemap.xml from the route table, and `verify-seo.mjs` fails the build
+on any violation. Both run as `prebuild`.
 
 ## Conventions
 

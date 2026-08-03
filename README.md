@@ -31,6 +31,16 @@ A powerful, production-ready MERN Stack application designed to perform deep tec
 
 ---
 
+## 📚 Documentation
+
+Full documentation lives in [`docs/`](docs/README.md):
+
+- [Architecture](docs/architecture.md) — folder layout, request flow, layering rules
+- [Audit specs](docs/README.md#specs--how-the-audit-engine-scores) — how every pillar is scored
+- [Implementation prompts](docs/README.md#prompts--implementation-briefs) — the briefs, and what diverged
+
+---
+
 ## 🛠️ Tech Stack
 
 ### Frontend

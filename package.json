@@ -1,0 +1,24 @@
+{
+  "name": "site-audit",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Website audit engine (Node/Express API + React client) with CMS-backed SEO management.",
+  "scripts": {
+    "dev": "concurrently -n api,web -c cyan,magenta \"npm:server\" \"npm:client\"",
+    "server": "npm --prefix Backend run dev",
+    "client": "npm --prefix Frontend run dev",
+    "install:all": "npm install && npm --prefix Backend install && npm --prefix Frontend install",
+    "build": "npm --prefix Frontend run build",
+    "lint": "npm --prefix Frontend run lint",
+    "seo:verify": "npm --prefix Frontend run seo:verify",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

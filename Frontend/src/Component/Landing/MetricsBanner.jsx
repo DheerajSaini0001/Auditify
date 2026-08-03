@@ -2,7 +2,7 @@ import React, { useContext, useRef, useEffect, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { Activity, Globe2, ShieldCheck, Zap, TrendingUp, Cpu, Eye, Lock, Layers } from 'lucide-react';
-import metricsBg from '../../assets/metrics_bg.png';
+import metricsBg from '../../assets/metrics_bg.jpg';
 
 const useCountUp = (target, duration = 1600, isActive = false) => {
     const [current, setCurrent] = useState(0);

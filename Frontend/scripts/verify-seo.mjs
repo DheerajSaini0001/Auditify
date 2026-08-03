@@ -120,9 +120,9 @@ const hasXRobots = headerFiles.some((f) => {
 if (!hasXRobots) fail(5, `X-Robots-Tag is not set in any of: ${headerFiles.join(', ')}`);
 
 // ── 8: image weight ──
-// Reported, not fatal: the repo already ships several large legacy assets, and
-// failing the build on those would block every build until they are re-encoded.
-// Anything NEW that breaches the limit shows up here immediately.
+// Fatal. Every shipped asset is now under the limit, so there is no legacy debt to
+// grandfather in — the first oversized image to land breaks the build, which is the
+// only way the limit stays true.
 const LIMIT = 150 * 1024;
 const imageDirs = ['src/assets', 'public'];
 const offenders = [];
@@ -136,7 +136,7 @@ for (const dir of imageDirs) {
   }
 }
 offenders.sort((a, b) => b.kb - a.kb);
-for (const o of offenders) warn(8, `${o.file} is ${o.kb}KB, over the 150KB limit`);
+for (const o of offenders) fail(8, `${o.file} is ${o.kb}KB, over the 150KB limit`);
 
 // ── report ──
 if (warnings.length) {

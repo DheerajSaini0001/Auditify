@@ -2,7 +2,7 @@ import Logo from "./DealerPulseLogo.png";
 import ReactLogo from "./react.svg";
 import DarkLogo from "./DarkLogoDealer_Pulse.png";
 import Bg from "./bg.jpg";
-import DarkBg from "./darkbg.png";
+import DarkBg from "./darkbg.jpg";
 import SiteAuditLogo from "./DealerPulseLogo.png";
 import LightLogo from "./logolight.png";
 

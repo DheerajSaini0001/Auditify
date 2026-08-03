@@ -1,0 +1,57 @@
+# Local full-stack bring-up (architecture doc §10).
+#
+# Production does NOT use this: the API is a container on Azure App Service pulling
+# from ACR, the frontend is an Azure Static Web App, and the database is Cosmos for
+# MongoDB. This file exists so a new developer gets a working stack in one command
+# without installing Mongo locally.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports: ["27017:27017"]
+    volumes: ["mongo-data:/data/db"]
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports: ["2000:2000"]
+    env_file: ./Backend/.env
+    environment:
+      # Override whatever .env says: inside the compose network the database is
+      # reachable as `mongo`, not localhost.
+      MONGO_URI: mongodb://mongo:27017/siteaudit
+      NODE_ENV: development
+      FRONTEND_URL: http://localhost:5173
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      # Hits the real health endpoint, which reports 503 when Mongo is unreachable —
+      # so an unhealthy database marks the container unhealthy rather than hiding it.
+      test: ["CMD", "node", "-e", "fetch('http://localhost:2000/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  web:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    ports: ["5173:5173"]
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:2000
+    depends_on: [api]
+
+volumes:
+  mongo-data:

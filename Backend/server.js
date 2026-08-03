@@ -24,8 +24,12 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import adminConfigRoutes from "./routes/adminConfigRoutes.js";
 import aeoRoutes from "./routes/aeoRoutes.js";
-import cmsSeoRoutes from "./routes/cmsSeoRoutes.js";
 import { syncCmsIndexes } from "./models/cms/index.js";
+import swaggerUi from "swagger-ui-express";
+import { buildSwaggerSpec } from "./config/swagger.js";
+import healthRoutes from "./modules/health/health.routes.js";
+import seoRoutes from "./modules/seo/seo.routes.js";
+import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
 import { captureScreenshot, getScreenshotImage } from "./controllers/singleAuditController.js";
 import { tryAuthenticate } from "./middleware/auth.js";
 
@@ -218,13 +222,29 @@ const startServer = async () => {
   app.use(globalLimiter);
 
   // ── 9. Routes ──
+  //
+  // Versioned surface (architecture doc §10). New modules mount ONLY here and answer
+  // in the standard { success, message, data } shape. The unversioned mounts below
+  // are the legacy surface the current client still calls; they stay until each is
+  // migrated, because renaming them in one go would break a deployed frontend.
+  app.use("/api/v1", healthRoutes);
+  app.use("/api/v1/seo", seoRoutes);
+
+  // Interactive API docs, generated from the @openapi blocks on the route files.
+  const swaggerSpec = buildSwaggerSpec();
+  // Raw spec too, so the docs can be diffed/linted in CI rather than only eyeballed.
+  app.get("/api-docs.json", (req, res) => res.json(swaggerSpec));
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "Site Audit API",
+  }));
+
+  // ── 9b. Legacy unversioned routes ──
   app.use("/api/auth", authRoutes);
   app.use("/api/user", userRoutes);
   app.use("/api/admin", adminRoutes);
   app.use("/api/admin/config", adminConfigRoutes);
   app.use("/api/websites", websiteRoutes);
   app.use("/api/aeo", aeoRoutes);
-  app.use("/api/cms/seo", cmsSeoRoutes);
   app.post("/api/screenshot", tryAuthenticate, captureScreenshot);
   app.get("/api/screenshot/view/:auditId", getScreenshotImage);
 
@@ -237,12 +257,12 @@ const startServer = async () => {
   });
 
   // ── 11. Error Handler ──
-  app.use((err, req, res, next) => {
-    logger.error(`${req.method} ${req.originalUrl} — Unhandled Error`, err);
-    res.status(500).json({
-      error: "Internal Server Error"
-    });
-  });
+  // One central handler (architecture doc §4/§7): every next(err) resolves here and
+  // leaves in the standard { success, message, errors } shape. An operational error
+  // keeps its own message and status; anything else is logged in full and answered
+  // generically so an internal detail never reaches a client.
+  app.use(notFoundHandler);
+  app.use(errorHandler);
 
   // ── 12. Start Server ──
   app.listen(parseInt(PORT), () => {

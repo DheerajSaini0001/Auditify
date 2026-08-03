@@ -73,7 +73,7 @@ export const useSeoDashboard = () => {
   }, []);
 
   const loadSummary = useCallback(async () => {
-    const { ok, data } = await apiFetch('/api/cms/seo/summary');
+    const { ok, data } = await apiFetch('/api/v1/seo/summary');
     if (ok) setSummary(data.data);
   }, [apiFetch]);
 
@@ -83,7 +83,7 @@ export const useSeoDashboard = () => {
     const qs = new URLSearchParams();
     if (search.trim()) qs.set('search', search.trim());
     if (status) qs.set('status', status);
-    const { ok, data } = await apiFetch(`/api/cms/seo/pages?${qs.toString()}`);
+    const { ok, data } = await apiFetch(`/api/v1/seo/pages?${qs.toString()}`);
     if (ok) setPages(data.data.pages || []);
     else setListError(data?.message || 'Could not load pages.');
     setLoadingList(false);
@@ -93,7 +93,7 @@ export const useSeoDashboard = () => {
     if (!id) return;
     const ticket = ++requestRef.current;
     setLoadingDraft(true);
-    const { ok, data } = await apiFetch(`/api/cms/seo/pages/${id}`);
+    const { ok, data } = await apiFetch(`/api/v1/seo/pages/${id}`);
     if (ticket !== requestRef.current) return; // a newer selection won
     if (ok) {
       const page = { ...data.data.page, seo: hydrateSeo(data.data.page.seo) };
@@ -123,7 +123,7 @@ export const useSeoDashboard = () => {
   const save = useCallback(async () => {
     if (!draft || saving) return;
     setSaving(true);
-    const { ok, data } = await apiFetch(`/api/cms/seo/pages/${draft._id}`, {
+    const { ok, data } = await apiFetch(`/api/v1/seo/pages/${draft._id}`, {
       method: 'PUT',
       body: JSON.stringify({ seo: draft.seo }),
     });
@@ -142,7 +142,7 @@ export const useSeoDashboard = () => {
   }, [apiFetch, draft, saving, flash, loadPages, loadSummary]);
 
   const createPage = useCallback(async ({ title, slug }) => {
-    const { ok, data } = await apiFetch('/api/cms/seo/pages', {
+    const { ok, data } = await apiFetch('/api/v1/seo/pages', {
       method: 'POST',
       body: JSON.stringify({ title, slug }),
     });
@@ -164,7 +164,7 @@ export const useSeoDashboard = () => {
   const loadRevisions = useCallback(async () => {
     if (!selectedId) return;
     setLoadingRevisions(true);
-    const { ok, data } = await apiFetch(`/api/cms/seo/pages/${selectedId}/revisions`);
+    const { ok, data } = await apiFetch(`/api/v1/seo/pages/${selectedId}/revisions`);
     setRevisions(ok ? data.data.revisions || [] : []);
     setLoadingRevisions(false);
   }, [apiFetch, selectedId]);
@@ -177,7 +177,7 @@ export const useSeoDashboard = () => {
 
   const rollback = useCallback(async (version) => {
     if (!selectedId) return;
-    const { ok, data } = await apiFetch(`/api/cms/seo/pages/${selectedId}/rollback/${version}`, {
+    const { ok, data } = await apiFetch(`/api/v1/seo/pages/${selectedId}/rollback/${version}`, {
       method: 'POST',
     });
     if (ok) {
@@ -203,7 +203,7 @@ export const useSeoDashboard = () => {
     const routes = SEO_CONFIGS
       .filter((c) => c.exact)
       .map(({ path, title, description, keywords, noindex }) => ({ path, title, description, keywords, noindex }));
-    const { ok, data } = await apiFetch('/api/cms/seo/pages/import', {
+    const { ok, data } = await apiFetch('/api/v1/seo/pages/import', {
       method: 'POST',
       body: JSON.stringify({ routes }),
     });
@@ -219,7 +219,7 @@ export const useSeoDashboard = () => {
 
   const removePage = useCallback(async () => {
     if (!selectedId) return;
-    const { ok, data } = await apiFetch(`/api/cms/seo/pages/${selectedId}`, { method: 'DELETE' });
+    const { ok, data } = await apiFetch(`/api/v1/seo/pages/${selectedId}`, { method: 'DELETE' });
     if (ok) {
       flash('Page deleted.');
       setSelectedId(null);

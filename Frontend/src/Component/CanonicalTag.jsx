@@ -61,7 +61,7 @@ const labelFor = (segment) =>
 const fetchCmsMeta = async (path, signal) => {
   try {
     const base = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-    const res = await fetch(`${base}/api/cms/seo/public/page-meta?path=${encodeURIComponent(path)}`, { signal });
+    const res = await fetch(`${base}/api/v1/seo/public/page-meta?path=${encodeURIComponent(path)}`, { signal });
     if (!res.ok) return null;
     const body = await res.json();
     return body?.data?.meta || null;

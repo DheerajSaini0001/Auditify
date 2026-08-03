@@ -3,6 +3,35 @@ import configService from '../services/configService.js';
 import logger from './logger.js';
 import { getCachedPsi, setCachedPsi } from './psiCache.js';
 
+// ── PSI concurrency gate ────────────────────────────────────────────────────
+// A multi-page audit fires PageSpeed for every key page the moment discovery
+// names them (prefetchPsiBatch) — 7 simultaneous calls. That burst is exactly
+// what Google slow-lanes: measured 2026-08-03, 5 of 7 parallel calls hit the
+// 45s attempt deadline and paid a full retry (90-135s/page) while staggered
+// calls returned in 20-40s. Cap the in-flight calls per worker instead, so the
+// same prefetches trickle through a few at a time. Cache hits never queue —
+// the gate is taken only when a real API call is about to go out.
+const PSI_MAX_CONCURRENT = Math.max(1, parseInt(process.env.PSI_MAX_CONCURRENT || '3', 10) || 3);
+let psiInFlight = 0;
+const psiWaiters = [];
+const acquirePsiSlot = (tag, url) => new Promise((resolve) => {
+  const tryAcquire = (queuedLog) => {
+    if (psiInFlight < PSI_MAX_CONCURRENT) {
+      psiInFlight++;
+      resolve();
+    } else {
+      if (queuedLog) logger.info(`${tag} queued behind ${psiInFlight} in-flight PageSpeed call(s) — ${url}`);
+      psiWaiters.push(() => tryAcquire(false));
+    }
+  };
+  tryAcquire(true);
+});
+const releasePsiSlot = () => {
+  psiInFlight = Math.max(0, psiInFlight - 1);
+  const next = psiWaiters.shift();
+  if (next) next();
+};
+
 export default async function googleAPI(url, device) {
   // Cache first — a PSI result is ~50-75s to fetch and barely changes hour to
   // hour, so within PSI_CACHE_TTL_MS (default 12h) a re-audit of the same
@@ -48,6 +77,10 @@ export default async function googleAPI(url, device) {
   // makes the final outcome scannable at a glance.
   const tag = `[PageSpeed] ${device}`;
   let lastData = {};
+  // The slot covers the WHOLE attempt ladder (not each attempt) so a retrying
+  // call can't be interleaved with fresh callers and re-create the burst.
+  await acquirePsiSlot(tag, url);
+  try {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
@@ -95,4 +128,7 @@ export default async function googleAPI(url, device) {
   // Return {} so technicalMetrics degrades gracefully (asset-level checks still run
   // on the live page) instead of throwing and failing the whole audit.
   return lastData || {};
+  } finally {
+    releasePsiSlot();
+  }
 }

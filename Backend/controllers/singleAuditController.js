@@ -12,6 +12,7 @@ import logger from "../utils/logger.js";
 import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
 import { detectSiteType } from "../utils/siteTypeDetector.js";
 import { registerWorkerWithManager } from "../utils/browserManager.js";
+import { acquireAuditSlot } from "../utils/auditQueue.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -385,19 +386,55 @@ export const startAudit = async (req, res) => {
       status: "inprogress",
     });
 
-    const workerPath = join(process.cwd(), "workers", "singleAuditWorker.js");
-
-    const worker = new Worker(workerPath, {
-      workerData: {
-        url,
-        device,
-        report,
-        auditId: newReport._id.toString(),
-        pageType: newReport.pageType || null,
-        siteType: newReport.siteType || null,
-        pageScopes: normalizedScopes,
+    // ── Admission control ────────────────────────────────────────────────────
+    // The client already has its report id (responded above) and is polling. Hold
+    // the WORKER until an audit slot frees: concurrent audits each want the whole
+    // browser pool, and over-admitting them doesn't just slow the run, it makes
+    // pillars time out and score on partial data (see utils/auditQueue.js). While
+    // queued the report says so, instead of showing fake browser-launch progress.
+    const releaseAuditSlot = await acquireAuditSlot({
+      label: url,
+      onPosition: (position) => {
+        auditStore.applyPatch(newReport._id, { status: "queued", queuePosition: position });
       },
     });
+
+    const workerPath = join(process.cwd(), "workers", "singleAuditWorker.js");
+
+    let worker;
+    try {
+      worker = new Worker(workerPath, {
+        workerData: {
+          url,
+          device,
+          report,
+          auditId: newReport._id.toString(),
+          pageType: newReport.pageType || null,
+          siteType: newReport.siteType || null,
+          pageScopes: normalizedScopes,
+        },
+      });
+    } catch (spawnErr) {
+      // Never strand the slot: without this the queue would leak a permit per
+      // failed spawn and eventually admit nothing at all.
+      releaseAuditSlot();
+      logger.error(`❌ Failed to spawn audit worker for ${url}`, spawnErr);
+      auditStore.complete(newReport._id, { status: "failed", error: spawnErr.message });
+      return;
+    }
+
+    // The audit is leaving the queue — clear the waiting marker so the status
+    // endpoint stops reporting a queue position for a run that has started.
+    auditStore.applyPatch(newReport._id, { status: "inprogress", queuePosition: 0 });
+
+    // Release when the audit's WORK is done (the terminal done/error message),
+    // not when the thread exits: measured, a finished worker can sit for minutes
+    // before 'exit' fires because pending handles keep its event loop alive, and
+    // holding the slot that long would stall the queue behind an audit that has
+    // already delivered its report. 'exit' and 'error' stay wired as backstops
+    // for a crash that never sends a terminal message — release() is idempotent,
+    // so whichever fires first wins and the rest are no-ops.
+    worker.on("exit", () => releaseAuditSlot());
 
     registerWorkerWithManager(worker);
 
@@ -492,6 +529,7 @@ export const startAudit = async (req, res) => {
 
       if (msg.type === "error") {
         logger.error(`❌ Audit Failed: ${msg.error}`);
+        releaseAuditSlot(); // terminal — let the next queued audit start now
         auditStore.complete(newReport._id, { status: "failed", error: msg.error });
         await markAuditLog({
           status: "failed",
@@ -503,6 +541,7 @@ export const startAudit = async (req, res) => {
 
       if (msg.type === "done") {
         const duration = Date.now() - startTime;
+        releaseAuditSlot(); // terminal — let the next queued audit start now
         // Finalize in memory; this queues the report for the next batched flush.
         const finalDoc = auditStore.complete(newReport._id, msg.patch || {});
 
@@ -529,6 +568,7 @@ export const startAudit = async (req, res) => {
 
     worker.on("error", async (err) => {
       logger.error(`❌ Audit Failed with worker error`, err);
+      releaseAuditSlot();
       auditStore.complete(newReport._id, { status: "failed", error: err.message });
       await markAuditLog({
         status: "failed",
@@ -660,6 +700,13 @@ export const getReportStatusById = async (req, res) => {
     } else if (report.status === "completed") {
       progress = 100;
       message = "Audit completed";
+    } else if (report.status === "queued") {
+      // Admitted but not started: another audit holds the slot. Say so rather
+      // than showing browser-launch progress for work that hasn't begun.
+      progress = 5;
+      message = report.queuePosition > 1
+        ? `Waiting for a free audit slot — #${report.queuePosition} in queue`
+        : "Waiting for a free audit slot — next in line";
     } else if (completedSections > 0) {
       progress = Math.min(99, 45 + Math.round((completedSections / total) * 55));
       message = report.stage2Progress || `Analyzing your site — ${completedSections}/${total} sections scored`;

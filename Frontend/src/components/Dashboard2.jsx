@@ -117,6 +117,17 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     if (data?.status === "failed") {
       return { progress: 100, title: "Audit failed", desc: data?.error || "Something went wrong while auditing this site." };
     }
+    // Admitted but not started — another audit holds the slot. Concurrent audits
+    // starve each other's browsers, so they're queued rather than run together.
+    if (data?.rawStatus === "queued") {
+      return {
+        progress: 5,
+        title: "Waiting in queue",
+        desc: data?.queuePosition > 1
+          ? `Another audit is running — this one is #${data.queuePosition} in line and will start automatically.`
+          : "Another audit is running — this one starts the moment it finishes.",
+      };
+    }
     const total = sectionMappings.length;
     const phase = phases[data?.rawStatus];
     // Once any section reports, the bar tracks section completion across 45% → 100%.
@@ -129,7 +140,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     }
     if (phase) return { progress: phase.base, title: phase.title, desc: phase.desc };
     return { progress: 8, title: "Auditing your site", desc: "Running checks across all report sections." };
-  }, [data?.rawStatus, data?.status, data?.error, completedSections, sectionMappings.length]);
+  }, [data?.rawStatus, data?.status, data?.error, data?.queuePosition, completedSections, sectionMappings.length]);
 
   // AI Visibility summary — derived as soon as AEO (or AIO Readiness) reports, which
   // normally happens well before the rest of the audit finishes. The moment this is

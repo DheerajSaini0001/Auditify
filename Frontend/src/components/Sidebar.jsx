@@ -171,7 +171,7 @@ export default function Sidebar({ darkMode }) {
                     <span className="text-[10px] font-bold text-emerald-500">✓ Complete</span>
                   ) : (
                     <span className="flex items-center gap-1 text-[10px] font-bold text-amber-400">
-                      <Loader2 className="w-3 h-3 animate-spin" /> 3-Puppeteer
+                      <Loader2 className="w-3 h-3 animate-spin" /> Crawling…
                     </span>
                   )}
                 </div>

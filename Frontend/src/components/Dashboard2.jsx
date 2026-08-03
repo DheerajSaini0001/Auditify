@@ -84,14 +84,17 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
     ).length;
   }, [data, sectionMappings]);
 
-  // Report view is ready ONLY when backend status is completed/success OR all sections have reported
+  // Report view is ready when backend status is completed/success, all sections have
+  // reported, OR the worker published its provisional Stage-1 rollup (seven pillars
+  // scored, only PageSpeed still running — psiPending marks the refining state).
   const isAuditComplete = Boolean(
     data && (
       data.status === "completed" ||
       data.status === "success" ||
       data.rawStatus === "completed" ||
       data.rawStatus === "success" ||
-      (completedSections === sectionMappings.length && sectionMappings.length > 0)
+      (completedSections === sectionMappings.length && sectionMappings.length > 0) ||
+      (data.stage1Completed === true && typeof data.score === "number")
     )
   );
   const isLoadingView = loading || !isAuditComplete;
@@ -394,19 +397,27 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                 <div>
                   <h3 className={`text-2xl font-semibold ${darkMode ? "text-white" : "text-ink"}`}>Category Performance</h3>
                   <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>Detailed analysis across key audit verticals</p>
+                  {data?.psiPending && (
+                    <p className={`flex items-center gap-1.5 text-xs font-medium mt-2 ${darkMode ? "text-amber-400" : "text-amber-600"}`}>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Google PageSpeed is still analyzing — Technical Performance and the overall score will refine in a moment.
+                    </p>
+                  )}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                 {barData.map((item, index) => {
-                  /* Determine Color & Status */
+                  /* Determine Color & Status — a section without a Percentage keeps its
+                     "Analyzing..." spinner even while the (provisional) report is open,
+                     e.g. Technical Performance while PageSpeed is still running. */
                   const isDone = item.hasPercentage;
                   const score = isDone ? (item.value || 0) : 0;
                   let statusColor = "text-amber-500";
                   let statusText = "Analyzing...";
                   let ringColor = "#f59e0b"; // amber-500
 
-                  if (isDone || isAuditComplete) {
+                  if (isDone) {
                     if (score >= 90) {
                       statusColor = "text-emerald-500";
                       statusText = "Excellent";
@@ -471,16 +482,16 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                       </h3>
                       {data?.stage2Completed ? (
                         <span className="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                          ✓ 3-Puppeteer Crawl Complete
+                          ✓ Parallel Crawl Complete
                         </span>
                       ) : (
                         <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Crawling 3-Parallel
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Crawling in Parallel
                         </span>
                       )}
                     </div>
                     <p className={`text-xs mt-1 leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                      3 parallel Puppeteer instances crawled these key domain pages in the background to enrich site-wide signals.
+                      Parallel Puppeteer instances crawled these key domain pages in the background to enrich site-wide signals.
                     </p>
                   </div>
 

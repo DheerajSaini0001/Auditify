@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import { gunzipSync } from "zlib";
 import { parseStringPromise } from "xml2js";
 import { newStealthPage, detectChallenge, waitForChallengeResolution } from "./puppeteer_cheerio.js";
 
@@ -9,6 +10,16 @@ import { newStealthPage, detectChallenge, waitForChallengeResolution } from "./p
 // queue against the same cap as the audit browsers instead of contending with
 // them uncounted — which previously let total concurrent Chrome exceed the cap
 // and stall large JS-heavy corporate sites (ford.com, bmwusa.com).
+
+// Sitemap-index handling bounds. A dealer sitemap index commonly fans out to
+// 10-30 child sitemaps (pages, inventory shards, blog, images…). Every child is
+// SAMPLED (round-robin interleave, see mergeChildSitemapUrls) so no single huge
+// child — usually the first inventory shard — floods the discovery cap while
+// service/finance/blog children never contribute a URL.
+const MAX_CHILD_SITEMAPS = 12;      // children fetched per index (rest logged + skipped)
+const CHILD_FETCH_CONCURRENCY = 3;  // parallel child fetches (pages within the ONE pooled browser)
+const MAX_SITEMAP_DEPTH = 3;        // index-inside-index recursion guard
+const MAX_URLS_PER_SITEMAP = 1000;  // memory bound per <urlset> (discovery keeps ~40 anyway)
 
 // Once the homepage ALONE yields at least this many same-origin links, stop —
 // a real dealer/OEM homepage nav almost always already links to every major
@@ -119,24 +130,80 @@ async function discoverPagesInner(baseUrl, maxPages) {
 // contributing to ford.com/bmwusa.com's residual latency after fixing the
 // equivalent axios-level sequential-candidate bug in pageDiscovery.js.
 async function fetchSitemapUrls(context, domain) {
-    const possibleSitemaps = [
+    // robots.txt is checked FIRST: it is the standard place a site announces a
+    // sitemap living at a non-default path (or on a www/CDN host), and dealer
+    // platforms use that constantly. Its declared sitemaps outrank the three
+    // guessed default paths.
+    const robotsSitemaps = await fetchRobotsSitemapUrls(context, domain);
+    const candidates = [...new Set([
+        ...robotsSitemaps,
         `${domain}/sitemap.xml`,
         `${domain}/sitemap_index.xml`,
         `${domain}/sitemap-index.xml`,
-    ];
+    ])];
+    const robotsCount = robotsSitemaps.length;
+
+    // One visited-set across every candidate: /sitemap.xml and /sitemap_index.xml
+    // frequently point at the SAME children — without this each candidate would
+    // re-fetch the whole child fan-out.
+    const visited = new Set(candidates);
 
     const attempts = await Promise.all(
-        possibleSitemaps.map((sitemapUrl) => fetchOneSitemapCandidate(context, sitemapUrl, domain))
+        candidates.map((sitemapUrl) => fetchOneSitemapCandidate(context, sitemapUrl, domain, visited))
     );
 
-    // First candidate (in priority order) that found anything wins.
-    for (const urls of attempts) {
+    // robots-declared sitemaps are MERGED (a site may declare several — e.g. a
+    // pages sitemap AND an inventory sitemap); the guessed defaults keep the old
+    // first-non-empty-wins order.
+    const robotsUrls = attempts.slice(0, robotsCount).flat();
+    if (robotsUrls.length) return [...new Set(robotsUrls)];
+    for (const urls of attempts.slice(robotsCount)) {
         if (urls.length) return [...new Set(urls)];
     }
     return [];
 }
 
-async function fetchOneSitemapCandidate(context, sitemapUrl, domain) {
+// Read `Sitemap:` declarations out of robots.txt (spec allows several, and they
+// may point anywhere — a subdomain, a CDN, a non-default filename). Raw request
+// first (robots.txt is plain text); rendered-page fallback for WAF'd origins.
+async function fetchRobotsSitemapUrls(context, domain) {
+    const parseDeclarations = (text) => text
+        .split(/\r?\n/)
+        .map((line) => line.match(/^\s*sitemap\s*:\s*(\S+)/i)?.[1])
+        .filter(Boolean)
+        .slice(0, 5);
+
+    try {
+        const resp = await context.request.get(`${domain}/robots.txt`, { timeout: 10000 });
+        if (resp.ok()) {
+            const declared = parseDeclarations(await resp.text());
+            if (declared.length) {
+                console.log(`🤖 robots.txt declares ${declared.length} sitemap(s): ${declared.join(", ")}`);
+                return declared;
+            }
+        }
+    } catch { /* fall through to the rendered-page path */ }
+
+    let page;
+    try {
+        page = await context.newPage();
+        await page.goto(`${domain}/robots.txt`, { waitUntil: "domcontentloaded", timeout: 12000 });
+        const declared = parseDeclarations(await page.evaluate(() => document.body.innerText));
+        if (declared.length) console.log(`🤖 robots.txt declares ${declared.length} sitemap(s): ${declared.join(", ")}`);
+        return declared;
+    } catch {
+        return [];
+    } finally {
+        if (page) await page.close().catch(() => {});
+    }
+}
+
+async function fetchOneSitemapCandidate(context, sitemapUrl, domain, visited, depth = 0) {
+    // Raw request first: no XML-viewer wrapper, no page overhead, .xml.gz handled.
+    const rawXml = await readSitemapBody(context, sitemapUrl);
+    if (rawXml) return parseSitemap(context, rawXml, domain, visited, depth);
+
+    // Fallback: render the page so a WAF challenge can be waited out.
     let page;
     try {
         page = await context.newPage();
@@ -153,7 +220,7 @@ async function fetchOneSitemapCandidate(context, sitemapUrl, domain) {
 
         const content = await page.evaluate(() => document.body.innerText);
         if (content.includes('<urlset') || content.includes('<sitemapindex')) {
-            return await parseSitemap(page, content, domain);
+            return await parseSitemap(context, content, domain, visited, depth);
         }
         return [];
     } catch (error) {
@@ -163,34 +230,145 @@ async function fetchOneSitemapCandidate(context, sitemapUrl, domain) {
     }
 }
 
-async function parseSitemap(page, xmlData, domain) {
+// Hostname with any leading "www." stripped — sitemap <loc>s routinely disagree
+// with the audited origin on www vs apex (the old startsWith(domain) check
+// silently dropped EVERY url in that case and discovery fell back to crawling).
+const registrableHost = (url) => {
+    try { return new URL(url).hostname.replace(/^www\./i, "").toLowerCase(); } catch { return null; }
+};
+
+// A <loc> that IS itself a sitemap file. Some sites (wrongly but commonly) list
+// their child sitemaps inside a plain <urlset> instead of a <sitemapindex> — e.g.
+// a top sitemap whose 6 entries are each another sitemap. Those must be RECURSED
+// INTO, not treated as auditable pages (or dropped by the asset filter), or the
+// whole tree is missed and discovery falls back to link crawling.
+const looksLikeSitemapUrl = (url) => /\.xml(\.gz)?(\?[^#]*)?$/i.test(url);
+
+// Fetch one sitemap's raw XML without rendering a page: the context's request
+// API sends the browser's cookies (incl. WAF clearance) but skips the XML-viewer
+// wrapper entirely, and we gunzip .xml.gz payloads (compressed child sitemaps
+// are standard on large sites). Returns null when the answer isn't a sitemap.
+async function readSitemapBody(context, url) {
+    try {
+        const resp = await context.request.get(url, { timeout: 10000 });
+        if (!resp.ok()) return null;
+        const buf = await resp.body();
+        const xml = buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b
+            ? gunzipSync(buf).toString("utf8")
+            : buf.toString("utf8");
+        return xml.includes("<urlset") || xml.includes("<sitemapindex") ? xml : null;
+    } catch {
+        return null;
+    }
+}
+
+// Fetch + parse a set of child-sitemap urls (from a <sitemapindex> OR sitemap-like
+// <loc>s found inside a <urlset>): bounded fan-out, small parallel chunks, shared
+// visited-set against loops, raw request first with a rendered-page fallback for
+// challenge-protected origins. Children are round-robin merged so each one is
+// sampled by the discovery cap.
+async function fetchChildSitemaps(context, childLocs, domain, visited, depth) {
+    if (depth >= MAX_SITEMAP_DEPTH) {
+        console.log(`🗺️ Sitemap nested deeper than ${MAX_SITEMAP_DEPTH} levels — stopping recursion`);
+        return [];
+    }
+
+    const fresh = childLocs.filter((loc) => loc && !visited.has(loc));
+    fresh.forEach((loc) => visited.add(loc));
+
+    const toFetch = fresh.slice(0, MAX_CHILD_SITEMAPS);
+    if (fresh.length > toFetch.length) {
+        console.log(`🗺️ ${fresh.length} child sitemap(s) found — fetching first ${toFetch.length}`);
+    } else if (toFetch.length) {
+        console.log(`🗺️ Fetching ${toFetch.length} child sitemap(s) before any page crawling`);
+    }
+
+    const childResults = [];
+    for (let i = 0; i < toFetch.length; i += CHILD_FETCH_CONCURRENCY) {
+        const chunk = toFetch.slice(i, i + CHILD_FETCH_CONCURRENCY);
+        const chunkResults = await Promise.all(chunk.map(async (subSitemapUrl) => {
+            const rawXml = await readSitemapBody(context, subSitemapUrl);
+            if (rawXml) return parseSitemap(context, rawXml, domain, visited, depth + 1);
+
+            // Fallback: a challenge page or non-XML answer — render it like before.
+            let subPage;
+            try {
+                subPage = await context.newPage();
+                await subPage.goto(subSitemapUrl, { waitUntil: "domcontentloaded", timeout: 10000 });
+                const subData = await subPage.evaluate(() => document.body.innerText);
+                return await parseSitemap(context, subData, domain, visited, depth + 1);
+            } catch (error) {
+                return [];
+            } finally {
+                if (subPage) await subPage.close().catch(() => {});
+            }
+        }));
+        childResults.push(...chunkResults);
+    }
+    return mergeChildSitemapUrls(childResults);
+}
+
+// Round-robin interleave of each child sitemap's urls, so the ~40-url discovery
+// cap samples EVERY child (pages + inventory + service + blog) instead of being
+// exhausted by whichever child the index happened to list first.
+const mergeChildSitemapUrls = (lists) => {
+    const merged = [];
+    const longest = lists.reduce((m, l) => Math.max(m, l.length), 0);
+    for (let i = 0; i < longest; i++) {
+        for (const list of lists) if (i < list.length) merged.push(list[i]);
+    }
+    return merged;
+};
+
+async function parseSitemap(context, xmlData, domain, visited = new Set(), depth = 0) {
     const urls = [];
     try {
-        const result = await parseStringPromise(xmlData).catch(() => null);
+        // Content read via page.evaluate(innerText) carries Chrome's XML-viewer
+        // preamble ("This XML file does not appear to have any style information…")
+        // ahead of the actual XML — xml2js chokes on it and the silent .catch turned
+        // EVERY sitemap into "Found 0 URLs" for as long as this crawler has existed.
+        // Slice to the first "<" so the parser always sees real XML.
+        const xmlStart = xmlData.indexOf("<");
+        const cleanXml = xmlStart > 0 ? xmlData.slice(xmlStart) : xmlData;
+        const result = await parseStringPromise(cleanXml).catch(() => null);
         if (!result) return [];
 
+        // ── Sitemap INDEX: fetch the child sitemaps (bounded, parallel, loop-safe) ──
         if (result.sitemapindex && result.sitemapindex.sitemap) {
-            for (const sitemap of result.sitemapindex.sitemap) {
-                if (sitemap.loc && sitemap.loc[0]) {
-                    try {
-                        const subSitemapUrl = sitemap.loc[0];
-                        await page.goto(subSitemapUrl, { waitUntil: "domcontentloaded", timeout: 10000 });
-                        const subData = await page.evaluate(() => document.body.innerText);
-                        const subUrls = await parseSitemap(page, subData, domain);
-                        urls.push(...subUrls);
-                    } catch (error) {}
-                }
-            }
+            const childLocs = result.sitemapindex.sitemap.map((s) => s.loc && s.loc[0]);
+            urls.push(...await fetchChildSitemaps(context, childLocs, domain, visited, depth));
         }
 
+        // ── Plain <urlset> ──
+        // Split the <loc>s: entries that are THEMSELVES sitemap files (a top
+        // sitemap listing its 6 child sitemaps inside a urlset — malformed but
+        // real) are recursed into like index children; the rest are kept as
+        // same-site page urls (www/apex-insensitive, asset extensions dropped —
+        // dealer sitemaps list inventory .json feeds and images alongside pages).
         if (result.urlset && result.urlset.url) {
+            const baseHost = registrableHost(domain);
+            const nestedSitemapLocs = [];
+            const pageUrls = [];
             for (const url of result.urlset.url) {
-                if (url.loc && url.loc[0]) {
-                    const pageUrl = url.loc[0];
-                    if (pageUrl.startsWith(domain)) {
-                        urls.push(pageUrl);
-                    }
+                if (pageUrls.length >= MAX_URLS_PER_SITEMAP) break;
+                if (!url.loc || !url.loc[0]) continue;
+                const pageUrl = url.loc[0];
+                if (looksLikeSitemapUrl(pageUrl)) {
+                    nestedSitemapLocs.push(pageUrl);
+                } else if (
+                    registrableHost(pageUrl) === baseHost &&
+                    !pageUrl.match(/\.(pdf|jpg|jpeg|png|gif|svg|zip|mp4|mp3|doc|docx|xls|xlsx|css|js|json|woff|woff2|ttf|eot)$/i)
+                ) {
+                    pageUrls.push(pageUrl);
                 }
+            }
+
+            if (nestedSitemapLocs.length) {
+                console.log(`🗺️ urlset carries ${nestedSitemapLocs.length} sitemap-file link(s) — treating them as child sitemaps`);
+                const childUrls = await fetchChildSitemaps(context, nestedSitemapLocs, domain, visited, depth);
+                urls.push(...mergeChildSitemapUrls([pageUrls, childUrls]));
+            } else {
+                urls.push(...pageUrls);
             }
         }
     } catch (error) {}

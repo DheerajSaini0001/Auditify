@@ -1,6 +1,6 @@
 import React from "react";
 import { ChevronUp, ChevronDown, Info, AlertTriangle, CheckCircle } from "lucide-react";
-import { InfoDetails as DefaultInfoDetails } from "../../Component/InfoDetails";
+import { InfoDetails as DefaultInfoDetails } from "../../components/InfoDetails";
 import ScoreBadge from "./ScoreBadge";
 import AskAIButton from "../AskAIButton";
 import Tooltip from "./Tooltip";

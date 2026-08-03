@@ -1,7 +1,7 @@
 import { Home, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import PageHeader from "../Component/PageHeader";
+import PageHeader from "../components/PageHeader";
 
 export default function NotFound({
   darkMode,

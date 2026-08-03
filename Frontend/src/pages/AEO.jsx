@@ -1,9 +1,9 @@
 import React, { useContext } from "react";
-import UrlHeader from "../Component/UrlHeader";
-import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
+import UrlHeader from "../components/UrlHeader";
+import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import ParameterInfoModal from "../Component/ParameterInfoModal";
+import ParameterInfoModal from "../components/ParameterInfoModal";
 import AEOPage from "./AEOPage";
 
 // AEO section page (spec §2.8 — Answer Engine Optimization).

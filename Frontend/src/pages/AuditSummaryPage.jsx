@@ -2,8 +2,8 @@ import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
-import CircularProgress from "../Component/CircularProgress";
-import LivePreview from "../Component/LivePreview";
+import CircularProgress from "../components/CircularProgress";
+import LivePreview from "../components/LivePreview";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 

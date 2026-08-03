@@ -67,7 +67,7 @@ for (const [value, paths] of seen('title')) fail(11, `duplicate title across ${p
 for (const [, paths] of seen('description')) fail(11, `duplicate description across ${paths.join(' + ')}`);
 
 // ── 3 & 4 & 10: the head manager must emit canonical, robots and OG ──
-const canonicalSrc = read('src/Component/CanonicalTag.jsx');
+const canonicalSrc = read('src/components/CanonicalTag.jsx');
 const required = [
   [3, "setLink('canonical'", 'self-referential canonical'],
   [4, "'robots'", 'robots meta tag'],

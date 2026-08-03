@@ -1,10 +1,10 @@
 import React, { useContext, useMemo } from "react";
-import UrlHeader from "../Component/UrlHeader";
-import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
-import CircularProgress from "../Component/CircularProgress";
+import UrlHeader from "../components/UrlHeader";
+import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
+import CircularProgress from "../components/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import LivePreview from "../Component/LivePreview";
+import LivePreview from "../components/LivePreview";
 import {
   Search, FileText, Link, Image as ImageIcon, Video,
   Layout, FileCode, Lock, Copy, List, Tag, Globe,
@@ -17,15 +17,15 @@ import {
   SiTiktok, SiReddit, SiSnapchat, SiMedium, SiYelp,
   SiGooglemaps, SiWhatsapp, SiTelegram, SiGoogle
 } from "react-icons/si";
-import MetricInfoModal from "../Component/MetricInfoModal";
-import ParameterInfoModal from "../Component/ParameterInfoModal";
-import { InfoDetails } from "../Component/InfoDetails";
+import MetricInfoModal from "../components/MetricInfoModal";
+import ParameterInfoModal from "../components/ParameterInfoModal";
+import { InfoDetails } from "../components/InfoDetails";
 import { isVisibleForAudience, isActionableParam } from "../config/parameterAudience";
-import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
-import SEOCard from "../Component/reusablecomponent/SEOCard";
-import Tooltip from "../Component/reusablecomponent/Tooltip";
-import AskAIButton from "../Component/AskAIButton";
-import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
+import ScoreBadge from "../components/reusablecomponent/ScoreBadge";
+import SEOCard from "../components/reusablecomponent/SEOCard";
+import Tooltip from "../components/reusablecomponent/Tooltip";
+import AskAIButton from "../components/AskAIButton";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 
 
 const getStatusFromScore = (score) => {

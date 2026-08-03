@@ -4,17 +4,17 @@ import {
   SlidersHorizontal, History as HistoryIcon, DownloadCloud,
 } from 'lucide-react';
 import { ThemeContext } from '../context/ThemeContext.jsx';
-import { Card, Button, Skeleton, EmptyState, StatusPill } from '../Component/seo/SeoUI.jsx';
-import SeoPageList from '../Component/seo/SeoPageList.jsx';
-import SeoRightRail from '../Component/seo/SeoRightRail.jsx';
-import NewPageModal from '../Component/seo/NewPageModal.jsx';
-import GeneralTab from '../Component/seo/tabs/GeneralTab.jsx';
-import KeywordsTab from '../Component/seo/tabs/KeywordsTab.jsx';
-import SocialTab from '../Component/seo/tabs/SocialTab.jsx';
-import SchemaTab from '../Component/seo/tabs/SchemaTab.jsx';
-import PreviewTab from '../Component/seo/tabs/PreviewTab.jsx';
-import AdvancedTab from '../Component/seo/tabs/AdvancedTab.jsx';
-import HistoryTab from '../Component/seo/tabs/HistoryTab.jsx';
+import { Card, Button, Skeleton, EmptyState, StatusPill } from '../components/seo/SeoUI.jsx';
+import SeoPageList from '../components/seo/SeoPageList.jsx';
+import SeoRightRail from '../components/seo/SeoRightRail.jsx';
+import NewPageModal from '../components/seo/NewPageModal.jsx';
+import GeneralTab from '../components/seo/tabs/GeneralTab.jsx';
+import KeywordsTab from '../components/seo/tabs/KeywordsTab.jsx';
+import SocialTab from '../components/seo/tabs/SocialTab.jsx';
+import SchemaTab from '../components/seo/tabs/SchemaTab.jsx';
+import PreviewTab from '../components/seo/tabs/PreviewTab.jsx';
+import AdvancedTab from '../components/seo/tabs/AdvancedTab.jsx';
+import HistoryTab from '../components/seo/tabs/HistoryTab.jsx';
 import { useSeoDashboard } from '../hooks/useSeoDashboard.js';
 import { computeClientScore } from '../utils/seoScore.js';
 

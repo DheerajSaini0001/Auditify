@@ -4,12 +4,12 @@ import { ThemeContext } from '../context/ThemeContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
-import Navbar from '../Component/Navbar';
-import Footer from '../Component/Footer';
-import HeroSection from '../Component/Landing/HeroSection';
-import MetricsBanner from '../Component/Landing/MetricsBanner';
-import AuditPillarsSection from '../Component/Landing/AuditPillarsSection';
-import HowItWorksSection from '../Component/Landing/HowItWorksSection';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
+import HeroSection from '../components/Landing/HeroSection';
+import MetricsBanner from '../components/Landing/MetricsBanner';
+import AuditPillarsSection from '../components/Landing/AuditPillarsSection';
+import HowItWorksSection from '../components/Landing/HowItWorksSection';
 
 const LandingPage = () => {
     const { theme } = useContext(ThemeContext);

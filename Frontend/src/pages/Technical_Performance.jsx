@@ -1,10 +1,10 @@
 import React, { useContext } from "react";
-import UrlHeader from "../Component/UrlHeader";
-import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
-import CircularProgress from "../Component/CircularProgress";
+import UrlHeader from "../components/UrlHeader";
+import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
+import CircularProgress from "../components/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import LivePreview from "../Component/LivePreview";
+import LivePreview from "../components/LivePreview";
 import {
   Activity, Zap, Layout, Image as ImageIcon,
   Server, Database, FileCode, Globe,
@@ -12,19 +12,19 @@ import {
   Info, ChevronDown, Sparkles, Briefcase, MousePointerClick, Car, Wrench,
   Smartphone, Layers, Cpu
 } from "lucide-react";
-import MetricInfoModal from "../Component/MetricInfoModal";
-import ParameterInfoModal from "../Component/ParameterInfoModal";
-import { InfoDetails } from "../Component/InfoDetails";
+import MetricInfoModal from "../components/MetricInfoModal";
+import ParameterInfoModal from "../components/ParameterInfoModal";
+import { InfoDetails } from "../components/InfoDetails";
 import { isVisibleForAudience } from "../config/parameterAudience";
 
-import MetricCard from "../Component/reusablecomponent/MetricCard";
-import { NotCalculatedNote, AffectedList } from "../Component/reusablecomponent/MetricExtras";
-import StatusSummary from "../Component/reusablecomponent/StatusSummary";
-import { AuditShimmer } from "../Component/reusablecomponent/AuditShimmer";
+import MetricCard from "../components/reusablecomponent/MetricCard";
+import { NotCalculatedNote, AffectedList } from "../components/reusablecomponent/MetricExtras";
+import StatusSummary from "../components/reusablecomponent/StatusSummary";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 
-import Section from "../Component/reusablecomponent/Section";
-import OptimizationCard from "../Component/reusablecomponent/OptimizationCard";
-import ScoreBadge from "../Component/reusablecomponent/ScoreBadge";
+import Section from "../components/reusablecomponent/Section";
+import OptimizationCard from "../components/reusablecomponent/OptimizationCard";
+import ScoreBadge from "../components/reusablecomponent/ScoreBadge";
 import { statusText, scoreToStatus, statusSolidBg } from "../utils/statusColors";
 
 const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;

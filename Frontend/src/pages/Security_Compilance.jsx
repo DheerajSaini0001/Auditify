@@ -1,20 +1,20 @@
 import React, { useContext, useMemo } from "react";
-import UrlHeader from "../Component/UrlHeader";
-import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper";
-import CircularProgress from "../Component/CircularProgress";
+import UrlHeader from "../components/UrlHeader";
+import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
+import CircularProgress from "../components/CircularProgress";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import LivePreview from "../Component/LivePreview";
+import LivePreview from "../components/LivePreview";
 import {
   Shield, Lock, AlertTriangle, CheckCircle, XCircle,
   Info, Server, Eye, FileText, Smartphone,
   Layout, Code, Bug, Share2, CalendarClock,
   Database, Key, Globe2, Layers, ShieldCheck, Loader2, CreditCard
 } from "lucide-react";
-import MetricInfoModal from "../Component/MetricInfoModal";
-import ParameterInfoModal from "../Component/ParameterInfoModal";
-import { InfoDetails } from "../Component/InfoDetails";
-import AskAIButton from "../Component/AskAIButton";
+import MetricInfoModal from "../components/MetricInfoModal";
+import ParameterInfoModal from "../components/ParameterInfoModal";
+import { InfoDetails } from "../components/InfoDetails";
+import AskAIButton from "../components/AskAIButton";
 import { isVisibleForAudience, isActionableParam } from "../config/parameterAudience";
 
 const iconMap = {

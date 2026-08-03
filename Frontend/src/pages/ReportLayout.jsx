@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo } from "react";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
-import Dashboard2 from "../Component/Dashboard2";
+import Dashboard2 from "../components/Dashboard2";
 import Technical_Performance from "./Technical_Performance";
 import On_Page_SEO from "./On_Page_SEO";
 import Accessibility from "./Accessibility";
@@ -16,7 +16,7 @@ import NotFound from "./NotFound";
 import NotADealership from "./NotADealership";
 import { Loader2 } from "lucide-react";
 
-import ReportRestrictionWrapper from "../Component/ReportRestrictionWrapper.jsx";
+import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper.jsx";
 
 const ReportLayout = () => {
   const { data, clearData, fetchSingleReport, fetchBulkPageReport, pollingState } = useData();

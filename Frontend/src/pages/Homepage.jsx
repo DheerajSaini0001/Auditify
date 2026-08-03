@@ -1,5 +1,5 @@
 import React, { useContext, useEffect } from 'react';
-import DarkCard from '../Component/InputForm.jsx';
+import DarkCard from '../components/InputForm.jsx';
 import { useNavigate } from 'react-router-dom';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useAuth } from '../context/AuthContext.jsx';

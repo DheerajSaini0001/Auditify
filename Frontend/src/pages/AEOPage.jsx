@@ -1,9 +1,9 @@
 import React from 'react';
-import AEOScoreGauge from '../Component/AEOScoreGauge';
-import AEOSignalCard from '../Component/AEOSignalCard';
-import AEORecommendations from '../Component/AEORecommendations';
-import PlatformScoreBar from '../Component/PlatformScoreBar';
-import LivePreview from '../Component/LivePreview';
+import AEOScoreGauge from '../components/AEOScoreGauge';
+import AEOSignalCard from '../components/AEOSignalCard';
+import AEORecommendations from '../components/AEORecommendations';
+import PlatformScoreBar from '../components/PlatformScoreBar';
+import LivePreview from '../components/LivePreview';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { isVisibleForAudience } from '../config/parameterAudience';

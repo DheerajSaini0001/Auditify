@@ -109,6 +109,7 @@ function createInProgress({ _id, url, device, report, userId, pageType, siteType
     conversionAndLeadFlow: null,
     aioReadiness: null,
     aeo: null,
+    psiPending: false,
     stage1Completed: false,
     stage2Completed: false,
     stage2Progress: null,

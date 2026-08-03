@@ -306,8 +306,12 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
 
     // The 8 pillars, in parallel against this single page — same set + timeouts
     // as Stage 1. Each streams its own section the moment it lands.
-    const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
-      (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })(),
+    //
+    // [PERF] Technical runs apart from the other seven (same split as Stage 1): it waits
+    // on PageSpeed (~50–75s), so the seven-pillar provisional below makes this page's
+    // report viewable early; the final rollup replaces it when PageSpeed lands.
+    const techPromise = (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })();
+    const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
       (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt), PILLAR_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
       (async () => { const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(pageUrl, page, response, pageBrowser, pt), SEC_TIMEOUT_MS, "Security/Compliance")); send({ securityOrCompliance: r }); return r; })(),
@@ -316,6 +320,24 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
       (async () => { const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(pageUrl, page, $, pt), PILLAR_TIMEOUT_MS, "AIO Readiness")); send({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge }); return r; })(),
       (async () => { const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(pageUrl, $, null, 100, { pageType: pt }), PILLAR_TIMEOUT_MS, "AEO")); send({ aeo: r }); return r; })(),
     ]);
+
+    // Seven pillars in — publish this page's provisional rollup (Technical renormalized
+    // out) so its child report opens before PageSpeed answers. stage1Completed is the
+    // same "provisional data is showable" gate the frontend uses for the parent.
+    const provisional = OverAll(
+      null, B_Res?.Percentage ?? null, C_Res?.Percentage ?? null, D_Res?.Percentage ?? null,
+      E_Res?.Percentage ?? null, F_Res?.Percentage ?? null, G_Res?.Percentage ?? null, aeoRes?.Percentage ?? null,
+      pt
+    );
+    send({
+      stage1Completed: true,
+      psiPending: true,
+      score: provisional.totalScore,
+      grade: provisional.grade,
+      sectionScore: provisional.sectionScores,
+    });
+
+    const A_Res = await techPromise;
 
     const overall = OverAll(
       A_Res?.Percentage ?? null, B_Res?.Percentage ?? null, C_Res?.Percentage ?? null, D_Res?.Percentage ?? null,
@@ -326,6 +348,7 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
     return {
       status: "completed",
       pageType: pt,
+      psiPending: false,
       score: overall.totalScore,
       grade: overall.grade,
       sectionScore: overall.sectionScores,
@@ -990,12 +1013,18 @@ async function auditKeyPages(currentAuditId, device) {
     logger.info(`⚡ [Stage 1] Running all 8 audit pillars concurrently in parallel against single browser instance for: ${url}`);
     logWorkerMetrics("Stage 1 Start");
 
-    const [A_Res, B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
-      (async () => {
-        const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi), TECH_TIMEOUT_MS, "Technical Performance"));
-        postProgress({ technicalPerformance: r });
-        return r;
-      })(),
+    // [PERF] Technical Performance runs APART from the other seven pillars: it awaits the
+    // PageSpeed response (~50–75s), which dominates the whole audit. The other seven land
+    // in a fraction of that, so the report goes visible on their provisional rollup
+    // (Technical renormalized out, psiPending: true) and the final score patches in below
+    // once PageSpeed answers. Not awaited yet — only after the seven-pillar rollup posts.
+    const techPromise = (async () => {
+      const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi), TECH_TIMEOUT_MS, "Technical Performance"));
+      postProgress({ technicalPerformance: r });
+      return r;
+    })();
+
+    const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => {
         const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(url, $, page, pageType), SEO_TIMEOUT_MS, "On Page SEO"));
         postProgress({ onPageSEO: r, siteSchema: r?.Schema });
@@ -1033,12 +1062,9 @@ async function auditKeyPages(currentAuditId, device) {
       })(),
     ]);
 
-    logWorkerMetrics("Stage 1 Complete");
-
     // Extract percentages for overall score calculation
     // `?? null` (not `|| 0`) so a "Not Run" section (null Percentage) is excluded and
     // renormalized in OverAll rather than counted as a real 0. A legit 0 is preserved.
-    const A = A_Res?.Percentage ?? null;
     const B = B_Res?.Percentage ?? null;
     const C = C_Res?.Percentage ?? null;
     const D = D_Res?.Percentage ?? null;
@@ -1046,6 +1072,26 @@ async function auditKeyPages(currentAuditId, device) {
     const F = F_Res?.Percentage ?? null;
     const G = G_Res?.Percentage ?? null;
     const H = aeoRes?.Percentage ?? null;
+
+    // Seven pillars are in — publish the PROVISIONAL rollup so the report opens now.
+    // Technical passes as null here, which OverAll renormalizes out (same math as a
+    // "Not Run" section); psiPending tells the frontend the Technical card and the
+    // overall score are still refining, not finished.
+    const provisional = OverAll(null, B, C, D, E, F, G, H, pageType);
+    postProgress({
+      stage1Completed: true,
+      psiPending: true,
+      score: provisional.totalScore,
+      grade: provisional.grade,
+      sectionScore: provisional.sectionScores,
+      message: "Report ready — PageSpeed (Technical Performance) is still being analyzed...",
+    });
+    logger.info(`⚡ [Stage 1] 7/8 pillars complete for ${url} — provisional score ${provisional.totalScore} published, awaiting PageSpeed...`);
+
+    const A_Res = await techPromise;
+    const A = A_Res?.Percentage ?? null;
+
+    logWorkerMetrics("Stage 1 Complete");
 
     const overall = OverAll(A, B, C, D, E, F, G, H, pageType);
 
@@ -1056,15 +1102,13 @@ async function auditKeyPages(currentAuditId, device) {
       logger.warn(`[Overall] ${notRunSections.length} section(s) Not Run — excluded & renormalized: ${notRunSections.join(", ")} | overall=${overall.totalScore} (${url})`);
     }
 
-    const timeTaken = ((performance.now() - start) / 1000).toFixed(0);
-
-    // Emit Stage 1 completion progress update so initial single-page scores populate on screen immediately
+    // Final Stage 1 rollup — replaces the provisional score now that PageSpeed landed.
     postProgress({
-      stage1Completed: true,
+      psiPending: false,
       score: overall.totalScore,
       grade: overall.grade,
       sectionScore: overall.sectionScores,
-      message: "Stage 1 initial page complete — launching Stage 2 3-Puppeteer crawl of remaining pages...",
+      message: "Stage 1 initial page complete — Stage 2 parallel crawl of remaining pages is underway...",
     });
 
     // Close Stage 1 single page browser before spawning Stage 2 parallel workers
@@ -1089,6 +1133,7 @@ async function auditKeyPages(currentAuditId, device) {
       score: overall.totalScore,
       grade: overall.grade,
       sectionScore: overall.sectionScores,
+      psiPending: false,
       stage1Completed: true,
       stage2Completed: true,
       crawledPagesCount: stage2Results ? stage2Results.length : 0,

@@ -36,6 +36,10 @@ const SiteReportSchema = new mongoose.Schema(
     // Set only on merged (multi-sample averaged) reports: how many sample
     // reports were averaged in. Lets a repeat audit reuse the merged report
     // and still show the "avg of N" badge.
+    // True while the report is showing a provisional score (seven pillars scored,
+    // PageSpeed/Technical still running). Always false by the time a report is
+    // flushed to Mongo — persisted only so the field survives the schema's strict mode.
+    psiPending: { type: Boolean, default: false },
     // Stage 2 Multi-Page Crawl fields
     stage1Completed: { type: Boolean, default: false },
     stage2Completed: { type: Boolean, default: false },

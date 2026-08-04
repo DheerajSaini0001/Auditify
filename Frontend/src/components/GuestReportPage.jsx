@@ -75,9 +75,9 @@ const FakeScore = ({ score, darkMode, accent }) => {
   const circ = 2 * Math.PI * r;
   const offset = circ - (score / 100) * circ;
   const color = {
-    blue: "#3b82f6", emerald: "#10b981", purple: "#a855f7",
-    rose: "#f43f5e", amber: "#f59e0b", cyan: "#06b6d4", violet: "#8b5cf6",
-  }[accent] || "#3b82f6";
+    blue: "#3F6A99", emerald: "#308D5C", purple: "#a855f7",
+    rose: "#DA3D51", amber: "#D18E14", cyan: "#2A7F76", violet: "#835795",
+  }[accent] || "#3F6A99";
 
   return (
     <div className="relative flex-shrink-0">
@@ -89,7 +89,7 @@ const FakeScore = ({ score, darkMode, accent }) => {
         <circle
           cx="70" cy="70" r={r}
           fill="none"
-          stroke={darkMode ? "#1e293b" : "#E7E0D2"}
+          stroke={darkMode ? "#303945" : "#E4E1D9"}
           strokeWidth="12"
         />
         <circle

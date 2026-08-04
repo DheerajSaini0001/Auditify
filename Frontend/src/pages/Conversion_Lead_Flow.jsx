@@ -1,7 +1,8 @@
 import React, { useContext, useMemo } from "react";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -57,51 +58,6 @@ const iconMap = {
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.Conversion_And_Lead_Flow_Methodology;
 
-const ConversionShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
-
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { score, details, meta, status, analysis } = data || {};
@@ -921,17 +877,6 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
     { icon: <Activity className="w-8 h-8 text-amber-500" />, title: "User Flow", text: "Mapping user journey linearity and removing friction points..." },
   ], []);
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
-  React.useEffect(() => {
-    if (loading || !data?.conversionAndLeadFlow) {
-      const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % auditSteps.length);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading, data, auditSteps.length]);
-
   const flow = data?.conversionAndLeadFlow || {};
 
   if (!data?.conversionAndLeadFlow) {
@@ -963,7 +908,7 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <ConversionShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+                <AuditShimmer darkMode={darkMode} steps={auditSteps} />
               </div>
             </div>
           </div>
@@ -974,10 +919,12 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
 
   const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
+  // Signed-out visitors get this section stripped, so fall back to the server's
+  // tallies rather than counting metrics that were never sent.
   const allMetrics = Object.values(flow).filter(val => typeof val === 'object' && val !== null && 'status' in val);
-  const passedCount = allMetrics.filter(m => m.status === "pass").length;
-  const warningCount = allMetrics.filter(m => m.status === "warning").length;
-  const failedCount = allMetrics.filter(m => m.status === "fail").length;
+  const passedCount = flow?.locked ? (flow.passedCount ?? 0) : allMetrics.filter(m => m.status === "pass").length;
+  const warningCount = flow?.locked ? (flow.warningCount ?? 0) : allMetrics.filter(m => m.status === "warning").length;
+  const failedCount = flow?.locked ? (flow.failedCount ?? 0) : allMetrics.filter(m => m.status === "fail").length;
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
@@ -1006,83 +953,38 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
               </div>
             )}
 
-            <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
-
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
-
-                  <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                    <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                          <Target className="w-3.5 h-3.5" />
-                          <span>Conversion Audit</span>
-                        </div>
-                        {flow.Confidence && (
-                          <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-surface-2 text-muted border border-line"}`} title="Conversion signals are measured from the rendered DOM (heuristic confidence). Page-specific parameters are scored only where they apply and renormalized.">
-                            <Info className="w-3.5 h-3.5" />
-                            <span>Confidence: {flow.Confidence}{flow.pageType ? ` · ${flow.pageType}` : ""}</span>
-                          </div>
-                        )}
-                      </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                        Conversion & <span className={darkMode ? "text-blue-500" : "text-accent"}>Lead Flow</span>
-                      </h3>
-                    </div>
-                    <p className={`text-sm font-medium leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                      Optimize your checkout paths, signup structures, value arguments, and Call-to-Actions to maximize page ROI.
-                    </p>
-                    <span
-                      title="This score is Auditify's own composite index for dealership lead flow. No industry-standard external tool produces a comparable conversion score to cross-check against."
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                      Auditify Index · no external equivalent
-                    </span>
-
-                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                                         <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                                           <div className="flex items-center gap-2">
-                                             <CheckCircle size={18} className="text-emerald-500" />
-                                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
-                                           </div>
-                                           {warningCount > 0 && (
-                                             <div className="flex items-center gap-2">
-                                               <AlertTriangle size={18} className="text-amber-500" />
-                                               <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
-                                             </div>
-                                           )}
-                                           <div className="flex items-center gap-2">
-                                             <XCircle size={18} className="text-rose-500" />
-                                             <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
-                                           </div>
-                                         </div>
-                                         <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
-                                         <button
-                                           onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                                           className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
-                                         >
-                                           <Info size={16} />
-                                           <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                                         </button>
-                                       </div>
+            <PillarHeader
+              darkMode={darkMode}
+              fullReport={data.report === "All"}
+              badge={{ icon: Target, label: "Conversion Audit" }}
+              chips={<>
+                {flow.Confidence && (
+                  <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-slate-800 text-slate-300 border border-slate-700" : "bg-surface-2 text-muted border border-line"}`} title="Conversion signals are measured from the rendered DOM (heuristic confidence). Page-specific parameters are scored only where they apply and renormalized.">
+                    <Info className="w-3.5 h-3.5" />
+                    <span>Confidence: {flow.Confidence}{flow.pageType ? ` · ${flow.pageType}` : ""}</span>
                   </div>
-
-                  <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${flow.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                    <CircularProgress value={flow.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{flow.Percentage || 0}%</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                )}
+              </>}
+              note={<>
+                <span
+                  title="This score is Auditify's own composite index for dealership lead flow. No industry-standard external tool produces a comparable conversion score to cross-check against."
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                  Auditify Index · no external equivalent
+                </span>
+              </>}
+              title="Conversion &"
+              titleAccent="Lead Flow"
+              description="Optimize your checkout paths, signup structures, value arguments, and Call-to-Actions to maximize page ROI."
+              stats={{ passed: passedCount, warning: warningCount, failed: failedCount }}
+              score={flow.Percentage || 0}
+              onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+            />
           </div>
         </div>
 
-        <ReportRestrictionWrapper>
+        <ReportRestrictionWrapper section="Conversion & Lead Flow">
           <div className="space-y-6">
             {(() => {
               const visible = (keys) => keys.filter((k) => flow[k] && isVisibleForAudience(k, audienceMode));

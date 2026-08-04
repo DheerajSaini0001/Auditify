@@ -223,10 +223,10 @@ export default function AIChatOverlay() {
 
   // Gauge color based on score
   const gaugeColor = scoreNum >= 90
-    ? '#10B981' // emerald
+    ? '#308D5C' // emerald
     : scoreNum >= 50
-      ? '#F59E0B' // amber
-      : '#EF4444'; // rose
+      ? '#D18E14' // amber
+      : '#DA3D51'; // rose
 
   const suggestionChips = [
     'How can I improve this score?',
@@ -299,7 +299,7 @@ export default function AIChatOverlay() {
                     cx={size / 2}
                     cy={size / 2}
                     r={radius}
-                    className={darkMode ? 'stroke-slate-800' : 'stroke-[#E7E0D2]'}
+                    className={darkMode ? 'stroke-slate-800' : 'stroke-[#E4E1D9]'}
                     strokeWidth={strokeWidth}
                     fill="transparent"
                   />

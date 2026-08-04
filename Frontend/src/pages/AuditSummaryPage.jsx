@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert } from "lucide-react";
+import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert, Globe, ExternalLink } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../components/CircularProgress";
 import LivePreview from "../components/LivePreview";
@@ -141,7 +141,7 @@ const SummaryInProgress = ({ darkMode, leadReport, device, rows, siteUrl }) => {
                     </div>
                     <div className={`mt-2 h-2 w-full rounded-full overflow-hidden ${darkMode ? "bg-slate-800" : "bg-slate-200"}`}>
                         <div
-                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#ea580c] transition-all duration-700"
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-[#F26419] transition-all duration-700"
                             style={{ width: `${stage.progress}%` }}
                         />
                     </div>
@@ -560,14 +560,25 @@ const AuditSummaryPage = () => {
                     >
                         <ChevronLeft className="w-3.5 h-3.5" /> New audit
                     </button>
-                    <h1 className={`text-3xl font-extrabold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>Audit Summary</h1>
+                    {/* The domain is the headline, not the page title.
+                        It used to be the other way round — "Audit Summary" at 3xl with
+                        the site as a small orange link underneath — so on a screen that
+                        is otherwise all progress bars there was nothing that told you
+                        WHICH site was being audited. Same shape as UrlHeader on the
+                        report pages: quiet label, loud domain. */}
+                    <p className={`inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                        <Globe className="w-3.5 h-3.5" />
+                        Audit Summary for
+                    </p>
                     <a
                         href={payload.siteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm font-medium text-[#ea580c] hover:underline w-fit"
+                        title={payload.siteUrl}
+                        className={`group inline-flex items-center gap-2.5 w-fit text-3xl lg:text-4xl font-black tracking-tight transition-colors ${darkMode ? "text-white hover:text-slate-300" : "text-ink hover:text-accent"}`}
                     >
                         {prettyHost(payload.siteUrl)}
+                        <ExternalLink className="w-5 h-5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </a>
                 </div>
 
@@ -675,7 +686,7 @@ const AuditSummaryPage = () => {
 
                     {loading ? (
                         <div className="flex items-center justify-center py-20">
-                            <Loader2 className="w-8 h-8 animate-spin text-[#ea580c]" />
+                            <Loader2 className="w-8 h-8 animate-spin text-[#F26419]" />
                         </div>
                     ) : (
                         <div className="overflow-x-auto">
@@ -747,7 +758,7 @@ const AuditSummaryPage = () => {
                                                         <button
                                                             onClick={() => openAll(row.id)}
                                                             title={`${row.label} · full report${row.overallPending ? " — still auditing" : row.excluded ? excludedNote : row.overall != null ? ` — ${row.overall}` : ""}`}
-                                                            className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
+                                                            className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#F26419] focus:outline-none
                                                                 ${darkMode ? "ring-offset-slate-900" : "ring-offset-card"}
                                                                 ${tier === "na"
                                                                     ? (darkMode ? "bg-slate-700/60 text-slate-500" : "bg-slate-200 text-slate-400")
@@ -774,7 +785,7 @@ const AuditSummaryPage = () => {
                                                         <button
                                                             onClick={() => openCell(row.id, s.link)}
                                                             title={`${row.label} · ${s.label}${score != null ? ` — ${score}` : " — N/A"}`}
-                                                            className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#ea580c] focus:outline-none
+                                                            className={`w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-xl flex items-center justify-center text-sm font-bold transition-all hover:scale-105 hover:ring-2 hover:ring-offset-1 hover:ring-[#F26419] focus:outline-none
                                                                 ${darkMode ? "ring-offset-slate-900" : "ring-offset-card"}
                                                                 ${tier === "na"
                                                                     ? (darkMode ? "bg-slate-700/60 text-slate-500" : "bg-slate-200 text-slate-400")

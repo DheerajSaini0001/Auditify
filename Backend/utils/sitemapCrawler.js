@@ -4,7 +4,7 @@ import { parseStringPromise } from "xml2js";
 import { newStealthPage, detectChallenge, waitForChallengeResolution } from "./puppeteer_cheerio.js";
 
 // Page-discovery browser usage is now bounded by the SINGLE global browser pool
-// (utils/browserManager.js, default MAX_CONCURRENT_BROWSERS=3) that every
+// (utils/browserManager.js, default MAX_CONCURRENT_BROWSERS=1) that every
 // headless-Chrome launch in the app shares. newStealthPage takes a permit from
 // that pool for the lifetime of its context, so concurrent discovery crawls
 // queue against the same cap as the audit browsers instead of contending with

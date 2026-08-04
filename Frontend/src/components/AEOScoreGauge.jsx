@@ -14,7 +14,7 @@ const AEOScoreGauge = ({ score, title, subtitle, color, size = 160, darkMode }) 
                         cx={size / 2}
                         cy={size / 2}
                         r={radius}
-                        stroke={darkMode ? "#0a0a0a" : "#E7E0D2"}
+                        stroke={darkMode ? "#0a0a0a" : "#E4E1D9"}
                         strokeWidth="10"
                         fill="transparent"
                     />

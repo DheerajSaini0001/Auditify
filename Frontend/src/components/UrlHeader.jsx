@@ -3,6 +3,8 @@ import { Globe, ExternalLink, Clock, Smartphone, Monitor, Layers, NotebookPen, D
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext";
+import { scoreBand } from "../utils/statusColors";
+import { AI_SUMMARY_ENABLED } from "../config/features";
 import { savePostAuthIntent } from "../utils/intentStore";
 import { useData } from "../context/DataContext";
 import { Sparkles } from "lucide-react";
@@ -148,14 +150,16 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         ) : typeof data?.score === 'number' && (
           <div className="flex items-center justify-center w-full lg:flex-1 min-w-0 order-3 lg:order-2 mt-4 lg:mt-0">
             <div className={`flex items-center gap-3 px-5 py-2 rounded-2xl border shadow-sm transition-all ${darkMode ? "bg-slate-800/50 border-slate-700/50" : "bg-card border-line/50"}`}>
-              <div className={`text-2xl font-black ${data.score >= 90 ? "text-emerald-500" :
-                  data.score >= 50 ? "text-amber-500" : "text-red-500"
-                }`}>
+              <div className={`text-2xl font-black ${scoreBand(data.score)?.text ?? "text-faint"}`}>
                 {data.score.toFixed(0)}%
               </div>
               <div className="flex flex-col">
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${darkMode ? "text-slate-400" : "text-muted"}`}>Overall</span>
-                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-inksoft"}`}>Average</span>
+                {/* Was the static word "Average", which contradicted the score it sat
+                    next to — a 94% site was labelled "Average". Now the band. */}
+                <span className={`text-xs font-medium ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                  {scoreBand(data.score)?.label ?? "—"}
+                </span>
               </div>
             </div>
           </div>
@@ -163,8 +167,8 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
 
         {/* Right: Metadata Badges */}
         <div className="flex flex-wrap items-center gap-3 w-full lg:flex-1 lg:justify-end order-2 lg:order-3">
-          {/* AI Summary Button */}
-          {data?.status === "success" && sectionData && (
+          {/* AI Summary Button — hidden behind AI_SUMMARY_ENABLED (config/features.js) */}
+          {AI_SUMMARY_ENABLED && data?.status === "success" && sectionData && (
             <button
               onClick={handleGetAISummary}
               className={`flex items-center gap-2 px-6 py-2 rounded-xl font-semibold bg-accent hover:bg-accenthover text-white shadow-lg shadow-accent/20 hover:scale-105 active:scale-95 transition-all transition-all`}
@@ -198,7 +202,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
           {false && data?.status === "success" && (
             <button
               onClick={handleDownloadPDF}
-              className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 bg-gradient-to-r from-[#16213E] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#16213E]/25"
+              className="flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all active:scale-95 transform hover:-translate-y-0.5 bg-gradient-to-r from-[#101C2C] to-[#2A3656] hover:from-[#1F2D52] hover:to-[#374468] shadow-[#101C2C]/25"
             >
               {isAuthenticated ? <Download className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
               <span>Download Report</span>

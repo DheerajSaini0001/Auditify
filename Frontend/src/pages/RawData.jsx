@@ -139,7 +139,7 @@ const RawData = ({ data, darkMode }) => {
                   transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }} // smooth easeOutQuint
                   className="overflow-hidden mt-8"
                 >
-                  <div className={`rounded-2xl border overflow-hidden shadow-2xl ${darkMode ? "bg-[#0f172a] border-slate-800" : "bg-card border-line"}`}>
+                  <div className={`rounded-2xl border overflow-hidden shadow-2xl ${darkMode ? "bg-[#1E2833] border-slate-800" : "bg-card border-line"}`}>
 
                     {/* Editor Toolbar */}
                     <div className={`flex items-center justify-between px-6 py-4 border-b ${darkMode ? "bg-slate-900 border-slate-800" : "bg-surface-2 border-line"}`}>

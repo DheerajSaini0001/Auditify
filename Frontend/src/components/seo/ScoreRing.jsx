@@ -1,9 +1,9 @@
 import React from 'react';
 
 const TONES = {
-  good: '#10b981', // emerald-500
-  ok: '#f59e0b',   // amber-500
-  poor: '#f43f5e', // rose-500
+  good: '#308D5C', // emerald-500
+  ok: '#D18E14',   // amber-500
+  poor: '#DA3D51', // rose-500
 };
 
 /**
@@ -25,7 +25,7 @@ const ScoreRing = ({ score = 0, size = 76, stroke = 7, darkMode, label }) => {
           cy={size / 2}
           r={r}
           fill="none"
-          stroke={darkMode ? '#1e293b' : '#E7E0D2'}
+          stroke={darkMode ? '#303945' : '#E4E1D9'}
           strokeWidth={stroke}
         />
         <circle
@@ -47,7 +47,7 @@ const ScoreRing = ({ score = 0, size = 76, stroke = 7, darkMode, label }) => {
           textAnchor="middle"
           fontSize={size * 0.3}
           fontWeight="800"
-          fill={darkMode ? '#fff' : '#16213E'}
+          fill={darkMode ? '#fff' : '#101C2C'}
         >
           {clamped}
         </text>

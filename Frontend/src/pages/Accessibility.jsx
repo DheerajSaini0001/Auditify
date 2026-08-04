@@ -1,7 +1,8 @@
 import React, { useContext, useMemo } from "react";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -52,51 +53,6 @@ const iconMap = {
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.Accessibility_Methodology;
 
-const AccessibilityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
-
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 // Simplified Metric Card
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
@@ -485,14 +441,6 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
     { icon: <Layout className="w-8 h-8 text-rose-500" />, title: "Page Structure", text: "Checking Heading hierarchy, Landmarks, Lists, and Document Title..." },
   ], []);
 
-  const [activeStep, setActiveStep] = React.useState(0);
-  React.useEffect(() => {
-    if (loading || !data?.accessibility) {
-      const interval = setInterval(() => { setActiveStep(prev => (prev + 1) % auditSteps.length); }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading, data, auditSteps.length]);
-
   const metric = data?.accessibility || {};
 
   if (!data?.accessibility) {
@@ -525,7 +473,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+                <AuditShimmer darkMode={darkMode} steps={auditSteps} />
               </div>
             </div>
           </div>
@@ -580,7 +528,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <AccessibilityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+                <AuditShimmer darkMode={darkMode} steps={auditSteps} />
               </div>
             </div>
           ) : (
@@ -596,81 +544,36 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
               )}
 
               {/* Right Panel: Metrics & Score */}
-              <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-                <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
-
-                  <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-6 md:gap-8 justify-center"}`}>
-
-                    {/* Text Content */}
-                    <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                      <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accentsoft"}`}>
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>WCAG 2.2 AA Audit</span>
-                        </div>
-                        <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                          Accessibility <span className="text-blue-500">Health</span>
-                        </h3>
-                        <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
-                          Comprehensive analysis of your website's accessibility, ensuring an inclusive experience for all users.
-                        </p>
-                        {metric?.Coverage && (
-                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
-                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>
-                              {metric.Coverage} Score deducts per failing element, scaled by impact and capped per rule — matching how AccessibilityChecker.org counts issues (same WCAG A/AA + best-practice + experimental rule set, excluding AAA) — from an automated ceiling of 90; the last 10 points require manual review (confidence: {metric?.Confidence || "heuristic"}).
-                              {typeof metric?.Graded_Percentage === "number" && (
-                                <> Page-level element pass rate: {metric.Graded_Percentage}%.</>
-                              )}
-                            </span>
-                          </div>
+              <PillarHeader
+                darkMode={darkMode}
+                fullReport={data.report === "All"}
+                badge={{ icon: ShieldCheck, label: "WCAG 2.2 AA Audit" }}
+                note={<>
+                  {metric?.Coverage && (
+                    <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
+                      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
+                      <span>
+                        {metric.Coverage} Score deducts per failing element, scaled by impact and capped per rule — matching how AccessibilityChecker.org counts issues (same WCAG A/AA + best-practice + experimental rule set, excluding AAA) — from an automated ceiling of 90; the last 10 points require manual review (confidence: {metric?.Confidence || "heuristic"}).
+                        {typeof metric?.Graded_Percentage === "number" && (
+                          <> Page-level element pass rate: {metric.Graded_Percentage}%.</>
                         )}
-                      </div>
-
-                      <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                        <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle size={18} className="text-emerald-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <AlertTriangle size={18} className="text-amber-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <XCircle size={18} className="text-rose-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
-                          </div>
-                        </div>
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-surface-2 hidden md:block"}`}></div>
-                        <button
-                          onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
-                        >
-                          <Info size={16} />
-                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                        </button>
-                      </div>
+                      </span>
                     </div>
-
-                    {/* Circular Progress */}
-                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                      <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
-                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{metric?.Percentage || 0}%</span>
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  )}
+                </>}
+                title="Accessibility"
+                titleAccent="Health"
+                description="Comprehensive analysis of your website's accessibility, ensuring an inclusive experience for all users."
+                stats={{ passed: passedCount, warning: warningCount, failed: failedCount }}
+                score={metric?.Percentage || 0}
+                onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+              />
             </div>
           )}
         </div>
 
         {/* Visual Accessibility Section (Gated) */}
-        <ReportRestrictionWrapper>
+        <ReportRestrictionWrapper section="Accessibility">
           <div className="space-y-8">
             {(() => {
               const visible = (keys) => keys.filter((k) => metric[k] && isVisibleForAudience(k, audienceMode));

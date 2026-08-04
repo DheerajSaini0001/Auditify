@@ -1,25 +1,57 @@
 import SingleAuditReport from "../models/singleAuditReport.js";
 import ActivityLog from "../models/ActivityLog.js";
 import { chromium } from "playwright";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
 import { acquireBrowserSlot, releaseBrowserSlot } from "../utils/browserManager.js";
+
+// The report HTML is handed to Playwright via setContent, so it has no origin to
+// resolve relative URLs against — and an absolute URL would make every export wait
+// on a network fetch. Inline the logo as a data URI, read once at module load.
+const BRAND_LOGO_DATA_URI = (() => {
+    try {
+        const here = path.dirname(fileURLToPath(import.meta.url));
+        const file = path.join(here, "..", "assets", "brand", "logo-horizontal-navy.png");
+        return `data:image/png;base64,${fs.readFileSync(file).toString("base64")}`;
+    } catch (err) {
+        // A missing logo must not cost the user their report — fall back to the wordmark.
+        logger.warn?.(`PDF brand logo unavailable, falling back to text: ${err.message}`);
+        return null;
+    }
+})();
+
+const brandLogoHtml = (extraStyle = "") =>
+    BRAND_LOGO_DATA_URI
+        ? `<img class="logo" src="${BRAND_LOGO_DATA_URI}" alt="DealerSiteAudit" style="${extraStyle}">`
+        : `<div class="logo-text" style="${extraStyle}">DealerSiteAudit</div>`;
 
 export const generatePDFReport = async (req, res) => {
     try {
         const { id } = req.params;
         let report;
 
+        // Same access rule as singleAuditController.canAccessReport — admins see all,
+        // signed-out callers get guest runs only, signed-in users get their own plus
+        // unowned guest runs (so signing in does not take the download button away
+        // from the report they were just reading).
+        const isAdmin = !!req.user && (req.user.role === 'admin' || req.user.role === 'super_admin');
+
         // A completed report may still be buffered in memory (not yet flushed to Mongo).
         const live = auditStore.get(id);
         if (live) {
-            const allowed = !(req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin')
-                || String(live.userId || "") === String(req.user.userId || "");
+            const allowed = isAdmin
+                || !live.userId
+                || (!!req.user && String(live.userId) === String(req.user.userId || ""));
             report = allowed ? live : null;
         } else {
             const query = { _id: id };
-            if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-                query.userId = req.user.userId;
+            if (!req.user) {
+                query.userId = null;
+            } else if (!isAdmin) {
+                query.$or = [{ userId: req.user.userId }, { userId: null }];
             }
             report = await SingleAuditReport.findOne(query);
         }
@@ -217,9 +249,16 @@ export const generatePDFReport = async (req, res) => {
             }
 
             .logo {
+                height: 44px;
+                width: auto;
+                display: block;
+            }
+
+            /* Only rendered if the logo file could not be read at boot. */
+            .logo-text {
                 font-size: 24px;
                 font-weight: 800;
-                color: var(--primary);
+                color: var(--dark);
                 letter-spacing: -1px;
             }
 
@@ -402,7 +441,7 @@ export const generatePDFReport = async (req, res) => {
     </head>
     <body>
         <div class="header">
-            <div class="logo">Site Audit.</div>
+            ${brandLogoHtml()}
             <div class="url-info">
                 <h1>${escapeHtml(report.url)}</h1>
                 <p>Audit Date: ${new Date(report.createdAt).toLocaleDateString()}</p>
@@ -477,7 +516,7 @@ export const generatePDFReport = async (req, res) => {
                  5. Re-run the Site Audit tool after deployments to verify changes in Lab/Crux data.<br/>
              </p>
              <div style="margin-top: 150px; text-align: center;">
-                 <div class="logo" style="font-size: 32px; opacity: 0.3;">Site Audit.</div>
+                 ${brandLogoHtml("height: 56px; opacity: 0.3; margin: 0 auto;")}
                  <p style="color: #94a3b8; margin-top: 10px;">End of Report</p>
              </div>
         </div>

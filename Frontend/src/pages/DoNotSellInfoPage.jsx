@@ -63,14 +63,14 @@ export default function DoNotSellInfoPage() {
         <header className="text-center space-y-5 pt-4">
           <div
             className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border ${
-              darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400" : "bg-[#ea580c]/10 border-[#ea580c]/20 text-accent"
+              darkMode ? "bg-[#F26419]/10 border-[#F26419]/25 text-orange-400" : "bg-[#F26419]/10 border-[#F26419]/20 text-accent"
             }`}
           >
             <ShieldOff size={28} />
           </div>
           <h1 className={`text-4xl md:text-5xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
             Do not sell or share{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] to-[#FB923C]">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] to-[#F4874A]">
               my information
             </span>
           </h1>
@@ -225,7 +225,7 @@ export default function DoNotSellInfoPage() {
             {/* Action card */}
             <div className={`rounded-3xl border p-7 flex flex-col sm:flex-row sm:items-center gap-5 justify-between ${cardClass}`}>
               <div className="flex items-start gap-4">
-                <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+                <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
                   <Mail size={19} />
                 </div>
                 <div>
@@ -247,7 +247,7 @@ export default function DoNotSellInfoPage() {
                   className={`inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl border font-semibold transition-colors whitespace-nowrap ${
                     darkMode
                       ? "border-slate-700 text-slate-200 hover:border-slate-600"
-                      : "border-line text-ink hover:border-[#ea580c]/40"
+                      : "border-line text-ink hover:border-[#F26419]/40"
                   }`}
                 >
                   Use the contact page

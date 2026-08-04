@@ -695,8 +695,8 @@ const AdminDashboard = () => {
                             contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '10px' }}
                             itemStyle={{ fontSize: '10px' }}
                           />
-                          <Bar dataKey="completed" fill="#10b981" radius={[4, 4, 0, 0]} barSize={20} />
-                          <Bar dataKey="failed" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={20} />
+                          <Bar dataKey="completed" fill="#308D5C" radius={[4, 4, 0, 0]} barSize={20} />
+                          <Bar dataKey="failed" fill="#DA3D51" radius={[4, 4, 0, 0]} barSize={20} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -793,11 +793,11 @@ const AdminDashboard = () => {
                               backgroundColor: darkMode ? '#111' : '#fff',
                               border: `1px solid ${darkMode ? '#333' : '#e2e8f0'}`,
                               fontSize: '10px',
-                              color: darkMode ? '#fff' : '#1e293b'
+                              color: darkMode ? '#fff' : '#303945'
                             }}
                           />
-                          <Line yAxisId="left" type="monotone" dataKey="score" name="Avg Score" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6' }} />
-                          <Line yAxisId="right" type="monotone" dataKey="count" name="Audits Run" stroke="#10b981" strokeWidth={3} dot={{ r: 4, fill: '#10b981' }} />
+                          <Line yAxisId="left" type="monotone" dataKey="score" name="Avg Score" stroke="#3F6A99" strokeWidth={3} dot={{ r: 4, fill: '#3F6A99' }} />
+                          <Line yAxisId="right" type="monotone" dataKey="count" name="Audits Run" stroke="#308D5C" strokeWidth={3} dot={{ r: 4, fill: '#308D5C' }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>

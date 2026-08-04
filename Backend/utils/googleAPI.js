@@ -32,6 +32,60 @@ const releasePsiSlot = () => {
   if (next) next();
 };
 
+// ── PSI failure classification ──────────────────────────────────────────────
+// PageSpeed overloads HTTP 400 for two completely different things, and the old
+// code treated both as permanent:
+//   • `errors[].domain === 'gdata.CoreErrorDomain'` (reason INVALID_PARAMETER) —
+//     our query string is malformed. Genuinely permanent; retrying is pointless.
+//   • `errors[].domain === 'lighthouse'` (reason lighthouseUserError) — the CRAWL
+//     failed (NO_FCP, FAILED_DOCUMENT_REQUEST/ERR_TIMED_OUT, NOT_HTML …). Often
+//     transient: measured 2026-08-04, carweek.com/auto-insight/types-of-tires
+//     returned 400 FAILED_DOCUMENT_REQUEST on 08-03 and a clean 200 (perf 83) the
+//     next day. Worth exactly one retry — a genuinely dead host still fails fast.
+// Returning a structured verdict also lets technicalMetrics name the real cause
+// instead of the catch-all "Lighthouse returned no data" string.
+const classifyPsiFailure = (status, data) => {
+  const errors = data?.error?.errors || [];
+  const message = data?.error?.message || '';
+  const lighthouse = errors.find((e) => e.domain === 'lighthouse');
+  // "Lighthouse returned error: NO_FCP. The page did not paint…" → "NO_FCP"
+  const lhCode = /Lighthouse returned error:\s*([A-Z_]+)/.exec(message)?.[1] || null;
+
+  if (status === 403) return {
+    kind: 'auth', code: 'FORBIDDEN', retryable: false,
+    reason: `Google rejected the PageSpeed API key (HTTP 403: ${message || 'forbidden'}). The key is invalid, restricted to HTTP referrers (which blocks server-side calls), or the PageSpeed Insights API is not enabled on its Cloud project.`,
+  };
+  if (status === 429) return {
+    kind: 'quota', code: 'RATE_LIMITED', retryable: true,
+    reason: `PageSpeed API quota exceeded (HTTP 429: ${message || 'rate limited'}).`,
+  };
+  if (lighthouse || lhCode) return {
+    kind: 'crawl', code: lhCode || 'LIGHTHOUSE_ERROR', retryable: true, crawlError: true,
+    reason: `Google PageSpeed accepted the request but Lighthouse could not measure this URL (${lhCode || 'lighthouse error'}): ${message}`,
+  };
+  if (status === 400) return {
+    kind: 'request', code: 'INVALID_PARAMETER', retryable: false,
+    reason: `PageSpeed rejected our request as malformed (HTTP 400: ${message || 'invalid argument'}). This is a bug in how the audit builds the PageSpeed URL, not a problem with the site.`,
+  };
+  if (status >= 500) return {
+    kind: 'upstream', code: `HTTP_${status}`, retryable: true,
+    reason: `Google PageSpeed returned a server error (HTTP ${status}: ${message || 'upstream failure'}).`,
+  };
+  return {
+    kind: 'empty', code: 'NO_LIGHTHOUSE_RESULT', retryable: true,
+    reason: `Google PageSpeed returned HTTP ${status} with no lighthouseResult${message ? `: ${message}` : '.'}`,
+  };
+};
+
+// Stamp the verdict onto whatever we hand back so the Technical pillar can report
+// the real cause. Non-enumerable: this object is persisted as-is into the audit
+// document and serialized to the client, and a stray key would trip strict schemas.
+const withFailure = (data, failure) => {
+  const out = data && typeof data === 'object' ? data : {};
+  Object.defineProperty(out, '_psiFailure', { value: failure, enumerable: false, configurable: true });
+  return out;
+};
+
 export default async function googleAPI(url, device) {
   // Cache first — a PSI result is ~50-75s to fetch and barely changes hour to
   // hour, so within PSI_CACHE_TTL_MS (default 12h) a re-audit of the same
@@ -47,7 +101,10 @@ export default async function googleAPI(url, device) {
   const API_KEY = configService.getConfig('API_KEY');
   if (!API_KEY) {
     logger.error('[PageSpeed] API_KEY is not configured — Technical Performance data will be empty.');
-    return {};
+    return withFailure({}, {
+      kind: 'config', code: 'NO_API_KEY', retryable: false,
+      reason: 'No PageSpeed API key is configured (API_KEY is empty in both the platform config and the environment), so no PageSpeed call was made.',
+    });
   }
 
   // encodeURIComponent the url/device: an unencoded url containing `?`, `&` or `#`
@@ -64,12 +121,31 @@ export default async function googleAPI(url, device) {
   // over a hiccup. A 400 (bad URL) is permanent, so we don't burn retries on it.
   const MAX_ATTEMPTS = 3;
   const RETRY_DELAY_MS = 1500;
-  // [FIX] Per-attempt deadline. `fetch` had no timeout, so a PageSpeed request that
-  // hung could burn the whole retry budget on one attempt — and 3 unbounded attempts
-  // blow straight past PILLAR_TECH_TIMEOUT_MS (150s), which then kills Technical
-  // wholesale instead of letting a retry succeed. 45s × 3 + 2 backoffs = 138s, so the
-  // full ladder now fits INSIDE the pillar timeout with headroom.
-  const ATTEMPT_TIMEOUT_MS = parseInt(process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '45000', 10);
+  // [FIX 2026-08-04] The ladder used to be a FLAT 45s deadline three times over.
+  // That is strictly worse than one long attempt for the case it kept hitting: a
+  // genuinely slow site. Measured against the real API, bomninchevrolet.com/
+  // preapproved.aspx returns HTTP 200 with a full lighthouseResult in 94.4s — so
+  // every one of the three 45s attempts was guaranteed to abort, burning 138s to
+  // return nothing when a single ~95s wait succeeds. (Log: "giving up after 3
+  // attempt(s) (timed out after 45000ms)" on 2026-08-03.)
+  //
+  // Now: attempt 1 keeps the short 45s probe so the common fast case and hard
+  // failures still fail fast, and any later attempt inherits ALL the remaining
+  // budget rather than re-running the same doomed 45s. The total is bounded by
+  // PAGESPEED_TOTAL_BUDGET_MS so the ladder still fits inside the pillar timeout.
+  const PROBE_TIMEOUT_MS = parseInt(process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '45000', 10);
+  // Keep this UNDER PILLAR_TECH_TIMEOUT_MS (default 150s): if the ladder outlives the
+  // pillar, withTimeout kills Technical wholesale instead of letting us return {} and
+  // still run the asset-level delivery checks on the live page. Raising one means
+  // raising the other. In the normal (prefetched) path the ladder starts at discovery
+  // time and overlaps browser setup, so it has usually finished before the pillar
+  // timer even starts — the tight case is only the inline device-mismatch fallback.
+  const TOTAL_BUDGET_MS = parseInt(process.env.PAGESPEED_TOTAL_BUDGET_MS || '145000', 10);
+  // Below this there isn't enough left for a PSI call to plausibly finish, so stop
+  // rather than start an attempt we know we'll abort.
+  const MIN_ATTEMPT_MS = 20000;
+  const ladderStart = Date.now();
+  const budgetLeft = () => TOTAL_BUDGET_MS - (Date.now() - ladderStart);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // Consistent [PageSpeed] tag on every line so the whole retry→outcome trail is one
@@ -77,13 +153,25 @@ export default async function googleAPI(url, device) {
   // makes the final outcome scannable at a glance.
   const tag = `[PageSpeed] ${device}`;
   let lastData = {};
+  let lastFailure = null;
+  // A crawl-side error (NO_FCP, FAILED_DOCUMENT_REQUEST …) gets exactly one retry:
+  // enough to ride out a transient blip, not enough to spend the whole budget on a
+  // host that is simply unreachable.
+  let crawlRetriesLeft = 1;
   // The slot covers the WHOLE attempt ladder (not each attempt) so a retrying
   // call can't be interleaved with fresh callers and re-create the burst.
   await acquirePsiSlot(tag, url);
   try {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const remaining = budgetLeft();
+    if (remaining < MIN_ATTEMPT_MS) {
+      logger.error(`${tag} ✗ out of budget after ${attempt - 1} attempt(s) (${TOTAL_BUDGET_MS}ms spent) — Technical will be "Not Run" — ${url}`);
+      break;
+    }
+    // Attempt 1 is a short probe; every later attempt gets the rest of the budget.
+    const attemptTimeout = Math.min(attempt === 1 ? PROBE_TIMEOUT_MS : TOTAL_BUDGET_MS, remaining);
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), ATTEMPT_TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), attemptTimeout);
     try {
       const response = await fetch(endpoint, { signal: controller.signal });
       const data = await response.json();
@@ -99,26 +187,43 @@ export default async function googleAPI(url, device) {
       }
 
       const status = response.status;
-      const nonRetryable = status === 400 || data?.error?.code === 400;
-      const canRetry = attempt < MAX_ATTEMPTS && !nonRetryable;
-      const reason = `HTTP ${status}: ${data?.error?.message || 'no lighthouseResult'}`;
+      const failure = classifyPsiFailure(status, data);
+      lastFailure = failure;
+      // Crawl errors carry their own (smaller) retry allowance; everything else is
+      // governed by the attempt count and whether the class is retryable at all.
+      if (failure.crawlError && crawlRetriesLeft > 0) crawlRetriesLeft--;
+      else if (failure.crawlError) failure.retryable = false;
+      const canRetry = attempt < MAX_ATTEMPTS
+        && failure.retryable
+        && budgetLeft() > MIN_ATTEMPT_MS + RETRY_DELAY_MS;
+      const reason = `HTTP ${status} [${failure.code}]: ${data?.error?.message || 'no lighthouseResult'}`;
       if (canRetry) {
         logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} failed (${reason}) — retrying in ${RETRY_DELAY_MS}ms — ${url}`);
       } else {
         logger.error(`${tag} ✗ giving up after ${attempt} attempt(s) (${reason}) — Technical will be "Not Run" — ${url}`);
-        return data;
+        return withFailure(data, failure);
       }
     } catch (error) {
       // Network/transport error — retryable. An AbortError here is our own
       // per-attempt deadline firing, not a server fault, so name it as such.
       const isTimeout = error.name === 'AbortError';
-      const what = isTimeout ? `timed out after ${ATTEMPT_TIMEOUT_MS}ms` : `network: ${error.message}`;
-      const canRetry = attempt < MAX_ATTEMPTS;
+      const what = isTimeout ? `timed out after ${attemptTimeout}ms` : `network: ${error.message}`;
+      lastFailure = isTimeout
+        ? {
+            kind: 'timeout', code: 'ATTEMPT_TIMEOUT', retryable: true,
+            reason: `Google PageSpeed did not respond within ${Math.round(attemptTimeout / 1000)}s. The API was reachable — this audit's own deadline fired first, which usually means the target page is slow enough that Lighthouse needs longer than the budget allows.`,
+          }
+        : {
+            kind: 'network', code: 'NETWORK_ERROR', retryable: true,
+            reason: `Could not reach the PageSpeed API: ${error.message}`,
+          };
+      const canRetry = attempt < MAX_ATTEMPTS
+        && budgetLeft() > MIN_ATTEMPT_MS + RETRY_DELAY_MS;
       if (canRetry) {
-        logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} ${what} — retrying in ${RETRY_DELAY_MS}ms — ${url}`);
+        logger.warn(`${tag} attempt ${attempt}/${MAX_ATTEMPTS} ${what} — retrying in ${RETRY_DELAY_MS}ms with the remaining ${Math.round(budgetLeft() / 1000)}s of budget — ${url}`);
       } else {
         logger.error(`${tag} ✗ giving up after ${attempt} attempt(s) (${what}) — Technical will be "Not Run" — ${url}`);
-        return {};
+        return withFailure({}, lastFailure);
       }
     } finally {
       clearTimeout(timer);
@@ -127,7 +232,10 @@ export default async function googleAPI(url, device) {
   }
   // Return {} so technicalMetrics degrades gracefully (asset-level checks still run
   // on the live page) instead of throwing and failing the whole audit.
-  return lastData || {};
+  return withFailure(lastData || {}, lastFailure || {
+    kind: 'empty', code: 'NO_LIGHTHOUSE_RESULT', retryable: false,
+    reason: 'Google PageSpeed returned no lighthouseResult after every attempt.',
+  });
   } finally {
     releasePsiSlot();
   }

@@ -7,7 +7,7 @@ import { fetchWithBotBypass } from "./puppeteer_cheerio.js";
 import logger from "./logger.js";
 
 // Stealth-browser escalations here are now bounded by the SINGLE global browser
-// pool (utils/browserManager.js, default MAX_CONCURRENT_BROWSERS=3) that every
+// pool (utils/browserManager.js, default MAX_CONCURRENT_BROWSERS=1) that every
 // headless-Chrome launch in the app shares — this used to keep its own separate
 // per-process limiter, which meant classification browsers weren't counted
 // against the audit browsers and total concurrent Chrome could exceed the cap.

@@ -210,10 +210,10 @@ export default function InputForm() {
             </div>
 
             {/* Divider */}
-            <div className={`hidden lg:block w-px h-8 ${darkMode ? "bg-slate-700" : "bg-[#E7E0D2]"} mx-2`}></div>
+            <div className={`hidden lg:block w-px h-8 ${darkMode ? "bg-slate-700" : "bg-[#E4E1D9]"} mx-2`}></div>
 
             {/* Mobile Divider */}
-            <div className={`lg:hidden w-full h-px ${darkMode ? "bg-slate-700" : "bg-[#E7E0D2]"} my-2`}></div>
+            <div className={`lg:hidden w-full h-px ${darkMode ? "bg-slate-700" : "bg-[#E4E1D9]"} my-2`}></div>
 
             {/* Controls Group */}
             <div className="flex w-full lg:w-auto items-center gap-2 px-2">

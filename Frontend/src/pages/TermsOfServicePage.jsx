@@ -65,14 +65,14 @@ export default function TermsOfServicePage() {
         <header className="text-center space-y-5 pt-4">
           <div
             className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border ${
-              darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400" : "bg-[#ea580c]/10 border-[#ea580c]/20 text-accent"
+              darkMode ? "bg-[#F26419]/10 border-[#F26419]/25 text-orange-400" : "bg-[#F26419]/10 border-[#F26419]/20 text-accent"
             }`}
           >
             <Gavel size={28} />
           </div>
           <h1 className={`text-4xl md:text-5xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
             Terms of{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] to-[#FB923C]">use</span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] to-[#F4874A]">use</span>
           </h1>
           <p className={`text-base md:text-lg max-w-3xl mx-auto leading-relaxed ${muted}`}>
             The rules for using Site Audit, in plain English. By using the service you agree to
@@ -263,7 +263,7 @@ export default function TermsOfServicePage() {
             {/* Contact card */}
             <div className={`rounded-3xl border p-7 flex flex-col sm:flex-row sm:items-center gap-5 justify-between ${cardClass}`}>
               <div className="flex items-start gap-4">
-                <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+                <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
                   <Mail size={19} />
                 </div>
                 <div>

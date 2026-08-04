@@ -153,14 +153,14 @@ export default function HelpCenterPage() {
         <header className="text-center space-y-5 pt-4">
           <div
             className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border ${
-              darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400" : "bg-[#ea580c]/10 border-[#ea580c]/20 text-accent"
+              darkMode ? "bg-[#F26419]/10 border-[#F26419]/25 text-orange-400" : "bg-[#F26419]/10 border-[#F26419]/20 text-accent"
             }`}
           >
             <HeartHandshake size={28} />
           </div>
           <h1 className={`text-4xl md:text-5xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
             How can we{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] to-[#FB923C]">help?</span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] to-[#F4874A]">help?</span>
           </h1>
           <p className={`text-base md:text-lg max-w-2xl mx-auto leading-relaxed ${muted}`}>
             Answers to the questions we get asked most. Search below, or write to us and a real
@@ -200,7 +200,7 @@ export default function HelpCenterPage() {
                       ? "bg-accent border-accent text-white"
                       : darkMode
                       ? "bg-slate-900/40 border-slate-800 text-slate-300 hover:border-slate-700"
-                      : "bg-card border-line text-ink hover:border-[#ea580c]/40"
+                      : "bg-card border-line text-ink hover:border-[#F26419]/40"
                   }`}
                 >
                   {c}
@@ -234,7 +234,7 @@ export default function HelpCenterPage() {
                   <div
                     key={faq.id}
                     className={`rounded-2xl border transition-all ${cardClass} ${
-                      open ? "border-[#ea580c]/40" : "hover:border-[#ea580c]/25"
+                      open ? "border-[#F26419]/40" : "hover:border-[#F26419]/25"
                     }`}
                   >
                     <button
@@ -277,9 +277,9 @@ export default function HelpCenterPage() {
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Link
             to="/contact"
-            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#F26419]/40 ${cardClass}`}
           >
-            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
               <MessageSquareText size={19} />
             </div>
             <div>
@@ -293,9 +293,9 @@ export default function HelpCenterPage() {
 
           <Link
             to="/documentation"
-            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#F26419]/40 ${cardClass}`}
           >
-            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
               <BookOpen size={19} />
             </div>
             <div>
@@ -309,9 +309,9 @@ export default function HelpCenterPage() {
 
           <a
             href={`mailto:${SUPPORT_EMAIL}`}
-            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#F26419]/40 ${cardClass}`}
           >
-            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
               <Mail size={19} />
             </div>
             <div className="min-w-0">

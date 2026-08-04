@@ -62,7 +62,7 @@ const ResetPasswordPage = () => {
                     <h2 className="text-3xl font-black text-ink tracking-tight">Invalid Link</h2>
                     <p className="mt-4 text-muted leading-relaxed font-medium">{error}</p>
                     <div className="mt-8 pt-6 border-t border-line">
-                        <Link to="/forgot-password" name="Request New Link" className="inline-flex items-center text-sm font-semibold text-accent hover:text-[#C2410C] transition-colors uppercase tracking-[0.2em] animate-pulse">Request New Link</Link>
+                        <Link to="/forgot-password" name="Request New Link" className="inline-flex items-center text-sm font-semibold text-accent hover:text-[#D4520E] transition-colors uppercase tracking-[0.2em] animate-pulse">Request New Link</Link>
                     </div>
                 </div>
             </div>

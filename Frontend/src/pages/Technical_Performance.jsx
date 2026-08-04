@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -19,13 +19,13 @@ import { isVisibleForAudience } from "../config/parameterAudience";
 
 import MetricCard from "../components/reusablecomponent/MetricCard";
 import { NotCalculatedNote, AffectedList } from "../components/reusablecomponent/MetricExtras";
-import StatusSummary from "../components/reusablecomponent/StatusSummary";
+import { techStatusCounts } from "../utils/techStatusCounts";
 import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 
 import Section from "../components/reusablecomponent/Section";
 import OptimizationCard from "../components/reusablecomponent/OptimizationCard";
 import ScoreBadge from "../components/reusablecomponent/ScoreBadge";
-import { statusText, scoreToStatus, statusSolidBg } from "../utils/statusColors";
+import { statusText } from "../utils/statusColors";
 
 const scoreCalculationInfo = InfoDetails.Technical_Performance_Methodology;
 const metricExplanations = InfoDetails;
@@ -142,7 +142,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <AuditShimmer darkMode={darkMode} loading={loading} data={data} auditSteps={AUDIT_STEPS} />
+                <AuditShimmer darkMode={darkMode} steps={AUDIT_STEPS} />
               </div>
             </div>
           ) : (
@@ -159,114 +159,73 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
               )}
 
               {/* Right Panel: Metrics & Score */}
-              <div className={`flex-1 ${data?.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-                <div className={`w-full ${data?.report === "All" ? "" : "max-w-2xl mx-auto"} ${data?.report === "All" ? "space-y-7" : "space-y-6"}`}>
-
-                  {/* Top Content Area */}
-                  <div className={`flex flex-col md:flex-row items-center ${data?.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
-
-                    {/* Text Content */}
-                    <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                      <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500 ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                          <Activity className="w-3.5 h-3.5 animate-pulse" />
-                          <span>Performance Audit</span>
-                        </div>
-                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight animate-in fade-in slide-in-from-left-6 duration-700 delay-75 ${darkMode ? "text-white" : "text-ink"}`}>
-                          Technical <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-500">Performance</span>
-                        </h3>
-                        <p className={`text-sm leading-relaxed opacity-70 animate-in fade-in slide-in-from-left-8 duration-700 delay-150 ${darkMode ? "text-slate-300" : "text-muted"}`}>
-                          Core vitals and speed configurations analysis for a faster user experience.
-                        </p>
-                        {/* Not Run: PageSpeed couldn't analyze the site, so there is no
-                            performance score to show — explain rather than imply a 0%. */}
-                        {notRun && (
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100"}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                            Not Run · PageSpeed unavailable
-                          </span>
+              <PillarHeader
+                darkMode={darkMode}
+                fullReport={data?.report === "All"}
+                badge={{ icon: Activity, label: "Performance Audit" }}
+                chips={<>
+                  {/* Not Run: PageSpeed couldn't analyze the site, so there is no
+                      performance score to show — explain rather than imply a 0%. */}
+                  {notRun && (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100"}`}>
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                      Not Run · PageSpeed unavailable
+                    </span>
+                  )}
+                  {/* Confidence (spec §0.5): tell the user whether Core Web Vitals came
+                      from real users (CrUX field) or are a lab estimate, so the score is
+                      never over-claimed as real-world when it isn't. */}
+                  {!notRun && tech.Confidence && (
+                    <span
+                      title={tech.Confidence === "field"
+                        ? "Core Web Vitals scored from real-user field data (Chrome UX Report, p75)."
+                        : "No real-user field data for this site — Core Web Vitals are scored from a single lab run (estimate)."}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
+                        tech.Confidence === "field"
+                          ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100")
+                          : (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100")
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${tech.Confidence === "field" ? "bg-emerald-500" : "bg-amber-500"}`} />
+                      {tech.Confidence === "field" ? "Real-user field data" : "Lab estimate · no field data"}
+                    </span>
+                  )}
+                </>}
+                note={<>
+                  {!notRun && tech.Score_Breakdown && (
+                    <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
+                      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
+                      <span>
+                        Score uses the official Lighthouse Performance formula (FCP 10% · SI 10% · LCP 25% · TBT 30% · CLS 25%) — directly comparable to PageSpeed Insights (±10 between runs is normal).
+                        {typeof tech?.Delivery_Hygiene?.score === "number" && (
+                          <> Delivery hygiene (not scored by Lighthouse): {tech.Delivery_Hygiene.score}%.</>
                         )}
-                        {/* Confidence (spec §0.5): tell the user whether Core Web Vitals came
-                            from real users (CrUX field) or are a lab estimate, so the score is
-                            never over-claimed as real-world when it isn't. */}
-                        {!notRun && tech.Confidence && (
-                          <span
-                            title={tech.Confidence === "field"
-                              ? "Core Web Vitals scored from real-user field data (Chrome UX Report, p75)."
-                              : "No real-user field data for this site — Core Web Vitals are scored from a single lab run (estimate)."}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${
-                              tech.Confidence === "field"
-                                ? (darkMode ? "bg-emerald-900/30 text-emerald-400 border-emerald-800" : "bg-emerald-50 text-emerald-600 border-emerald-100")
-                                : (darkMode ? "bg-amber-900/30 text-amber-400 border-amber-800" : "bg-amber-50 text-amber-600 border-amber-100")
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${tech.Confidence === "field" ? "bg-emerald-500" : "bg-amber-500"}`} />
-                            {tech.Confidence === "field" ? "Real-user field data" : "Lab estimate · no field data"}
-                          </span>
-                        )}
-                        {!notRun && tech.Score_Breakdown && (
-                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-slate-800/60 text-slate-400 border border-slate-700/50" : "bg-cardsoft text-muted border border-line"}`}>
-                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>
-                              Score uses the official Lighthouse Performance formula (FCP 10% · SI 10% · LCP 25% · TBT 30% · CLS 25%) — directly comparable to PageSpeed Insights (±10 between runs is normal).
-                              {typeof tech?.Delivery_Hygiene?.score === "number" && (
-                                <> Delivery hygiene (not scored by Lighthouse): {tech.Delivery_Hygiene.score}%.</>
-                              )}
-                            </span>
-                          </div>
-                        )}
-                        {notRun && (
-                          <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-amber-900/20 text-amber-300 border border-amber-800/50" : "bg-amber-50 text-amber-700 border border-amber-100"}`}>
-                            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
-                            <span>
-                              Google PageSpeed returned no data for this URL (after retries), so Core Web Vitals could not be measured. This section is excluded from the overall score rather than counted as 0. The delivery checks below still ran on the live page.
-                            </span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Stats & Tools */}
-                      <div className={`flex flex-wrap items-center ${data?.report === "All" ? "gap-6" : "gap-5"}`}>
-                        <StatusSummary tech={tech} className={data?.report === "All" ? "gap-5" : "gap-4"} />
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
-                        <button
-                          onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`group flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 border ${darkMode ? "bg-slate-800/50 border-slate-700 hover:border-blue-500/50 text-blue-400 hover:text-blue-300 shadow-lg shadow-blue-500/5" : "bg-accentsoft border-accent/20 hover:border-accent/40 text-accent shadow-sm"}`}
-                        >
-                          <Info size={14} className="transition-transform group-hover:rotate-12" />
-                          <span>Methodology</span>
-                        </button>
-                      </div>
+                      </span>
                     </div>
-
-                    {/* Circular Progress */}
-                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${notRun ? "bg-amber-400" : statusSolidBg(scoreToStatus(overallScore))}`}></div>
-                      <CircularProgress value={notRun ? 0 : overallScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
-                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        {notRun ? (
-                          <>
-                            <span className={`${data?.report === "All" ? "text-3xl" : "text-2xl"} font-black tracking-tight ${darkMode ? "text-amber-400" : "text-amber-500"}`}>N/A</span>
-                            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] opacity-60 text-center px-4">Not Run</span>
-                          </>
-                        ) : (
-                          <>
-                            <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
-                            <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                          </>
-                        )}
-                      </div>
+                  )}
+                  {notRun && (
+                    <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-amber-900/20 text-amber-300 border border-amber-800/50" : "bg-amber-50 text-amber-700 border border-amber-100"}`}>
+                      <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
+                      <span>
+                        Google PageSpeed returned no data for this URL (after retries), so Core Web Vitals could not be measured. This section is excluded from the overall score rather than counted as 0. The delivery checks below still ran on the live page.
+                      </span>
                     </div>
-                  </div>
-                </div>
-              </div>
+                  )}
+                </>}
+                title="Technical"
+                titleAccent="Performance"
+                description="Core vitals and speed configurations analysis for a faster user experience."
+                stats={techStatusCounts(tech)}
+                score={notRun ? 0 : overallScore}
+                onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+              />
             </div>
           )}
         </div>
 
         {/* Sections - Manual Unrolled Rendering */}
         {data?.technicalPerformance && (
-          <ReportRestrictionWrapper>
+          <ReportRestrictionWrapper section="Technical Performance">
             <div className="space-y-6">
               {/* Core Web Vitals */}
               {coreVisible && (
@@ -781,7 +740,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
 
               {/* Category 3: Asset & Optimizations (Gated) */}
               {assetsVisible && (
-              <ReportRestrictionWrapper>
+              <ReportRestrictionWrapper section="Technical Performance">
                 <div className="space-y-8">
                   <Section title="Asset Distribution & Code Delivery Optimizations" icon={Sparkles} darkMode={darkMode}>
                     {tech.Compression && isVisibleForAudience('Compression', audienceMode) && (

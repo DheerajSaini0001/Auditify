@@ -1,10 +1,13 @@
-import React, { useContext } from 'react';
-import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { ThemeContext } from '../../context/ThemeContext';
-
-const StatusSummary = ({ tech, className = "gap-4" }) => {
-    const { theme } = useContext(ThemeContext);
-    const darkMode = theme === "dark";
+/**
+ * Technical Performance tallies its own statuses because its metrics are nested
+ * (LCP.lab / LCP.crux / …) rather than flat like every other section, so the usual
+ * "count direct children with a status" does not reach them.
+ *
+ * Exported so PillarHeader can render these counts in the same row, in the same
+ * order, as the other seven pillars — this page used to be the only one whose
+ * header showed no tallies at all.
+ */
+export const techStatusCounts = (tech) => {
     let passedCount = 0;
     let failedCount = 0;
     let warningCount = 0;
@@ -49,22 +52,5 @@ const StatusSummary = ({ tech, className = "gap-4" }) => {
     checkStatus(tech?.Third_Party_Optimization?.status);
     checkStatus(tech?.JS_Execution?.status);
 
-    return (
-        <div className={`flex items-center ${className}`}>
-            <div className="flex items-center gap-2">
-                <CheckCircle size={18} className="text-emerald-500" />
-                <span className={`text-xs   tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <XCircle size={18} className="text-rose-500" />
-                <span className={`text-xs   tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
-            </div>
-            <div className="flex items-center gap-2">
-                <AlertTriangle size={18} className="text-amber-500" />
-                <span className={`text-xs   tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
-            </div>
-        </div>
-    );
+    return { passed: passedCount, warning: warningCount, failed: failedCount };
 };
-
-export default StatusSummary;

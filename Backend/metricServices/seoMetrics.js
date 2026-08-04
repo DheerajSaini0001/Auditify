@@ -2653,7 +2653,17 @@ const tuScoreUniqueness = (sample, cfg) => {
   const { field, noun, tag } = cfg;
 
   if (!sample || !sample.ok) {
+    // Nothing to compare against — a single-page audit has no sibling pages, so
+    // "is this title unique across the site?" is a question we never asked.
+    //
+    // `present: false` hands this to spec rule 6 in the weighting loop below, which
+    // drops the parameter from BOTH the numerator and the denominator and rescales
+    // the rest. Previously this returned a flat 0.5 that WAS weighted, so a
+    // single-page audit silently carried 6% of its On-Page SEO score (3% title +
+    // 3% meta description) as half-credit for two checks that never ran. The card
+    // is hidden for the same reason — see On_Page_SEO.jsx.
     return evaluateParameter(0.5, `Not enough eligible pages to compare ${noun}s`, {
+      present: false,
       pagesChecked: 0,
       found: 0,
       uniqueCount: 0,

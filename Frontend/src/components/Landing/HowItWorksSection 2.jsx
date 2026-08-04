@@ -62,7 +62,7 @@ const HowItWorksSection = () => {
                             className={`rounded-2xl border p-7 ${cardClass}`}
                         >
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-4
-                                ${darkMode ? 'bg-[#ea580c]/15 text-orange-400' : 'bg-[#ea580c]/10 text-[#EA580B]'}`}>
+                                ${darkMode ? 'bg-[#F26419]/15 text-orange-400' : 'bg-[#F26419]/10 text-[#F26419]'}`}>
                                 {n}
                             </div>
                             <h3 className={`text-lg font-semibold mb-2 ${darkMode ? 'text-white' : 'text-ink'}`}>{title}</h3>
@@ -85,7 +85,7 @@ const HowItWorksSection = () => {
                     <button
                         type="button"
                         onClick={focusAuditInput}
-                        className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-[#EA580B] hover:bg-[#C2410C] transition-colors text-white font-semibold"
+                        className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-[#F26419] hover:bg-[#D4520E] transition-colors text-white font-semibold"
                     >
                         Check my website
                         <ArrowRight size={18} />

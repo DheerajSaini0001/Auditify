@@ -10,48 +10,13 @@ import {
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useData } from '../../context/DataContext.jsx';
+import { PAGE_TYPES, CORPORATE_PAGE_TYPES, DEFAULT_PAGE_SCOPES } from '../../config/pageTypes';
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
 // Guests run audits with no verification at all. The email/OTP step and the
 // captcha that replaced it are both gone; the per-IP report budget on the
 // backend is what limits abuse now.
-
-/* ─────────────────────────────────────────
-   Fixed dealership page-type catalog (Screen 01).
-   `key` matches the backend discovery categories[].key.
-───────────────────────────────────────── */
-const PAGE_TYPES = [
-    { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
-    { key: 'srp', label: 'Inventory / SRP', desc: 'Search results page, filters', Icon: LayoutGrid },
-    { key: 'vdp', label: 'Vehicle Detail / VDP', desc: 'Per-car detail + lead form', Icon: Car },
-    { key: 'trade', label: 'Trade-In Tool', desc: 'KBB-style valuation, lead capture', Icon: Repeat },
-    { key: 'lease', label: 'Lease Deals', desc: 'Lease offers + calculator', Icon: Key },
-    { key: 'specials', label: 'Offers & Specials', desc: 'Deals, incentives, rebates', Icon: Tag },
-    { key: 'finance', label: 'Financing', desc: 'Credit application, payment tools', Icon: CreditCard },
-    { key: 'service', label: 'Service & Parts', desc: 'Service, repair, parts & accessories', Icon: Wrench },
-    { key: 'about', label: 'About / Contact', desc: 'Hours, staff, directions', Icon: Info },
-    { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
-];
-
-/* ─────────────────────────────────────────
-   Corporate / OEM page-type catalog — shown instead of PAGE_TYPES once
-   discovery reports `siteType: "corporate"` (no dealer inventory of its own).
-───────────────────────────────────────── */
-const CORPORATE_PAGE_TYPES = [
-    { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
-    { key: 'models', label: 'Models & Lineup', desc: 'Vehicle lineup, research, build & price', Icon: LayoutGrid },
-    { key: 'locator', label: 'Dealer Locator', desc: 'Find a dealer near you', Icon: MapPin },
-    { key: 'press', label: 'Press & News', desc: 'Newsroom, media, investor relations', Icon: Megaphone },
-    { key: 'about', label: 'About / Corporate', desc: 'Company info, leadership, careers', Icon: Building2 },
-    { key: 'content', label: 'Content / Blog', desc: 'Blog, guides, FAQ', Icon: Newspaper },
-];
-
-// Union of both catalogs' keys — the SAFE default `scopes` selection before the
-// first scan, since we don't yet know which catalog (dealer or corporate)
-// applies. Once discovery resolves a siteType, scopes is intersected down to
-// that catalog's keys (see detect()).
-const ALL_PAGE_TYPE_KEYS = [...new Set([...PAGE_TYPES, ...CORPORATE_PAGE_TYPES].map((p) => p.key))];
 
 /* ─────────────────────────────────────────
    Audit report sections (Screen 01 report-scope checklist).
@@ -134,7 +99,7 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 border
-                    bg-[#FB8C4B] border-[#FB8C4B] hover:bg-[#F97316] hover:border-[#F97316] shadow-sm shadow-orange-500/20
+                    bg-accent border-accent hover:bg-accenthover hover:border-accenthover shadow-sm shadow-accent/20
                     ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
             >
                 <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
@@ -160,11 +125,11 @@ const CustomDropdown = ({ value, onChange, options, icon, darkMode, disabled }) 
                                     onClick={() => { onChange(opt.value); setIsOpen(false); }}
                                     className={`w-full flex items-center justify-between px-4 py-3 text-[11px] font-semibold tracking-wide rounded-xl transition-all duration-200
                                         ${value === opt.value
-                                            ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
+                                            ? (darkMode ? "bg-accent/20 text-accent" : "bg-accent/10 text-accent")
                                             : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-muted hover:bg-cardsoft hover:text-ink")}`}
                                 >
                                     <span className="truncate pr-2">{opt.label}</span>
-                                    {value === opt.value && <span className="w-1.5 h-1.5 rounded-full bg-[#ea580c]" />}
+                                    {value === opt.value && <span className="w-1.5 h-1.5 rounded-full bg-accent" />}
                                 </button>
                             ))}
                         </div>
@@ -212,7 +177,7 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
                 className={`flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 border
-                    bg-[#FB8C4B] border-[#FB8C4B] hover:bg-[#F97316] hover:border-[#F97316] shadow-sm shadow-orange-500/20
+                    bg-accent border-accent hover:bg-accenthover hover:border-accenthover shadow-sm shadow-accent/20
                     ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
             >
                 <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
@@ -235,7 +200,7 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                             type="button"
                             onClick={() => onSetAll(!allSelected)}
                             className={`w-full flex items-center justify-between px-4 py-2.5 mb-1 text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all duration-200
-                                ${darkMode ? "text-orange-400 hover:bg-white/5" : "text-[#ea580c] hover:bg-cardsoft"}`}
+                                ${darkMode ? "text-accent hover:bg-white/5" : "text-accent hover:bg-cardsoft"}`}
                         >
                             <span>{allSelected ? "Clear all" : "Select all"}</span>
                             <span className="font-semibold">{selectedInOptions.length}/{options.length}</span>
@@ -251,11 +216,11 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                                         onClick={() => onToggle(opt.value)}
                                         className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-[12px] font-semibold tracking-wide rounded-xl transition-all duration-200
                                             ${on
-                                                ? (darkMode ? "bg-[#ea580c]/20 text-orange-400" : "bg-[#ea580c]/10 text-[#ea580c]")
+                                                ? (darkMode ? "bg-accent/20 text-accent" : "bg-accent/10 text-accent")
                                                 : (darkMode ? "text-slate-400 hover:bg-white/5 hover:text-white" : "text-muted hover:bg-cardsoft hover:text-ink")}`}
                                     >
                                         <span className={`flex items-center justify-center w-4 h-4 rounded border flex-shrink-0 transition-colors
-                                            ${on ? "bg-[#ea580c] border-[#ea580c]" : darkMode ? "border-white/20" : "border-line"}`}>
+                                            ${on ? "bg-accent border-accent" : darkMode ? "border-white/20" : "border-line"}`}>
                                             {on && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                                         </span>
                                         <span className="truncate text-left">{opt.label}</span>
@@ -294,15 +259,15 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
         <div
             className={`relative flex flex-col gap-1.5 p-4 rounded-2xl border transition-all duration-300
                 ${darkMode ? 'bg-white/[0.04] border-white/10' : 'bg-card border-line'}
-                ${audited ? 'ring-1 ring-emerald-500/60' : auditing ? 'ring-1 ring-[#ea580c]/50' : found ? 'ring-1 ring-emerald-500/40' : ''}
+                ${audited ? 'ring-1 ring-emerald-500/60' : auditing ? 'ring-1 ring-accent/50' : found ? 'ring-1 ring-emerald-500/40' : ''}
                 ${dimmed ? 'opacity-40' : ''}`}
         >
             {/* status badge top-right — audit state takes priority once it begins */}
             <div className="absolute top-3 right-3">
-                {auditing ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
+                {auditing ? <Loader2 className="w-4 h-4 animate-spin text-accent" />
                     : audited ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                         : auditFailed ? <AlertCircle className="w-4 h-4 text-rose-500" />
-                            : detecting ? <Loader2 className="w-4 h-4 animate-spin text-[#ea580c]" />
+                            : detecting ? <Loader2 className="w-4 h-4 animate-spin text-accent" />
                                 : found ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                     : (missing || excluded) ? <MinusCircle className="w-4 h-4 text-slate-400" />
                                         : <span className={`block w-4 h-4 rounded-full border-2 ${darkMode ? 'border-white/20' : 'border-line'}`} />}
@@ -310,7 +275,7 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
 
             <div className={`flex items-center justify-center w-9 h-9 rounded-lg mb-0.5
                 ${found ? 'bg-emerald-500/10 text-emerald-500'
-                    : detecting ? 'bg-[#ea580c]/10 text-[#ea580c]'
+                    : detecting ? 'bg-accent/10 text-accent'
                         : darkMode ? 'bg-white/5 text-slate-300' : 'bg-cardsoft text-inksoft'}`}>
                 <Icon className="w-5 h-5" />
             </div>
@@ -319,7 +284,7 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
             <p className={`text-[11px] leading-snug ${darkMode ? 'text-slate-400' : 'text-muted'}`}>{desc}</p>
 
             <div className="mt-1 min-h-[16px]">
-                {detecting && <span className="text-[10px] font-semibold uppercase tracking-wider text-[#ea580c]">Detecting…</span>}
+                {detecting && <span className="text-[10px] font-semibold uppercase tracking-wider text-accent">Detecting…</span>}
                 {found && (
                     <div className="space-y-0.5">
                         <span className="block text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
@@ -360,12 +325,12 @@ const PageCard = ({ def, phase, cat, darkMode, dimmed, audit, pageAudits, inScop
                 <div className="mt-1.5 pt-1.5 border-t border-dashed border-current/10 min-h-[16px]">
                     {auditing && (
                         <div className="space-y-0.5">
-                            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#ea580c]">
+                            <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-accent">
                                 <Loader2 className="w-3 h-3 animate-spin" />
                                 Auditing{audit.progress ? ` · ${audit.progress}%` : '…'}
                             </span>
                             {audit.stage && (
-                                <span className={`block text-[10px] leading-snug truncate ${darkMode ? 'text-orange-300/80' : 'text-[#ea580c]/80'}`} title={audit.stage}>
+                                <span className={`block text-[10px] leading-snug truncate ${darkMode ? 'text-accent/80' : 'text-accent/80'}`} title={audit.stage}>
                                     {audit.stage}
                                 </span>
                             )}
@@ -401,19 +366,22 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const darkMode = theme === "dark";
 
     const [url, setUrl] = useState('');
-    const [device, setDevice] = useState('Mobile');
+    const [device, setDevice] = useState('Desktop');
     // Which audit sections to run (defaults to all → full audit). The report-scope
     // checklist drives this; `report` is the backend value derived from it.
     const [reportSections, setReportSections] = useState(() => SECTIONS.map((s) => s.value));
     const report = useMemo(() => sectionsToReport(reportSections), [reportSections]);
     const [localError, setLocalError] = useState(null);
 
-    // Which page types to include in the audit (defaults to all, across BOTH
-    // catalogs — we don't know if this is a dealer or corporate site until the
-    // first scan resolves). The multi-select dropdown in the form drives this;
-    // only selected types are audited on "Run Full Audit", and unselected cards
-    // are dimmed. Intersected down to the resolved catalog's keys once known.
-    const [scopes, setScopes] = useState(() => ALL_PAGE_TYPE_KEYS);
+    // Which page types to include in the audit. Defaults to the home page alone —
+    // the fastest, cheapest run, and the URL the user actually typed. Users widen
+    // it from the dropdown when they want the whole site.
+    //
+    // 'home' is deliberately the default rather than the full catalog: it is the
+    // one key present in BOTH the dealer and corporate catalogs, so it survives
+    // detect()'s intersection whichever site type comes back, with no need for the
+    // cross-catalog union that a broader default required.
+    const [scopes, setScopes] = useState(() => DEFAULT_PAGE_SCOPES);
 
     // Detected site type ("dealer" | "corporate" | null before the first scan).
     // Drives which page-type catalog (PAGE_TYPES vs CORPORATE_PAGE_TYPES) is shown.
@@ -873,13 +841,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                 <div className="text-center max-w-4xl mx-auto space-y-4 flex flex-col items-center justify-center">
 
                     <span className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border
-                        ${darkMode ? 'bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400' : 'bg-[#ea580c]/10 border-[#ea580c]/20 text-[#EA580B]'}`}>
+                        ${darkMode ? 'bg-accent/10 border-accent/25 text-accent' : 'bg-accent/10 border-accent/20 text-accent'}`}>
                         <Car size={13} /> For dealership &amp; automotive websites
                     </span>
 
                     <h1 className={`text-center text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-[1.08] tracking-[-0.03em] ${darkMode ? 'text-white' : 'text-ink'}`}>
                         Your website, checked in{" "}
-                        <span className="text-[#EA580B]">minutes</span>
+                        <span className="text-accent">minutes</span>
                     </h1>
 
                     <p className={`text-base sm:text-lg font-medium leading-relaxed max-w-2xl mx-auto ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>
@@ -945,7 +913,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95
                                         ${runBtnDisabled
                                             ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed" : "bg-cardsoft border-line text-faint cursor-not-allowed")
-                                            : "bg-[#EA580B] border-[#EA580B] text-white hover:bg-[#C2410C] hover:border-[#C2410C] shadow-lg shadow-orange-600/25 hover:-translate-y-0.5"}`}
+                                            : "bg-accent border-accent text-white hover:bg-accenthover hover:border-accenthover shadow-lg shadow-accent/25 hover:-translate-y-0.5"}`}
                                 >
                                     {phase === 'detecting' ? <><Loader2 className="animate-spin w-5 h-5" /> Scanning…</> : <>Run Audit <ArrowRight size={16} /></>}
                                 </button>
@@ -954,7 +922,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                                     type="button"
                                     onClick={handleFullAudit}
                                     disabled={batchRunning || noSectionSelected || noPageSelected}
-                                    className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-gradient-to-r from-emerald-500 to-teal-600 border-emerald-500 text-white hover:from-emerald-400 hover:to-teal-500 shadow-lg shadow-emerald-600/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
+                                    className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-ink border-ink text-white hover:bg-inksoft hover:border-inksoft shadow-lg shadow-ink/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                                 >
                                     {batchRunning ? <><Loader2 className="animate-spin w-5 h-5" /> Auditing…</> : <>Run Full Audit <ArrowRight size={16} /></>}
                                 </button>
@@ -982,7 +950,7 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             'Nothing on your site is changed',
                         ].map((t) => (
                             <span key={t} className="inline-flex items-center gap-2">
-                                <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0" />
+                                <CheckCircle2 size={15} className="text-accent flex-shrink-0" />
                                 {t}
                             </span>
                         ))}

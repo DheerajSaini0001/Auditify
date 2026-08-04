@@ -1,6 +1,7 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
 import { ThemeContext } from "../context/ThemeContext.jsx";
+import { SCORE_BANDS } from "../utils/statusColors.js";
 import {
   BookOpen,
   Gauge,
@@ -38,29 +39,28 @@ const STEPS = [
   },
 ];
 
-const BANDS = [
-  {
-    range: "90 – 100",
-    label: "Good",
-    desc: "This area is in good shape. Keep an eye on it after big website changes.",
-    dot: "bg-emerald-500",
-    text: "text-emerald-500",
-  },
-  {
-    range: "50 – 89",
-    label: "Needs work",
-    desc: "Nothing is broken, but visitors or Google are being slowed down. Worth fixing soon.",
-    dot: "bg-amber-500",
-    text: "text-amber-500",
-  },
-  {
-    range: "0 – 49",
-    label: "Poor",
-    desc: "This is costing you visitors or putting your site at risk. Fix these items first.",
-    dot: "bg-rose-500",
-    text: "text-rose-500",
-  },
-];
+// What each band means, in plain language. Derived from SCORE_BANDS rather than
+// restated, so this customer-facing table can never promise thresholds the app
+// does not actually use — the previous hardcoded copy published three bands while
+// the report rendered a different split.
+const BAND_COPY = {
+  excellent: "This area is in great shape. Keep an eye on it after big website changes.",
+  good: "Solid, with a little room to tighten up. Worth a look when you have time.",
+  needs_improvement: "Nothing is broken, but visitors or Google are being slowed down. Worth fixing soon.",
+  poor: "This is costing you visitors or search traffic. Put it near the top of the list.",
+  critical: "This is actively hurting your site or putting it at risk. Fix these items first.",
+};
+
+const BANDS = SCORE_BANDS.map((band, i) => {
+  const upper = i === 0 ? 100 : SCORE_BANDS[i - 1].min - 1;
+  return {
+    range: `${band.min} – ${upper}`,
+    label: band.label,
+    desc: BAND_COPY[band.key],
+    dot: band.solidBg,
+    text: band.text,
+  };
+});
 
 const AREAS = [
   {
@@ -164,14 +164,14 @@ export default function DocsPage() {
         <header className="text-center space-y-5 pt-4">
           <div
             className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border ${
-              darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400" : "bg-[#ea580c]/10 border-[#ea580c]/20 text-accent"
+              darkMode ? "bg-[#F26419]/10 border-[#F26419]/25 text-orange-400" : "bg-[#F26419]/10 border-[#F26419]/20 text-accent"
             }`}
           >
             <BookOpen size={28} />
           </div>
           <h1 className={`text-4xl md:text-5xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
             How your report{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] to-[#FB923C]">works</span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] to-[#F4874A]">works</span>
           </h1>
           <p className={`text-base md:text-lg max-w-3xl mx-auto leading-relaxed ${muted}`}>
             A short guide to what we check, what the numbers mean, and what to do with them.
@@ -190,7 +190,7 @@ export default function DocsPage() {
               <div key={n} className={`rounded-2xl border p-6 ${cardClass}`}>
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-4 ${
-                    darkMode ? "bg-[#ea580c]/15 text-orange-400" : "bg-[#ea580c]/10 text-accent"
+                    darkMode ? "bg-[#F26419]/15 text-orange-400" : "bg-[#F26419]/10 text-accent"
                   }`}
                 >
                   {n}
@@ -237,7 +237,7 @@ export default function DocsPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {AREAS.map(({ icon: Icon, title, what, low }) => (
               <div key={title} className={`rounded-2xl border p-6 ${cardClass}`}>
-                <div className="w-11 h-11 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20 mb-4">
+                <div className="w-11 h-11 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20 mb-4">
                   <Icon size={19} />
                 </div>
                 <h3 className="font-semibold text-lg mb-1.5">{title}</h3>
@@ -268,9 +268,9 @@ export default function DocsPage() {
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Link
             to="/help"
-            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#F26419]/40 ${cardClass}`}
           >
-            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
               <LifeBuoy size={19} />
             </div>
             <div>
@@ -284,9 +284,9 @@ export default function DocsPage() {
 
           <Link
             to="/contact"
-            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+            className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#F26419]/40 ${cardClass}`}
           >
-            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+            <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
               <MessageSquareText size={19} />
             </div>
             <div>

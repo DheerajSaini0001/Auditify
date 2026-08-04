@@ -75,14 +75,14 @@ export default function ContactPage() {
         <header className="text-center space-y-5 pt-4 pb-2">
           <div
             className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border ${
-              darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400" : "bg-[#ea580c]/10 border-[#ea580c]/20 text-accent"
+              darkMode ? "bg-[#F26419]/10 border-[#F26419]/25 text-orange-400" : "bg-[#F26419]/10 border-[#F26419]/20 text-accent"
             }`}
           >
             <MessagesSquare size={28} />
           </div>
           <h1 className={`text-4xl md:text-5xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
             Talk to{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] to-[#FB923C]">our team</span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] to-[#F4874A]">our team</span>
           </h1>
           <p className={`text-base md:text-lg max-w-2xl mx-auto leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>
             Have a question about your website report or our plans? Write to us and a real
@@ -104,7 +104,7 @@ export default function ContactPage() {
               <div className="space-y-6">
                 {contactItems.map(({ icon: Icon, title, value, href, note }) => (
                   <div key={title} className="flex items-start gap-4">
-                    <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+                    <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
                       <Icon size={19} />
                     </div>
                     <div className="min-w-0">
@@ -128,7 +128,7 @@ export default function ContactPage() {
 
             {/* Response time */}
             <div className={`rounded-3xl border p-6 flex items-start gap-4 ${cardClass}`}>
-              <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+              <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
                 <Clock size={19} />
               </div>
               <div>
@@ -243,9 +243,9 @@ export default function ContactPage() {
             <Link
               key={title}
               to={to}
-              className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+              className={`rounded-3xl border p-7 flex items-start gap-4 transition-all hover:border-[#F26419]/40 ${cardClass}`}
             >
-              <div className="w-11 h-11 shrink-0 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20">
+              <div className="w-11 h-11 shrink-0 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20">
                 <Icon size={19} />
               </div>
               <div>

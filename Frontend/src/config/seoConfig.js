@@ -24,12 +24,20 @@ export const SITE_NAME = 'Site Audit';
 export const PUBLISHER = 'Success Ladder Technologies';
 export const PUBLISHER_URL = 'https://www.sltechsoft.com';
 
-// og:image must be an absolute URL to the logo asset, served from this origin.
-// favicon.png is the 512x512 master already in public/ — 87KB, within the limit.
+// The schema.org Organization logo — the square brand mark. favicon.png is the
+// 512x512 master already in public/, well within the size limit.
 export const LOGO_PATH = '/favicon.png';
 export const LOGO_WIDTH = 512;
 export const LOGO_HEIGHT = 512;
 export const logoUrl = () => `${SITE_ORIGIN}${LOGO_PATH}`;
+
+// og:image / twitter:image want a landscape card, not the square mark — a 512x512
+// logo gets letterboxed or cropped by every social preview. This is the brand kit's
+// 1200x630 Open Graph export, the size Facebook/LinkedIn/X all render natively.
+export const SOCIAL_IMAGE_PATH = '/og-image.png';
+export const SOCIAL_IMAGE_WIDTH = 1200;
+export const SOCIAL_IMAGE_HEIGHT = 630;
+export const socialImageUrl = () => `${SITE_ORIGIN}${SOCIAL_IMAGE_PATH}`;
 
 /** Absolute, self-referential canonical for a path. Trailing slash only for root. */
 export const canonicalFor = (pathname) => {

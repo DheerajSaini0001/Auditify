@@ -14,7 +14,7 @@ const PageHeader = ({
     return (
         <header className="relative text-center space-y-6 mb-10 px-4 pt-8">
             {/* Background Decoration */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-64 bg-gradient-to-r from-[#ea580c]/8 via-[#f97316]/6 to-[#ea580c]/8 blur-[100px] pointer-events-none -z-10"></div>
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-64 bg-gradient-to-r from-[#F26419]/8 via-[#F26419]/6 to-[#F26419]/8 blur-[100px] pointer-events-none -z-10"></div>
 
             {logo && (
                 <motion.div 
@@ -32,8 +32,8 @@ const PageHeader = ({
                     animate={{ opacity: 1, y: 0 }}
                     className={`inline-flex items-center gap-2 px-6 py-2 rounded-full border shadow-xl backdrop-blur-md transition-all duration-500 ${
                         darkMode 
-                            ? "bg-slate-900/40 border-[#ea580c]/25 text-orange-400 shadow-orange-500/10"
-                            : "bg-white/80 border-[#ea580c]/20 text-accent shadow-slate-200"
+                            ? "bg-slate-900/40 border-[#F26419]/25 text-orange-400 shadow-orange-500/10"
+                            : "bg-white/80 border-[#F26419]/20 text-accent shadow-slate-200"
                     }`}
                 >
                     {Icon && <Icon size={16} className="animate-pulse" />}
@@ -66,7 +66,7 @@ const PageHeader = ({
                     {titleAccent && (
                         <>
                             <br />
-                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] via-[#F97316] to-[#FB923C] drop-shadow-2xl">
+                            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] via-[#F26419] to-[#F4874A] drop-shadow-2xl">
                                 {titleAccent}
                             </span>
                         </>
@@ -85,7 +85,7 @@ const PageHeader = ({
                 initial={{ width: 0 }}
                 animate={{ width: "80px" }}
                 transition={{ delay: 0.5, duration: 1 }}
-                className={`h-1.5 mx-auto rounded-full bg-gradient-to-r from-[#EA580C] to-[#F97316] mt-8 shadow-lg shadow-orange-500/20`}
+                className={`h-1.5 mx-auto rounded-full bg-gradient-to-r from-[#F26419] to-[#F26419] mt-8 shadow-lg shadow-orange-500/20`}
             ></motion.div>
         </header>
     );

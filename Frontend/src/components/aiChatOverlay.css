@@ -54,12 +54,12 @@
   border-radius: 4px;
   font-family: monospace;
   font-size: 0.9em;
-  color: #818cf8;
+  color: #767DB4;
 }
 
 .prose pre {
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: #1E2833;
+  border: 1px solid #303945;
   color: #cbd5e1;
   padding: 12px;
   border-radius: 8px;
@@ -86,7 +86,7 @@
 /* Problem & Solution block support in overlay */
 .ai-problem-block {
   background: rgba(239, 68, 68, 0.08);
-  border-left: 4px solid #ef4444;
+  border-left: 4px solid #DA3D51;
   padding: 10px 14px;
   border-radius: 0 8px 8px 0;
   margin: 8px 0;
@@ -95,7 +95,7 @@
 
 .ai-solution-block {
   background: rgba(16, 185, 129, 0.08);
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #308D5C;
   padding: 10px 14px;
   border-radius: 0 8px 8px 0;
   margin: 8px 0;
@@ -110,7 +110,7 @@
   font-size: 1.1em;
   font-weight: 700;
   margin: 14px 0 6px;
-  color: #6366f1;
+  color: #585F99;
 }
 
 /* Pulse highlight for strategically recommended action */

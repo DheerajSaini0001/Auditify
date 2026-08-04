@@ -15,7 +15,7 @@ export default function Footer() {
     <footer className={`relative overflow-hidden transition-colors duration-500 border-t ${darkMode ? 'bg-[#060B18] border-white/5 text-slate-500' : 'bg-surface border-line text-muted'}`}>
 
       {/* Subtle Background Glow */}
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-32 bg-emerald-500/5 blur-[100px] pointer-events-none"></div>
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[80%] h-32 bg-accent/5 blur-[100px] pointer-events-none"></div>
 
       {/* Full-width on laptops: no narrow max-width cap, just comfortable side gutters. */}
       <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24 py-12">
@@ -36,9 +36,9 @@ export default function Footer() {
           <div className="space-y-5">
             <h2 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Get Started</h2>
             <ul className="space-y-4 text-sm font-semibold">
-              <li><Link to="/" state={{ focusAudit: true }} className="hover:text-emerald-500 transition-colors">Check My Website</Link></li>
+              <li><Link to="/" state={{ focusAudit: true }} className="hover:text-accent transition-colors">Check My Website</Link></li>
               {isAuthenticated && (
-                <li><Link to="/dashboard" className="hover:text-emerald-500 transition-colors">My Reports</Link></li>
+                <li><Link to="/dashboard" className="hover:text-accent transition-colors">My Reports</Link></li>
               )}
             </ul>
           </div>
@@ -47,9 +47,9 @@ export default function Footer() {
           <div className="space-y-5">
             <h2 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>About</h2>
             <ul className="space-y-4 text-sm font-semibold">
-              <li><Link to="/about" className="hover:text-emerald-500 transition-colors">About Us</Link></li>
-              <li><Link to="/services" className="hover:text-emerald-500 transition-colors">What We Do</Link></li>
-              <li><Link to="/contact" className="hover:text-emerald-500 transition-colors">Contact Us</Link></li>
+              <li><Link to="/about" className="hover:text-accent transition-colors">About Us</Link></li>
+              <li><Link to="/services" className="hover:text-accent transition-colors">What We Do</Link></li>
+              <li><Link to="/contact" className="hover:text-accent transition-colors">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -57,8 +57,8 @@ export default function Footer() {
           <div className="space-y-5">
             <h2 className={`text-xs font-black uppercase tracking-[0.2em] ${darkMode ? 'text-white' : 'text-ink'}`}>Help</h2>
             <ul className="space-y-4 text-sm font-semibold">
-              <li><Link to="/documentation" className="hover:text-emerald-500 transition-colors">How It Works</Link></li>
-              <li><Link to="/help" className="hover:text-emerald-500 transition-colors">Help Center</Link></li>
+              <li><Link to="/documentation" className="hover:text-accent transition-colors">How It Works</Link></li>
+              <li><Link to="/help" className="hover:text-accent transition-colors">Help Center</Link></li>
             </ul>
           </div>
 
@@ -67,15 +67,15 @@ export default function Footer() {
         <div className={`pt-6 border-t flex flex-col md:flex-row justify-between items-center gap-5 ${darkMode ? 'border-white/5' : 'border-linesoft'}`}>
           <div className="text-[12px] font-semibold flex items-center gap-2">
             <span className={darkMode ? 'text-slate-600' : 'text-faint'}>&copy; {new Date().getFullYear()}</span>
-            <a href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer" className={`hover:text-emerald-500 transition-colors ${darkMode ? 'text-white' : 'text-ink'}`}>
+            <a href="https://www.sltechsoft.com" target="_blank" rel="noopener noreferrer" className={`hover:text-accent transition-colors ${darkMode ? 'text-white' : 'text-ink'}`}>
               Success Ladder Technologies
             </a>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-3 text-[12px] font-semibold">
-            <Link to="/privacy" className="hover:text-emerald-500 transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-emerald-500 transition-colors">Terms of Use</Link>
-            <Link to="/cookies" className="hover:text-emerald-500 transition-colors">Cookie Policy</Link>
-            <Link to="/do-not-sell" className="hover:text-emerald-500 transition-colors whitespace-nowrap">Do Not Sell My Info</Link>
+            <Link to="/privacy" className="hover:text-accent transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-accent transition-colors">Terms of Use</Link>
+            <Link to="/cookies" className="hover:text-accent transition-colors">Cookie Policy</Link>
+            <Link to="/do-not-sell" className="hover:text-accent transition-colors whitespace-nowrap">Do Not Sell My Info</Link>
           </div>
         </div>
       </div>

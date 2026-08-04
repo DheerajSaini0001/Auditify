@@ -181,6 +181,10 @@ const ReportLayout = () => {
           </section>
 
           <section id="rawdata" className="scroll-mt-24">
+            {/* No `section` — this dumps whatever data the client actually holds,
+                and for a signed-out visitor the backend has already stripped the
+                gated pillars out of it. Gating it here as well would be a
+                frontend-only lock with nothing behind it. */}
             <ReportRestrictionWrapper>
               <RawData darkMode={darkMode} data={stableData} />
             </ReportRestrictionWrapper>

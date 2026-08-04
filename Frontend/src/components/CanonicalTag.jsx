@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   SITE_ORIGIN, SITE_NAME, PUBLISHER, PUBLISHER_URL,
-  LOGO_WIDTH, LOGO_HEIGHT, logoUrl, canonicalFor, resolveSeo,
+  logoUrl, socialImageUrl, SOCIAL_IMAGE_WIDTH, SOCIAL_IMAGE_HEIGHT,
+  canonicalFor, resolveSeo,
 } from '../config/seoConfig.js';
 
 /**
@@ -99,15 +100,15 @@ const CanonicalTag = () => {
     setMeta('property', 'og:url', canonical);
     setMeta('property', 'og:type', 'website');
     setMeta('property', 'og:site_name', SITE_NAME);
-    setMeta('property', 'og:image', logoUrl());
-    setMeta('property', 'og:image:width', String(LOGO_WIDTH));
-    setMeta('property', 'og:image:height', String(LOGO_HEIGHT));
+    setMeta('property', 'og:image', socialImageUrl());
+    setMeta('property', 'og:image:width', String(SOCIAL_IMAGE_WIDTH));
+    setMeta('property', 'og:image:height', String(SOCIAL_IMAGE_HEIGHT));
 
     // ── 5. Twitter ──
     setMeta('name', 'twitter:card', 'summary_large_image');
     setMeta('name', 'twitter:title', config.title);
     setMeta('name', 'twitter:description', config.description);
-    setMeta('name', 'twitter:image', logoUrl());
+    setMeta('name', 'twitter:image', socialImageUrl());
 
     // ── 6. JSON-LD ──
     // Organization + WebSite sitewide; a BreadcrumbList only where there is an

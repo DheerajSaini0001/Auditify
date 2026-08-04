@@ -60,29 +60,42 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
     navigate("/dashboard", { replace: true });
   };
 
-  const handleLogin = () => {
-    if (data?._id) {
-      savePostAuthIntent(data._id, `/report/${data._id}`);
-      navigate("/login", { state: { from: `/report/${data._id}` } });
-    } else if (location.pathname.startsWith("/report")) {
-      savePostAuthIntent("temp", location.pathname);
-      navigate("/login", { state: { from: location.pathname } });
+  // Every surface a visitor can be reading a report from. A section page is just as
+  // much "where I was" as the overview is.
+  const REPORT_PATHS = [
+    "/report", "/audit-summary", "/technical-performance", "/on-page-seo",
+    "/accessibility", "/security-compliance", "/ux-content-structure",
+    "/conversion-lead-flow", "/aio", "/aeo",
+  ];
+
+  /**
+   * Where to send the user back to after they authenticate.
+   *
+   * Prefers the URL they are actually on. This used to build `/report/${data._id}`
+   * from context whenever any report was loaded, which had two failure modes: it
+   * dropped them on the overview when they were reading a section tab, and if the
+   * context held a different (say, more recently run) report than the one in the
+   * address bar, it sent them to a report they were never looking at.
+   */
+  const postAuthReturnPath = () => {
+    const here = location.pathname + location.search;
+    if (REPORT_PATHS.some((p) => location.pathname.startsWith(p))) return here;
+    if (data?._id) return `/report/${data._id}`;
+    return null;
+  };
+
+  const goAuth = (target) => {
+    const from = postAuthReturnPath();
+    if (from) {
+      savePostAuthIntent(data?._id || "temp", from);
+      navigate(target, { state: { from } });
     } else {
-      navigate("/login");
+      navigate(target);
     }
   };
 
-  const handleRegister = () => {
-    if (data?._id) {
-      savePostAuthIntent(data._id, `/report/${data._id}`);
-      navigate("/register", { state: { from: `/report/${data._id}` } });
-    } else if (location.pathname.startsWith("/report")) {
-      savePostAuthIntent("temp", location.pathname);
-      navigate("/register", { state: { from: location.pathname } });
-    } else {
-      navigate("/register");
-    }
-  };
+  const handleLogin = () => goAuth("/login");
+  const handleRegister = () => goAuth("/register");
 
   // Styles dynamically based on scroll and theme
   const isTop = !isScrolled;
@@ -137,7 +150,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               className="flex items-center gap-3 group focus:outline-none"
             >
               <div className="relative">
-                <div className={`absolute opacity-0 rounded-full ${darkMode ? "bg-emerald-500" : "bg-emerald-400"}`}></div>
+                <div className={`absolute opacity-0 rounded-full ${darkMode ? "bg-accent" : "bg-accent"}`}></div>
                 <img
                   src={darkMode ? Assets.Logo : Assets.DarkLogo}
                   alt="Site Audit Logo"
@@ -157,8 +170,8 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
               <button
                 onClick={handleGoHome}
                 className={`hidden sm:flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-white shadow-lg transition-all
-                bg-orange-600 hover:bg-orange-350 hover:scale-[1.02] active:scale-[0.98]
-                shadow-orange-350/20`}
+                bg-accent hover:bg-accenthover hover:scale-[1.02] active:scale-[0.98]
+                shadow-accent/20`}
               >
                 <Plus className="w-5 h-5" />
                 <span>Start New Audit</span>
@@ -188,7 +201,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                           className="w-8 h-8 rounded-full border border-white/20 shadow-sm object-cover"
                         />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-[#16213E] flex items-center justify-center text-white text-[11px] font-black tracking-tight">
+                        <div className="w-8 h-8 rounded-full bg-ink flex items-center justify-center text-white text-[11px] font-black tracking-tight">
                           {getInitials(user?.name)}
                         </div>
                       )}
@@ -220,7 +233,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                     <button onClick={handleLogin} className={`px-4 py-1.5 rounded-lg text-sm font-semibold border ${buttonClass}`}>
                       Login
                     </button>
-                    <button onClick={handleRegister} className="hidden sm:block px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-orange-600 hover:bg-orange-350 shadow-md shadow-orange-600/20">
+                    <button onClick={handleRegister} className="hidden sm:block px-4 py-1.5 rounded-lg text-sm font-semibold text-white bg-accent hover:bg-accenthover shadow-md shadow-accent/20">
                       Sign Up
                     </button>
                   </div>

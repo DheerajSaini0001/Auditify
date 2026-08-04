@@ -4404,6 +4404,58 @@ export const InfoDetails = {
         ]
     },
 
+    // Answer Engine Optimization — the section headline score (spec §2.8).
+    // Figures below are read from AEO_SECTION_WEIGHTS in Backend/metricServices/
+    // aeoService.js. If those weights change, change them here too.
+    AEO_Methodology: {
+        icon: Bot,
+        badge: "Answer Engine Optimization",
+        title: "Answer Engine Optimization (AEO)",
+        guideLink: "https://developers.google.com/search/docs/appearance/structured-data",
+        whatThisMetricIs: (
+            <div className="space-y-2">
+                <p>This score measures how ready your page is to be used as <span className="font-semibold">the answer</span> — quoted, cited or summarised by an answer engine such as ChatGPT, Google Gemini or Perplexity — rather than merely ranked as a link.</p>
+                <p>It is a separate question from AIO readiness. AIO asks whether an AI <em>can read</em> your site; AEO asks whether, having read it, the AI would <em>trust and repeat</em> what it found.</p>
+            </div>
+        ),
+        whyItMatters: (
+            <div className="space-y-4">
+                <p>Answer engines return one synthesised answer, not ten blue links. If your page is not the source that answer is built from, the visit never happens — there is no second position to fall back to.</p>
+                <p>For a dealership this decides whether "who sells used cars near me" is answered with your inventory and your hours, or a competitor's.</p>
+            </div>
+        ),
+        whatToDoForAGoodScore: (
+            <div className="space-y-2">
+                <p>Lead with the answer, then explain — the first paragraph should stand alone as a complete reply to the page's question.</p>
+                <p>Mark up what you assert: page-appropriate schema, FAQ blocks for genuine questions, and a consistent name / address / phone everywhere it appears.</p>
+                <p>Let the engines in. Bot access is scored per engine, so blocking one crawler in robots.txt costs you that engine entirely.</p>
+            </div>
+        ),
+        howThisScoreIsCalculated: (
+            <div className="space-y-4">
+                <p>A graded weighted average over the parameters that apply to this page: <code>Σ(score × weight) ÷ Σ(weight)</code>. Each parameter is scored 0–100, then banded — <span className="font-semibold">≥75 passes</span>, <span className="font-semibold">25–74 warns</span>, <span className="font-semibold">below 25 fails</span>.</p>
+                <p>Because the divisor is the total weight of whichever parameters actually applied, the weights below <span className="font-semibold">do not need to add up to 100%</span>. Three parameters are page-specific and drop out where they are not relevant: FAQ / Q&amp;A blocks, sameAs breadth (home and about pages) and the E-E-A-T composite (editorial pages). A parameter whose probe could not run is renormalised out as well — never scored zero, which would punish you for a check that never happened.</p>
+                <p>Brand entity strength, markdown structure and page speed are shown for guidance but carry <span className="font-semibold">zero weight</span>, so the same signal is not counted twice here and in another section.</p>
+                <p>This is an Auditify composite index with heuristic confidence: no industry-standard external tool produces a comparable AEO score to check it against.</p>
+            </div>
+        ),
+        weightage: [
+            { param: "Schema markup (page-appropriate)", weight: "20%" },
+            { param: "Answer-first structure / TL;DR lead", weight: "15%" },
+            { param: "Bot access (averaged per engine)", weight: "11%" },
+            { param: "E-E-A-T composite (editorial pages)", weight: "10%" },
+            { param: "Machine-parseable tables & lists", weight: "9%" },
+            { param: "FAQ / Q&A blocks (page-specific)", weight: "7%" },
+            { param: "Entity recognition (Org schema + Knowledge Graph)", weight: "7%" },
+            { param: "Citation / NAP consistency", weight: "6%" },
+            { param: "Outbound citations & attribution", weight: "5%" },
+            { param: "Topical authority (depth + clustering)", weight: "5%" },
+            { param: "Index coverage", weight: "4%" },
+            { param: "sameAs validation (page-specific)", weight: "4%" },
+            { param: "/llms.txt present & well-formed", weight: "2%" },
+        ],
+    },
+
 };
 
 export default InfoDetails;

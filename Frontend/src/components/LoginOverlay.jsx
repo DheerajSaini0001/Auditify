@@ -44,7 +44,7 @@ export default function LoginPrompt({ darkMode }) {
 
         {/* Animated Icon */}
         <div className="mb-8 relative flex justify-center">
-          <div className="absolute inset-0 bg-[#ea580c]/15 rounded-full blur-2xl animate-pulse"></div>
+          <div className="absolute inset-0 bg-[#F26419]/15 rounded-full blur-2xl animate-pulse"></div>
 
           <div
             className={`relative p-6 rounded-full border shadow-inner ${darkMode

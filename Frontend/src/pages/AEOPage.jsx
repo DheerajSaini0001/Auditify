@@ -4,6 +4,8 @@ import AEOSignalCard from '../components/AEOSignalCard';
 import AEORecommendations from '../components/AEORecommendations';
 import PlatformScoreBar from '../components/PlatformScoreBar';
 import LivePreview from '../components/LivePreview';
+import { AuditShimmer } from '../components/reusablecomponent/AuditShimmer';
+import { Database, MessageSquareText, Bot, Quote } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { isVisibleForAudience } from '../config/parameterAudience';
@@ -21,6 +23,15 @@ import { savePostAuthIntent } from '../utils/intentStore';
 // Page-specific params (FAQ/Q&A, sameAs, E-E-A-T) render only where they apply
 // (aeo.params[key].applicable === false → dropped, matching the score). Brand
 // Entity Strength is informational (shown, weight 0).
+// What the AEO engine is doing while the user waits. Rotated by <AuditShimmer>,
+// the shared loading state used by every audit section.
+const AEO_AUDIT_STEPS = [
+    { icon: <Database className="w-8 h-8 text-accent" />, title: "Reading Your Markup", text: "Checking the schema an answer engine would use to understand this page..." },
+    { icon: <MessageSquareText className="w-8 h-8 text-accent" />, title: "Looking For Answers", text: "Finding whether your pages answer questions directly, in the first paragraph..." },
+    { icon: <Bot className="w-8 h-8 text-accent" />, title: "Testing Engine Access", text: "Confirming Gemini, ChatGPT and Perplexity are each allowed to read your site..." },
+    { icon: <Quote className="w-8 h-8 text-accent" />, title: "Weighing Trust Signals", text: "Assessing citations, attribution and consistency an engine would rely on before quoting you..." },
+];
+
 const AEO_PARAM_CARDS = [
     { paramKey: 'Schema_Markup',            signal: 'aeoSchema',           sig: 'schema',              title: 'Schema Markup',                                 description: 'Page-appropriate JSON-LD (FAQ/HowTo/Vehicle/Offer/LocalBusiness) that AI engines parse to verify your content.' },
     { paramKey: 'Answer_First_Structure',   signal: 'answerFirst',         sig: 'answerFirst',         title: 'Answer-First Structure',                        description: 'A direct, quotable answer in the first ~40–60 words / a TL;DR lead so engines can extract the nugget immediately.' },
@@ -106,7 +117,11 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     const showSignalBreakdown = AEO_SIGNAL_KEYS.some((s) => isVisibleForAudience(s, audienceMode));
 
     const [streamedAeo, setStreamedAeo] = React.useState(null);
-    const [streamStatus, setStreamStatus] = React.useState("Initializing AEO Engine...");
+    // The streamed status text this used to hold is gone with the bespoke loading
+    // card: the shared AuditShimmer is now rendered by AEO.jsx and, like the other
+    // seven sections, shows rotating steps rather than a live server message.
+    // Consistency was the point of the change; re-add a status line to AuditShimmer
+    // (it takes an optional `statusLine`) if this detail is wanted back everywhere.
     const [isStreaming, setIsStreaming] = React.useState(false);
     const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     
@@ -142,12 +157,9 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                                 const dataStr = line.replace('data: ', '').trim();
                                 if (!dataStr) continue;
                                 try {
-                                    const { type, data, error } = JSON.parse(dataStr);
+                                    const { type, data } = JSON.parse(dataStr);
                                     if (type === 'error') {
-                                        setStreamStatus("Error: " + error);
                                         break;
-                                    } else if (type === 'status') {
-                                        setStreamStatus(data.message);
                                     } else if (type === 'signal') {
                                         signals = { ...signals, [data.name]: data.data };
                                         setStreamedAeo(prev => ({ ...prev, signals }));
@@ -163,7 +175,6 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
                     }
                 } catch (e) {
                     console.error("Stream error", e);
-                    setStreamStatus("Failed to load AEO data.");
                     setIsStreaming(false);
                 }
             };
@@ -175,37 +186,11 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
     const aeo = auditData?.aeo || streamedAeo;
     const isComplete = aeo && aeo.overallScore !== undefined;
 
+    // The section's loading card (preview + shimmer) is rendered by AEO.jsx, in the
+    // same white card every other pillar uses. Returning null here keeps a second
+    // shimmer from stacking underneath it.
     if (!aeo || (!isComplete && Object.keys(aeo?.signals || {}).length === 0)) {
-        return (
-            <div className="max-w-7xl mx-auto space-y-24 mt-8 transition-colors duration-500">
-                <div className={`flex flex-col xl:flex-row items-center ${hideScreenshot ? "justify-center" : "gap-10 py-4"}`}>
-                    {!hideScreenshot && (
-                        <div className="w-full xl:w-[45%] flex items-center justify-center">
-                            <div className="w-full relative">
-                                <LivePreview data={auditData} variant="plain" />
-                            </div>
-                        </div>
-                    )}
-                    <div className={`w-full ${hideScreenshot ? "max-w-3xl" : "xl:w-[55%]"} flex flex-col items-center justify-center`}>
-                        <div className={`flex flex-col items-center justify-center w-full min-h-[400px] border border-dashed rounded-3xl p-12 ${darkMode ? "bg-slate-900 border-slate-800" : "bg-surface-2 border-line"}`}>
-                            {auditData?.aioReadiness?.Percentage !== undefined && (
-                                <div className="mb-8 flex flex-col items-center">
-                                    <div className="text-[3.5rem] font-black text-emerald-500 leading-none tracking-tighter mb-2">
-                                        {auditData.aioReadiness.Percentage}%
-                                    </div>
-                                    <div className="text-[10px] uppercase font-semibold tracking-widest text-muted mb-6">
-                                        Initial AIO Score
-                                    </div>
-                                </div>
-                            )}
-                            <div className={`animate-spin rounded-full h-12 w-12 border-b-2 mb-6 ${darkMode ? "border-indigo-400" : "border-indigo-600"}`}></div>
-                            <h3 className={`text-xl font-semibold ${darkMode ? "text-slate-200" : "text-inksoft"}`}>AEO Engine Analyzing...</h3>
-                            <p className={`text-sm mt-2 text-center max-w-sm ${darkMode ? "text-slate-500" : "text-faint"}`}>{streamStatus || "Generating Answer Engine Optimization scores across Gemini, ChatGPT, and Perplexity AI."}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
+        return null;
     }
 
     return (
@@ -224,36 +209,11 @@ const AEOPage = ({ auditData, darkMode, onInfo, hideScreenshot = false }) => {
 
             
             </div> 
-            {/* Header Section (Middle Row) */}
-            <header className={`flex flex-col md:flex-row md:items-end justify-between gap-8 pb-4 border-b border-transparent`}>
-                <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      
-                        <h1 className={`text-4xl md:text-[2.75rem] font-black tracking-tight ${darkMode ? "text-white" : "text-ink"} leading-none`}>
-                            Answer Engine <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Optimization</span>
-                        </h1>
-                    </div>
-                    <p className="text-[1.1rem] font-medium text-muted">Measuring your site's readiness for the next generation of AI search.</p>
-                    <span
-                        title="This score is Auditify's own composite index for answer-engine readiness. No industry-standard external tool produces a comparable AEO score to cross-check against."
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
-                    >
-                        <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                        Auditify Index · no external equivalent
-                    </span>
-                </div>
-
-                <div className="flex items-center gap-6">
-                    <div className="text-right">
-                        <div className="text-[3.5rem] font-black leading-none text-accent tracking-tighter">{isComplete ? `${aeo.overallScore}%` : '...'}</div>
-                        <div className="text-[10px] uppercase font-semibold tracking-[0.2em] mt-1 text-muted">AEO Mastery</div>
-                    </div>
-                    <div className={`h-16 w-[1px] ${darkMode ? "bg-slate-800" : "bg-line"}`}></div>
-                    <div className="text-xs font-medium leading-relaxed max-w-[120px] text-muted">
-                        Overall platform readiness across 5 signals.
-                    </div>
-                </div>
-            </header>
+            {/* The section's title, score and description used to live here in a
+                bespoke layout. They now come from <PillarHeader> in AEO.jsx, so AEO
+                matches the other seven pillars and stops being the only one without
+                pass/warn/fail tallies or a score ring. This file keeps the parts
+                that are genuinely AEO-specific: the platform gauges and signals. */}
 
             {/* Platform Master Grid (Bottom Row) */}
             {isComplete && (

@@ -16,35 +16,35 @@ import toast from 'react-hot-toast';
 // ── Category & Environment Config ───────────────────────────────────
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
-  { value: 'auth', label: 'Authentication', color: '#8b5cf6' },
-  { value: 'email', label: 'Email / SMTP', color: '#f59e0b' },
-  { value: 'api', label: 'API Keys', color: '#3b82f6' },
-  { value: 'database', label: 'Database', color: '#10b981' },
-  { value: 'security', label: 'Security', color: '#ef4444' },
-  { value: 'frontend', label: 'Frontend', color: '#06b6d4' },
-  { value: 'general', label: 'General', color: '#6b7280' },
+  { value: 'auth', label: 'Authentication', color: '#835795' },
+  { value: 'email', label: 'Email / SMTP', color: '#D18E14' },
+  { value: 'api', label: 'API Keys', color: '#3F6A99' },
+  { value: 'database', label: 'Database', color: '#308D5C' },
+  { value: 'security', label: 'Security', color: '#DA3D51' },
+  { value: 'frontend', label: 'Frontend', color: '#2A7F76' },
+  { value: 'general', label: 'General', color: '#6C7581' },
 ];
 
 const ENVIRONMENTS = [
   { value: 'all', label: 'All Environments', icon: Globe },
-  { value: 'development', label: 'Development', color: '#22c55e' },
-  { value: 'staging', label: 'Staging', color: '#f59e0b' },
-  { value: 'production', label: 'Production', color: '#ef4444' },
+  { value: 'development', label: 'Development', color: '#308D5C' },
+  { value: 'staging', label: 'Staging', color: '#D18E14' },
+  { value: 'production', label: 'Production', color: '#DA3D51' },
 ];
 
 const ACTION_COLORS = {
-  CREATE: '#22c55e',
-  UPDATE: '#3b82f6',
-  DELETE: '#ef4444',
-  ROLLBACK: '#f59e0b',
-  REVEAL: '#8b5cf6',
-  BULK_IMPORT: '#06b6d4',
-  CACHE_REFRESH: '#6b7280',
+  CREATE: '#308D5C',
+  UPDATE: '#3F6A99',
+  DELETE: '#DA3D51',
+  ROLLBACK: '#D18E14',
+  REVEAL: '#835795',
+  BULK_IMPORT: '#2A7F76',
+  CACHE_REFRESH: '#6C7581',
 };
 
-const getCategoryColor = (cat) => CATEGORIES.find(c => c.value === cat)?.color || '#6b7280';
+const getCategoryColor = (cat) => CATEGORIES.find(c => c.value === cat)?.color || '#6C7581';
 const getCategoryLabel = (cat) => CATEGORIES.find(c => c.value === cat)?.label || cat;
-const getEnvColor = (env) => ENVIRONMENTS.find(e => e.value === env)?.color || '#6b7280';
+const getEnvColor = (env) => ENVIRONMENTS.find(e => e.value === env)?.color || '#6C7581';
 
 // ── Main Component ──────────────────────────────────────────────────
 const AdminConfig = () => {
@@ -463,9 +463,9 @@ const AdminConfig = () => {
 
           {/* ── Stats Row ── */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-            <StatCard label="Total Configs" value={configs.length} icon={Database} color="#6366f1" dk={dk} />
-            <StatCard label="Sensitive" value={sensitiveCount} icon={Lock} color="#ef4444" dk={dk} />
-            <StatCard label="Categories" value={categoryGroups.length} icon={Filter} color="#f59e0b" dk={dk} />
+            <StatCard label="Total Configs" value={configs.length} icon={Database} color="#585F99" dk={dk} />
+            <StatCard label="Sensitive" value={sensitiveCount} icon={Lock} color="#DA3D51" dk={dk} />
+            <StatCard label="Categories" value={categoryGroups.length} icon={Filter} color="#D18E14" dk={dk} />
 
           </div>
 
@@ -892,10 +892,10 @@ const ConfigRow = ({ config, idx, total, dk, revealedValue, onReveal, openMenu, 
                     exit={{ opacity: 0, scale: 0.95 }}
                     className={`absolute right-0 ${idx > total - 3 && total > 2 ? 'bottom-full mb-2' : 'top-full mt-2'} w-48 z-[70] rounded-xl border shadow-2xl p-1.5 ${dk ? 'bg-[#111] border-white/[0.08]' : 'bg-card border-line'}`}
                   >
-                    <MenuButton icon={Settings} label="Edit" color="#6366f1" onClick={onEdit} dk={dk} />
-                    <MenuButton icon={History} label="History" color="#f59e0b" onClick={onHistory} dk={dk} />
+                    <MenuButton icon={Settings} label="Edit" color="#585F99" onClick={onEdit} dk={dk} />
+                    <MenuButton icon={History} label="History" color="#D18E14" onClick={onHistory} dk={dk} />
                     <div className={`my-1 border-t ${dk ? 'border-white/[0.06]' : 'border-linesoft'}`} />
-                    <MenuButton icon={Trash2} label="Delete" color="#ef4444" onClick={onDelete} dk={dk} />
+                    <MenuButton icon={Trash2} label="Delete" color="#DA3D51" onClick={onDelete} dk={dk} />
                   </motion.div>
                 </>
               )}
@@ -944,7 +944,7 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
               {/* Action Badge */}
               <div
                 className="w-2 h-2 rounded-full mt-2 flex-shrink-0"
-                style={{ backgroundColor: ACTION_COLORS[log.action] || '#6b7280' }}
+                style={{ backgroundColor: ACTION_COLORS[log.action] || '#6C7581' }}
               />
 
               <div className="flex-1 min-w-0">
@@ -952,8 +952,8 @@ const AuditTrail = ({ logs, loading, pagination, onPageChange, dk }) => {
                   <span
                     className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md"
                     style={{
-                      backgroundColor: (ACTION_COLORS[log.action] || '#6b7280') + '18',
-                      color: ACTION_COLORS[log.action] || '#6b7280'
+                      backgroundColor: (ACTION_COLORS[log.action] || '#6C7581') + '18',
+                      color: ACTION_COLORS[log.action] || '#6C7581'
                     }}
                   >
                     {log.action}

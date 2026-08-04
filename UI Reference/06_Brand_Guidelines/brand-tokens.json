@@ -1,0 +1,12 @@
+{
+  "name": "DealerSiteAudit",
+  "font_primary": "Manrope",
+  "colors": {
+    "heritage_navy": "#101C2C",
+    "performance_orange": "#F26419",
+    "warm_ivory": "#F7F5F0",
+    "graphite": "#303945",
+    "steel_gray": "#8B949E"
+  },
+  "tagline": "Dealership Website Intelligence"
+}

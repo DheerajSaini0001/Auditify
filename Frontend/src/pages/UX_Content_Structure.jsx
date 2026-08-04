@@ -1,7 +1,8 @@
 import React, { useContext, useMemo, useState } from "react";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -43,51 +44,6 @@ const uxEducationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.UX_And_Content_Methodology;
 
 
-const UxShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
-
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-accent dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MetricCard = ({ title, description, score, status, analysis, meta, infoOnly, darkMode, icon: Icon, type, className, onInfo }) => {
   const isPassed = status === 'pass' || score === 100;
@@ -900,17 +856,6 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
     { icon: <Loader2 className="w-8 h-8 text-amber-500" />, title: "Usability Signals", text: "Checking for broken links, loading feedback, and intrusive interstitials..." },
   ], []);
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
-  React.useEffect(() => {
-    if (loading || !data?.UXOrContentStructure) {
-      const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % auditSteps.length);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading, data, auditSteps.length]);
-
   const results = data?.UXOrContentStructure || {};
   const overallScore = results.Percentage || 0;
 
@@ -944,7 +889,7 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <UxShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+                <AuditShimmer darkMode={darkMode} steps={auditSteps} />
               </div>
             </div>
           </div>
@@ -971,9 +916,11 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
   const getStatus = (key) => results[key]?.Status ?? results[key]?.status;
   const getScoreValue = (key) => results[key]?.Score ?? results[key]?.score ?? 0;
 
-  const passedCount = metrics.filter(k => getStatus(k) === 'pass').length;
-  const warningCount = metrics.filter(k => getStatus(k) === 'warning').length;
-  const failedCount = metrics.filter(k => getStatus(k) === 'fail').length;
+  // Signed-out visitors get this section stripped, so fall back to the server's
+  // tallies rather than counting metrics that were never sent.
+  const passedCount = results?.locked ? (results.passedCount ?? 0) : metrics.filter(k => getStatus(k) === 'pass').length;
+  const warningCount = results?.locked ? (results.warningCount ?? 0) : metrics.filter(k => getStatus(k) === 'warning').length;
+  const failedCount = results?.locked ? (results.failedCount ?? 0) : metrics.filter(k => getStatus(k) === 'fail').length;
 
   // Define column spans for metrics with potentially large content
   const spanMap = {
@@ -1053,79 +1000,31 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
             )}
 
             {/* Right Panel: Metrics & Score */}
-            <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
-
-                {/* Top Content Area */}
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
-
-                  {/* Text Content */}
-                  <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                    <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                        <Layout className="w-3.5 h-3.5" />
-                        <span>UX Audit</span>
-                      </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                        UX & <span className={darkMode ? "text-blue-500" : "text-accent"}>Content</span>
-                      </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
-                        Detailed performance breakdown of user experience and content organization.
-                      </p>
-                      <span
-                        title="This score is Auditify's own composite index. Each check's threshold cites public guidance (Google, WCAG, UX research), but no industry-standard external tool produces a comparable UX score to cross-check against."
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                        Auditify Index · no external equivalent
-                      </span>
-                    </div>
-
-                    {/* Stats & Tools */}
-                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                      <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
-                        </div>
-                      </div>
-                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-slate-200 hidden md:block"}`}></div>
-                      <button
-                        onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
-                      >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Circular Progress */}
-                  <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                    <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            <PillarHeader
+              darkMode={darkMode}
+              fullReport={data.report === "All"}
+              badge={{ icon: Layout, label: "UX Audit" }}
+              note={<>
+                <span
+                  title="This score is Auditify's own composite index. Each check's threshold cites public guidance (Google, WCAG, UX research), but no industry-standard external tool produces a comparable UX score to cross-check against."
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                  Auditify Index · no external equivalent
+                </span>
+              </>}
+              title="UX &"
+              titleAccent="Content"
+              description="Detailed performance breakdown of user experience and content organization."
+              stats={{ passed: passedCount, warning: warningCount, failed: failedCount }}
+              score={overallScore}
+              onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+            />
           </div>
         </div>
 
         {/* Filtered Sections */}
-        <ReportRestrictionWrapper>
+        <ReportRestrictionWrapper section="UX & Content Structure">
           <div className="space-y-8">
             {sectionDefinitions.map((section, idx) => {
               const visibleKeys = section.keys.filter((key) => isVisibleForAudience(key, audienceMode));

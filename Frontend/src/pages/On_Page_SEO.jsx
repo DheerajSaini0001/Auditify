@@ -1,7 +1,7 @@
 import React, { useContext, useMemo } from "react";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -3031,7 +3031,7 @@ const SocialProfilesCard = ({ data, darkMode, onInfo, className = "" }) => {
     const u = (url || "").toLowerCase();
     const brand = SOCIAL_BRANDS.find((b) => b.match.some((d) => u.includes(d)));
     if (brand) return brand;
-    return { name: platformNameFromDomain(url), Icon: Globe, bg: darkMode ? "#4B5563" : "#6B7280", fg: "#FFFFFF" };
+    return { name: platformNameFromDomain(url), Icon: Globe, bg: darkMode ? "#4B5563" : "#6C7581", fg: "#FFFFFF" };
   };
 
   // Show EVERY profile URL — the union of on-page social links (meta.links) and
@@ -3399,6 +3399,13 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
   const { audienceMode } = useData();
   const vis = (key) => isVisibleForAudience(key, audienceMode);
   const segVisible = (keys) => keys.some((k) => isVisibleForAudience(k, audienceMode));
+
+  // A parameter the backend marked inapplicable (`meta.present === false`) is dropped
+  // from the score entirely by spec rule 6, so its card must not render either — a
+  // visible number that counts for nothing reads as a real result. This is how the
+  // cross-page uniqueness checks disappear on a single-page audit: with no sibling
+  // pages there is nothing to compare, so the question was never asked.
+  const applies = (metric) => metric?.meta?.present !== false;
   const contentMasteryVisible = segVisible(["Title", "H1", "Meta_Description", "Content_Relevance", "Content_Freshness", "Service_Content_Quality", "Content_Depth_Quality", "EEAT"]);
   const technicalFoundationVisible = segVisible(["Canonical", "Robots_Txt", "Sitemap", "Title_Uniqueness", "Meta_Description_Uniqueness", "Title_Location_Optimization", "Structured_Data", "URL_Structure", "URL_Slugs"]);
   const mediaVisible = segVisible(["Image", "Video", "Heading_Hierarchy", "Semantic_Tags"]);
@@ -3435,7 +3442,9 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
       seo.VDP_Content_Uniqueness,
       seo.SRP_Index_Control,
       seo.SRP_To_VDP_Links
-    ].filter(Boolean);
+      // Inapplicable parameters are excluded so the "N Passed · N Failed" header
+      // tallies only what is actually on the page and actually in the score.
+    ].filter(Boolean).filter(applies);
 
     let passed = 0;
     let warning = 0;
@@ -3467,12 +3476,12 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
       <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-surface"} transition-colors duration-300`}>
         <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
           {/* ✅ Card 1: URL Header Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             <UrlHeader data={data} darkMode={darkMode} hideBorder={true} />
           </div>
 
           {/* ✅ Card 2: Overview / Preview Card */}
-          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
+          <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Left Panel: Live Preview (Only if not All) */}
               {data?.report !== "All" && (
@@ -3485,7 +3494,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <AuditShimmer darkMode={darkMode} loading={loading} data={data?.onPageSEO} auditSteps={auditSteps} />
+                <AuditShimmer darkMode={darkMode} steps={auditSteps} />
               </div>
             </div>
           </div>
@@ -3499,7 +3508,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
       <main className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 ${data?.report === "All" ? "pt-8" : "pt-0"} pb-8 space-y-6`}>
 
         {/* ✅ Card 1: URL Header Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <UrlHeader
             data={data}
             darkMode={darkMode}
@@ -3511,7 +3520,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
         </div>
 
         {/* ✅ Card 2: Overview / Preview Card */}
-        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-surface border border-line shadow-xl shadow-slate-200/50"}`}>
+        <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           <div className={`flex flex-col xl:flex-row ${data.report === "All" ? "" : "min-h-[300px]"}`}>
 
             {/* Left Panel: Live Preview (Only if not All) */}
@@ -3524,84 +3533,31 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
               </div>
             )}
 
-            {/* Right Panel: Metrics & Score */}
-            <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
-
-                {/* Top Content Area */}
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
-
-                  {/* Text Content */}
-                  <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                    <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accent/20"}`}>
-                          <Search className="w-3.5 h-3.5" />
-                          <span>SEO Audit</span>
-                        </div>
-                        {seo.Confidence && (
-                          <span
-                            title="On-Page SEO is scored from page markup/DOM inference — not field or lab measurement."
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-slate-700/60 text-slate-300 border border-slate-600" : "bg-surface-2 text-muted border border-line"}`}
-                          >
-                            <Info className="w-3 h-3" />
-                            {seo.Confidence} signal
-                          </span>
-                        )}
-                      </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                        On-Page <span className="text-accent">SEO</span>
-                      </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
-                        Deep dive into your content strategy, technical structure, and user experience signals.
-                      </p>
-                    </div>
-
-                    {/* Stats & Tools */}
-                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                      <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{metricStats.passed} Passed</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <AlertTriangle size={18} className="text-amber-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{metricStats.warning} Warning</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{metricStats.failed} Failed</span>
-                        </div>
-                      </div>
-                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-surface-2 hidden md:block"}`}></div>
-                      <button
-                        onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
-                      >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Circular Progress */}
-                  <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${overallScore >= 75 ? "bg-emerald-500" : overallScore >= 25 ? "bg-amber-500" : "bg-rose-500"}`}></div>
-                    <CircularProgress value={overallScore} size={data.report === "All" ? 180 : 150} stroke={14} />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{overallScore}%</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
+            <PillarHeader
+              darkMode={darkMode}
+              fullReport={data.report === "All"}
+              badge={{ icon: Search, label: "SEO Audit" }}
+              chips={seo.Confidence && (
+                <span
+                  title="On-Page SEO is scored from page markup/DOM inference — not field or lab measurement."
+                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-slate-700/60 text-slate-300 border border-slate-600" : "bg-surface-2 text-muted border border-line"}`}
+                >
+                  <Info className="w-3 h-3" />
+                  {seo.Confidence} signal
+                </span>
+              )}
+              title="On-Page"
+              titleAccent="SEO"
+              description="Deep dive into your content strategy, technical structure, and user experience signals."
+              stats={metricStats}
+              score={overallScore}
+              onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+            />
           </div>
         </div>
 
         {/* Content Mastery */}
-        <ReportRestrictionWrapper>
+        <ReportRestrictionWrapper section="On Page SEO">
           <div className="space-y-6">
             {contentMasteryVisible && (
             <Section title="Content Mastery" icon={FileText} darkMode={darkMode} gridClasses="grid-cols-1 md:grid-cols-2">
@@ -3695,7 +3651,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                 onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Sitemap, icon: Search })}
               />
               )}
-              {seo.Title_Uniqueness && vis('Title_Uniqueness') && (
+              {seo.Title_Uniqueness && applies(seo.Title_Uniqueness) && vis('Title_Uniqueness') && (
                 <UniquenessCard
                   data={seo.Title_Uniqueness}
                   darkMode={darkMode}
@@ -3706,7 +3662,7 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
                   onInfo={() => setSelectedParameterInfo({ ...InfoDetails.Title_Uniqueness, icon: Copy })}
                 />
               )}
-              {seo.Meta_Description_Uniqueness && vis('Meta_Description_Uniqueness') && (
+              {seo.Meta_Description_Uniqueness && applies(seo.Meta_Description_Uniqueness) && vis('Meta_Description_Uniqueness') && (
                 <UniquenessCard
                   data={seo.Meta_Description_Uniqueness}
                   darkMode={darkMode}

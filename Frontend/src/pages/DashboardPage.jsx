@@ -3,6 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useData } from '../context/DataContext.jsx';
+import { scoreBand, scoreBandHex } from '../utils/statusColors.js';
+import { PAGE_TYPES, DEFAULT_PAGE_SCOPES } from '../config/pageTypes';
 import {
   Plus,
   Globe,
@@ -14,6 +16,7 @@ import {
   FileText,
   Download,
   ShieldCheck,
+  Check,
   LogOut,
   RefreshCw,
   Zap,
@@ -39,8 +42,51 @@ import toast from 'react-hot-toast';
 import { useProjectsCache } from '../hooks/useProjectsCache';
 import { useAuditPolling } from '../hooks/useAuditPolling';
 
-// Custom absolute-centered Circular Progress
-const CircularProgress = ({ score, size = 66, strokeWidth = 4, color = "#3b82f6", darkMode = false }) => {
+/* ─────────────────────────────────────────
+   Remembers that this account has already had its Search Console properties pulled
+   in once, so the automatic import does not keep resurrecting properties the user
+   deleted. Keyed per account so signing in as someone else still gets their first
+   import. Losing this key (cleared storage, new browser) costs exactly one extra
+   sync — deliberately cheap to be wrong about.
+───────────────────────────────────────── */
+const GSC_AUTOSYNC_KEY = 'dealerpulse_gsc_autosynced';
+
+const gscAutoSyncKeyFor = (user) => user?._id || user?.userId || user?.email || null;
+
+const hasAutoSyncedGsc = (user) => {
+  const id = gscAutoSyncKeyFor(user);
+  if (!id) return true; // no identity yet — don't fire a sync we can't attribute
+  try {
+    const seen = JSON.parse(localStorage.getItem(GSC_AUTOSYNC_KEY) || '[]');
+    return Array.isArray(seen) && seen.includes(id);
+  } catch {
+    return false;
+  }
+};
+
+const markGscAutoSynced = (user) => {
+  const id = gscAutoSyncKeyFor(user);
+  if (!id) return;
+  try {
+    const seen = JSON.parse(localStorage.getItem(GSC_AUTOSYNC_KEY) || '[]');
+    const next = Array.isArray(seen) ? seen : [];
+    if (!next.includes(id)) next.push(id);
+    localStorage.setItem(GSC_AUTOSYNC_KEY, JSON.stringify(next));
+  } catch {
+    /* storage unavailable — worst case the import runs again next visit */
+  }
+};
+
+// Custom absolute-centered Circular Progress.
+//
+// The ring colour comes from the score's band, never from the metric. Each of these
+// rings used to carry a hardcoded per-metric colour (performance blue, accessibility
+// violet, conversion yellow …) which meant the colour said "this is the SEO ring"
+// while the label right beside it said "Excellent" — a 100% score drew in blue. Two
+// colour languages in one row. Now the ring, the dot and the label all read from
+// scoreBand().
+const CircularProgress = ({ score, size = 66, strokeWidth = 4, darkMode = false }) => {
+  const color = scoreBandHex(score);
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   const strokeDashoffset = circumference - (score / 100) * circumference;
@@ -53,7 +99,7 @@ const CircularProgress = ({ score, size = 66, strokeWidth = 4, color = "#3b82f6"
           cy={size / 2}
           r={radius}
           fill="transparent"
-          stroke={darkMode ? "#1e293b" : "#E7E0D2"}
+          stroke={darkMode ? "#303945" : "#E4E1D9"}
           strokeWidth={strokeWidth}
           className="transition-colors duration-300"
         />
@@ -166,8 +212,16 @@ const DashboardPage = () => {
       refresh();
     }
 
-    // Auto GSC Sync on mount for Google Account users
-    if (user?.authProvider === 'google' && user?.googleAccessToken) {
+    // GSC sync runs automatically ONCE, to populate a Google account's very first
+    // visit. After that it is the "Sync GSC" button's job.
+    //
+    // It used to run on every mount, which quietly undid deletions: remove a
+    // property, refresh, and the sync pulled it straight back from Search Console.
+    // Deleting is a hard delete server-side (removeWebsite pulls it off the user),
+    // so there was nothing on the backend to remember the user's intent — the
+    // re-import always won.
+    if (user?.authProvider === 'google' && user?.googleAccessToken && !hasAutoSyncedGsc(user)) {
+      markGscAutoSynced(user);
       handleSync();
     }
   }, [refresh, location.state]);
@@ -386,13 +440,13 @@ const DashboardPage = () => {
     return { isAudited: false, status: 'not_started' };
   };
 
-  // Rating shown next to each metric. Same three bands the report and the
-  // documentation page use (90+ good, 50–89 needs work, below 50 poor) so a score
-  // never reads as "Good" in one place and "Needs work" in another.
+  // Rating shown next to each metric. Reads straight from the shared score bands
+  // so a score never says "Good" here and something else on the report.
   const getRatingInfo = (score) => {
-    if (score >= 90) return { label: "Good", dotColor: "bg-emerald-500" };
-    if (score >= 50) return { label: "Needs work", dotColor: "bg-amber-500" };
-    return { label: "Poor", dotColor: "bg-rose-500" };
+    const band = scoreBand(score);
+    return band
+      ? { label: band.label, dotColor: band.solidBg }
+      : { label: "—", dotColor: "bg-faint" };
   };
 
   // Filter GSC + local properties
@@ -418,16 +472,35 @@ const DashboardPage = () => {
   const [directUrl, setDirectUrl] = useState("");
   const [directAuditing, setDirectAuditing] = useState(false);
 
-  // New parameters for device and audit type
-  const [directDevice, setDirectDevice] = useState("Mobile");
+  // New parameters for device and audit type. Desktop matches the default on the
+  // home-page audit form, so the same URL run from either entry point behaves the
+  // same way. Users can still switch to Mobile from the dropdown.
+  const [directDevice, setDirectDevice] = useState("Desktop");
   const [directReport, setDirectReport] = useState("All");
   const [deviceOpen, setDeviceOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  // Which page types this audit crawls. Defaults to just the URL typed in — the
+  // same default the home-page form uses, so the two entry points agree.
+  const [directScopes, setDirectScopes] = useState(DEFAULT_PAGE_SCOPES);
+  const [scopeOpen, setScopeOpen] = useState(false);
 
   const closeAllDropdowns = () => {
     setDeviceOpen(false);
     setReportOpen(false);
+    setScopeOpen(false);
   };
+
+  const toggleDirectScope = (key) =>
+    setDirectScopes((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+  // Mirrors the wording on the home-page form so the same selection reads the same
+  // way in both places.
+  const directScopeLabel = (() => {
+    if (directScopes.length === 0) return 'No pages';
+    if (directScopes.length === PAGE_TYPES.length) return 'All pages';
+    if (directScopes.length === 1 && directScopes[0] === 'home') return 'This page only';
+    return `${directScopes.length} pages`;
+  })();
 
   // Close any open dropdown when clicking outside it. Each dropdown wrapper carries a
   // data-dropdown="<id>" marker; a mousedown anywhere closes every dropdown except the
@@ -481,7 +554,10 @@ const DashboardPage = () => {
     toast.loading(`Starting audit for ${targetUrl}...`, { id: 'direct-audit-toast' });
 
     try {
-      const result = await runAudit(targetUrl, directDevice, directReport, null);
+      // Whatever the page-scope dropdown has selected. This used to pass null, which
+      // the API reads as "every page type", so the quick-audit bar silently ran a far
+      // heavier crawl than the home-page form.
+      const result = await runAudit(targetUrl, directDevice, directReport, false, directScopes);
       toast.dismiss('direct-audit-toast');
 
       if (result?.success === false) {
@@ -807,8 +883,57 @@ const DashboardPage = () => {
             )}
           </div>
 
-          {/* The scope picker that sat here offered a single option ("Homepage (Fast)")
-              and its value was never sent with the audit request — removed. */}
+          {/* 5. Page-scope picker — which page types the crawl covers.
+              An earlier picker here offered a single option ("Homepage (Fast)") and
+              its value was never sent with the request; this one is multi-select and
+              its keys go to the API. Defaults to the entered page only. */}
+          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="scope">
+            <button
+              onClick={() => {
+                const state = !scopeOpen;
+                closeAllDropdowns();
+                setScopeOpen(state);
+              }}
+              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-surface-2 hover:bg-cardsoft text-inksoft border border-line'}`}
+            >
+              <span className="truncate">{directScopeLabel}</span>
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {scopeOpen && (
+              <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-64 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
+                <button
+                  onClick={() =>
+                    setDirectScopes(
+                      directScopes.length === PAGE_TYPES.length ? [] : PAGE_TYPES.map((p) => p.key)
+                    )
+                  }
+                  className={`w-full flex items-center justify-between px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors duration-250 text-accent ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-surface-2'}`}
+                >
+                  <span>{directScopes.length === PAGE_TYPES.length ? 'Clear all' : 'Select all'}</span>
+                  <span>{directScopes.length}/{PAGE_TYPES.length}</span>
+                </button>
+
+                <div className="max-h-64 overflow-y-auto">
+                  {PAGE_TYPES.map((pt) => {
+                    const on = directScopes.includes(pt.key);
+                    return (
+                      <button
+                        key={pt.key}
+                        onClick={() => toggleDirectScope(pt.key)}
+                        className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2.5 transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${on ? (darkMode ? 'text-white' : 'text-ink') : ''}`}
+                      >
+                        <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${on ? 'bg-accent border-accent' : (darkMode ? 'border-slate-600' : 'border-line')}`}>
+                          {on && <Check size={11} className="text-white" strokeWidth={3} />}
+                        </span>
+                        <span className="truncate">{pt.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Audit Submit Button */}
           <button
@@ -901,12 +1026,31 @@ const DashboardPage = () => {
               )}
             </div>
 
-            {/* Manual Sync Button */}
+            {/* Re-import from Search Console. This is now the ONLY way GSC properties
+                come back after the first automatic import — deliberately, so deleting
+                a property sticks across refreshes. Note it will also restore anything
+                previously deleted that is still in Search Console, because a delete is
+                a hard delete with nothing recording the user's intent. */}
+            {user?.authProvider === 'google' && user?.googleAccessToken && (
+              <button
+                onClick={handleSync}
+                disabled={syncing || loading}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-ink hover:bg-inksoft text-white rounded-lg text-xs font-semibold transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
+                title="Re-import your properties from Google Search Console"
+              >
+                <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} />
+                <span>{syncing ? 'Syncing…' : 'Sync GSC'}</span>
+              </button>
+            )}
+
+            {/* Refresh only re-reads what is already saved — it does not talk to
+                Search Console. Labelled accordingly; it used to be commented as the
+                "Manual Sync Button", which is what made the two look interchangeable. */}
             <button
               onClick={() => refresh(true)}
               disabled={loading}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all duration-300 active:scale-[0.98] disabled:opacity-50"
-              title="Force Sync with Backend"
+              title="Reload your saved sites"
             >
               <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
               <span>Refresh</span>
@@ -1206,7 +1350,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/technical-performance/${scores.auditId}` : `/technical-performance`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.performance} color="#0070f3" darkMode={darkMode} />
+                        <CircularProgress score={scores.performance} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           Performance
                         </span>
@@ -1221,7 +1365,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/on-page-seo/${scores.auditId}` : `/on-page-seo`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.seo} color="#10b981" darkMode={darkMode} />
+                        <CircularProgress score={scores.seo} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           SEO Score
                         </span>
@@ -1236,7 +1380,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/accessibility/${scores.auditId}` : `/accessibility`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.accessibility} color="#7c3aed" darkMode={darkMode} />
+                        <CircularProgress score={scores.accessibility} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           Accessibility
                         </span>
@@ -1251,7 +1395,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/security-compliance/${scores.auditId}` : `/security-compliance`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.security} color="#10b981" darkMode={darkMode} />
+                        <CircularProgress score={scores.security} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           Security
                         </span>
@@ -1266,7 +1410,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/ux-content-structure/${scores.auditId}` : `/ux-content-structure`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.onPage} color="#f97316" darkMode={darkMode} />
+                        <CircularProgress score={scores.onPage} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           On-Page SEO
                         </span>
@@ -1281,7 +1425,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/conversion-lead-flow/${scores.auditId}` : `/conversion-lead-flow`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.conversion} color="#eab308" darkMode={darkMode} />
+                        <CircularProgress score={scores.conversion} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           Conversion
                         </span>
@@ -1296,7 +1440,7 @@ const DashboardPage = () => {
                         onClick={() => navigate(scores.auditId ? `/aio/${scores.auditId}` : `/aio`)}
                         className={`flex flex-col items-center text-center p-2 rounded-xl transition-all duration-300 border-none bg-transparent group ${darkMode ? 'hover:bg-slate-800' : 'hover:bg-surface-2'}`}
                       >
-                        <CircularProgress score={scores.aiReadiness} color="#0d9488" darkMode={darkMode} />
+                        <CircularProgress score={scores.aiReadiness} darkMode={darkMode} />
                         <span className={`text-[11px] font-black uppercase tracking-wide mt-3 transition-colors duration-300 ${darkMode ? 'text-slate-400 group-hover:text-white' : 'text-muted group-hover:text-ink'}`}>
                           AI Readiness
                         </span>

@@ -21,13 +21,15 @@ import logger from "./logger.js";
  * is not spawned until a slot frees. A waiting audit reports its queue position
  * so the client can say "waiting" instead of pretending work is happening.
  *
- * MAX_CONCURRENT_AUDITS=1 serialises audits completely (strictest, best data);
- * the default of 2 lets a second audit make progress on the pool's spare
- * capacity without the 3-way starvation above.
+ * MAX_CONCURRENT_AUDITS=1 serialises audits completely — the default, because
+ * "spare capacity" is a fiction on the production box (App Service B2, 2 vCPU):
+ * a second audit has nothing to make progress ON, it just splits the same two
+ * cores and both runs score on timed-out pillars. Data correctness beats
+ * throughput here; a second audit waits in the queue and says so.
  */
 const MAX_CONCURRENT_AUDITS = Math.max(
   1,
-  parseInt(process.env.MAX_CONCURRENT_AUDITS || "2", 10) || 2
+  parseInt(process.env.MAX_CONCURRENT_AUDITS || "1", 10) || 1
 );
 
 let running = 0;

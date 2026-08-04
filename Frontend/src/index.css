@@ -3,11 +3,11 @@ html {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: var(--app-surface, #F7F3EA);
-  color: var(--app-ink, #16213E);
+  background-color: var(--app-surface, #F7F5F0);
+  color: var(--app-ink, #101C2C);
 }
 
 input, button, textarea, select {
@@ -23,7 +23,7 @@ input, button, textarea, select {
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Manrope', sans-serif;
   --animate-shimmer: shimmer 1.5s infinite linear;
 
   @keyframes shimmer {
@@ -35,6 +35,289 @@ input, button, textarea, select {
       transform: translateX(100%);
     }
   }
+
+  /* ═══════════════════════════════════════════════════════════════
+     BRAND PALETTE OVERRIDE
+
+     ~5,400 Tailwind colour utilities are spread across 87 files, and a
+     large share of them are load-bearing: emerald/amber/rose encode audit
+     pass / warn / fail on every report page. Rewriting those call sites
+     would have been thousands of edits with a real chance of flattening a
+     "fail" into a "pass".
+
+     So the ramps themselves are rebranded here instead. Every existing
+     `bg-slate-100`, `text-emerald-600`, `border-rose-200` keeps working and
+     keeps its meaning — it just renders in brand colour now. One file to
+     review, one file to revert.
+
+     Two rules shaped the values:
+       1. Neutrals resolve to the brand's own neutrals, so the chrome of the
+          app is literally Warm Ivory → Steel Gray → Graphite → Heritage Navy.
+       2. Status hues stay hue-separated (green ≠ amber ≠ red) but are
+          desaturated to sit beside Performance Orange instead of fighting it.
+     Decorative hues (blue/indigo/violet/cyan/teal) are pulled toward the
+     navy family — still mutually distinguishable, no longer a rainbow.
+     ═══════════════════════════════════════════════════════════════ */
+
+  /* ═══════════════════════════════════════════════════════════════
+     SCORE BANDS — the five audit levels.
+
+     These sit deliberately OUTSIDE the brand palette: a score readout has to
+     read as good/bad at a glance, which is a different job from brand
+     expression. They are their own namespace precisely because the brand
+     override below remaps Tailwind's ramps — `text-green-500` renders brand
+     green (#308D5C), so the spec colours would be silently lost if score
+     colours borrowed those ramps. See utils/statusColors.js.
+
+     `-ink` variants are the same hue darkened for small label text. #84CC16 on
+     Warm Ivory is roughly 2:1 contrast — fine as a 10px-thick ring, illegible
+     as 12px type — so indicators keep the spec colour and labels step down.
+     ═══════════════════════════════════════════════════════════════ */
+  --color-score-excellent: #22C55E;      /* 90–100 Excellent          */
+  --color-score-good: #84CC16;           /* 75–89  Good               */
+  --color-score-warn: #F59E0B;           /* 50–74  Needs Improvement  */
+  --color-score-poor: #F97316;           /* 25–49  Poor               */
+  --color-score-critical: #EF4444;       /*  0–24  Critical           */
+
+  --color-score-excellent-ink: #15803D;
+  --color-score-good-ink: #4D7C0F;
+  --color-score-warn-ink: #B45309;
+  --color-score-poor-ink: #C2410C;
+  --color-score-critical-ink: #B91C1C;
+
+  /* ── Neutrals → Warm Ivory / Steel Gray / Graphite / Heritage Navy ── */
+  --color-slate-50: #F7F5F0;
+  --color-slate-100: #EFEDE7;
+  --color-slate-200: #E0DFD9;
+  --color-slate-300: #C9CBCC;
+  --color-slate-400: #A9AFB6;
+  --color-slate-500: #8B949E;
+  --color-slate-600: #6C7581;
+  --color-slate-700: #4E5762;
+  --color-slate-800: #303945;
+  --color-slate-900: #1E2833;
+  --color-slate-950: #101C2C;
+
+  --color-gray-50: #F7F5F0;
+  --color-gray-100: #EFEDE7;
+  --color-gray-200: #E0DFD9;
+  --color-gray-300: #C9CBCC;
+  --color-gray-400: #A9AFB6;
+  --color-gray-500: #8B949E;
+  --color-gray-600: #6C7581;
+  --color-gray-700: #4E5762;
+  --color-gray-800: #303945;
+  --color-gray-900: #1E2833;
+  --color-gray-950: #101C2C;
+
+  --color-neutral-50: #F7F5F0;
+  --color-neutral-100: #EFEDE7;
+  --color-neutral-200: #E0DFD9;
+  --color-neutral-300: #C9CBCC;
+  --color-neutral-400: #A9AFB6;
+  --color-neutral-500: #8B949E;
+  --color-neutral-600: #6C7581;
+  --color-neutral-700: #4E5762;
+  --color-neutral-800: #303945;
+  --color-neutral-900: #1E2833;
+  --color-neutral-950: #101C2C;
+
+  --color-zinc-50: #F7F5F0;
+  --color-zinc-100: #EFEDE7;
+  --color-zinc-200: #E0DFD9;
+  --color-zinc-300: #C9CBCC;
+  --color-zinc-400: #A9AFB6;
+  --color-zinc-500: #8B949E;
+  --color-zinc-600: #6C7581;
+  --color-zinc-700: #4E5762;
+  --color-zinc-800: #303945;
+  --color-zinc-900: #1E2833;
+  --color-zinc-950: #101C2C;
+
+  /* ── Orange → Performance Orange #F26419 ── */
+  --color-orange-50: #FEF4ED;
+  --color-orange-100: #FDE5D5;
+  --color-orange-200: #FAC8A9;
+  --color-orange-300: #F7A97A;
+  --color-orange-400: #F4874A;
+  --color-orange-500: #F26419;
+  --color-orange-600: #D4520E;
+  --color-orange-700: #AC420C;
+  --color-orange-800: #85330A;
+  --color-orange-900: #672807;
+  --color-orange-950: #391604;
+
+  /* ── Success (emerald / green) — audit "pass" ── */
+  --color-emerald-50: #EDF7F1;
+  --color-emerald-100: #D3ECDD;
+  --color-emerald-200: #A9D9BE;
+  --color-emerald-300: #78C199;
+  --color-emerald-400: #4BA777;
+  --color-emerald-500: #308D5C;
+  --color-emerald-600: #26724B;
+  --color-emerald-700: #1F5C3D;
+  --color-emerald-800: #194830;
+  --color-emerald-900: #133826;
+  --color-emerald-950: #0A2115;
+
+  --color-green-50: #EDF7F1;
+  --color-green-100: #D3ECDD;
+  --color-green-200: #A9D9BE;
+  --color-green-300: #78C199;
+  --color-green-400: #4BA777;
+  --color-green-500: #308D5C;
+  --color-green-600: #26724B;
+  --color-green-700: #1F5C3D;
+  --color-green-800: #194830;
+  --color-green-900: #133826;
+  --color-green-950: #0A2115;
+
+  /* ── Warning (amber / yellow) — audit "needs work" ── */
+  --color-amber-50: #FDF7E9;
+  --color-amber-100: #FAEBC7;
+  --color-amber-200: #F5D690;
+  --color-amber-300: #EFBD55;
+  --color-amber-400: #E9A72C;
+  --color-amber-500: #D18E14;
+  --color-amber-600: #AE7310;
+  --color-amber-700: #8B5B0D;
+  --color-amber-800: #6D470A;
+  --color-amber-900: #553708;
+  --color-amber-950: #2F1E04;
+
+  --color-yellow-50: #FDF7E9;
+  --color-yellow-100: #FAEBC7;
+  --color-yellow-200: #F5D690;
+  --color-yellow-300: #EFBD55;
+  --color-yellow-400: #E9A72C;
+  --color-yellow-500: #D18E14;
+  --color-yellow-600: #AE7310;
+  --color-yellow-700: #8B5B0D;
+  --color-yellow-800: #6D470A;
+  --color-yellow-900: #553708;
+  --color-yellow-950: #2F1E04;
+
+  /* ── Danger (rose / red / pink) — audit "fail" ── */
+  --color-rose-50: #FDEFF1;
+  --color-rose-100: #FAD8DD;
+  --color-rose-200: #F4B1BB;
+  --color-rose-300: #ED8694;
+  --color-rose-400: #E36174;
+  --color-rose-500: #DA3D51;
+  --color-rose-600: #BA2E40;
+  --color-rose-700: #972533;
+  --color-rose-800: #771D28;
+  --color-rose-900: #5D1720;
+  --color-rose-950: #340C12;
+
+  --color-red-50: #FDEFF1;
+  --color-red-100: #FAD8DD;
+  --color-red-200: #F4B1BB;
+  --color-red-300: #ED8694;
+  --color-red-400: #E36174;
+  --color-red-500: #DA3D51;
+  --color-red-600: #BA2E40;
+  --color-red-700: #972533;
+  --color-red-800: #771D28;
+  --color-red-900: #5D1720;
+  --color-red-950: #340C12;
+
+  --color-pink-50: #FDEFF1;
+  --color-pink-100: #FAD8DD;
+  --color-pink-200: #F4B1BB;
+  --color-pink-300: #ED8694;
+  --color-pink-400: #E36174;
+  --color-pink-500: #DA3D51;
+  --color-pink-600: #BA2E40;
+  --color-pink-700: #972533;
+  --color-pink-800: #771D28;
+  --color-pink-900: #5D1720;
+  --color-pink-950: #340C12;
+
+  /* ── Decorative hues → pulled toward the navy family ── */
+  --color-blue-50: #EFF3F8;
+  --color-blue-100: #DAE3EF;
+  --color-blue-200: #B5C7DE;
+  --color-blue-300: #8BA7C9;
+  --color-blue-400: #6288B2;
+  --color-blue-500: #3F6A99;
+  --color-blue-600: #33557B;
+  --color-blue-700: #2A4563;
+  --color-blue-800: #21374E;
+  --color-blue-900: #1A2B3D;
+  --color-blue-950: #0F1924;
+
+  --color-sky-50: #EDF5F8;
+  --color-sky-100: #D6E8EF;
+  --color-sky-200: #ADD1DF;
+  --color-sky-300: #7EB4C9;
+  --color-sky-400: #5295B0;
+  --color-sky-500: #327896;
+  --color-sky-600: #286078;
+  --color-sky-700: #214E61;
+  --color-sky-800: #1A3E4D;
+  --color-sky-900: #15313C;
+  --color-sky-950: #0C1D24;
+
+  --color-cyan-50: #ECF6F5;
+  --color-cyan-100: #D2EAE7;
+  --color-cyan-200: #A5D5CF;
+  --color-cyan-300: #72BAB2;
+  --color-cyan-400: #459C93;
+  --color-cyan-500: #2A7F76;
+  --color-cyan-600: #21665F;
+  --color-cyan-700: #1B534D;
+  --color-cyan-800: #16423D;
+  --color-cyan-900: #113330;
+  --color-cyan-950: #091E1C;
+
+  --color-teal-50: #ECF6F5;
+  --color-teal-100: #D2EAE7;
+  --color-teal-200: #A5D5CF;
+  --color-teal-300: #72BAB2;
+  --color-teal-400: #459C93;
+  --color-teal-500: #2A7F76;
+  --color-teal-600: #21665F;
+  --color-teal-700: #1B534D;
+  --color-teal-800: #16423D;
+  --color-teal-900: #113330;
+  --color-teal-950: #091E1C;
+
+  --color-indigo-50: #F1F2F9;
+  --color-indigo-100: #DFE1F1;
+  --color-indigo-200: #BFC3E2;
+  --color-indigo-300: #9AA0CD;
+  --color-indigo-400: #767DB4;
+  --color-indigo-500: #585F99;
+  --color-indigo-600: #474D7B;
+  --color-indigo-700: #3A3F64;
+  --color-indigo-800: #2E324F;
+  --color-indigo-900: #24273D;
+  --color-indigo-950: #141625;
+
+  --color-violet-50: #F6F1F8;
+  --color-violet-100: #EBDFF0;
+  --color-violet-200: #D7BFE0;
+  --color-violet-300: #BC9BCA;
+  --color-violet-400: #9F76B0;
+  --color-violet-500: #835795;
+  --color-violet-600: #6A4578;
+  --color-violet-700: #563761;
+  --color-violet-800: #442C4C;
+  --color-violet-900: #35223B;
+  --color-violet-950: #1D1221;
+
+  --color-purple-50: #F6F1F8;
+  --color-purple-100: #EBDFF0;
+  --color-purple-200: #D7BFE0;
+  --color-purple-300: #BC9BCA;
+  --color-purple-400: #9F76B0;
+  --color-purple-500: #835795;
+  --color-purple-600: #6A4578;
+  --color-purple-700: #563761;
+  --color-purple-800: #442C4C;
+  --color-purple-900: #35223B;
+  --color-purple-950: #1D1221;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -44,37 +327,44 @@ input, button, textarea, select {
    Use the generated utilities (bg-surface, text-ink, text-muted,
    border-line, bg-card, bg-accent, …) instead of hardcoded colours.
    ───────────────────────────────────────────────────────────── */
+/* Values below are the five approved brand colours from
+   UI Reference/06_Brand_Guidelines/brand-tokens.json, plus tints derived from
+   them. The named brand colours are exact — do not "adjust" them; the in-between
+   steps (surface-2, card-soft, line, accent-soft) are interpolations and may be
+   retuned. */
 :root,
 .light {
-  --app-surface: #F7F3EA;        /* page background (cream)            */
-  --app-surface-2: #F1EBDD;      /* slightly deeper cream sections     */
+  --app-surface: #F7F5F0;        /* Warm Ivory — page background       */
+  --app-surface-2: #EFEBE3;      /* deeper ivory for banded sections   */
   --app-card: #FFFFFF;           /* cards / panels                     */
-  --app-card-soft: #FDFBF6;      /* subtle card / inset                */
-  --app-ink: #16213E;            /* headings / primary text (navy)     */
-  --app-ink-soft: #2A3656;       /* strong body text                   */
-  --app-muted: #5A6B87;          /* secondary text (slate-blue)        */
-  --app-faint: #8A97AD;          /* tertiary / placeholder text        */
-  --app-line: #E7E0D2;           /* borders / dividers (warm)          */
-  --app-line-soft: #EFE9DC;      /* subtle borders                     */
-  --app-accent: #EA580C;         /* brand orange                       */
-  --app-accent-hover: #C2410C;   /* orange hover                       */
-  --app-accent-soft: #FBE8DD;    /* orange tint background             */
+  --app-card-soft: #FBFAF7;      /* subtle card / inset                */
+  --app-ink: #101C2C;            /* Heritage Navy — headings           */
+  --app-ink-soft: #303945;       /* Graphite — strong body copy        */
+  --app-muted: #5C6674;          /* secondary text (Graphite→Steel)    */
+  --app-faint: #8B949E;          /* Steel Gray — tertiary text         */
+  --app-line: #E4E1D9;           /* borders / dividers (warm neutral)  */
+  --app-line-soft: #EDEBE4;      /* subtle borders                     */
+  --app-accent: #F26419;         /* Performance Orange                 */
+  --app-accent-hover: #D4520E;   /* orange hover                       */
+  --app-accent-soft: #FDE9DD;    /* orange tint background             */
 }
 
+/* Dark theme is currently unreachable — ThemeContext hardcodes "light" — but the
+   values are kept in brand so the block is correct if it is ever switched back on. */
 .dark {
-  --app-surface: #0A0520;
-  --app-surface-2: #0B1120;
-  --app-card: #0B1120;
-  --app-card-soft: #131A2E;
+  --app-surface: #0A121C;
+  --app-surface-2: #101C2C;      /* Heritage Navy                      */
+  --app-card: #101C2C;
+  --app-card-soft: #1A2634;
   --app-ink: #FFFFFF;
-  --app-ink-soft: #E2E8F0;       /* slate-200 */
-  --app-muted: #94A3B8;          /* slate-400 */
-  --app-faint: #64748B;          /* slate-500 */
-  --app-line: #1E293B;           /* slate-800 */
-  --app-line-soft: #233044;
-  --app-accent: #EA580C;
-  --app-accent-hover: #C2410C;
-  --app-accent-soft: rgba(234, 88, 12, 0.15);
+  --app-ink-soft: #E0DFD9;
+  --app-muted: #A9AFB6;
+  --app-faint: #8B949E;          /* Steel Gray                         */
+  --app-line: #303945;           /* Graphite                           */
+  --app-line-soft: #3A434F;
+  --app-accent: #F26419;         /* Performance Orange                 */
+  --app-accent-hover: #F4874A;
+  --app-accent-soft: rgba(242, 100, 25, 0.15);
 }
 
 @theme inline {

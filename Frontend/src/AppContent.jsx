@@ -62,12 +62,23 @@ const GuestRouteWrapper = ({ children }) => {
   const [isFetching, setIsFetching] = React.useState(false);
 
   React.useEffect(() => {
-    // If we have an ID in URL but no data (or mismatch), fetch it to restore state on refresh
-    if (id && (!data || data._id !== id)) {
-      setIsFetching(true);
-      fetchSingleReport(id).finally(() => setIsFetching(false));
-    }
-  }, [id, data, fetchSingleReport]);
+    if (!id) return;
+
+    // A guest's copy of a report has the gated sections stripped by the server and
+    // flagged `locked`. After signing in, that copy is not merely stale — it is
+    // missing the very content they signed in to read, so the blur would lift to
+    // reveal an empty panel. The data says which copy it is, so ask it rather than
+    // trying to track auth transitions across mounts.
+    const holdsGatedCopy =
+      !!data &&
+      Object.values(data).some((v) => v && typeof v === "object" && v.locked === true);
+
+    const needsFetch = !data || data._id !== id || (isAuthenticated && holdsGatedCopy);
+    if (!needsFetch) return;
+
+    setIsFetching(true);
+    fetchSingleReport(id).finally(() => setIsFetching(false));
+  }, [id, data, isAuthenticated, fetchSingleReport]);
 
   if (isLoading || isFetching) return null; // Wait silently for auth resolution
 

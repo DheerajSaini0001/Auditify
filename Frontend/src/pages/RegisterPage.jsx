@@ -5,6 +5,7 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { User, Mail, Lock, Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Assets from '../assets/Assets.js';
+import brandingBg from '../assets/brand/auth-branding.png';
 import './RegisterPage.css';
 
 const RegisterPage = () => {
@@ -91,15 +92,20 @@ const RegisterPage = () => {
       <div className={`register-wrapper ${darkMode ? 'dark' : 'light'}`}>
         {/* Left Side: Branding */}
         <div className="register-branding">
+          {/* Was pointing at an absolute path on a developer's machine, so it 404'd
+              in every build. Now a bundled brand asset. */}
           <img
-            src="/Users/dheeraj/.gemini/antigravity/brain/395eb820-345b-4db5-9b19-dad312edc833/registration_branding_image_1777615204902.png"
-            alt="Branding"
+            src={brandingBg}
+            alt=""
+            aria-hidden="true"
             className="branding-image-bg"
           />
           <div className="branding-overlay"></div>
           <div className="branding-content">
             <Link to="/">
-              <img src={Assets.Logo} alt="Site Audit" className="h-12 w-auto mb-10 brightness-0 invert" />
+              {/* Assets.Logo is already the white-on-dark lockup, so no invert filter
+                  — that would flatten the orange growth mark to white. */}
+              <img src={Assets.Logo} alt="Site Audit" className="h-12 w-auto mb-10" />
             </Link>
             <h1 className="branding-title">Start Your Journey with Site Audit</h1>
             <p className="branding-subtitle">

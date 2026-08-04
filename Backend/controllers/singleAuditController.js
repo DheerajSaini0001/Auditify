@@ -9,6 +9,7 @@ import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
+import { gateReportForViewer } from "../utils/reportGating.js";
 import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
 import { detectSiteType } from "../utils/siteTypeDetector.js";
 import { registerWorkerWithManager } from "../utils/browserManager.js";
@@ -197,7 +198,7 @@ export const startAudit = async (req, res) => {
 
       auditLog.save().catch(err => logger.error("Error saving cached AuditLog", err));
 
-      return res.status(200).json(existing);
+      return res.status(200).json(gateReportForViewer(existing, !!req.user));
     }
  
     // ⭐ ENHANCEMENT: Extract one OR MORE sections from an existing "Full Audit".
@@ -278,7 +279,7 @@ export const startAudit = async (req, res) => {
           });
           auditLog.save().catch(err => logger.error("Error saving extracted AuditLog", err));
 
-          return res.status(200).json(newSectionReport);
+          return res.status(200).json(gateReportForViewer(newSectionReport, !!req.user));
         }
       }
     }
@@ -287,9 +288,9 @@ export const startAudit = async (req, res) => {
     // in-memory store first (the in-progress report isn't in Mongo yet), then Mongo.
     await new Promise(resolve => setTimeout(resolve, 200));
     const raceDup = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null });
-    if (raceDup) return res.status(200).json(raceDup);
+    if (raceDup) return res.status(200).json(gateReportForViewer(raceDup, !!req.user));
     const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
-    if (raceCheck) return res.status(200).json(raceCheck);
+    if (raceCheck) return res.status(200).json(gateReportForViewer(raceCheck, !!req.user));
 
     // The frontend already ran /single-audit/discover for this URL and knows the
     // siteType from that single homepage fetch — trust it when supplied so we
@@ -594,11 +595,32 @@ export const startAudit = async (req, res) => {
 
 // Enforce the same per-user access control whether the report comes from the
 // in-memory store or Mongo. Returns true if the requester may see this report.
+// A report with no userId is a guest run. Those are already readable by anyone
+// holding the id — a signed-out GET /single-audit/:id returns one today — so
+// letting a signed-in user read them grants no access that did not already exist.
+//
+// Scoping them to `userId` instead did something much worse: it made the report a
+// visitor was reading disappear the moment they signed in, because their new
+// userId could never equal the null on the doc. The report pages then sat on
+// "Analyzing…" forever waiting for data that was 404ing. That is the exact path a
+// visitor takes when they hit the sign-up gate on a locked section, so the gate
+// was breaking the flow it exists to drive.
+const isUnownedReport = (report) => !report?.userId;
+
 const canAccessReport = (req, report) => {
-  if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-    return String(report.userId || "") === String(req.user.userId || "");
-  }
-  return true;
+  // Admins see everything.
+  if (req.user && (req.user.role === 'admin' || req.user.role === 'super_admin')) return true;
+
+  // Signed out: only guest runs. This branch used to be skipped entirely for
+  // anonymous requests — `if (req.user && …)` meant no scoping was applied at all,
+  // so anyone holding a report id could read someone else's report without logging
+  // in. Ids are ObjectIds so they are not guessable, but a shared link was enough.
+  if (!req.user) return isUnownedReport(report);
+
+  // Signed in: own reports, plus unowned guest runs so the report a visitor was
+  // reading does not vanish the moment they create an account.
+  if (isUnownedReport(report)) return true;
+  return String(report.userId || "") === String(req.user.userId || "");
 };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -617,9 +639,16 @@ const resolveReport = async (req, id, projection = null) => {
   if (liveDoc) return { doc: liveDoc, ok: canAccessReport(req, liveDoc) };
 
   // 2) Mongo, with a short cooldown+retry to ride out the flush / write-lag window.
+  // Mirrors canAccessReport — keep the two in step. `userId: null` also matches
+  // docs missing the field, which is how older guest reports were written.
   const query = { _id: id };
-  if (req.user && req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-    query.userId = req.user.userId; // non-admins only see their own reports
+  if (!req.user) {
+    // Signed out: guest runs only. Previously unscoped, which let anyone with a
+    // report id read another account's report.
+    query.userId = null;
+  } else if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+    // Own reports, plus unowned guest runs so a visitor's report survives sign-up.
+    query.$or = [{ userId: req.user.userId }, { userId: null }];
   }
 
   for (let attempt = 0; attempt < REPORT_LOOKUP_RETRIES; attempt++) {
@@ -648,7 +677,7 @@ export const getReportById = async (req, res) => {
     if (!doc || !ok) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
-    res.status(200).json(doc);
+    res.status(200).json(gateReportForViewer(doc, !!req.user));
   } catch (error) {
     logger.error("Error fetching report", error);
     res.status(500).json({ message: "Internal Server Error" });

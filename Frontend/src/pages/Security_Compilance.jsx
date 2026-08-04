@@ -1,7 +1,8 @@
 import React, { useContext, useMemo } from "react";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -45,51 +46,6 @@ const iconMap = {
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.Security_And_Compliance_Methodology;
 
-const SecurityShimmer = ({ darkMode, steps = [], currentStep = 0 }) => {
-  const step = steps[currentStep] || steps[0];
-
-  return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-in fade-in zoom-in duration-500 min-h-[350px]">
-      <div className={`w-full max-w-xl rounded-[32px] p-8 flex flex-col items-center text-center transition-all duration-500 ${darkMode ? "bg-slate-800/40 border border-slate-700/50" : "bg-cardsoft border border-line"}`}>
-        {/* Icon Container (Circle) */}
-        <div className={`w-20 h-20 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${darkMode ? "bg-slate-900 shadow-black/40 text-white" : "bg-[#1e293b] shadow-slate-400/30 text-white"}`}>
-          <div className="animate-pulse">
-            {React.cloneElement(step.icon, {
-              className: "w-8 h-8",
-              strokeWidth: 2.5
-            })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h2 className={`mt-6 text-2xl font-semibold tracking-tight transition-all duration-500 ${darkMode ? "text-white" : "text-ink"}`}>
-          {step.title}
-        </h2>
-
-        {/* Description */}
-        <p className={`mt-4 text-base leading-relaxed max-w-sm mx-auto transition-all duration-500 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-          {step.text}
-        </p>
-
-        {/* Processing State */}
-        <div className="mt-8 flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span className="text-xs font-semibold uppercase tracking-wider">Processing</span>
-        </div>
-
-        {/* Progress Indicators */}
-        <div className="flex items-center gap-2 mt-6">
-          {steps.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all duration-500 ${i === currentStep ? "w-6 bg-blue-500" : i < currentStep ? "w-6 bg-blue-500/40" : "w-2 bg-slate-400/30"}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
   const { status, details, meta, analysis } = data || {};
@@ -927,17 +883,6 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
     { icon: <Key className="w-8 h-8 text-amber-500" />, title: "Access Control", text: "Testing for exposed admin panels, weak default credentials, secure form submission, and MFA availability..." },
   ], []);
 
-  const [activeStep, setActiveStep] = React.useState(0);
-
-  React.useEffect(() => {
-    if (loading || !data?.securityOrCompliance) {
-      const interval = setInterval(() => {
-        setActiveStep((prev) => (prev + 1) % auditSteps.length);
-      }, 2000);
-      return () => clearInterval(interval);
-    }
-  }, [loading, data, auditSteps.length]);
-
   const metric = data?.securityOrCompliance || {};
 
   if (!data?.securityOrCompliance) {
@@ -970,7 +915,7 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
               )}
               {/* Right Panel: Shimmer */}
               <div className="flex-1 flex flex-col justify-center">
-                <SecurityShimmer darkMode={darkMode} steps={auditSteps} currentStep={activeStep} />
+                <AuditShimmer darkMode={darkMode} steps={auditSteps} />
               </div>
             </div>
           </div>
@@ -981,10 +926,13 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
 
   const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
+  // For a signed-out visitor this section arrives with its detail stripped, so the
+  // per-metric tallies would all be 0 next to a real score. The server sends the
+  // counts instead — see Backend/utils/reportGating.js.
   const allMetrics = Object.values(metric).filter(val => typeof val === 'object' && val !== null && 'status' in val);
-  const passedCount = allMetrics.filter(m => m.status === "pass").length;
-  const warningCount = allMetrics.filter(m => m.status === "warning").length;
-  const failedCount = allMetrics.filter(m => m.status === "fail").length;
+  const passedCount = metric?.locked ? (metric.passedCount ?? 0) : allMetrics.filter(m => m.status === "pass").length;
+  const warningCount = metric?.locked ? (metric.warningCount ?? 0) : allMetrics.filter(m => m.status === "warning").length;
+  const failedCount = metric?.locked ? (metric.failedCount ?? 0) : allMetrics.filter(m => m.status === "fail").length;
 
   return (
     <div className={`w-full ${mainBg} transition-colors duration-300`}>
@@ -1014,78 +962,35 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
               </div>
             )}
 
-            <div className={`flex-1 ${data.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-              <div className={`w-full ${data.report === "All" ? "" : "max-w-2xl mx-auto"} ${data.report === "All" ? "space-y-7" : "space-y-6"}`}>
-                <div className={`flex flex-col md:flex-row items-center ${data.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
-                  <div className={`flex-1 ${data.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                    <div className={`${data.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                      <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" : "bg-accentsoft text-accent border border-accentsoft"}`}>
-                        <ShieldCheck className="w-3.5 h-3.5" />
-                        <span>Security Audit</span>
-                      </div>
-                      <h3 className={`${data.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                        Security & <span className="text-accent">Compliance</span>
-                      </h3>
-                      <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
-                        Comprehensive analysis of your web application's security posture.
-                      </p>
-                      {metric?.Confidence && (
-                        <div className="flex flex-wrap items-center gap-1.5 pt-1" title={metric?.Note || ""}>
-                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${darkMode ? "text-slate-300 border-slate-700 bg-slate-800/60" : "text-slate-600 border-slate-200 bg-slate-100"}`}>
-                            <Info className="w-3 h-3" /> Confidence: {metric.Confidence}
-                          </span>
-                          {metric?.Coverage && (
-                            <span className={`text-[10px] leading-snug opacity-70 ${darkMode ? "text-slate-400" : "text-muted"}`}>
-                              {metric.Coverage}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <div className={`flex flex-wrap items-center ${data.report === "All" ? "gap-6" : "gap-5"}`}>
-                      <div className={`flex items-center ${data.report === "All" ? "gap-5" : "gap-4"}`}>
-                        <div className="flex items-center gap-2">
-                          <CheckCircle size={18} className="text-emerald-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
-                        </div>
-                        {warningCount > 0 && (
-                          <div className="flex items-center gap-2">
-                            <AlertTriangle size={18} className="text-amber-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warning</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2">
-                          <XCircle size={18} className="text-rose-500" />
-                          <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
-                        </div>
-                      </div>
-                      <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
-                      <button
-                        onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                        className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-blue-400 hover:text-blue-300" : "text-accent hover:text-accenthover"}`}
-                      >
-                        <Info size={16} />
-                        <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                      </button>
-                    </div>
+            <PillarHeader
+              darkMode={darkMode}
+              fullReport={data.report === "All"}
+              badge={{ icon: ShieldCheck, label: "Security Audit" }}
+              note={<>
+                {metric?.Confidence && (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1" title={metric?.Note || ""}>
+                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${darkMode ? "text-slate-300 border-slate-700 bg-slate-800/60" : "text-slate-600 border-slate-200 bg-slate-100"}`}>
+                      <Info className="w-3 h-3" /> Confidence: {metric.Confidence}
+                    </span>
+                    {metric?.Coverage && (
+                      <span className={`text-[10px] leading-snug opacity-70 ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                        {metric.Coverage}
+                      </span>
+                    )}
                   </div>
-
-                  <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                    <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${metric?.Percentage >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                    <CircularProgress value={metric?.Percentage || 0} size={data.report === "All" ? 180 : 150} stroke={14} />
-                    <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                      <span className={`${data.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{metric?.Percentage || 0}%</span>
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+                )}
+              </>}
+              title="Security &"
+              titleAccent="Compliance"
+              description="Comprehensive analysis of your web application's security posture."
+              stats={{ passed: passedCount, warning: warningCount, failed: failedCount }}
+              score={metric?.Percentage || 0}
+              onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+            />
           </div>
         </div>
 
-        <ReportRestrictionWrapper>
+        <ReportRestrictionWrapper section="Security/Compliance">
           <div className="space-y-8">
             {(() => {
               // Params that don't apply to this page are hidden outright rather than

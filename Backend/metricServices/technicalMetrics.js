@@ -2367,14 +2367,33 @@ export default async function technicalMetrics(url, device, page, response, brow
   // and a 100% headline. Detect that and mark the lab metrics "not calculated" instead
   // (the CrUX/field evaluators already return null when their data is absent).
   const psiUsable = !!data?.lighthouseResult;
-  const PSI_FAIL_REASON = "Google PageSpeed could not analyze this URL — Lighthouse returned no data (the site may be too slow, blocking automated requests, or the PageSpeed API key/quota is unavailable).";
-  const PSI_FAIL_REC = "Confirm the site loads in Google PageSpeed Insights and that the PageSpeed API key/quota is configured, then re-run the audit.";
+  // googleAPI attaches a classified `_psiFailure` ({kind, code, reason}) whenever it
+  // gives up. Prefer it: the old blanket string listed every possible cause at once
+  // ("too slow, blocking automated requests, or the API key/quota is unavailable"),
+  // which sent people to the Cloud Console for what was usually a slow target page or
+  // our own attempt deadline firing. Fall back to the generic wording only if the
+  // failure came from somewhere that predates the classifier.
+  const psiFailure = data?._psiFailure;
+  const PSI_FAIL_REASON = psiFailure?.reason
+    || "Google PageSpeed could not analyze this URL — Lighthouse returned no data (the site may be too slow, blocking automated requests, or the PageSpeed API key/quota is unavailable).";
+  // Point the reader at the thing that is actually wrong, not at a generic checklist.
+  const PSI_FAIL_REC = {
+    auth: "Fix the PageSpeed API key in Google Cloud Console: enable the PageSpeed Insights API on its project and remove any HTTP-referrer restriction (server-side calls send no referrer — use an IP restriction or none).",
+    config: "Set API_KEY in the platform configuration (or the backend environment) and re-run the audit.",
+    quota: "The PageSpeed daily/per-minute quota is exhausted. Wait for the quota window to reset or request a higher limit, then re-run the audit.",
+    crawl: "This is a problem with the target page, not the audit: open it in Google PageSpeed Insights to confirm. Typical causes are bot protection blocking Google's crawler, a redirect chain, a non-HTML response, or a page that never paints.",
+    timeout: "The page is slow enough that Lighthouse exceeded this audit's PageSpeed budget. Raise PAGESPEED_TOTAL_BUDGET_MS (and PILLAR_TECH_TIMEOUT_MS with it) or re-run when the site is under less load.",
+    request: "This is an internal bug in how the audit builds the PageSpeed request — report it rather than changing any site or key setting.",
+    upstream: "Google PageSpeed itself returned a server error. Re-run the audit shortly; no configuration change is needed.",
+    network: "The backend could not reach googleapis.com. Check outbound network/DNS/proxy from the audit host.",
+  }[psiFailure?.kind]
+    || "Confirm the site loads in Google PageSpeed Insights and that the PageSpeed API key/quota is configured, then re-run the audit.";
   const labOrNA = (fn) => (psiUsable ? fn() : notCalculated(PSI_FAIL_REASON, PSI_FAIL_REC));
 
   // One clear decision line — pairs with the [PageSpeed] retry trail so you can confirm
   // the whole flow: retries fired → gave up → section marked Not Run.
   if (!psiUsable) {
-    logger.warn(`[Technical] PageSpeed unusable for ${url} (${wantDevice}) — Core Web Vitals "Not Run", section excluded from overall (delivery checks still run on the live page).`);
+    logger.warn(`[Technical] PageSpeed unusable for ${url} (${wantDevice}) [${psiFailure?.code || 'UNCLASSIFIED'}] — Core Web Vitals "Not Run", section excluded from overall (delivery checks still run on the live page). Cause: ${PSI_FAIL_REASON}`);
   }
 
   const pageSpeedScore = evaluatePageSpeedScore(data, wantDevice);

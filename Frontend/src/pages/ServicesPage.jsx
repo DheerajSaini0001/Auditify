@@ -123,14 +123,14 @@ export default function ServicesPage() {
         <header className="text-center space-y-5 pt-4">
           <div
             className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center border ${
-              darkMode ? "bg-[#ea580c]/10 border-[#ea580c]/25 text-orange-400" : "bg-[#ea580c]/10 border-[#ea580c]/20 text-accent"
+              darkMode ? "bg-[#F26419]/10 border-[#F26419]/25 text-orange-400" : "bg-[#F26419]/10 border-[#F26419]/20 text-accent"
             }`}
           >
             <Layers size={28} />
           </div>
           <h1 className={`text-4xl md:text-5xl font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
             Everything we{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#EA580C] to-[#FB923C]">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#F26419] to-[#F4874A]">
               check for you
             </span>
           </h1>
@@ -146,9 +146,9 @@ export default function ServicesPage() {
           {SERVICES.map(({ icon: Icon, title, desc, points }) => (
             <div
               key={title}
-              className={`rounded-2xl border p-6 transition-all hover:border-[#ea580c]/40 ${cardClass}`}
+              className={`rounded-2xl border p-6 transition-all hover:border-[#F26419]/40 ${cardClass}`}
             >
-              <div className="w-11 h-11 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20 mb-4">
+              <div className="w-11 h-11 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20 mb-4">
                 <Icon size={19} />
               </div>
               <h3 className="font-semibold text-lg mb-1.5">{title}</h3>
@@ -177,7 +177,7 @@ export default function ServicesPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {DELIVERABLES.map(({ icon: Icon, title, desc }) => (
               <div key={title} className={`rounded-3xl border p-7 ${cardClass}`}>
-                <div className="w-11 h-11 rounded-xl bg-[#ea580c]/10 flex items-center justify-center text-accent border border-[#ea580c]/20 mb-4">
+                <div className="w-11 h-11 rounded-xl bg-[#F26419]/10 flex items-center justify-center text-accent border border-[#F26419]/20 mb-4">
                   <Icon size={19} />
                 </div>
                 <h3 className="font-semibold text-lg mb-2">{title}</h3>
@@ -226,7 +226,7 @@ export default function ServicesPage() {
               className={`inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border font-semibold transition-colors ${
                 darkMode
                   ? "border-slate-700 text-slate-200 hover:border-slate-600"
-                  : "border-line text-ink hover:border-[#ea580c]/40"
+                  : "border-line text-ink hover:border-[#F26419]/40"
               }`}
             >
               Ask us a question

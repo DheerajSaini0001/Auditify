@@ -3,14 +3,20 @@ import { motion } from 'framer-motion';
 import { Zap, Search, Accessibility, ShieldCheck, LayoutDashboard, Cpu, Target, Sparkles } from 'lucide-react';
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 
+// The pillars used to run through a seven-hue rainbow (blue/purple/rose/cyan/amber/
+// indigo), none of which are brand colours. Colour was never carrying meaning here —
+// each card is already identified by its icon, title and tag — so these now cycle
+// through the three approved neutrals-plus-accent, which keeps the grid varied
+// without inventing palette. Keys keep their old names so the pillar list below
+// (and anything else referencing them) does not have to change.
 const COLOR_MAP = {
-    orange: { text: 'text-orange-400', accent: '#f97316', bg: '#f9731610' },
-    blue: { text: 'text-blue-400', accent: '#3b82f6', bg: '#3b82f610' },
-    purple: { text: 'text-violet-400', accent: '#8b5cf6', bg: '#8b5cf610' },
-    red: { text: 'text-rose-400', accent: '#f43f5e', bg: '#f43f5e10' },
-    cyan: { text: 'text-cyan-400', accent: '#06b6d4', bg: '#06b6d410' },
-    amber: { text: 'text-amber-400', accent: '#f59e0b', bg: '#f59e0b10' },
-    indigo: { text: 'text-indigo-400', accent: '#6366f1', bg: '#6366f110' },
+    orange: { text: 'text-accent', accent: '#F26419', bg: '#F2641914' },  /* Performance Orange */
+    blue: { text: 'text-ink', accent: '#101C2C', bg: '#101C2C12' },       /* Heritage Navy      */
+    purple: { text: 'text-inksoft', accent: '#303945', bg: '#30394512' }, /* Graphite           */
+    red: { text: 'text-accent', accent: '#F26419', bg: '#F2641914' },
+    cyan: { text: 'text-ink', accent: '#101C2C', bg: '#101C2C12' },
+    amber: { text: 'text-inksoft', accent: '#303945', bg: '#30394512' },
+    indigo: { text: 'text-ink', accent: '#101C2C', bg: '#101C2C12' },
 };
 
 const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMode, isWide }) => {
@@ -43,8 +49,7 @@ const PillarCard = ({ icon: Icon, title, tag, description, color, index, darkMod
                 {/* Text */}
                 <div className="space-y-2">
                     <h3 className={`text-lg font-semibold leading-snug
-                        ${darkMode ? 'text-white' : 'text-ink'}`}
-                        style={{ fontFamily: "'Syne', sans-serif" }}>
+                        ${darkMode ? 'text-white' : 'text-ink'}`}>
                         {title}
                     </h3>
                     <p className={`text-sm leading-relaxed
@@ -77,8 +82,7 @@ const AuditPillarsSection = () => {
     return (
         <section
             id="features"
-            className={`pt-12 pb-20 transition-colors duration-500 ${darkMode ? 'bg-[#07070f]' : 'bg-surface'}`}
-        >
+            className={`pt-12 pb-20 transition-colors duration-500 ${darkMode ? 'bg-[#07070f]' : 'bg-surface'}`}>
             <div className="container mx-auto px-6 max-w-7xl">
 
                 {/* Header */}
@@ -92,9 +96,7 @@ const AuditPillarsSection = () => {
                             viewport={{ once: true }}
                             transition={{ duration: 0.6, delay: 0.1 }}
                             className={`text-4xl lg:text-5xl font-black tracking-tight leading-[1.05]
-                                ${darkMode ? 'text-white' : 'text-ink'}`}
-                            style={{ fontFamily: "'Syne', sans-serif" }}
-                        >
+                                ${darkMode ? 'text-white' : 'text-ink'}`}>
                            Website Check Areas
                         </motion.h2>
                     </div>
@@ -105,8 +107,7 @@ const AuditPillarsSection = () => {
                         viewport={{ once: true }}
                         transition={{ delay: 0.2 }}
                         className={`lg:max-w-[240px] text-sm leading-relaxed
-                            ${darkMode ? 'text-slate-400' : 'text-muted'}`}
-                    >
+                            ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
                         A complete website check across 8 important areas.
                     </motion.p>
                 </div>

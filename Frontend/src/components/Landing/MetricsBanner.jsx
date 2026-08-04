@@ -90,10 +90,10 @@ const MetricsBanner = () => {
     const darkMode = theme === 'dark';
 
     const metrics = [
-        // { value: '12', suffix: 'K+', label: 'Audits Run', sublabel: 'Websites analyzed across all 7 automotive dimensions', icon: Activity, accentColor: '#ea580c' },
-        { value: '8', suffix: null, label: 'Check areas', sublabel: 'Speed, SEO, accessibility, mobile, security, AI readiness, answers and enquiries — each one scored on its own.', icon: Cpu, accentColor: '#3b82f6' },
-        { value: '100', suffix: '+', label: 'Checks run', sublabel: 'Every score comes from a real test on your live website, not a guess.', icon: Zap, accentColor: '#f97316' },
-        // { value: '4.9', suffix: '/5', label: 'Dealer Rating', sublabel: 'Rated by general managers & marketing directors', icon: ShieldCheck, accentColor: '#6366f1' },
+        // { value: '12', suffix: 'K+', label: 'Audits Run', sublabel: 'Websites analyzed across all 7 automotive dimensions', icon: Activity, accentColor: '#F26419' },
+        { value: '8', suffix: null, label: 'Check areas', sublabel: 'Speed, SEO, accessibility, mobile, security, AI readiness, answers and enquiries — each one scored on its own.', icon: Cpu, accentColor: '#101C2C' },
+        { value: '100', suffix: '+', label: 'Checks run', sublabel: 'Every score comes from a real test on your live website, not a guess.', icon: Zap, accentColor: '#F26419' },
+        // { value: '4.9', suffix: '/5', label: 'Dealer Rating', sublabel: 'Rated by general managers & marketing directors', icon: ShieldCheck, accentColor: '#585F99' },
     ];
 
     // Full Tailwind class strings (never built by string concat — the JIT scanner
@@ -134,12 +134,11 @@ const MetricsBanner = () => {
                 >
                     <div className="space-y-3">
                         <p className={`text-xs font-semibold uppercase tracking-[0.25em]
-                            ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
+                            ${darkMode ? 'text-accent' : 'text-accent'}`}>
                             Website Overview
                         </p>
                         <h2 className={`text-3xl lg:text-4xl font-black tracking-tight leading-tight
-                            ${darkMode ? 'text-white' : 'text-ink'}`}
-                            style={{ fontFamily: "'Syne', sans-serif" }}>
+                            ${darkMode ? 'text-white' : 'text-ink'}`}>
                            Built for dealers who care about their website.
                             
                         </h2>
@@ -156,9 +155,8 @@ const MetricsBanner = () => {
                                 className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border
                                     ${darkMode
                                         ? 'bg-white/4 border-white/8 text-white'
-                                        : 'bg-card border-line text-muted shadow-sm'}`}
-                            >
-                                <span className="text-orange-350">{d.icon}</span>
+                                        : 'bg-card border-line text-muted shadow-sm'}`}>
+                                <span className="text-accent">{d.icon}</span>
                                 {d.label}
                             </motion.span>
                         ))}

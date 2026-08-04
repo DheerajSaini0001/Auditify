@@ -14,6 +14,7 @@ import {
 import { ArrowRight, Loader2, Bot, CheckCircle2, AlertCircle, Server, Search, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import CircularProgress from "./CircularProgress";
+import { scoreBand } from "../utils/statusColors";
 import LivePreview from "./LivePreview";
 import UrlHeader from "./UrlHeader";
 import { useData } from "../context/DataContext";
@@ -424,25 +425,17 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                      e.g. Technical Performance while PageSpeed is still running. */
                   const isDone = item.hasPercentage;
                   const score = isDone ? (item.value || 0) : 0;
-                  let statusColor = "text-amber-500";
-                  let statusText = "Analyzing...";
-                  let ringColor = "#f59e0b"; // amber-500
 
-                  if (isDone) {
-                    if (score >= 90) {
-                      statusColor = "text-emerald-500";
-                      statusText = "Excellent";
-                      ringColor = "#10b981";
-                    } else if (score >= 50) {
-                      statusColor = "text-amber-500";
-                      statusText = "Needs Work";
-                      ringColor = "#f59e0b";
-                    } else {
-                      statusColor = "text-red-500";
-                      statusText = "Action Needed";
-                      ringColor = "#ef4444";
-                    }
-                  }
+                  // Label and ring both derive from the same scoreBand() call, so
+                  // they cannot disagree. This block used to hardcode its own bands
+                  // and pass a `ringColor` hex to <CircularProgress color={…}> — a
+                  // prop that component never accepted, so the hex was dropped and
+                  // the ring coloured itself from a different band. Reading this file
+                  // alone the two looked consistent; on screen an 87% pillar drew a
+                  // green ring under an amber "NEEDS WORK".
+                  const band = isDone ? scoreBand(score) : null;
+                  const statusColor = band ? band.text : "text-score-warn-ink";
+                  const statusText = band ? band.label : "Analyzing...";
 
                   return (
                     <button
@@ -456,8 +449,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
                       <div className="mb-6 mt-2 relative">
                         {/* Glowing Background for Score */}
-                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${isDone && score >= 90 ? "bg-emerald-500" : isDone && score >= 50 ? "bg-amber-500" : "bg-amber-400"}`}></div>
-                        <CircularProgress value={isDone ? score : 0} size={110} stroke={8} color={ringColor} />
+                        {/* Hover glow reuses the card's own band, so it can never
+                            disagree with the ring or the label above it. */}
+                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${band ? band.solidBg : "bg-faint"}`}></div>
+                        <CircularProgress value={isDone ? score : 0} size={110} stroke={8} />
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                           {isDone ? (
                             <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>

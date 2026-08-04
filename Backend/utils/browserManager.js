@@ -8,7 +8,7 @@ import logger from "./logger.js";
  * ============================================================================
  * ONE hard cap on how many headless Chromium instances may be doing work at the
  * same time across the ENTIRE process tree — the main Express process AND every
- * audit worker_thread. Default 3, configurable via MAX_CONCURRENT_BROWSERS.
+ * audit worker_thread. Default 1, configurable via MAX_CONCURRENT_BROWSERS.
  *
  * Why this exists
  * ---------------
@@ -60,9 +60,15 @@ import logger from "./logger.js";
  */
 
 // ── Configuration ──
+// Default 1: one live Chromium at a time. Production is a 2-vCPU App Service and
+// three concurrent browsers there did not run three audits faster — they ran the
+// browser-bound pillars (Accessibility, UX, Conversion, SEO) past their timeouts,
+// so whole sections came back null and the heatmap showed "—" where the real
+// answer was "we ran out of CPU". A serialised render is slower but complete.
+// Raise via MAX_CONCURRENT_BROWSERS on a box with cores to spare (dev: 6).
 const MAX_CONCURRENT_BROWSERS = Math.max(
   1,
-  parseInt(process.env.MAX_CONCURRENT_BROWSERS || "3", 10) || 3
+  parseInt(process.env.MAX_CONCURRENT_BROWSERS || "1", 10) || 1
 );
 // A permit held longer than this is presumed leaked (crashed holder, lost
 // release) and reclaimed by the watchdog. Set well above a normal hold: a full

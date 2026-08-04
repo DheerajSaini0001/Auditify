@@ -1,7 +1,8 @@
 import React, { useContext } from "react";
 import UrlHeader from "../components/UrlHeader";
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper";
-import CircularProgress from "../components/CircularProgress";
+import PillarHeader from "../components/reusablecomponent/PillarHeader";
+import { AuditShimmer } from "../components/reusablecomponent/AuditShimmer";
 import { useData } from "../context/DataContext";
 import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
@@ -52,6 +53,15 @@ const iconMap = {
 
 const educationalContent = InfoDetails;
 const scoreCalculationInfo = InfoDetails.AIO_Readiness_Methodologies;
+
+// What the AIO section is doing while the user waits. Rotated by <AuditShimmer>,
+// the same loading state every other section uses.
+const AUDIT_STEPS = [
+  { icon: <Database className="w-8 h-8 text-accent" />, title: "Reading Structured Data", text: "Parsing schema markup so AI assistants can identify what this page is about..." },
+  { icon: <Brain className="w-8 h-8 text-accent" />, title: "Assessing AI Readability", text: "Checking whether the content is written in a way language models can parse and summarise..." },
+  { icon: <Bot className="w-8 h-8 text-accent" />, title: "Checking Crawler Access", text: "Confirming AI crawlers are allowed to reach and read your pages..." },
+  { icon: <Network className="w-8 h-8 text-accent" />, title: "Mapping Internal Links", text: "Following your link structure the way an AI agent would when exploring the site..." },
+];
 
 
 
@@ -585,7 +595,9 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
   </div>
 );
 
-const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
+// `loading` is intentionally not destructured: this section's spinner is driven by
+// its own data, not by the report-wide loading flag. The parent still passes it.
+const AIO_Inner = React.memo(({ data, darkMode }) => {
   const aio = data?.aioReadiness || {};
 
   // AEO is now its own section (spec §2.8) — AIO no longer folds the engine score in.
@@ -598,12 +610,24 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
 
   const hasAioData = aio && Object.keys(aio).length > 0;
-  const isAioLoading = loading || !data || data.status === "pending" || !hasAioData;
 
+  // Only this section's own data decides this spinner.
+  //
+  // It used to also key off `loading` and the report-wide `data.status`, which the
+  // context normalises to "pending" for every in-flight stage. The sections stream
+  // in one at a time, so once AIO had finished and its cards were rendering right
+  // below, this card was still saying "Analyzing AIO Readiness…" purely because
+  // some *other* pillar had not landed yet — a spinner over content that was
+  // already on screen. Verified against a live run: at status=extracting_data the
+  // payload already carried a complete aioReadiness.
+  const isAioLoading = !hasAioData;
+
+  // Signed-out visitors get this section stripped, so fall back to the server's
+  // tallies rather than counting metrics that were never sent.
   const allMetrics = Object.values(aio).filter(val => typeof val === 'object' && val !== null && 'score' in val && !val.infoOnly);
-  const passedCount = allMetrics.filter(m => m.status === "pass").length;
-  const warningCount = allMetrics.filter(m => m.status === "warning").length;
-  const failedCount = allMetrics.filter(m => m.status === "fail").length;
+  const passedCount = aio?.locked ? (aio.passedCount ?? 0) : allMetrics.filter(m => m.status === "pass").length;
+  const warningCount = aio?.locked ? (aio.warningCount ?? 0) : allMetrics.filter(m => m.status === "warning").length;
+  const failedCount = aio?.locked ? (aio.failedCount ?? 0) : allMetrics.filter(m => m.status === "fail").length;
 
   const mainBg = darkMode ? "bg-gray-900" : "bg-surface";
 
@@ -627,107 +651,63 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           {isAioLoading ? (
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
-              {/* Right Panel: Loading */}
-              <div className="flex-1 flex flex-col items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 animate-spin text-blue-500 mb-2" />
-                <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>Analyzing AIO Readiness...</p>
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AuditShimmer darkMode={darkMode} steps={AUDIT_STEPS} />
               </div>
             </div>
           ) : (
             <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
               {/* Right Panel: Metrics & Score */}
-              <div className={`flex-1 ${data?.report === "All" ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
-                <div className={`w-full ${data?.report === "All" ? "" : "max-w-2xl mx-auto"} ${data?.report === "All" ? "space-y-7" : "space-y-6"}`}>
+              <PillarHeader
+                darkMode={darkMode}
+                fullReport={data?.report === "All"}
+                badge={{ icon: Brain, label: "AIO Readiness Report" }}
+                note={<>
+                  <span
+                    title="This score is Auditify's own composite index for AI-readiness. No industry-standard external tool produces a comparable AIO score to cross-check against."
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                    Auditify Index · no external equivalent
+                  </span>
+                </>}
+                title="AIO"
+                titleAccent="Readiness"
+                description="Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers."
+                stats={{ passed: passedCount, warning: warningCount, failed: failedCount }}
+                score={unifiedAioScore}
+                extra={<>
+                  {/* The vertical rule that used to precede this badge is gone: it
+                      separated the badge from the stats when both sat on one row.
+                      The badge now sits below them, where a divider is just a
+                      floating line. */}
+                  <div className="flex items-center gap-3 mt-4">
+                    <div className={`p-2.5 rounded-xl border shadow-sm transition-all duration-500 flex items-center gap-3 ${aio?.AIO_Compatibility_Badge === "Yes"
+                      ? (darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-card border-emerald-100")
+                      : (darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-card border-rose-100")}`}>
 
-                  {/* Top Content Area */}
-                  <div className={`flex flex-col md:flex-row items-center ${data?.report === "All" ? "gap-7 md:gap-9 justify-between" : "gap-8 md:gap-8 justify-center"}`}>
+                      {/* Icon Container (Card Style) */}
+                      <div className={`p-2 rounded-lg ${aio?.AIO_Compatibility_Badge === "Yes"
+                        ? (darkMode ? "bg-emerald-500/20" : "bg-emerald-50")
+                        : (darkMode ? "bg-rose-500/20" : "bg-rose-50")}`}>
+                        <ShieldCheck size={20} className={aio?.AIO_Compatibility_Badge === "Yes" ? "text-emerald-500" : "text-rose-500"} />
+                      </div>
 
-                    {/* Text Content */}
-                    <div className={`flex-1 ${data?.report === "All" ? "space-y-5" : "space-y-4"} text-left order-2 md:order-1`}>
-                      <div className={`${data?.report === "All" ? "space-y-2" : "space-y-1.5"}`}>
-                        <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider ${darkMode ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20" : "bg-indigo-100/50 text-indigo-600 border border-indigo-200"}`}>
-                          <Brain className="w-3.5 h-3.5" />
-                          <span>AIO Readiness Report</span>
-                        </div>
-                        <h3 className={`${data?.report === "All" ? "text-3xl lg:text-5xl" : "text-2xl lg:text-4xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                          AIO <span className="text-indigo-500">Readiness</span>
-                        </h3>
-                        <p className={`text-sm leading-relaxed opacity-70 ${darkMode ? "text-slate-300" : "text-muted"}`}>
-                          Evaluation of your website's readiness for Artificial Intelligence optimization and crawlers.
-                        </p>
-                        <span
-                          title="This score is Auditify's own composite index for AI-readiness. No industry-standard external tool produces a comparable AIO score to cross-check against."
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
-                        >
-                          <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                          Auditify Index · no external equivalent
+                      {/* Text Area */}
+                      <div className="flex flex-col">
+                        <span className={`text-[10px] font-semibold uppercase tracking-widest opacity-60 ${darkMode ? "text-white" : "text-ink"}`}>
+                          AIO Compatibility
                         </span>
-                      </div>
-
-                      {/* Stats & Tools */}
-                      <div className={`flex flex-wrap items-center ${data?.report === "All" ? "gap-6" : "gap-5"}`}>
-                        <div className={`flex items-center ${data?.report === "All" ? "gap-5" : "gap-4"}`}>
-                          <div className="flex items-center gap-2">
-                            <CheckCircle size={18} className="text-emerald-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{passedCount} Passed</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <AlertTriangle size={18} className="text-amber-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{warningCount} Warnings</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <XCircle size={18} className="text-rose-500" />
-                            <span className={`text-xs font-semibold  tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>{failedCount} Failed</span>
-                          </div>
-                        </div>
-                        <div className={`w-px h-10 mx-2 hidden sm:block ${darkMode ? "bg-slate-700" : "bg-line"}`}></div>
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2.5 rounded-xl border shadow-sm transition-all duration-500 flex items-center gap-3 ${aio?.AIO_Compatibility_Badge === "Yes"
-                            ? (darkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-card border-emerald-100")
-                            : (darkMode ? "bg-rose-500/10 border-rose-500/20" : "bg-card border-rose-100")}`}>
-
-                            {/* Icon Container (Card Style) */}
-                            <div className={`p-2 rounded-lg ${aio?.AIO_Compatibility_Badge === "Yes"
-                              ? (darkMode ? "bg-emerald-500/20" : "bg-emerald-50")
-                              : (darkMode ? "bg-rose-500/20" : "bg-rose-50")}`}>
-                              <ShieldCheck size={20} className={aio?.AIO_Compatibility_Badge === "Yes" ? "text-emerald-500" : "text-rose-500"} />
-                            </div>
-
-                            {/* Text Area */}
-                            <div className="flex flex-col">
-                              <span className={`text-[10px] font-semibold uppercase tracking-widest opacity-60 ${darkMode ? "text-white" : "text-ink"}`}>
-                                AIO Compatibility
-                              </span>
-                              <span className={`text-sm font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
-                                {aio?.AIO_Compatibility_Badge === "Yes" ? "Compatible" : "Not Optimized"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className={`w-px h-4 ${darkMode ? "bg-slate-800" : "bg-line hidden md:block"}`}></div>
-                        <button
-                          onClick={() => setSelectedMetricInfo(scoreCalculationInfo)}
-                          className={`flex items-center gap-2 text-sm font-semibold transition-all ${darkMode ? "text-indigo-400 hover:text-indigo-300" : "text-indigo-600 hover:text-indigo-700"}`}
-                        >
-                          <Info size={16} />
-                          <span className="border-b border-transparent hover:border-current">Metric Methodology</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Circular Progress */}
-                    <div className="relative flex-shrink-0 group cursor-default order-1 md:order-2">
-                      <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${unifiedAioScore >= 80 ? "bg-emerald-500" : "bg-amber-500"}`}></div>
-                      <CircularProgress value={unifiedAioScore} size={data?.report === "All" ? 180 : 150} stroke={14} />
-                      <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-                        <span className={`${data?.report === "All" ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{unifiedAioScore}%</span>
-                        <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+                        <span className={`text-sm font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
+                          {aio?.AIO_Compatibility_Badge === "Yes" ? "Compatible" : "Not Optimized"}
+                        </span>
                       </div>
                     </div>
                   </div>
-
-                </div>
-              </div>
+                </>}
+                onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+              />
 
             </div>
           )}
@@ -735,7 +715,7 @@ const AIO_Inner = React.memo(({ data, loading, darkMode }) => {
 
         {/* Gated Detailed Audit Sections */}
         {hasAioData && (
-          <ReportRestrictionWrapper>
+          <ReportRestrictionWrapper section="AIO (AI-Optimization) Readiness">
             <div className="space-y-6 mt-6">
               {(() => {
                 const visible = (keys) => keys.filter((k) => aio[k] && isVisibleForAudience(k, audienceMode));

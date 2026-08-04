@@ -13,6 +13,7 @@ import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } 
 import { detectSiteType } from "../utils/siteTypeDetector.js";
 import { registerWorkerWithManager } from "../utils/browserManager.js";
 import { acquireAuditSlot } from "../utils/auditQueue.js";
+import { collectWorkerConfig } from "../utils/workerConfig.js";
  
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
@@ -412,6 +413,12 @@ export const startAudit = async (req, res) => {
           pageType: newReport.pageType || null,
           siteType: newReport.siteType || null,
           pageScopes: normalizedScopes,
+          // Platform config resolved on THIS thread. The worker's own
+          // configService cache is always empty (see utils/workerConfig.js), and
+          // in the container there is no .env to fall back to — without this,
+          // every key set through the admin UI is invisible to the audit and
+          // Technical Performance silently scores "Not Run".
+          config: collectWorkerConfig(),
         },
       });
     } catch (spawnErr) {

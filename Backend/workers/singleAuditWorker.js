@@ -16,8 +16,22 @@ import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
 import { classifyPageType, classifyCorporatePageType } from "../utils/pageClassifier.js";
+import { applyWorkerConfig } from "../utils/workerConfig.js";
 
-const { url, device, report, auditId, pageType: initialPageType, siteType, pageScopes } = workerData;
+const { url, device, report, auditId, pageType: initialPageType, siteType, pageScopes, config: workerConfig } = workerData;
+
+// Seed this thread's configService cache from the main thread's snapshot BEFORE
+// any metric service runs — googleAPI (PageSpeed) and securityCompliance read
+// their keys the moment they're called. Worker threads never run
+// configService.initialize(), so without this their cache stays empty and every
+// getConfig() falls through to process.env, which the container has nothing in.
+// Logs key NAMES only, never values.
+const seededConfigKeys = applyWorkerConfig(workerConfig);
+if (seededConfigKeys.length) {
+  logger.info(`🔑 [Worker] Platform config seeded from main thread: ${seededConfigKeys.join(", ")}`);
+} else {
+  logger.warn(`🔑 [Worker] No platform config received — API-backed checks (PageSpeed, Safe Browsing, VirusTotal) will fall back to process.env and may not run.`);
+}
 
 // Which page types the user ticked in the home-page picker. `null` = no restriction
 // (audit whatever discovery finds, the original behaviour). A non-empty list means

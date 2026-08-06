@@ -11,6 +11,7 @@ router.get('/', websiteController.getWebsites);
 router.post('/add', websiteController.addWebsite);
 router.post('/verify', websiteController.verifyWebsite);
 router.post('/sync', websiteController.syncWebsites);
+router.patch('/gsc-preference', websiteController.setGscSyncPreference);
 router.delete('/:websiteId', websiteController.removeWebsite);
 
 export default router;

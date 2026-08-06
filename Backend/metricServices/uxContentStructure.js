@@ -1,3 +1,12 @@
+import { applySiteApplicability, isParamApplicable } from "../config/siteTypeProfiles.js";
+import { importanceFor } from "../config/parameterImportance.js";
+import { getLocale, matchGroups } from "../config/locale/index.js";
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites. See
+// config/parameterImportance.js.
+const importance = importanceFor("UX & Content Structure");
+
 // Helper to count syllables in a word (heuristic)
 function countSyllables(word) {
   word = word.toLowerCase().replace(/[^a-z]/g, '');
@@ -1298,8 +1307,20 @@ async function checkInPageNav(page, deviceType) {
 }
 
 // Inventory Filtering / Faceted Search Quality (dealership-specific, context-aware)
-async function checkInventoryFiltering(page) {
-  const data = await page.evaluate(() => {
+async function checkInventoryFiltering(page, market = null) {
+  // Extra facet vocabulary for the audited market. Additive only — the US
+  // patterns inside the evaluate keep matching exactly what they matched
+  // before, so a US audit is unchanged by construction.
+  const facetExtras = getLocale(market).code === 'AU' ? {
+    mileage: ['kilometres', 'kilometers', '\\bkms?\\b'],
+    bodyType: ['\\bute\\b', '\\bwagon\\b', '\\bhatch\\b', '\\bdual cab\\b'],
+    fuel: ['\\bpetrol\\b', 'l/100km'],
+    drivetrain: ['4x4', '\\b2wd\\b'],
+    condition: ['\\bdemo\\b', 'demonstrator', 'second.?hand'],
+    trim: ['\\bbadge\\b', '\\bvariant\\b'],
+  } : {};
+
+  const data = await page.evaluate((cfg) => {
     const text = (document.body.innerText || '').toLowerCase();
     const url = window.location.href.toLowerCase();
     const pathname = window.location.pathname.toLowerCase();
@@ -1386,21 +1407,36 @@ async function checkInventoryFiltering(page) {
     const facetText = facetTextParts.join(' ').toLowerCase();
 
     // Core automotive facets (the 6 that drive breadth) + bonus facets.
+    //
+    // Five of these carry market vocabulary rather than universal vocabulary,
+    // and grading an Australian SRP against the US words made a complete filter
+    // set look sparse: distance is kilometres not miles, body type includes
+    // "ute" and "wagon", fuel is petrol not gas, the condition axis has a third
+    // value ("demo") with no US equivalent, and drivetrain — a far more
+    // prominent filter in AU — is expressed as 4x4 / 2WD. The extra alternates
+    // come from the locale pack (cfg.facetExtras) and are ADDITIVE, so the US
+    // patterns below match exactly what they matched before.
+    const alt = (key) => (cfg.facetExtras[key] || []).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+    const withExtras = (base, key) => {
+      const extra = alt(key);
+      return extra ? new RegExp(`${base.source}|${extra}`, base.flags) : base;
+    };
+
     const coreFacets = {
       make: /\bmake\b|\bbrand\b/,
       model: /\bmodel\b|\btrim\b.*\bmodel\b|\bmodel\b/,
       year: /\byear\b/,
       price: /\bprice\b|\bbudget\b|\bpayment\b|\$/,
-      mileage: /\bmileage\b|\bmiles\b|\bodometer\b/,
-      bodyType: /\bbody\b|\bbody type\b|\bsuv\b|\bsedan\b|\btruck\b|\bcoupe\b|\bvehicle type\b/
+      mileage: withExtras(/\bmileage\b|\bmiles\b|\bodometer\b/, 'mileage'),
+      bodyType: withExtras(/\bbody\b|\bbody type\b|\bsuv\b|\bsedan\b|\btruck\b|\bcoupe\b|\bvehicle type\b/, 'bodyType')
     };
     const bonusFacets = {
-      trim: /\btrim\b/,
-      fuel: /\bfuel\b|\bmpg\b|\bgas\b|\bdiesel\b|\belectric\b|\bhybrid\b/,
+      trim: withExtras(/\btrim\b/, 'trim'),
+      fuel: withExtras(/\bfuel\b|\bmpg\b|\bgas\b|\bdiesel\b|\belectric\b|\bhybrid\b/, 'fuel'),
       transmission: /\btransmission\b|\bautomatic\b|\bmanual\b/,
-      drivetrain: /\bdrivetrain\b|\bdrive type\b|\bawd\b|\bfwd\b|\brwd\b|\b4wd\b/,
+      drivetrain: withExtras(/\bdrivetrain\b|\bdrive type\b|\bawd\b|\bfwd\b|\brwd\b|\b4wd\b/, 'drivetrain'),
       color: /\bcolor\b|\bcolour\b|\bexterior\b|\binterior\b/,
-      condition: /\bcondition\b|\bnew\b|\bused\b|\bcertified\b|\bcpo\b|\bpre-owned\b/
+      condition: withExtras(/\bcondition\b|\bnew\b|\bused\b|\bcertified\b|\bcpo\b|\bpre-owned\b/, 'condition')
     };
     const coreFacetsFound = Object.keys(coreFacets).filter(k => coreFacets[k].test(facetText));
     const bonusFacetsFound = Object.keys(bonusFacets).filter(k => bonusFacets[k].test(facetText));
@@ -1441,7 +1477,7 @@ async function checkInventoryFiltering(page) {
       homepageFinderFacets,
       hasFinderHeading
     };
-  });
+  }, { facetExtras });
 
   // ---- C. Score per context ----
   // Context 'other' → not applicable: hide (no score) + info-only.
@@ -2313,7 +2349,10 @@ async function checkMobileExperienceMerged(page, deviceType) {
   };
 }
 
-export default async function evaluateMobileUX(device, page) {
+// `siteSubType` (franchise/independent/service/repair) gates parameter
+// applicability — see config/siteTypeProfiles.js. The 3rd argument is pageType,
+// passed by the worker but not used here (this pillar derives its own).
+export default async function evaluateMobileUX(device, page, _pageType = null, siteSubType = null, market = null) {
   const deviceType = device === 'Mobile' ? 'mobile' : 'desktop';
 
   // [PERF] Pull the page's links FIRST (one cheap in-page evaluate), then let the
@@ -2345,10 +2384,35 @@ export default async function evaluateMobileUX(device, page) {
   // --- Page-specific parameters (drop from the denominator when not applicable) ---
   const breadcrumbs = await checkBreadcrumbs(page);
   const inPageNav = await checkInPageNav(page, deviceType);
-  const inventoryFiltering = await checkInventoryFiltering(page);
+  // A service centre or repair garage has no inventory to filter, no zero-result
+  // search to recover and no vehicle of its own to photograph. Rather than run
+  // three real in-page evaluates that can only come back "not an inventory
+  // page", short-circuit them into the same not-applicable shape the checks
+  // themselves return off-SRP — so the report still shows the row and explains
+  // why, and the roll-up below drops them from the denominator.
+  const inventoryNA = (details) => ({
+    score: 0,
+    status: 'pass',
+    details,
+    analysis: {
+      cause: "This site sells no vehicles, so inventory parameters don't apply to it.",
+      recommendation: "No action needed — this parameter is excluded from the score."
+    },
+    meta: { context: 'non-selling-site', notApplicable: true },
+    infoOnly: true
+  });
+  const sellsVehicles = isParamApplicable("Inventory_Filtering", siteSubType);
+
+  const inventoryFiltering = sellsVehicles
+    ? await checkInventoryFiltering(page, market)
+    : inventoryNA("This is a service/repair site with no vehicle inventory, so faceted filtering isn't applicable.");
   const isSrp = inventoryFiltering?.meta?.context === 'srp';
-  const noResultsUX = await checkNoResultsUX(page, isSrp);
-  const vehicleGallery = await checkVehicleGallery(page);
+  const noResultsUX = sellsVehicles
+    ? await checkNoResultsUX(page, isSrp)
+    : inventoryNA("This is a service/repair site with no inventory search, so no-results UX isn't applicable.");
+  const vehicleGallery = sellsVehicles
+    ? await checkVehicleGallery(page)
+    : inventoryNA("This is a service/repair site with no vehicles for sale, so a vehicle image gallery isn't applicable.");
 
   // Collect the sweep that has been running underneath all of the above. Rethrowing here
   // keeps the pre-existing contract: a sweep failure fails the pillar, not just this param.
@@ -2409,12 +2473,19 @@ export default async function evaluateMobileUX(device, page) {
   let weightedSum = 0;
   let totalWeight = 0;
 
-  for (const [key, result] of Object.entries(results)) {
+  // Site-level applicability on top of the page-type gates: Inventory_Filtering,
+  // No_Results_UX and Vehicle_Image_Gallery all describe an SRP or a vehicle
+  // listing. On a service or repair site there is no inventory to filter and no
+  // vehicle to photograph, so they are nulled here and drop out of the
+  // denominator below rather than scoring zero (config/siteTypeProfiles.js).
+  const applicableResults = applySiteApplicability(results, siteSubType);
+
+  for (const [key, result] of Object.entries(applicableResults)) {
     // Info-only / not-applicable params are displayed but excluded from the weighted score
     // (rule-6 N/A renormalization — they drop out of the denominator entirely).
     if (!result || result.infoOnly) continue;
     if ((result.score ?? undefined) === undefined) continue;
-    const weight = SPEC_WEIGHTS[key] || 0;
+    const weight = (SPEC_WEIGHTS[key] || 0) * importance(key, siteSubType);
     if (!weight) continue;
     const score = Math.max(0, Math.min(100, result.score));
     weightedSum += score * weight;

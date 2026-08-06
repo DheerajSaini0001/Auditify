@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { consumePostAuthIntent } from '../utils/intentStore';
+import { claimAuditForCurrentUser } from '../utils/claimAudit';
 
 import { getRedirectPath } from '../utils/roleRedirect';
 
@@ -36,6 +37,10 @@ const AuthCallbackPage = () => {
       login(token);
 
       const intent = consumePostAuthIntent();
+
+      // The report they signed in to read is still an ownerless guest run. Adopt
+      // it now, otherwise it never appears under their past reports.
+      claimAuditForCurrentUser(intent?.auditId);
 
       // Role-Based Redirection for OAuth
       let roleFallback = '/';

@@ -11,12 +11,14 @@ import Conversion_Lead_Flow from "./Conversion_Lead_Flow";
 import AIO from "./AIO";
 import AEO from "./AEO";
 import RawData from "./RawData";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import NotFound from "./NotFound";
 import NotADealership from "./NotADealership";
 import { Loader2 } from "lucide-react";
 
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper.jsx";
+import AuditProgressPanel from "../components/AuditProgressPanel.jsx";
+import { trackEvent } from "../utils/tracking.js";
 
 const ReportLayout = () => {
   const { data, clearData, fetchSingleReport, fetchBulkPageReport, pollingState } = useData();
@@ -24,6 +26,7 @@ const ReportLayout = () => {
   const darkMode = theme === "dark";
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const [searchParams] = useSearchParams();
   const [isFetching, setIsFetching] = React.useState(false);
   const [isReloading, setIsReloading] = React.useState(false);
@@ -71,6 +74,37 @@ const ReportLayout = () => {
     }
   }, [id, searchParams, navigate, fetchSingleReport]);
 
+  /**
+   * Count this report as READ, exactly once.
+   *
+   * The ref is what makes "once" true: this component re-renders on every 3s poll
+   * tick, and without the guard each tick would fire another beacon and report one
+   * reader as hundreds of views. It is keyed by report id so opening a different
+   * report in the same mounted layout still counts.
+   *
+   * Gated on `completed` because the page mounts while the audit is still running
+   * — counting that would mark every audit as read whether or not anyone stayed
+   * for the result.
+   */
+  const viewTrackedFor = React.useRef(null);
+  useEffect(() => {
+    const reportId = data?._id;
+    // `data.status` is the NORMALIZED status — DataContext collapses every backend
+    // stage into pending | success | failed, so a finished report reads "success",
+    // never the raw "completed". Comparing against "completed" here meant this guard
+    // always returned early and REPORT_VIEW was never emitted once (verified: zero
+    // rows in activitylogs, while every other action type is present).
+    if (!reportId || data?.status !== 'success') return;
+    if (viewTrackedFor.current === reportId) return;
+    viewTrackedFor.current = reportId;
+
+    trackEvent('REPORT_VIEW', {
+      url: data.url,
+      reportId,
+      metadata: { score: data.score ?? null, grade: data.grade ?? null, reportType: data.report },
+    });
+  }, [data?._id, data?.status]);
+
   // Watch for sudden data loss (e.g. from live poll 404)
   useEffect(() => {
     // Prevent navigating away during initial load of a direct link
@@ -81,27 +115,126 @@ const ReportLayout = () => {
     }
   }, [data, isFetching, navigate, id, searchParams]);
 
-  // Live polling for continuous updates
-  useEffect(() => {
-    const bulkId = searchParams.get("bulkId");
-    const pageUrl = searchParams.get("url");
-    let intervalId;
+  // Mirror of the live status, so the bulk poll below can see it without taking
+  // `data` as a dependency (which would tear the interval down on every tick).
+  const statusRef = React.useRef(null);
+  useEffect(() => { statusRef.current = data?.status ?? null; }, [data?.status]);
 
-    if (id || (bulkId && pageUrl)) {
+  /**
+   * Live polling — driven by the cheap status endpoint, so the full report is only
+   * refetched when the run actually produced something new.
+   *
+   * This used to refetch the ENTIRE report every 3s for as long as the page stayed
+   * open, terminal or not. Measured against a live run: 22 fetches, of which only 9
+   * returned new data — and once the audit completed every further fetch was
+   * byte-identical, forever, at 195 KB a time (~234 MB/hour per open tab, plus a
+   * Mongo read and a full gating pass each). The report page is the one users leave
+   * open the longest, so it was the worst possible place for it.
+   *
+   * /single-audit/:id/status is ~500 bytes and is served from the in-memory audit
+   * store (usually no DB read at all), and it already carries every signal that marks
+   * new data: completedSections climbs 0→8 as pillars land, psiPending/score/grade
+   * flip when PageSpeed patches the Technical card, stage2Progress moves as extra
+   * pages land. So nothing is invisible to it — the progressive reveal is unchanged.
+   *
+   * One subtlety, measured rather than assumed: the payload changes ONCE MORE a beat
+   * after `status` turns terminal, because the finished report is buffered in memory
+   * and flushed to Mongo in batches ("buffered 1/10 for next flush") and the two
+   * serialize differently. Stopping the instant status is terminal would drop that,
+   * so we stop the interval and take one final pass after the flush has landed.
+   */
+  const FINAL_REFETCH_MS = 4000; // > the observed memory→Mongo flush lag
+  const pollSigRef = React.useRef(null);
+
+  // Depend on the PRIMITIVES, never on the searchParams object: useSearchParams hands
+  // back a fresh instance on every render, so listing it here tore the interval down
+  // and rebuilt it on each tick — which reset pollSigRef and made the very next tick
+  // look like "new data", refetching the full report anyway. Measured: 28 full fetches
+  // across a 105s run instead of the ~10 the run actually produced.
+  const bulkId = searchParams.get("bulkId");
+  const pageUrl = searchParams.get("url");
+
+  useEffect(() => {
+    if (!id && !(bulkId && pageUrl)) return;
+
+    let cancelled = false;
+    let intervalId = null;
+    let finalTimeoutId = null;
+
+    const stop = () => {
+      if (intervalId) { clearInterval(intervalId); intervalId = null; }
+    };
+    const scheduleFinalPass = (refetch) => {
+      stop();
+      finalTimeoutId = setTimeout(() => { if (!cancelled) refetch(); }, FINAL_REFETCH_MS);
+    };
+
+    // Bulk pages have no status endpoint of their own, so they keep polling the full
+    // payload — but they no longer do it forever once the run is terminal.
+    if (!id) {
       intervalId = setInterval(() => {
-        if (id) {
-          fetchSingleReport(id);
-        } else if (bulkId && pageUrl) {
-          fetchBulkPageReport(bulkId, pageUrl);
+        // NOTE: this is the NORMALIZED status off `data` (DataContext collapses every
+        // backend stage into pending | success | failed), so terminal is "success" —
+        // NOT the raw "completed" that the /status endpoint reports.
+        const s = statusRef.current;
+        if (s === "success" || s === "failed") {
+          scheduleFinalPass(() => fetchBulkPageReport(bulkId, pageUrl));
+          return;
         }
+        fetchBulkPageReport(bulkId, pageUrl);
       }, 3000);
+      return () => { cancelled = true; stop(); if (finalTimeoutId) clearTimeout(finalTimeoutId); };
     }
 
+    pollSigRef.current = null;
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+
+    const tick = async () => {
+      let status;
+      try {
+        const token = localStorage.getItem("dealerpulse_token");
+        const res = await fetch(`${API_URL}/single-audit/${id}/status`, {
+          credentials: "include",
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        });
+        if (!res.ok) return; // transient — try again on the next tick
+        status = await res.json();
+      } catch {
+        return;
+      }
+      if (cancelled) return;
+
+      // Everything whose movement means the report BODY changed.
+      const sig = [
+        status.status,
+        status.completedSections,
+        status.psiPending,
+        status.score,
+        status.grade,
+        status.stage2Progress,
+        status.crawledPagesCount,
+        status.screenshotUrl,
+      ].join("|");
+
+      if (sig !== pollSigRef.current) {
+        pollSigRef.current = sig;
+        fetchSingleReport(id);
+      }
+
+      if (status.status === "completed" || status.status === "failed") {
+        scheduleFinalPass(() => fetchSingleReport(id));
+      }
+    };
+
+    intervalId = setInterval(tick, 3000);
+
     return () => {
-      if (intervalId) clearInterval(intervalId);
+      cancelled = true;
+      stop();
+      if (finalTimeoutId) clearTimeout(finalTimeoutId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, searchParams]);
+  }, [id, bulkId, pageUrl]);
 
   const handleRefresh = async () => {
     if (!id) return;
@@ -170,7 +303,20 @@ const ReportLayout = () => {
 
   return (
     <div className={`w-full ${darkMode ? "bg-gray-900" : "bg-surface"}`}>
-      
+
+      {/* Progress, ETA and — for a multi-page run — permission to walk away.
+          Renders itself to null once the audit reaches a terminal state, so a
+          finished report shows nothing extra. */}
+      {id && data?.status !== "completed" && data?.status !== "failed" && (
+        <div className="px-4 sm:px-6 lg:px-8 pt-6 max-w-[1600px] mx-auto w-full">
+          <AuditProgressPanel
+            reportId={id}
+            notifyEmail={location.state?.notifyEmail || null}
+            onComplete={() => fetchSingleReport(id)}
+          />
+        </div>
+      )}
+
       {/* =================================================
           SCENARIO 1: DASHBOARD VIEW ("All")
       ================================================== */}

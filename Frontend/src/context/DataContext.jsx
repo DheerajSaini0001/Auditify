@@ -148,7 +148,7 @@ export const DataProvider = ({ children }) => {
   // 🚀 FETCH DATA
   // Audits need no guest verification — no captcha, no emailed OTP, no grant.
   // Logged-in users still hit /api/user/audit with their Bearer token.
-  const fetchData = async (inputValue, device, report, force = false, pageScopes = null) => {
+  const fetchData = async (inputValue, device, report, force = false, pageScopes = null, notifyEmail = null, country = null) => {
     if (loading) return { success: false, error: "An audit is already in progress." };
     if (!inputValue) return { success: false, error: "URL is empty" };
 
@@ -181,6 +181,12 @@ export const DataProvider = ({ children }) => {
           // Page types the user kept ticked on the home page. ["home"] alone means
           // "audit only the URL I entered" — the worker then skips the key-page crawl.
           ...(Array.isArray(pageScopes) && pageScopes.length ? { pageScopes } : {}),
+          // Multi-page runs take minutes, so the visitor is told to leave the page.
+          // This is where the finished report reaches them.
+          ...(notifyEmail ? { notifyEmail } : {}),
+          // Market the visitor selected on the home page. Stored with the run;
+          // see Frontend/src/config/countries.js for its current effect.
+          ...(country ? { country } : {}),
         })
       });
 
@@ -225,27 +231,45 @@ export const DataProvider = ({ children }) => {
 
     setPollingState(prev => ({ ...prev, [id]: "pending" }));
 
+    // Poll the ~500-byte STATUS endpoint, not the full report. This used to refetch
+    // the entire ~195 KB report every 3s for the whole run, which is pure waste: the
+    // only things this poller produces are `pollingState` and the completion toast,
+    // and neither needs the report body. The finished report is pulled exactly once,
+    // when the run actually reaches a terminal state.
+    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+
     const newInterval = setInterval(async () => {
       try {
-        const result = await fetchSingleReport(id);
+        const token = localStorage.getItem("dealerpulse_token");
+        const res = await fetch(`${API_URL}/single-audit/${id}/status`, {
+          credentials: "include",
+          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
+        });
 
-        if (result && result.success && result.data) {
-          const newStatus = result.data.status;
-          setPollingState(prev => ({ ...prev, [id]: newStatus }));
-
-          if (newStatus === "success" || newStatus === "failed") {
-            clearInterval(newInterval);
-            setIntervalId(null);
-
-            if (newStatus === "success") {
-              toast.success("Audit complete!");
-            } else if (newStatus === "failed") {
-              toast.error("Audit run failed.");
-            }
-          }
-        } else {
+        // Report is gone (deleted/expired) — stop, same as the old !success branch.
+        if (res.status === 404 || res.status === 403) {
           clearInterval(newInterval);
           setIntervalId(null);
+          return;
+        }
+        if (!res.ok) return; // transient — try again on the next tick
+
+        const raw = await res.json();
+        const newStatus = normalizeStatus(raw.status);
+        setPollingState(prev => ({ ...prev, [id]: newStatus }));
+
+        if (newStatus === "success" || newStatus === "failed") {
+          clearInterval(newInterval);
+          setIntervalId(null);
+
+          // One full fetch, now that there is a finished report worth fetching.
+          await fetchSingleReport(id);
+
+          if (newStatus === "success") {
+            toast.success("Audit complete!");
+          } else {
+            toast.error("Audit run failed.");
+          }
         }
       } catch (err) {
         console.error("Error polling audit:", err);

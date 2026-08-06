@@ -1,3 +1,10 @@
+import { importanceFor } from "../config/parameterImportance.js";
+import { parseLocalDate } from "../utils/localeFormats.js";
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites.
+const importance = importanceFor("AIO (AI-Optimization) Readiness");
+
 // AI Agentic Browsing (WebMCP) lives in the AIO section per spec Part 3 + §5.1.
 // The evaluator is defined in technicalMetrics.js (reuses its fetch helper) and imported here.
 
@@ -226,7 +233,7 @@ function checkKeywordsEntitiesAnnotated($) {
 }
 
 // Content Updated Regularly
-function checkContentUpdatedRegularly($) {
+function checkContentUpdatedRegularly($, market = null) {
   // Enhanced meta tag detection
   const metaModified = $('meta[name="last-modified"]').attr('content') ||
     $('meta[property="article:modified_time"]').attr('content') ||
@@ -303,7 +310,13 @@ function checkContentUpdatedRegularly($) {
   let meta = { lastModified: dateFound };
 
   if (dateFound) {
-    const date = new Date(dateFound);
+    // Locale-aware parse. The freshness RULE does not change between markets —
+    // only the visible field order does, and getting it wrong is not cosmetic:
+    // a month-first parser reads 04/08/2026 four months off and rejects
+    // 25/12/2026 outright, which surfaces as "no freshness signal on the page"
+    // on a site that publishes its dates perfectly well. ISO 8601 is handled
+    // identically in both markets, so machine-readable dates are unaffected.
+    const date = parseLocalDate(dateFound, market) || new Date(dateFound);
     const now = new Date();
 
     if (isNaN(date.getTime())) {
@@ -980,7 +993,7 @@ const evaluateAgenticBrowsing = async (page, url) => {
   };
 };
 
-export default async function aioReadiness(url, page, $, pageType = null) {
+export default async function aioReadiness(url, page, $, pageType = null, siteSubType = null, market = null) {
 
   const domain = Domain(url);
 
@@ -989,7 +1002,7 @@ export default async function aioReadiness(url, page, $, pageType = null) {
   const contentNLPFriendly = checkContentNLPFriendly($);
   const answerOrientedStructure = checkAnswerOrientedStructure($, pageType);
   const keywordsEntitiesAnnotated = checkKeywordsEntitiesAnnotated($);
-  const contentUpdatedRegularly = checkContentUpdatedRegularly($);
+  const contentUpdatedRegularly = checkContentUpdatedRegularly($, market);
   const internalLinkingAIFriendly = checkInternalLinkingAIFriendly($, domain);
   const topicalFocusClarity = checkTopicalFocusClarity($, url);
   // AI Agentic Browsing — WebMCP readiness arm (spec Part 3 + §5.1, ~6% in AIO).
@@ -1047,9 +1060,15 @@ export default async function aioReadiness(url, page, $, pageType = null) {
   let totalWeight = 0;
   let earned = 0;
   let scored = 0;
-  for (const [key, w] of Object.entries(weights)) {
+  for (const [key, w0] of Object.entries(weights)) {
     const m = metricsMap[key];
     if (!m || m.present === false) continue;
+    // Per-site-type tilt: dealers need entity precision and freshness (inventory
+    // turns weekly); service and repair need answer-shaped structure, because
+    // their queries are questions. 1.0 for a franchise dealer and for
+    // corporate/unresolved sites — see config/parameterImportance.js.
+    const w = w0 * importance(key, siteSubType);
+    if (w <= 0) continue;
     const s = typeof m.score === "number" ? m.score : 0;
     totalWeight += w;
     earned += s * w;

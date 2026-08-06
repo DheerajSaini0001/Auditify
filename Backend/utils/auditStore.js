@@ -66,12 +66,18 @@ function logMetricResults(auditId, patch) {
 // Only these keys are persisted (mirror of singleAuditReport schema). Anything else
 // on the in-memory object (e.g. updatedAt) is bookkeeping and not written.
 const SCHEMA_FIELDS = [
-  "_id", "url", "report", "device", "status", "pageType", "siteType", "siteSchema", "timeTaken",
+  "_id", "url", "report", "device", "status", "pageType", "siteType", "siteSubType", "siteSchema", "timeTaken",
   "score", "grade", "aioCompatibilityBadge", "sectionScore", "technicalPerformance",
   "onPageSEO", "accessibility", "securityOrCompliance", "UXOrContentStructure",
   "conversionAndLeadFlow", "aioReadiness", "aeo", "stage1Completed", "stage2Completed",
   "stage2Progress", "crawledPagesCount", "crawledPagesSummary", "isBotProtected", "isDealership",
-  "dealershipDetection", "error", "screenshot", "screenshotUrl", "userId", "createdAt",
+  "dealershipDetection", "error", "screenshot", "screenshotUrl", "userId",
+  "notifyEmail", "notifiedAt", "country", "plannedPages", "estimatedSeconds", "createdAt",
+  // Which market's norms the run was scored against, and the evidence behind
+  // that choice. `country` above is what the visitor picked; these two are what
+  // the engine actually resolved and used, which is not always the same thing —
+  // see utils/marketResolver.js.
+  "market", "marketResolution",
 ];
 
 const TERMINAL = new Set(["completed", "failed"]);
@@ -85,7 +91,10 @@ const idStr = (v) => (v == null ? "" : String(v));
 const sameUser = (a, b) => idStr(a) === idStr(b);
 
 /** Create a fresh in-progress report held only in memory (no DB write). */
-function createInProgress({ _id, url, device, report, userId, pageType, siteType }) {
+function createInProgress({
+  _id, url, device, report, userId, pageType, siteType, siteSubType,
+  notifyEmail, country, market, plannedPages, estimatedSeconds,
+}) {
   const now = new Date();
   const doc = {
     _id,
@@ -95,6 +104,7 @@ function createInProgress({ _id, url, device, report, userId, pageType, siteType
     status: "inprogress",
     pageType: pageType || null,
     siteType: siteType || null,
+    siteSubType: siteSubType || null,
     siteSchema: null,
     timeTaken: null,
     score: null,
@@ -122,6 +132,19 @@ function createInProgress({ _id, url, device, report, userId, pageType, siteType
     screenshot: null,
     screenshotUrl: null,
     userId: userId || null,
+    // Set once, at creation. `notifyEmail` is the whole reason a long run can be
+    // walked away from, so it must survive into the live doc — the completion
+    // handler reads it off this object, not off Mongo.
+    notifyEmail: notifyEmail || null,
+    notifiedAt: null,
+    country: country || null,
+    // Resolved at creation, not by the worker, because it is part of this
+    // audit's IDENTITY: the same URL scored for the US and for Australia are two
+    // legitimately different reports, so dedupe has to be able to tell them
+    // apart before any worker starts. See findActiveDuplicate.
+    market: market || null,
+    plannedPages: plannedPages || 1,
+    estimatedSeconds: estimatedSeconds || null,
     createdAt: now,
     updatedAt: now,
   };
@@ -186,11 +209,17 @@ function complete(id, patch = {}) {
  * query in the controller: a completed report, or an in-progress one started within
  * the last 5 minutes, for the same url/device/report/user.
  */
-function findActiveDuplicate({ url, device, report, userId }) {
+function findActiveDuplicate({ url, device, report, userId, market = null }) {
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
   for (const doc of live.values()) {
     if (doc.url !== url || doc.device !== device || doc.report !== report) continue;
     if (!sameUser(doc.userId, userId)) continue;
+    // Market is part of the identity: a US run and an AU run of the same URL
+    // grade against different reference lists and produce different scores, so
+    // reusing one for the other would silently hand back the wrong market's
+    // report. Reports created before market existed carry null and therefore
+    // only ever dedupe against another null.
+    if ((doc.market || null) !== (market || null)) continue;
     if (doc.status === "completed") return doc;
     // Any non-terminal status (inprogress, launching, navigating, waiting_for_render,
     // screenshot_ready, extracting_data) is an in-flight audit — dedupe against it so a
@@ -210,8 +239,9 @@ function findCompletedFullAudit({ url, device, userId }) {
 }
 
 /** Remove any live entries matching a force-rerun delete (mirror of deleteMany). */
-function removeMatching({ url, device, report, userId }) {
+function removeMatching({ url, device, report, userId, market = null }) {
   for (const [key, doc] of live.entries()) {
+    if ((doc.market || null) !== (market || null)) continue;
     if (doc.url === url && doc.device === device && doc.report === report && sameUser(doc.userId, userId)) {
       live.delete(key);
     }
@@ -244,6 +274,24 @@ function removeByIds(ids) {
  * report doc yet, so the history endpoint must union these with the Mongo ids to show
  * the true count (e.g. 3 buffered + 4 in Mongo = 7).
  */
+/**
+ * Attach an in-memory guest report to an account.
+ *
+ * A visitor's audit is created with `userId: null`. When they sign in to read it,
+ * the report has to become theirs or it never shows up in their history. Reports
+ * that are already owned are left alone, so this can't be used to take over
+ * someone else's run. A doc already queued in `pendingWrites` is the same object,
+ * so the next flush persists the new owner.
+ */
+function claimForUser(id, userId) {
+  const doc = live.get(idStr(id));
+  if (!doc || doc.userId) return false;
+  doc.userId = userId;
+  doc.updatedAt = new Date();
+  logger.info(`[auditStore] audit ${idStr(id)} claimed by user ${idStr(userId)}`);
+  return true;
+}
+
 function liveReportIdsForUser(userId) {
   const ids = [];
   for (const doc of live.values()) {
@@ -350,6 +398,7 @@ export default {
   findCompletedFullAudit,
   removeMatching,
   removeByIds,
+  claimForUser,
   liveReportIdsForUser,
   flush,
   flushAll,

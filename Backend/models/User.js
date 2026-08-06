@@ -10,6 +10,20 @@ const websiteSchema = new mongoose.Schema({
   addedAt:      { type: Date, default: Date.now }
 });
 
+/**
+ * Tombstone for a Search Console property the user deleted.
+ *
+ * Deleting is a hard delete on `websites`, so without this the next GSC sync
+ * pulled the property straight back from Google — the user's deletion only
+ * survived until the next sync (or the next browser). The url is stored
+ * normalized so it matches whatever form Google returns (sc-domain:, trailing
+ * slash, scheme).
+ */
+const removedWebsiteSchema = new mongoose.Schema({
+  url:       { type: String, required: true },
+  removedAt: { type: Date, default: Date.now }
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   name:            { type: String, required: true, trim: true },
   email:           { type: String, required: true, unique: true, lowercase: true, trim: true },
@@ -24,6 +38,10 @@ const userSchema = new mongoose.Schema({
   avatar:             { type: String },       // Google profile pic URL
   isEmailVerified: { type: Boolean, default: false },
   websites:        [websiteSchema],
+  removedWebsites: [removedWebsiteSchema],
+  // Whether the user has answered the "import your Search Console properties?"
+  // prompt. 'unset' means we have not asked yet, so nothing is synced silently.
+  gscSyncPreference: { type: String, enum: ['unset', 'enabled', 'disabled'], default: 'unset' },
   lastLogin:       { type: Date, default: null }, // Preserving from existing system
   lastLoginIp:     { type: String, default: null },
   lastLoginCountry:{ type: String, default: null },

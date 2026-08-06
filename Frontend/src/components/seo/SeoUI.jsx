@@ -5,7 +5,7 @@ import { X, Plus } from 'lucide-react';
  * Shared primitives for the SEO dashboard.
  *
  * The reference implementation these are modelled on was dark-only, with hardcoded
- * hex values. Auditify has a light/dark toggle and a semantic token set, so these
+ * hex values. DealerSiteAudit  has a light/dark toggle and a semantic token set, so these
  * use the tokens (bg-card, text-ink, border-line, bg-accent …) and take `darkMode`
  * where a token has no dark equivalent. That keeps the dashboard from being the one
  * screen in the app that ignores the theme switch.
@@ -13,9 +13,8 @@ import { X, Plus } from 'lucide-react';
 
 export const Card = ({ darkMode, className = '', children, ...props }) => (
   <div
-    className={`rounded-2xl border shadow-sm ${
-      darkMode ? 'bg-[#111827] border-slate-800' : 'bg-card border-line'
-    } ${className}`}
+    className={`rounded-2xl border shadow-sm ${darkMode ? 'bg-[#111827] border-slate-800' : 'bg-card border-line'
+      } ${className}`}
     {...props}
   >
     {children}
@@ -56,10 +55,9 @@ export const Field = ({ label, hint, darkMode, children, right }) => (
 );
 
 const inputBase = (darkMode) =>
-  `w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors border ${
-    darkMode
-      ? 'bg-[#0B1120] border-slate-700 text-slate-100 placeholder:text-slate-600 focus:border-accent'
-      : 'bg-cardsoft border-line text-ink placeholder:text-faint focus:border-accent'
+  `w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors border ${darkMode
+    ? 'bg-[#0B1120] border-slate-700 text-slate-100 placeholder:text-slate-600 focus:border-accent'
+    : 'bg-cardsoft border-line text-ink placeholder:text-faint focus:border-accent'
   } focus:ring-2 focus:ring-accent/20`;
 
 export const TextInput = ({ darkMode, className = '', ...props }) => (
@@ -107,14 +105,12 @@ export const CounterTextArea = ({ value = '', recommended, rows = 3, darkMode, .
 export const Toggle = ({ checked, onChange, label, darkMode }) => (
   <button type="button" onClick={() => onChange(!checked)} className="inline-flex items-center gap-2.5">
     <span
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-        checked ? 'bg-emerald-500' : darkMode ? 'bg-slate-700' : 'bg-line'
-      }`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? 'bg-emerald-500' : darkMode ? 'bg-slate-700' : 'bg-line'
+        }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
+        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'
+          }`}
       />
     </span>
     {label && <span className={`text-sm ${darkMode ? 'text-slate-300' : 'text-inksoft'}`}>{label}</span>}
@@ -131,16 +127,14 @@ export const TagInput = ({ value = [], onChange, darkMode, placeholder = 'Type a
   };
   return (
     <div
-      className={`rounded-xl border px-2.5 py-2 flex flex-wrap gap-2 focus-within:border-accent ${
-        darkMode ? 'bg-[#0B1120] border-slate-700' : 'bg-cardsoft border-line'
-      }`}
+      className={`rounded-xl border px-2.5 py-2 flex flex-wrap gap-2 focus-within:border-accent ${darkMode ? 'bg-[#0B1120] border-slate-700' : 'bg-cardsoft border-line'
+        }`}
     >
       {value.map((tag, i) => (
         <span
           key={tag}
-          className={`inline-flex items-center gap-1 rounded-lg text-xs px-2 py-1 ${
-            i === 0 ? 'bg-accent/15 text-accent font-semibold' : darkMode ? 'bg-white/10 text-slate-300' : 'bg-surface-2 text-inksoft'
-          }`}
+          className={`inline-flex items-center gap-1 rounded-lg text-xs px-2 py-1 ${i === 0 ? 'bg-accent/15 text-accent font-semibold' : darkMode ? 'bg-white/10 text-slate-300' : 'bg-surface-2 text-inksoft'
+            }`}
           title={i === 0 ? 'Focus keyword — the first keyword is scored against the title and slug' : undefined}
         >
           {tag}
@@ -160,9 +154,8 @@ export const TagInput = ({ value = [], onChange, darkMode, placeholder = 'Type a
             }
           }}
           placeholder={placeholder}
-          className={`flex-1 bg-transparent text-sm outline-none py-1 ${
-            darkMode ? 'text-slate-100 placeholder:text-slate-600' : 'text-ink placeholder:text-faint'
-          }`}
+          className={`flex-1 bg-transparent text-sm outline-none py-1 ${darkMode ? 'text-slate-100 placeholder:text-slate-600' : 'text-ink placeholder:text-faint'
+            }`}
         />
         {draft && (
           <button type="button" onClick={add} aria-label="Add keyword" className="text-muted hover:text-accent">
@@ -188,9 +181,8 @@ const statusStyles = {
 
 export const StatusPill = ({ status }) => (
   <span
-    className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${
-      statusStyles[status] || 'bg-slate-500/15 text-slate-500'
-    }`}
+    className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${statusStyles[status] || 'bg-slate-500/15 text-slate-500'
+      }`}
   >
     {(status || '').replace('_', ' ')}
   </span>
@@ -204,9 +196,8 @@ export const EmptyState = ({ icon: Icon, title, subtitle, action, darkMode }) =>
   <div className="flex flex-col items-center justify-center text-center py-16 px-6">
     {Icon && (
       <div
-        className={`mb-4 h-14 w-14 rounded-2xl flex items-center justify-center ${
-          darkMode ? 'bg-white/5 text-slate-500' : 'bg-surface-2 text-faint'
-        }`}
+        className={`mb-4 h-14 w-14 rounded-2xl flex items-center justify-center ${darkMode ? 'bg-white/5 text-slate-500' : 'bg-surface-2 text-faint'
+          }`}
       >
         <Icon size={26} />
       </div>

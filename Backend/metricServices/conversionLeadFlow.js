@@ -1,4 +1,13 @@
-import { classifyPageType } from "../utils/pageClassifier.js";
+import { classifyPageType, classifyServicePageType } from "../utils/pageClassifier.js";
+import { applySiteApplicability } from "../config/siteTypeProfiles.js";
+import { importanceFor } from "../config/parameterImportance.js";
+import { getLocale, anyTerm, matchedTerms, GLOBAL_CTA_VERBS, GLOBAL_MAKES } from "../config/locale/index.js";
+import { isPhoneLikeDigits } from "../utils/localeFormats.js";
+
+// Per-parameter weight tilt for this section, by site sub-type. 1.0 for a
+// franchise dealer (the reference column) and for corporate/unresolved sites,
+// so nothing about their scoring changes. See config/parameterImportance.js.
+const importance = importanceFor("Conversion & Lead Flow");
 
 // Call to Action (CTA) Effectiveness
 function checkCTAs($) {
@@ -43,9 +52,12 @@ function checkCTAs($) {
 }
 
 // CTA Clarity
-function checkCTAClarity($) {
+function checkCTAClarity($, market = null) {
   const ctaSelectors = ['button', 'a', '.cta', '.cta-button', '.btn-primary'];
-  const clearVerbs = ["buy", "get", "download", "sign up", "subscribe", "start", "join", "register", "learn", "book", "order"];
+  // Globally-clear verbs plus the ones that are idiomatic in this market.
+  // "Enquire" was missing entirely, so nearly every Australian dealer's primary
+  // CTA — "Enquire Now" — was being scored as vague.
+  const clearVerbs = [...GLOBAL_CTA_VERBS, ...getLocale(market).ctaVerbs];
 
   const elements = $(ctaSelectors.join(','));
   let totalChecked = 0;
@@ -582,7 +594,8 @@ function checkTestimonials($) {
 }
 
 // Reviews Visible
-function checkReviewsVisible($) {
+function checkReviewsVisible($, market = null) {
+  const locale = getLocale(market);
   const keywords = ["review", "rating", "stars", "customer-review"];
   const elements = $("*").filter((_, el) => {
     const cls = ($(el).attr("class") || "").toLowerCase();
@@ -590,14 +603,28 @@ function checkReviewsVisible($) {
     return keywords.some(k => cls.includes(k) || id.includes(k));
   });
 
+  // Which third-party review platforms is this site actually linking to? Google
+  // dominates in both markets, but beyond it the ecosystems have nothing in
+  // common — Yelp and DealerRater are meaningless in Australia, where
+  // ProductReview.com.au and carsales dealer ratings are what buyers read.
+  const platformLinks = [];
+  $("a[href]").each((_, el) => {
+    const href = ($(el).attr("href") || "").toLowerCase();
+    for (const d of locale.directoryDomains) {
+      if (href.includes(d) && !platformLinks.includes(d)) platformLinks.push(d);
+    }
+  });
+
   const count = elements.length;
 
-  if (count > 0) {
+  if (count > 0 || platformLinks.length) {
     return {
       score: 100,
       status: "pass",
-      details: "User reviews/ratings detected.",
-      meta: { count, checkedKeywords: keywords },
+      details: platformLinks.length
+        ? `User reviews/ratings detected, including links to ${platformLinks.slice(0, 3).join(", ")}.`
+        : "User reviews/ratings detected.",
+      meta: { market: locale.code, count, checkedKeywords: keywords, platformLinks },
       analysis: null
     };
   }
@@ -606,16 +633,19 @@ function checkReviewsVisible($) {
     score: 0,
     status: "fail",
     details: "No reviews found.",
-    meta: { count: 0, checkedKeywords: keywords },
+    meta: { market: locale.code, count: 0, checkedKeywords: keywords, platformLinks: [] },
     analysis: {
       cause: "No aggregate ratings or specific user review elements were detected on the page.",
-      recommendation: "Display star ratings or numerical scores if applicable to increase trust."
+      recommendation: locale.code === "AU"
+        ? "Display star ratings on the page and link your Google Business Profile, ProductReview.com.au and carsales dealer-rating profiles."
+        : "Display star ratings or numerical scores if applicable to increase trust, and link your Google, DealerRater and Cars.com profiles."
     }
   };
 }
 
 // Trust Badges
-function checkTrustBadges($) {
+function checkTrustBadges($, market = null) {
+  const locale = getLocale(market);
   const keywords = ["secure", "ssl", "verified", "payment", "badge", "trust", "guarantee"];
 
   // 🔍 Step 1: Detect payment intent from page text
@@ -624,14 +654,19 @@ function checkTrustBadges($) {
 
   const hasPayment = paymentKeywords.some(k => pageText.includes(k));
 
-  // 🔍 Step 2: Find trust badge images
+  // 🔍 Step 2: Find trust badge images — generic security seals, plus the
+  // accreditation marks that actually carry trust in this market. An Australian
+  // dealer displaying its LMCT number and VACC membership is showing strong
+  // trust signals that a US-only badge list could not see at all.
+  const localCredentials = locale.credentials.filter((c) => pageText.includes(c));
   const images = $("img").filter((_, el) => {
     const src = ($(el).attr("src") || "").toLowerCase();
     const alt = ($(el).attr("alt") || "").toLowerCase();
-    return keywords.some(k => src.includes(k) || alt.includes(k));
+    return keywords.some(k => src.includes(k) || alt.includes(k))
+      || locale.credentials.some(c => alt.includes(c) || src.includes(c.replace(/\s+/g, "")));
   });
 
-  const count = images.length;
+  const count = images.length + localCredentials.length;
 
   // ✅ Step 3: If NO payment → ignore this check
   if (!hasPayment) {
@@ -972,7 +1007,14 @@ async function checkLinkRelevance(page) {
 }
 
 // Trade-In Flow / Trade-In Estimator (Dealer Lead Flow)
-async function checkTradeInFlow(page, $) {
+async function checkTradeInFlow(page, $, market = null) {
+  // The valuation-provider dictionary is the whole reason this parameter — the
+  // heaviest in the pillar at 0.15 — scored near zero on complete Australian
+  // trade-in tools: it looked for KBB, Black Book and J.D. Power, none of which
+  // operate in Australia, where RedBook and Glass's Guide are the market.
+  const locale = getLocale(market);
+  const valuation = locale.valuationProviders;
+
   // Signals ordered strongest -> weakest
   const textKeywords = [
     "trade-in", "trade in", "value your trade", "value my trade",
@@ -992,9 +1034,14 @@ async function checkTradeInFlow(page, $) {
     "sell-us-your-car", "sell-us-your-auto", "sell-your-auto", "value-your-auto", "value-your-vehicle"
   ];
   const widgetSignals = [
-    "kbb.com", "kbb", "tradepending", "trade-pending", "accutrade", "accu-trade",
-    "blackbook", "black-book", "icoapi", "instantcashoffer", "trade-in-widget",
-    "tradein-widget", "valueyourtrade", "value-your-trade"
+    // Vendor-neutral widget markers, true in any market.
+    "tradepending", "trade-pending", "trade-in-widget",
+    "tradein-widget", "valueyourtrade", "value-your-trade",
+    // Whichever valuation providers this market actually uses.
+    ...valuation.names.map((n) => n.replace(/\s+/g, "")),
+    ...valuation.domains,
+    // US-only vendor markers, kept for the US pack via its own provider list.
+    ...(locale.code === "US" ? ["kbb", "accutrade", "accu-trade", "blackbook", "black-book", "icoapi", "instantcashoffer"] : []),
   ];
 
   const result = await page.evaluate((sig) => {
@@ -1118,7 +1165,7 @@ async function checkTradeInFlow(page, $) {
 }
 
 // Financing Flow / Pre-Approval Process (Dealer Lead Flow)
-async function checkFinancingFlow(page, $) {
+async function checkFinancingFlow(page, $, market = null) {
   // Signals ordered strongest -> weakest
   const textKeywords = [
     "financing", "auto financing", "car financing", "vehicle financing",
@@ -1201,21 +1248,53 @@ async function checkFinancingFlow(page, $) {
   const hasForm = result.formFieldsDetected.length > 0;
   const hasText = result.matchedKeywords.length > 0;
 
-  // PASS: an actionable financing flow exists
+  // PASS: an actionable financing flow exists.
+  //
+  // Where the market licenses credit assistance, offering the flow at all
+  // carries a disclosure obligation with it. In Australia, arranging finance is
+  // credit assistance under the NCCP Act and the Australian Credit Licence
+  // number must be disclosed — present or absent, no judgement required, and
+  // there is no US analogue. The licence PATTERN is matched, not just the
+  // phrase: "we are a credit licensee" without a number is exactly the case
+  // this is meant to catch.
+  const licenceRule = getLocale(market).finance.licenceDisclosure;
+  let licence = null;
+  if (licenceRule && (hasWidget || hasCTA || hasForm)) {
+    licence = await page.evaluate((cfg) => {
+      const text = document.body.innerText || "";
+      const lower = text.toLowerCase();
+      const m = text.match(new RegExp(cfg.pattern.source, cfg.pattern.flags));
+      return {
+        numberFound: !!m,
+        number: m ? m[1] : null,
+        phraseFound: cfg.terms.some((t) => lower.includes(t)),
+      };
+    }, { pattern: { source: licenceRule.pattern.source, flags: licenceRule.pattern.flags }, terms: licenceRule.terms })
+      .catch(() => null);
+  }
+  const licenceMissing = !!(licenceRule && licence && !licence.numberFound);
+
   if (hasWidget || hasCTA || hasForm) {
     const detectionType = hasWidget ? "lender-widget" : hasForm ? "credit-application-form" : "financing-cta";
     return {
-      score: 100,
-      status: "pass",
-      details: "A financing / pre-approval flow is available to capture sales-ready leads on-site.",
+      score: licenceMissing ? 75 : 100,
+      status: licenceMissing ? "warning" : "pass",
+      details: licenceMissing
+        ? `A financing flow is available, but no ${licenceRule.label} was found on the page.`
+        : "A financing / pre-approval flow is available to capture sales-ready leads on-site.",
       meta: {
+        market: getLocale(market).code,
+        creditLicence: licenceRule ? { expected: licenceRule.label, ...(licence || {}), basis: licenceRule.basis } : null,
         detectionType,
         foundWidgets: result.foundWidgets,
         ctaExamples: result.ctaExamples,
         formFieldsDetected: result.formFieldsDetected,
         matchedKeywords: result.matchedKeywords
       },
-      analysis: null
+      analysis: licenceMissing ? {
+        cause: `This page offers finance but does not display ${licenceRule.label.toLowerCase()}. ${licenceRule.basis}`,
+        recommendation: "Display your Australian Credit Licence number (or your authorised-representative details and the licensee's number) on every page that offers or arranges finance — typically in the footer and beside the application form.",
+      } : null
     };
   }
 
@@ -1259,13 +1338,22 @@ async function checkFinancingFlow(page, $) {
 }
 
 // Finance Calculator / Payment Estimator (Dealer Lead Flow)
-async function checkFinanceCalculator(page, $) {
+async function checkFinanceCalculator(page, $, market = null) {
+  const locale = getLocale(market);
+
   // Signals ordered strongest -> weakest
   const textKeywords = [
     "payment calculator", "finance calculator", "loan calculator", "lease calculator",
     "payment estimator", "estimate your payment", "estimate your monthly payment",
     "calculate your payment", "calculate your monthly payment", "estimated monthly payment",
-    "monthly payment calculator", "auto loan calculator", "car payment calculator"
+    "monthly payment calculator", "auto loan calculator", "car payment calculator",
+    // Australian sites overwhelmingly quote WEEKLY repayments, and call the tool
+    // a repayment calculator rather than a payment calculator.
+    ...(locale.code === "AU" ? [
+      "repayment calculator", "repayments calculator", "estimate your repayments",
+      "calculate your repayments", "weekly repayment", "weekly repayments",
+      "finance calculator", "car loan calculator", "novated lease calculator",
+    ] : []),
   ];
   const ctaKeywords = [
     "payment-calculator", "finance-calculator", "loan-calculator", "lease-calculator",
@@ -1344,21 +1432,63 @@ async function checkFinanceCalculator(page, $) {
   const hasCTA = result.ctaExamples.length > 0;
   const hasText = result.matchedKeywords.length > 0;
 
-  // PASS: an actionable payment calculator exists
+  // PASS: an actionable payment calculator exists.
+  //
+  // A working calculator is necessary but not sufficient: both markets require a
+  // disclosure wherever a rate or repayment is advertised, and they require
+  // DIFFERENT ones. The US triggers on Reg-Z — stating a payment forces the full
+  // terms including the APR. Australia requires a comparison rate plus the
+  // prescribed warning under the National Credit Code, and expects the credit
+  // licence number nearby. Both are deterministic string checks, so a calculator
+  // that quotes a rate with no disclosure is a real, quotable finding rather
+  // than a clean 100.
   if (hasWidget || hasInputs || hasCTA) {
     const detectionType = hasWidget ? "calculator-widget" : hasInputs ? "calculator-inputs" : "calculator-cta";
+    const rd = locale.finance.rateDisclosure;
+    const disclosure = await page.evaluate((cfg) => {
+      const text = (document.body.innerText || "").toLowerCase();
+      const quotesRate = /\b\d+(?:\.\d+)?\s*%\s*(?:p\.?a\.?|apr|interest|comparison)?/.test(text)
+        || /\bfrom \$\d+\s*(?:per|\/)\s*(?:week|month|fortnight)/.test(text);
+      return {
+        quotesRate,
+        required: cfg.required.filter((t) => text.includes(t)),
+        supporting: cfg.supporting.filter((t) => text.includes(t)),
+        licence: cfg.licence ? cfg.licence.some((t) => text.includes(t)) : null,
+      };
+    }, {
+      required: rd.requiredTerms,
+      supporting: rd.supportingTerms,
+      licence: locale.finance.licenceDisclosure ? locale.finance.licenceDisclosure.terms : null,
+    }).catch(() => null);
+
+    const disclosureMissing = !!(disclosure && disclosure.quotesRate && disclosure.required.length === 0);
+    const score = disclosureMissing ? 75 : 100;
+
     return {
-      score: 100,
-      status: "pass",
-      details: "An interactive payment calculator / estimator is available to help shoppers gauge affordability.",
+      score,
+      status: score >= 80 ? "pass" : "warning",
+      details: disclosureMissing
+        ? `Interactive calculator present, but a rate is advertised without ${rd.label}.`
+        : "An interactive payment calculator / estimator is available to help shoppers gauge affordability.",
       meta: {
+        market: locale.code,
         detectionType,
         foundWidgets: result.foundWidgets,
         ctaExamples: result.ctaExamples,
         formFieldsDetected: result.formFieldsDetected,
-        matchedKeywords: result.matchedKeywords
+        matchedKeywords: result.matchedKeywords,
+        rateDisclosure: disclosure
+          ? { expected: rd.label, quotesRate: disclosure.quotesRate, found: disclosure.required, supporting: disclosure.supporting, licenceNearby: disclosure.licence, basis: rd.basis }
+          : null,
       },
-      analysis: null
+      analysis: disclosureMissing
+        ? {
+          cause: `This page advertises a rate or repayment but ${rd.label.toLowerCase()} was not found alongside it. ${rd.basis}`,
+          recommendation: locale.code === "AU"
+            ? "Show the comparison rate and the prescribed warning statement beside every advertised rate, along with \"fees and charges apply\", \"approval subject to lending criteria\", and your Australian Credit Licence number."
+            : "Show the APR wherever a payment amount, down payment, term or finance charge appears, together with the full credit terms.",
+        }
+        : null
     };
   }
 
@@ -1712,9 +1842,21 @@ async function checkChatExperience(page, $) {
 }
 
 // Click-to-Call (tel: link detection)
-async function checkClickToCall(page, $) {
-  const result = await page.evaluate(() => {
+async function checkClickToCall(page, $, market = null) {
+  // The primary path — a tel: link — is market-neutral and unchanged. What was
+  // broken is the FALLBACK ("a number is shown but is not tappable"), whose
+  // hardcoded 10–11 digit rule rejected every Australian 13-number: "13 12 34"
+  // is six digits, so such a page scored 0 instead of 50.
+  const validLengths = getLocale(market).phone.nationalDigits;
+
+  const result = await page.evaluate((lengths) => {
     const digitCount = (s) => (s.replace(/\D/g, "").length);
+    const plausible = (s) => {
+      const d = digitCount(s);
+      // A national-length number, optionally carrying a trunk zero or a country
+      // code on top of it.
+      return lengths.some((n) => d === n || d === n + 1 || d === n + 2 || d === n + 3);
+    };
 
     const telLinks = Array.from(document.querySelectorAll('a[href^="tel:"]'));
     const telExamples = [];
@@ -1723,11 +1865,11 @@ async function checkClickToCall(page, $) {
       if (num && telExamples.length < 5 && !telExamples.includes(num)) telExamples.push(num);
     });
 
-    // Visible phone numbers in body text (10-11 digit, separator-containing)
+    // Visible phone numbers in body text, at any length this market actually uses.
     const bodyText = document.body.innerText || "";
-    const phoneRegex = /(\+?\d[\d\s().-]{8,}\d)/g;
+    const phoneRegex = /(\+?\d[\d\s().-]{4,}\d)/g;
     const matches = bodyText.match(phoneRegex) || [];
-    const phones = matches.filter(s => { const d = digitCount(s); return d >= 10 && d <= 11; });
+    const phones = matches.filter(plausible);
 
     return {
       telCount: telLinks.length,
@@ -1735,7 +1877,7 @@ async function checkClickToCall(page, $) {
       phoneInText: phones.length > 0,
       phoneSample: phones.slice(0, 3).map(s => s.trim())
     };
-  });
+  }, validLengths);
 
   // PASS: click-to-call links present
   if (result.telCount > 0) {
@@ -2027,21 +2169,49 @@ export function checkCRMIntegration(data, $) {
 // UX §2.5 (relocated here). Self-flags N/A (dropped from denominator) when the page
 // shows no pricing at all.
 // ---------------------------------------------------------------------------
-async function checkPricingTransparency(page) {
-  const data = await page.evaluate(() => {
+// The two markets grade this differently because the underlying obligation is
+// different, not merely worded differently:
+//
+//   US → a price plus separately-disclosed fees and taxes. "Out-the-door" is a
+//        customer-driven norm; honesty flows from FTC Act s5.
+//   AU → ACL s48: the single total minimum price INCLUDING GST must be stated
+//        at least as prominently as any component of it. "Drive away, no more
+//        to pay" is the clean compliant form; "+ on-road costs" shown on its
+//        own is the defect. The ACCC enforces this actively in automotive.
+//
+// So the AU branch grades the presence of a TOTAL, and treats a component-only
+// price as a specific, quotable finding. Running the AU rule against US pages
+// would produce mass false positives, which is exactly why it is gated on the
+// locale's own `totalPriceRequired` flag rather than on a market string.
+async function checkPricingTransparency(page, market = null) {
+  const locale = getLocale(market);
+
+  const data = await page.evaluate((cfg) => {
     const text = (document.body.innerText || '').toLowerCase();
+    const has = (terms) => terms.some((t) => text.includes(t));
     const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
     const dollarCount = (text.match(/\$\s?\d/g) || []).length;
-    const hasPriceLabels = /\bmsrp\b|sale price|our price|internet price|selling price|list price|asking price/.test(text);
-    const callForPrice = /call for price|contact (us )?for price|price on request|please call|inquire for price/.test(text);
+    const hasPriceLabels = new RegExp(cfg.priceLabels, 'i').test(text);
+    const callForPrice = /call for price|contact (us )?for price|price on request|please call|inquire for price|enquire for price/.test(text);
 
-    const feeDisclosure = /\bdoc(umentation)? fee|dealer fee|processing fee|destination (charge|fee)|no hidden fees|no dealer fees|plus (tax|fees|tax and fees)|out[- ]the[- ]door|price includes|price excludes|additional fees may/.test(text);
-    const noHidden = /no hidden fees|no dealer fees|no surprise|transparent pricing|upfront pricing|no markup/.test(text);
-    const disclaimer = /disclaimer|price does not include|does not include tax|see dealer for details|plus applicable|tax, title|excludes tax/.test(text);
-    const financing = /monthly payment|estimated payment|\/mo\b|\bapr\b|financing available|payment calculator|as low as \$/.test(text);
+    const feeDisclosure = has(cfg.feeTerms);
+    const noHidden = has(cfg.transparencyTerms);
+    const disclaimer = /disclaimer|price does not include|does not include tax|see dealer for details|plus applicable|tax, title|excludes tax|excludes on-road|conditions apply/.test(text);
+    const financing = /monthly payment|estimated payment|weekly repayment|\/mo\b|\bapr\b|comparison rate|financing available|finance available|payment calculator|repayment calculator|as low as \$|from \$\d+\s*(?:per|\/)\s*week/.test(text);
+
+    const totalShown = has(cfg.totalTerms);
+    const componentOnly = cfg.componentOnlyTerms.filter((t) => text.includes(t));
 
     const hasAnyPrice = priceEls > 0 || dollarCount >= 2 || hasPriceLabels;
-    return { priceEls, dollarCount, hasPriceLabels, callForPrice, feeDisclosure, noHidden, disclaimer, financing, hasAnyPrice };
+    return { priceEls, dollarCount, hasPriceLabels, callForPrice, feeDisclosure, noHidden, disclaimer, financing, hasAnyPrice, totalShown, componentOnly };
+  }, {
+    priceLabels: locale.code === 'AU'
+      ? '\\bdrive ?away\\b|\\brrp\\b|sale price|our price|list price|asking price|was price'
+      : '\\bmsrp\\b|sale price|our price|internet price|selling price|list price|asking price',
+    feeTerms: locale.pricing.feeDisclosureTerms,
+    transparencyTerms: locale.pricing.transparencyTerms,
+    totalTerms: locale.pricing.totalPriceTerms || [],
+    componentOnlyTerms: locale.pricing.componentOnlyTerms || [],
   });
 
   if (!data.hasAnyPrice && !data.callForPrice) {
@@ -2049,31 +2219,82 @@ async function checkPricingTransparency(page) {
       status: 'pass',
       details: "No pricing is shown on this page, so pricing transparency isn't applicable here.",
       analysis: { cause: "Pricing transparency is evaluated where vehicle prices/payments appear (VDP, Offers, Lease, Finance).", recommendation: "Audit a vehicle-detail, offers or finance page to grade price and fee transparency." },
-      meta: { notApplicable: true, infoOnly: true },
+      meta: { notApplicable: true, infoOnly: true, market: locale.code },
       infoOnly: true
     };
   }
 
   const showsRealPrices = (data.priceEls > 0 || data.dollarCount >= 2 || data.hasPriceLabels) && !(data.callForPrice && data.dollarCount < 2);
-  const score = Math.max(0, Math.min(100,
+
+  // Same 100-point budget in both markets — only what earns the middle 30
+  // changes. Where a total price is the legal requirement, showing one is what
+  // earns it; where it is not, fee disclosure is.
+  const totalOrFee = locale.pricing.totalPriceRequired ? data.totalShown : data.feeDisclosure;
+  let score = Math.max(0, Math.min(100,
     (showsRealPrices ? 30 : 0) +
-    (data.feeDisclosure ? 30 : 0) +
+    (totalOrFee ? 30 : 0) +
     (data.disclaimer ? 15 : 0) +
     (data.financing ? 15 : 0) +
     (data.noHidden ? 10 : 0)
   ));
+
+  // A component-only price where a total is legally required is worse than a
+  // merely incomplete page: it is the specific thing the regulator acts on.
+  const componentOnlyDefect = locale.pricing.totalPriceRequired && data.componentOnly.length > 0 && !data.totalShown;
+  if (componentOnlyDefect) score = Math.min(score, 45);
+
   const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
 
   let analysis;
-  if (status === 'pass') analysis = { cause: "Prices are shown openly with fee disclosure, building buyer trust before they ever call.", recommendation: "Keep fees and disclaimers visible next to price; consider an out-the-door price estimator." };
-  else if (status === 'warning') analysis = { cause: `Pricing is partly transparent${!data.feeDisclosure ? ' but fees/taxes are not disclosed' : ''}${!data.financing ? '; no payment estimate' : ''}.`, recommendation: "Disclose doc/dealer fees and taxes near the price, add a monthly-payment estimate, and state 'no hidden fees' if true." };
-  else analysis = { cause: data.callForPrice ? "Prices are largely hidden behind 'call for price', which erodes trust." : "Prices appear but fees and disclaimers are not disclosed.", recommendation: "Show actual prices (not just 'call for price'), disclose all fees and taxes, and add financing/payment estimates." };
+  if (componentOnlyDefect) {
+    analysis = {
+      cause: `This page advertises a price component (${data.componentOnly.join(', ')}) without an equally prominent total. ${locale.pricing.basis}`,
+      recommendation: "Show the drive-away price — the GST-inclusive total including registration, stamp duty and dealer delivery — at least as prominently as any component figure. \"Drive away, no more to pay\" is the clean compliant form."
+    };
+  } else if (status === 'pass') {
+    analysis = {
+      cause: locale.pricing.totalPriceRequired
+        ? "A total drive-away price is shown, which is both the legal requirement and what buyers compare on."
+        : "Prices are shown openly with fee disclosure, building buyer trust before they ever call.",
+      recommendation: locale.pricing.totalPriceRequired
+        ? "Keep the drive-away total as the headline figure on every listing and offer."
+        : "Keep fees and disclaimers visible next to price; consider an out-the-door price estimator."
+    };
+  } else if (status === 'warning') {
+    analysis = {
+      cause: `Pricing is partly transparent${!totalOrFee ? (locale.pricing.totalPriceRequired ? ' but no total drive-away price is shown' : ' but fees/taxes are not disclosed') : ''}${!data.financing ? '; no payment estimate' : ''}.`,
+      recommendation: locale.pricing.totalPriceRequired
+        ? "Show a GST-inclusive drive-away total beside every advertised figure, add a repayment estimate, and state \"no more to pay\" if it is true."
+        : "Disclose doc/dealer fees and taxes near the price, add a monthly-payment estimate, and state 'no hidden fees' if true."
+    };
+  } else {
+    analysis = {
+      cause: data.callForPrice
+        ? "Prices are largely hidden behind 'call for price', which erodes trust."
+        : (locale.pricing.totalPriceRequired ? "Prices appear but no GST-inclusive total is shown." : "Prices appear but fees and disclaimers are not disclosed."),
+      recommendation: locale.pricing.totalPriceRequired
+        ? "Show actual drive-away prices rather than \"call for price\", and make the GST-inclusive total the most prominent figure."
+        : "Show actual prices (not just 'call for price'), disclose all fees and taxes, and add financing/payment estimates."
+    };
+  }
 
   return {
     score, status,
-    details: `${showsRealPrices ? 'Prices shown' : 'Prices hidden / call-for-price'}; fee disclosure: ${data.feeDisclosure ? 'yes' : 'no'}, financing: ${data.financing ? 'yes' : 'no'}.`,
+    details: locale.pricing.totalPriceRequired
+      ? `${showsRealPrices ? 'Prices shown' : 'Prices hidden / call-for-price'}; drive-away total: ${data.totalShown ? 'yes' : 'no'}, finance shown: ${data.financing ? 'yes' : 'no'}.`
+      : `${showsRealPrices ? 'Prices shown' : 'Prices hidden / call-for-price'}; fee disclosure: ${data.feeDisclosure ? 'yes' : 'no'}, financing: ${data.financing ? 'yes' : 'no'}.`,
     analysis,
-    meta: { showsRealPrices, callForPrice: data.callForPrice, feeDisclosure: data.feeDisclosure, noHidden: data.noHidden, disclaimer: data.disclaimer, financing: data.financing }
+    meta: {
+      market: locale.code,
+      pricingModel: locale.pricing.model,
+      showsRealPrices, callForPrice: data.callForPrice,
+      feeDisclosure: data.feeDisclosure, noHidden: data.noHidden,
+      disclaimer: data.disclaimer, financing: data.financing,
+      totalPriceRequired: locale.pricing.totalPriceRequired,
+      totalPriceShown: data.totalShown,
+      componentOnlyTerms: data.componentOnly,
+      basis: locale.pricing.basis,
+    }
   };
 }
 
@@ -2081,26 +2302,35 @@ async function checkPricingTransparency(page) {
 // Vehicle History — CARFAX / AutoCheck (page-specific: VDP) — spec §2.6. Claimed
 // from UX §2.5 (relocated here). Self-flags N/A for new-only / non-inventory pages.
 // ---------------------------------------------------------------------------
-async function checkVehicleHistory(page) {
-  const data = await page.evaluate(() => {
+// CARFAX and AutoCheck do not operate in Australia, so an AU used-car VDP
+// offering a PPSR certificate — the direct analogue, and the single most
+// requested trust artefact by Australian used buyers — used to score zero here.
+// The check shape is unchanged; only the provider dictionary moves.
+async function checkVehicleHistory(page, market = null) {
+  const locale = getLocale(market);
+  const providers = locale.historyProviders;
+
+  const data = await page.evaluate((cfg) => {
     const text = (document.body.innerText || '').toLowerCase();
     const url = window.location.pathname.toLowerCase();
     const html = document.documentElement.innerHTML.toLowerCase();
 
-    const usedUrl = /\/used|\/pre-owned|\/preowned|\/cpo|\/certified/.test(url);
-    const usedText = /\bused\b|pre-owned|pre owned|certified pre-owned|\bcpo\b/.test(text);
+    const usedUrl = /\/used|\/pre-owned|\/preowned|\/cpo|\/certified|\/second-hand|\/demo/.test(url);
+    const usedText = /\bused\b|pre-owned|pre owned|certified pre-owned|\bcpo\b|second-hand|second hand|\bdemo\b|demonstrator/.test(text);
     const newOnlyUrl = /\/new(-|\/|$)/.test(url) && !usedUrl;
 
     const priceEls = document.querySelectorAll('[class*="price" i], [itemprop="price"]').length;
-    const vehicleContext = usedUrl || usedText || /\/inventory|\/vehicles|\/vdp|\/cars/.test(url) || priceEls >= 2 || /\b(vin|stock\s?#|mileage|odometer)\b/.test(text);
+    const vehicleContext = usedUrl || usedText || /\/inventory|\/vehicles|\/vdp|\/cars|\/stock/.test(url) || priceEls >= 2 || /\b(vin|stock\s?#|mileage|odometer|kilometres|\bkms?\b)\b/.test(text);
 
-    const carfax = /carfax/.test(html);
-    const autocheck = /autocheck/.test(html);
-    const reportLinks = document.querySelectorAll('a[href*="carfax" i], a[href*="autocheck" i]').length;
-    const historyLang = /vehicle history report|free (vehicle )?history|history report|accident[- ]free|no accidents|\bone[- ]owner\b|\b1[- ]owner\b|clean (title|history)|\bclean carfax\b/.test(text);
+    // Which of this market's providers is named anywhere in the markup?
+    const providersFound = cfg.names.filter((n) => html.includes(n));
+    const reportLinks = cfg.domains.reduce(
+      (n, d) => n + document.querySelectorAll(`a[href*="${d}" i]`).length, 0
+    );
+    const historyLang = cfg.language.some((t) => text.includes(t));
 
-    return { usedUrl, usedText, newOnlyUrl, vehicleContext, carfax, autocheck, reportLinks, historyLang };
-  });
+    return { usedUrl, usedText, newOnlyUrl, vehicleContext, providersFound, reportLinks, historyLang };
+  }, { names: providers.names, domains: providers.domains, language: providers.language });
 
   const isUsedContext = data.usedUrl || data.usedText;
 
@@ -2108,29 +2338,41 @@ async function checkVehicleHistory(page) {
     return {
       status: 'pass',
       details: data.newOnlyUrl ? "New-vehicle context — history reports don't apply to new cars." : "No used-vehicle inventory context on this page; history reports not applicable.",
-      analysis: { cause: "CARFAX/AutoCheck history is only expected on used / certified pre-owned vehicles.", recommendation: "Audit a used or CPO vehicle-detail page to grade history-report availability." },
-      meta: { notApplicable: true, context: data.newOnlyUrl ? 'new' : 'non-inventory', infoOnly: true },
+      analysis: { cause: `${providers.label} history is only expected on used / certified pre-owned vehicles.`, recommendation: "Audit a used or CPO vehicle-detail page to grade history-report availability." },
+      meta: { notApplicable: true, context: data.newOnlyUrl ? 'new' : 'non-inventory', infoOnly: true, market: locale.code },
       infoOnly: true
     };
   }
 
-  const hasReport = data.carfax || data.autocheck;
+  const hasReport = data.providersFound.length > 0;
   const score = Math.max(0, Math.min(100,
     (hasReport ? 55 : 0) +
     (data.reportLinks > 0 ? 20 : 0) +
     (data.historyLang ? 25 : 0)
   ));
   const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
-  const providers = [data.carfax && 'CARFAX', data.autocheck && 'AutoCheck'].filter(Boolean).join(' & ');
+  const found = data.providersFound.map((n) => n.toUpperCase()).join(' & ');
 
   return {
     score, status,
-    details: `${hasReport ? `${providers} present` : 'No CARFAX/AutoCheck detected'}${data.reportLinks ? `, ${data.reportLinks} report link(s)` : ''}.`,
+    details: `${hasReport ? `${found} present` : `No ${providers.label} detected`}${data.reportLinks ? `, ${data.reportLinks} report link(s)` : ''}.`,
     analysis: {
-      cause: hasReport ? "Vehicle history reports are surfaced, reassuring used-car buyers about condition and ownership." : "Used vehicles are shown without visible CARFAX/AutoCheck history reports, a major trust gap for pre-owned shoppers.",
-      recommendation: "Provide a free CARFAX or AutoCheck report link on every used/CPO listing and highlight 'accident-free' / 'one-owner' / 'clean title' where applicable."
+      cause: hasReport
+        ? "Vehicle history reports are surfaced, reassuring used-car buyers about condition and ownership."
+        : `Used vehicles are shown without a visible ${providers.label}, a major trust gap for pre-owned shoppers in ${locale.name}.`,
+      recommendation: locale.code === 'AU'
+        ? "Offer a PPSR certificate on every used listing and say plainly that the vehicle is clear of finance, not written off and not stolen. PPSR status is the first thing an Australian used buyer looks for."
+        : "Provide a free CARFAX or AutoCheck report link on every used/CPO listing and highlight 'accident-free' / 'one-owner' / 'clean title' where applicable."
     },
-    meta: { context: isUsedContext ? 'used' : 'inventory', carfax: data.carfax, autocheck: data.autocheck, reportLinks: data.reportLinks, historyLang: data.historyLang }
+    meta: {
+      market: locale.code,
+      context: isUsedContext ? 'used' : 'inventory',
+      expectedProvider: providers.label,
+      providersFound: data.providersFound,
+      reportLinks: data.reportLinks,
+      historyLang: data.historyLang,
+      registryNote: providers.registryNote,
+    }
   };
 }
 
@@ -2139,25 +2381,40 @@ async function checkVehicleHistory(page) {
 // Spec §2.6 folds this into the "Client logos / case studies / certifications &
 // awards" param. Claimed from UX §2.5 (where it was info-only); WEIGHTED here.
 // ---------------------------------------------------------------------------
-async function checkCertificationsAwards(page) {
-  const data = await page.evaluate(() => {
+async function checkCertificationsAwards(page, market = null) {
+  // ASE, NADA and BBB simply do not exist in Australia, so the old signal set
+  // read a legitimate AU dealer displaying its LMCT number and VACC membership
+  // as having no credibility marks at all. Market-specific credentials come
+  // from the locale pack; the three genuinely universal signals (a
+  // manufacturer certification, an award, a star rating) stay shared.
+  const locale = getLocale(market);
+
+  const data = await page.evaluate((cfg) => {
     const text = (document.body.innerText || '').toLowerCase();
     const imgAlts = Array.from(document.querySelectorAll('img')).map(i => (i.getAttribute('alt') || '').toLowerCase());
     const altText = imgAlts.join(' ');
     const haystack = text + ' ' + altText + ' ' + document.body.className.toLowerCase();
 
-    const signals = {
-      certified: /\bcertified\b|\bcertification\b|certified pre-owned|\bcpo\b/,
-      bbb: /\bbbb\b|better business bureau|accredited business/,
+    const universal = {
+      certified: /\bcertified\b|\bcertification\b|certified pre-owned|\bcpo\b|accredited/,
       award: /\baward(s|ed)?\b|dealer of the year|president'?s award|mark of excellence|top rated|top-rated|best dealer/,
-      ratings: /dealerrater|cars\.com award|edmunds|kelley blue book|\bkbb\b|google reviews|5[- ]?star|five[- ]?star/,
-      manufacturer: /(toyota|honda|ford|chevrolet|nissan|bmw|mercedes|hyundai|kia|subaru|gmc|jeep|ram|lexus|audi|volkswagen|mazda) certified/,
-      ase: /\base certified\b|ase[- ]certified/
+      ratings: /google reviews|5[- ]?star|five[- ]?star|customer rating/,
+      manufacturer: new RegExp(`(${cfg.makes.join('|')})\\s+(?:certified|authorised|authorized)`),
     };
-    const found = Object.keys(signals).filter(k => signals[k].test(haystack));
-    const badgeImgs = imgAlts.filter(a => /certified|award|bbb|accredited|5[- ]?star|dealerrater|excellence/.test(a)).length;
+    const found = Object.keys(universal).filter((k) => universal[k].test(haystack));
 
-    return { found, badgeImgs };
+    // Market credentials matched as literal phrases from the locale pack.
+    const localCreds = cfg.credentials.filter((c) => haystack.includes(c));
+    if (localCreds.length) found.push('local accreditation');
+
+    const badgeImgs = imgAlts.filter((a) =>
+      /certified|award|accredited|5[- ]?star|excellence/.test(a) || cfg.credentials.some((c) => a.includes(c))
+    ).length;
+
+    return { found, localCreds, badgeImgs };
+  }, {
+    credentials: locale.credentials,
+    makes: [...GLOBAL_MAKES, ...locale.vehicle.distinctiveMakes],
   });
 
   const distinct = data.found.length;
@@ -2165,14 +2422,22 @@ async function checkCertificationsAwards(page) {
   if (data.badgeImgs > 0 && score < 100) score = Math.min(100, score + 10);
   const status = score >= 80 ? 'pass' : (score >= 40 ? 'warning' : 'fail');
 
+  const exampleCreds = locale.code === 'AU'
+    ? 'your dealer licence number (LMCT/MD), ABN, AADA or state motor-trades membership (VACC, MTA), and RACV/NRMA/RACQ approval'
+    : 'manufacturer certifications, BBB accreditation, award badges (Dealer of the Year, DealerRater) and star ratings';
+
   return {
     score, status,
-    details: distinct ? `Trust signals found: ${data.found.join(', ')}${data.badgeImgs ? ` (+${data.badgeImgs} badge image${data.badgeImgs > 1 ? 's' : ''})` : ''}.` : "No certifications, accreditations or awards detected on this page.",
+    details: distinct
+      ? `Trust signals found: ${data.found.join(', ')}${data.localCreds.length ? ` (${data.localCreds.slice(0, 3).join(', ')})` : ''}${data.badgeImgs ? ` (+${data.badgeImgs} badge image${data.badgeImgs > 1 ? 's' : ''})` : ''}.`
+      : "No certifications, accreditations or awards detected on this page.",
     analysis: {
-      cause: distinct >= 2 ? "The page surfaces multiple credibility signals (certifications/awards) that build buyer trust." : "Few or no third-party credibility signals (certifications, BBB, awards, ratings) are visible.",
-      recommendation: "Display manufacturer certifications, BBB accreditation, award badges (Dealer of the Year, DealerRater) and star ratings prominently near the top of key pages."
+      cause: distinct >= 2
+        ? "The page surfaces multiple credibility signals (certifications/awards) that build buyer trust."
+        : `Few or no third-party credibility signals recognised in ${locale.name} are visible.`,
+      recommendation: `Display ${exampleCreds} prominently near the top of key pages.`
     },
-    meta: { found: data.found, badgeImgs: data.badgeImgs }
+    meta: { market: locale.code, found: data.found, localCredentials: data.localCreds, badgeImgs: data.badgeImgs }
   };
 }
 
@@ -2218,9 +2483,19 @@ const CONVERSION_SPEC_WEIGHTS = {
   Incentives_Displayed: 0.06,
 };
 
-export default async function conversionLeadFlow(page, $) {
+// `siteSubType` (franchise/independent/service/repair) gates which parameters
+// are even applicable to this kind of business — see config/siteTypeProfiles.js.
+// It arrives as the 4th argument because the 3rd (pageType) is passed by the
+// worker but deliberately re-derived here from the live page URL.
+export default async function conversionLeadFlow(page, $, _pageType = null, siteSubType = null, market = null) {
   const url = (() => { try { return page.url(); } catch { return ""; } })();
-  const pageType = classifyPageType(url);
+  const isServicingSite = siteSubType === "service" || siteSubType === "repair";
+  // Classify against the taxonomy that matches the business. On a servicing
+  // site the dealer classifier buckets /book-online and /price-list as
+  // "generic", which is precisely why the two most important conversion
+  // parameters for those site types went unscored — the gates below key off
+  // page type, so the page type has to be right first.
+  const pageType = isServicingSite ? classifyServicePageType(url) : classifyPageType(url);
 
   const isTradeIn = pageType === "trade";
   const isFinance = pageType === "finance";
@@ -2229,7 +2504,9 @@ export default async function conversionLeadFlow(page, $) {
   const isOffers = pageType === "specials";
   const isLease = pageType === "lease";
   // Spec: Form presence applies on Trade-In, Finance, Contact, Service (N/A elsewhere).
-  const isFormPage = ["trade", "finance", "about", "service"].includes(pageType);
+  // "booking" and "pricing" only exist in the servicing taxonomy, and both are
+  // form pages by definition — a booking request and a quote request.
+  const isFormPage = ["trade", "finance", "about", "service", "booking", "pricing"].includes(pageType);
 
   // ---- Analytics / measurability (site-wide) ----
   const trackingData = await collectTrackingData(page);
@@ -2240,7 +2517,7 @@ export default async function conversionLeadFlow(page, $) {
 
   // ---- CTA effectiveness (common) ----
   const checkCTAsScore = checkCTAs($);
-  const checkCTAClarityScore = checkCTAClarity($);
+  const checkCTAClarityScore = checkCTAClarity($, market);
   const checkCTACrowdingScore = await checkCTACrowding(page);
   const checkCTAFlowAlignmentScore = await checkCTAFlowAlignment(page, $);
 
@@ -2258,28 +2535,51 @@ export default async function conversionLeadFlow(page, $) {
   const checkThankYouPagesScore = await checkThankYouPages(page, $);
 
   // ---- Trust / social proof (common) ----
-  const checkTrustBadgesScore = checkTrustBadges($);
+  const checkTrustBadgesScore = checkTrustBadges($, market);
   const checkTestimonialsScore = checkTestimonials($);
-  const checkReviewsVisibleScore = checkReviewsVisible($);
+  const checkReviewsVisibleScore = checkReviewsVisible($, market);
   const checkClientLogosScore = await checkClientLogos(page);
   const checkCaseStudiesAccessibilityScore = await checkCaseStudiesAccessibility(page);
-  const checkCertificationsAwardsScore = await checkCertificationsAwards(page);
+  const checkCertificationsAwardsScore = await checkCertificationsAwards(page, market);
 
   // ---- Commercial (page-specific) ----
-  const checkPricingTransparencyScore = (isVdp || isOffers || isLease || isFinance) ? await checkPricingTransparency(page) : null;
-  const checkVehicleHistoryScore = isVdp ? await checkVehicleHistory(page) : null;
+  // Service pages were added to this gate for the two servicing site types.
+  // Published service pricing is the strongest differentiator a service centre
+  // or garage has (the matrix rates it Most Important for both) and it was
+  // previously never measured for them at all: the gate only opened on
+  // vdp/specials/lease/finance, none of which a garage has.
+  const checkPricingTransparencyScore = (isVdp || isOffers || isLease || isFinance || (isServicingSite && (isService || pageType === "pricing")))
+    ? await checkPricingTransparency(page, market)
+    : null;
+  const checkVehicleHistoryScore = isVdp ? await checkVehicleHistory(page, market) : null;
 
   // ---- Engagement (common) ----
-  const checkClickToCallScore = await checkClickToCall(page, $);
+  const checkClickToCallScore = await checkClickToCall(page, $, market);
   const checkChatExperienceScore = await checkChatExperience(page, $);
   const checkLeadMagnetsScore = await checkLeadMagnets(page);
 
   // ---- Page-specific lead tools (only run where they apply) ----
-  const checkTradeInFlowScore = isTradeIn ? await checkTradeInFlow(page, $) : null;
-  const checkFinancingFlowScore = isFinance ? await checkFinancingFlow(page, $) : null;       // user decision: keep, page-specific Finance
-  const checkFinanceCalculatorScore = (isFinance || isVdp) ? await checkFinanceCalculator(page, $) : null;
-  const checkAppointmentBookingScore = isService ? await checkAppointmentBooking(page, $) : null;
-  const checkIncentivesDisplayedScore = (isService || isOffers) ? checkIncentivesDisplayed($) : null;
+  const checkTradeInFlowScore = isTradeIn ? await checkTradeInFlow(page, $, market) : null;
+  const checkFinancingFlowScore = isFinance ? await checkFinancingFlow(page, $, market) : null;       // user decision: keep, page-specific Finance
+  const checkFinanceCalculatorScore = (isFinance || isVdp) ? await checkFinanceCalculator(page, $, market) : null;
+  // Booking is THE funnel for a service centre or garage (the matrix rates it
+  // Most Important for both), but their booking form very often sits on the
+  // home page or a /book page that classifies as `generic` — so gating it on
+  // pageType === "service" alone left the single most important conversion
+  // parameter for those site types unscored. Widened to home/generic there
+  // only; on a dealer site the service-page gate is still exactly right.
+  const bookingApplies = isService || (isServicingSite && ["booking", "home", "generic"].includes(pageType));
+  const checkAppointmentBookingScore = bookingApplies ? await checkAppointmentBooking(page, $) : null;
+  // Lease was added to this gate because it is where a franchise dealer's
+  // incentives actually live. The parameter is rated Most Important for a
+  // franchise store on the reasoning that OEM incentives and manufacturer
+  // rebates are its time-bound offer surface — but the franchise crawl plan
+  // spends its sixth slot on Lease rather than Specials, so the gate never
+  // opened and the highest-rated Conversion parameter for that site type went
+  // unscored on every franchise audit. A lease-specials page advertising
+  // manufacturer lease offers IS an incentive surface, so this is a correction
+  // rather than a workaround for the plan.
+  const checkIncentivesDisplayedScore = (isService || isOffers || isLease) ? checkIncentivesDisplayed($) : null;
 
   // Applicable metric set. Page-specific & form-quality params are `null` where they
   // don't apply (omitted → dropped from the denominator, spec rule 6). NOTE: Link_Relevance
@@ -2332,13 +2632,25 @@ export default async function conversionLeadFlow(page, $) {
   let earnedScore = 0;
   const metricsMap = {};
 
-  for (const [key, metric] of Object.entries(candidateMap)) {
+  // Site-level applicability on top of the page-level gates above: Vehicle
+  // History, Trade-In, Financing Flow and Finance Calculator presuppose a
+  // vehicle for sale, so on a service/repair site they are N/A rather than
+  // failed. Not redundant with the page gates — page type is decided by URL
+  // regex, and a garage's /finance-options page (payment plans for a big
+  // repair bill are common) classifies as `finance` and would otherwise run
+  // and fail the whole credit-application battery.
+  const applicableMap = applySiteApplicability(candidateMap, siteSubType);
+
+  for (const [key, metric] of Object.entries(applicableMap)) {
     if (!metric) continue;                                            // not applicable on this page type
     if (metric.infoOnly === true || metric.meta?.notApplicable === true) continue; // self-flagged N/A → drop
-    const weight = CONVERSION_SPEC_WEIGHTS[key] ?? 0.02;
+    const weight = (CONVERSION_SPEC_WEIGHTS[key] ?? 0.02) * importance(key, siteSubType);
     const s = typeof metric.score === "number"
       ? metric.score
       : (metric.status === "pass" ? 100 : metric.status === "warning" ? 50 : 0);
+    // A zero weight means the matrix rates this parameter N/A for this kind of
+    // business. It still goes into metricsMap (the card is shown, with its real
+    // score) but contributes to neither side of the ratio.
     totalWeight += weight;
     earnedScore += weight * (s / 100);
     metricsMap[key] = metric;

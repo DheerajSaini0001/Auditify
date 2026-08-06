@@ -1,6 +1,13 @@
 import AxeBuilder from "@axe-core/playwright";
 import logger from "../utils/logger.js";
 import fastFetch from "../utils/fastFetch.js";
+import { evaluateLegalFrameworks } from "./accessibilityLegal.js";
+import { importanceFor } from "../config/parameterImportance.js";
+import { getLocale } from "../config/locale/index.js";
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites.
+const importance = importanceFor("Accessibility");
 
 // ============================================================================
 // Accessibility — WCAG 2.2 AA, rebuilt to AUDIT_FRAMEWORK_SPECIFICATION.md §2.3
@@ -300,6 +307,48 @@ const checkHtmlHasLang = (results) =>
     cause: "Screen readers need a valid lang attribute to select the correct voice profile.",
     recommendation: "Add a valid BCP-47 lang code (e.g. lang='en') to the <html> tag.",
   });
+
+// ── Regional language subtag (market-sensitive, NON-scoring) ────────────────
+//
+// The one accessibility parameter that legitimately differs between markets:
+// `en-AU` and `en-US` change how a screen reader pronounces place names,
+// currency and dates. Bare `en` is what most templates ship, and it satisfies
+// WCAG 3.1.1 — so this deliberately does NOT move the score. Capping a Critical
+// ×3 parameter (and with it the whole pillar, at 70) over a subtag would be
+// disproportionate and would break the rule that thresholds never move between
+// markets. It is surfaced as an observation and a recommendation instead.
+const withRegionalLangNote = (metric, $, market) => {
+  if (!metric || typeof metric !== "object" || !$) return metric;
+  const locale = getLocale(market);
+  let lang = null;
+  try { lang = String($("html").attr("lang") || "").trim(); } catch (_) { return metric; }
+  if (!lang) return metric;
+
+  const expected = locale.language;                       // e.g. "en-AU"
+  const region = lang.includes("-") ? lang.split("-").pop().toUpperCase() : null;
+  const regionallyCorrect = region === locale.code;
+  const wrongRegion = !!region && !regionallyCorrect;
+
+  return {
+    ...metric,
+    meta: {
+      ...(metric.meta || {}),
+      lang,
+      market: locale.code,
+      expectedLang: expected,
+      regionallyCorrect,
+      // A lang that names the OTHER market is a locale-contamination signal in
+      // its own right, and a stronger one than a bare `en`.
+      wrongRegion,
+    },
+    ...(regionallyCorrect || metric.status !== "pass" ? {} : {
+      analysis: {
+        ...(metric.analysis || {}),
+        recommendation: `${metric.analysis?.recommendation || ""} For a ${locale.name} audience, use lang="${expected}" rather than "${lang}" — the regional subtag is what tells a screen reader how to pronounce local place names, currency and dates.`.trim(),
+      },
+    }),
+  };
+};
 
 // ── Meta viewport / zoom (Serious) ──
 const checkMetaViewport = (results) =>
@@ -626,7 +675,14 @@ async function checkInteractiveElementAffordance(page) {
 }
 
 // ── Keyboard Navigation (Critical, weighted) — composite of the 4 sub-checks ──
-const checkKeyboardNavigation = ({ focusOrder, focusableContent, tabindex, ariaHiddenFocus }) => {
+//
+// The four sub-checks carry their own site-type ratings (all four drop from
+// Important to Recommended on a repair site, whose "forms" are usually a phone
+// number). Those ratings are applied HERE rather than in the section roll-up,
+// because the section only ever sees the composite: Keyboard_Navigation is what
+// carries the weight and the sub-checks are display-only. Without this the four
+// ratings would be config that reads as load-bearing and multiplies nothing.
+const checkKeyboardNavigation = ({ focusOrder, focusableContent, tabindex, ariaHiddenFocus }, siteSubType = null) => {
   const parts = [
     { key: "Focus_Order", weight: 8, metric: focusOrder },
     { key: "Focusable_Content", weight: 6, metric: focusableContent },
@@ -640,8 +696,10 @@ const checkKeyboardNavigation = ({ focusOrder, focusableContent, tabindex, ariaH
   for (const part of parts) {
     const m = part.metric;
     breakdown[part.key] = { score: m.score, status: m.status, details: m.details };
-    totalWeight += part.weight;
-    earned += (m.score / 100) * part.weight;
+    const w = part.weight * importance(part.key, siteSubType);
+    if (w <= 0) continue;
+    totalWeight += w;
+    earned += (m.score / 100) * w;
     if (m.status !== "pass") failing.push(part.key.replace(/_/g, " "));
   }
   const score = totalWeight > 0 ? parseFloat(((earned / totalWeight) * 100).toFixed(0)) : 100;
@@ -953,7 +1011,12 @@ const checkWcagAACompliance = (results) => {
   };
 };
 
-export default async function accessibilityMetrics(page) {
+// `market` is the ISO alpha-2 code the audit was run for ("US" / "AU"). It does
+// not change a single score — WCAG success criteria are identical worldwide —
+// it only selects which legal frameworks the report maps the same results onto.
+// Callers currently pass (page, $, pageType); market is optional and defaults to
+// null, which reports every framework.
+export default async function accessibilityMetrics(page, $ = null, pageType = null, market = null, siteSubType = null) {
   // Determinism: axe must run on a SETTLED DOM. Client-rendered widgets that
   // inject/replace nodes after first paint (carousels, inventory feeds) change
   // what axe sees run-to-run — the same page scored 56 vs 80 across renders in
@@ -1023,7 +1086,7 @@ export default async function accessibilityMetrics(page) {
   const imageAlt = viaAxe(() => checkImageAlt(axeResults));
   const linkName = viaAxe(() => checkLinkName(axeResults));
   const buttonName = viaAxe(() => checkButtonName(axeResults));
-  const htmlHasLang = viaAxe(() => checkHtmlHasLang(axeResults));
+  const htmlHasLang = withRegionalLangNote(viaAxe(() => checkHtmlHasLang(axeResults)), $, market);
   const metaViewport = viaAxe(() => checkMetaViewport(axeResults));
   const list = viaAxe(() => checkList(axeResults));
   const headingOrder = viaAxe(() => checkHeadingOrder(axeResults));
@@ -1053,7 +1116,7 @@ export default async function accessibilityMetrics(page) {
   // Composite of 4 axe sub-checks — meaningless when the scan didn't run.
   const keyboardNavigation = axeFailed
     ? axeDown()
-    : checkKeyboardNavigation({ focusOrder, focusableContent, tabindex, ariaHiddenFocus });
+    : checkKeyboardNavigation({ focusOrder, focusableContent, tabindex, ariaHiddenFocus }, siteSubType);
 
   // ── Severity-tiered weighting (spec rule 5): Critical ×3, Serious ×2, Moderate ×1.
   // Keyboard is weighted ONCE via the composite; its sub-parts are display-only.
@@ -1090,8 +1153,17 @@ export default async function accessibilityMetrics(page) {
   for (const w of weighted) {
     const m = w.metric;
     if (!m || typeof m.score !== "number") continue; // N/A → renormalized out
-    totalWeight += w.weight;
-    earned += (m.score / 100) * w.weight;
+    // Per-site-type tilt on top of the severity tier. This section is nearly
+    // flat by design — WCAG does not care about business model — so the only
+    // real movement is mobile-first criteria (target size, zoom) rising on
+    // service and repair, whose traffic is phone-dominated and often urgent,
+    // and form/keyboard criteria falling on a repair site that has no form at
+    // all. The pass/fail GATES below are deliberately left untilted: a contrast
+    // failure is a contrast failure on any site.
+    const weight = w.weight * importance(w.key, siteSubType);
+    if (weight <= 0) continue;
+    totalWeight += weight;
+    earned += (m.score / 100) * weight;
     if (m.status === "fail") {
       if (w.tier === "critical") criticalFail = true;
       else if (w.tier === "serious") seriousFail = true;
@@ -1259,6 +1331,11 @@ export default async function accessibilityMetrics(page) {
       : "Automated WCAG 2.2 AA coverage (~30–40% of success criteria).",
     Note: axeFailed ? `${COVERAGE_NOTE} ${AXE_FAILURE_NOTE}` : COVERAGE_NOTE,
     WCAG_AA_Compliance: wcagAACompliance,
+    // Informational (weight 0). ADA / Section 508 / DDA / EAA / AODA re-sliced
+    // from the SAME axe results — no extra scan, no effect on the score. Each
+    // law adopts a WCAG version by reference, and the scan already runs a
+    // superset of all of them, so this is a mapping layer only.
+    Legal_Frameworks: evaluateLegalFrameworks(axeResults, axeFailed, market),
     // Critical
     Color_Contrast: colorContrast,
     Label: label,

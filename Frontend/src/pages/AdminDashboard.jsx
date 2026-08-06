@@ -40,12 +40,15 @@ import {
   AlertTriangle,
   Info,
   X,
-  Menu,
   Sun,
   Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { usePageSidebar } from '../context/PageSidebarContext.jsx';
+import AnalyticsTab from '../components/admin/AnalyticsTab.jsx';
+import JourneysTab from '../components/admin/JourneysTab.jsx';
+import ActivityTab from '../components/admin/ActivityTab.jsx';
 import {
   BarChart,
   Bar,
@@ -127,7 +130,7 @@ const AdminDashboard = () => {
   const { user } = useAuth();
   const darkMode = theme === "dark";
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = usePageSidebar();
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
 
   // Close the "Create Project" dropdown when clicking outside of it.
@@ -274,6 +277,12 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'users', 'logs', 'settings'
   const [search, setSearch] = useState('');
   const [countryFilter, setCountryFilter] = useState('');
+  // Audit date range (yyyy-mm-dd, straight from <input type="date">). Empty = no
+  // bound on that side, so you can ask for "everything since 1 Aug" as easily as
+  // a closed range.
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -314,7 +323,8 @@ const AdminDashboard = () => {
       }, 500);
       return () => clearTimeout(delayDebounceFn);
     }
-  }, [activeTab, search, countryFilter, page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, search, countryFilter, dateFrom, dateTo, page]);
 
   const fetchStats = async () => {
     try {
@@ -353,10 +363,24 @@ const AdminDashboard = () => {
     }
   };
 
+  // Built once and reused by both the table and the CSV export, so the file can
+  // never come back with a different slice of data than the screen it was
+  // downloaded from.
+  const auditFilterParams = () => {
+    const params = new URLSearchParams();
+    if (search) params.set('search', search);
+    if (countryFilter) params.set('country', countryFilter);
+    if (dateFrom) params.set('from', dateFrom);
+    if (dateTo) params.set('to', dateTo);
+    return params;
+  };
+
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      const response = await api.get(`/api/admin/audit-logs?page=${page}&search=${search}&country=${countryFilter}`);
+      const params = auditFilterParams();
+      params.set('page', page);
+      const response = await api.get(`/api/admin/audit-logs?${params.toString()}`);
       const data = response.data;
       setLogs(data.logs || []);
       setTotalItems(data.total || 0);
@@ -365,6 +389,52 @@ const AdminDashboard = () => {
       toast.error('Failed to load website logs');
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Download the currently filtered audits as CSV.
+   *
+   * Deliberately a raw fetch rather than the shared `api` helper: that helper
+   * parses every response as JSON, which would turn the CSV body into a parse
+   * failure. The blob + object-URL dance is what lets a fetch (which carries the
+   * bearer token) produce a file download — a plain <a href> could not
+   * authenticate.
+   */
+  const handleExportLogs = async () => {
+    setExporting(true);
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+      const token = localStorage.getItem('dealerpulse_token');
+      const res = await fetch(`${API_URL}/api/admin/audit-logs/export?${auditFilterParams().toString()}`, {
+        credentials: 'include',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || `Export failed (${res.status})`);
+      }
+
+      // Prefer the server's filename — it already encodes the date range.
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const named = disposition.match(/filename="?([^"]+)"?/);
+      const blob = await res.blob();
+
+      const href = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = href;
+      a.download = named ? named[1] : 'audit-logs.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(href);
+
+      toast.success('Export downloaded');
+    } catch (err) {
+      toast.error(err.message || 'Failed to export audits');
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -489,7 +559,8 @@ const AdminDashboard = () => {
   const distributionData = overviewData?.distribution || { good: 0, average: 0, poor: 0 };
   const deviceSplitData = overviewData?.deviceSplit || [];
   const recentAudits = overviewData?.recentAudits || [];
-  const recentActivity = overviewData?.recentActivity || [];
+  // recentActivity was read here only for the old "Critical Issues Detected"
+  // panel. The Activity tab now fetches the full, filterable log itself.
   const activeUsersData = overviewData?.activeUsers || [];
   const countrySplitData = overviewData?.countrySplit || [];
 
@@ -551,22 +622,14 @@ const AdminDashboard = () => {
 
           {/* Header Area */}
           <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3 justify-between md:justify-start w-full md:w-auto">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-black tracking-tight">Admin Dashboard</h1>
-                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-semibold rounded-full flex items-center gap-1.5 border border-emerald-500/20">
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <div className="flex items-center gap-3 min-w-0">
+                <h1 className="text-2xl font-black tracking-tight truncate">Admin Dashboard</h1>
+                <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[10px] font-semibold rounded-full flex items-center gap-1.5 border border-emerald-500/20 shrink-0">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
                   Live
                 </span>
               </div>
-              {/* Mobile Sidebar Toggle Button */}
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-cardsoft'}`}
-              >
-                <Menu size={14} />
-                <span>Menu</span>
-              </button>
             </div>
 
             <div className="flex items-center gap-4">
@@ -574,9 +637,11 @@ const AdminDashboard = () => {
               <div className={`p-1 rounded-xl flex items-center gap-1 ${darkMode ? 'bg-white/5' : 'bg-cardsoft'}`}>
                 {[
                   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+                  { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+                  { id: 'journeys', label: 'Journeys', icon: Activity },
                   { id: 'users', label: 'Users', icon: Users },
                   { id: 'logs', label: 'Audits', icon: Globe },
-                  { id: 'User_Logs', label: 'User Logs', icon: History },
+                  { id: 'User_Logs', label: 'Activity', icon: History },
                 ].map(tab => (
                   <button
                     key={tab.id}
@@ -592,14 +657,9 @@ const AdminDashboard = () => {
                 ))}
               </div>
 
-              <div className={`flex items-center gap-2 border-l pl-4 ml-2 ${darkMode ? 'border-white/10' : 'border-line'}`}>
-
-                <button className={`px-4 py-2 border rounded-lg text-[10px] font-semibold transition-all flex items-center gap-2 ${darkMode ? 'bg-transparent border-white/10 hover:bg-white/5 text-white' : 'bg-card border-line hover:bg-cardsoft text-inksoft'
-                  }`}>
-                  Export Report <ArrowUpRight size={14} />
-                </button>
-
-              </div>
+              {/* A header "Export Report" button used to sit here on every tab. It had
+                  no onClick — it exported nothing, from any tab. Export now lives in
+                  the Audits toolbar, next to the filters whose result it downloads. */}
             </div>
           </header>
 
@@ -836,67 +896,43 @@ const AdminDashboard = () => {
               </motion.div>
             )}
 
+            {activeTab === 'analytics' && (
+              <motion.div
+                key="analytics"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mt-8"
+              >
+                <AnalyticsTab darkMode={darkMode} />
+              </motion.div>
+            )}
+
+            {activeTab === 'journeys' && (
+              <motion.div
+                key="journeys"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="mt-8"
+              >
+                <JourneysTab darkMode={darkMode} />
+              </motion.div>
+            )}
+
+            {/* Was a panel headed "Critical Issues Detected" that rendered the ten
+                most recent activity rows out of the overview payload — no filters,
+                no search, no paging, no export, and a title describing something it
+                did not show. Replaced by the real activity log + session list. */}
             {activeTab === 'User_Logs' && (
               <motion.div
                 key="User_Logs"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-6"
+                className="mt-8"
               >
-                <div className={`border rounded-[2.5rem] mt-6 p-8 shadow-2xl transition-colors ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line'
-                  }`}>
-                  <h3 className={`text-xs font-black uppercase tracking-widest mb-8 ${darkMode ? 'text-slate-400' : 'text-muted'
-                    }`}>
-                    Critical Issues Detected
-                  </h3>
-
-                  <div className="space-y-6 pl-2">
-                    {recentActivity.length === 0 ? (
-                      <div className="text-center py-8 text-sm text-gray-500">
-                        No user activity logs recorded yet.
-                      </div>
-                    ) : (
-                      recentActivity.map((activity) => {
-                        const formattedDate = new Date(activity.timestamp).toLocaleString('en-GB', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          second: '2-digit'
-                        });
-
-                        const displayName = activity.userId?.name || 'Guest';
-                        const displayAction = activity.action.toLowerCase().replace('_', ' ');
-
-                        return (
-                          <div key={activity._id} className="flex items-start gap-5 group">
-                            {/* Bullet Dot */}
-                            <div className="mt-1.5 flex-shrink-0">
-                              <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500 shadow-md shadow-blue-500/50"></span>
-                              </span>
-                            </div>
-
-                            {/* Content */}
-                            <div className="flex flex-col gap-1">
-                              <h4 className={`text-base font-semibold leading-tight transition-colors ${darkMode ? 'text-slate-100 group-hover:text-blue-400' : 'text-ink group-hover:text-accent'
-                                }`}>
-                                {displayName} {displayAction}
-                              </h4>
-                              <p className={`text-xs font-semibold ${darkMode ? 'text-slate-500' : 'text-faint'
-                                }`}>
-                                {activity.ip} • {formattedDate}
-                              </p>
-                            </div>
-                          </div>
-                        );
-                      })
-                    )}
-                  </div>
-                </div>
+                <ActivityTab darkMode={darkMode} />
               </motion.div>
             )}
 
@@ -922,17 +958,62 @@ const AdminDashboard = () => {
                     />
                   </div>
                   {activeTab === 'logs' && (
-                    <div className="relative">
-                      <Filter className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={18} />
-                      <input
-                        type="text"
-                        placeholder="Country Filter..."
-                        className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-accent focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-surface-2 text-ink placeholder:text-faint'
-                          }`}
-                        value={countryFilter}
-                        onChange={(e) => setCountryFilter(e.target.value)}
-                      />
-                    </div>
+                    <>
+                      <div className="relative">
+                        <Filter className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={18} />
+                        <input
+                          type="text"
+                          placeholder="Country Filter..."
+                          className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-accent focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-surface-2 text-ink placeholder:text-faint'
+                            }`}
+                          value={countryFilter}
+                          onChange={(e) => setCountryFilter(e.target.value)}
+                        />
+                      </div>
+
+                      {/* Date range. Either side can be left blank — "since 1 Aug"
+                          and "up to 5 Aug" are both useful questions. */}
+                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
+                        <Calendar className={`shrink-0 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={16} />
+                        <input
+                          type="date"
+                          aria-label="Audits from"
+                          value={dateFrom}
+                          max={dateTo || undefined}
+                          onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                          className={`bg-transparent text-xs font-semibold outline-none ${darkMode ? 'text-white' : 'text-ink'}`}
+                        />
+                        <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-faint'}`}>to</span>
+                        <input
+                          type="date"
+                          aria-label="Audits to"
+                          value={dateTo}
+                          min={dateFrom || undefined}
+                          onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                          className={`bg-transparent text-xs font-semibold outline-none ${darkMode ? 'text-white' : 'text-ink'}`}
+                        />
+                        {(dateFrom || dateTo) && (
+                          <button
+                            onClick={() => { setDateFrom(''); setDateTo(''); setPage(1); }}
+                            title="Clear date range"
+                            className={`p-1 rounded-lg transition-colors ${darkMode ? 'text-gray-500 hover:text-white hover:bg-white/10' : 'text-faint hover:text-ink hover:bg-card'}`}
+                          >
+                            <X size={13} />
+                          </button>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={handleExportLogs}
+                        disabled={exporting || totalItems === 0}
+                        title={totalItems === 0 ? 'Nothing to export for these filters' : 'Download these audits as CSV'}
+                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold bg-accent hover:bg-accenthover text-white shadow-md shadow-accent/20 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                      >
+                        {exporting
+                          ? <><RefreshCw size={14} className="animate-spin" /> Exporting…</>
+                          : <><Download size={14} /> Export CSV ({totalItems})</>}
+                      </button>
+                    </>
                   )}
                 </div>
 
@@ -1024,7 +1105,12 @@ const AdminDashboard = () => {
                                 </td>
                                 <td className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-tighter">{formatTimestamp(item.createdAt)}</td>
                                 <td className="px-8 py-5 text-right">
-                                  <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  {/* Always visible. These used to be opacity-0 until the
+                                      row was hovered, which hid "Make admin" entirely on
+                                      touch devices — there is no hover to reveal it — and
+                                      made it easy to miss on desktop too. An action you
+                                      cannot find is an action you do not have. */}
+                                  <div className="flex justify-end gap-2">
                                     {/* Appoint / remove admin — super-admins only. Hidden for other
                                         super-admins and for your own row, mirroring the API's guards
                                         so the UI never offers an action the server will reject. */}
@@ -1044,9 +1130,9 @@ const AdminDashboard = () => {
                                     {item.isBlocked ? (
                                       <button onClick={(e) => handleUnblock(item._id, e)} className="p-2.5 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl transition-colors"><Unlock size={14} /></button>
                                     ) : (
-                                      <button onClick={(e) => handleBlock(item._id, e)} disabled={item.role === 'admin'} className="p-2.5 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl transition-colors disabled:opacity-10"><Lock size={14} /></button>
+                                      <button onClick={(e) => handleBlock(item._id, e)} disabled={item.role === 'admin'} title={item.role === 'admin' ? 'Remove admin rights before blocking' : 'Block user'} className="p-2.5 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><Lock size={14} /></button>
                                     )}
-                                    <button onClick={(e) => handleDelete(item._id, e)} disabled={item.role === 'admin'} className="p-2.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors disabled:opacity-10"><Trash2 size={14} /></button>
+                                    <button onClick={(e) => handleDelete(item._id, e)} disabled={item.role === 'admin'} title={item.role === 'admin' ? 'Remove admin rights before deleting' : 'Delete user'} className="p-2.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><Trash2 size={14} /></button>
                                   </div>
                                 </td>
                               </>

@@ -239,55 +239,74 @@ export const updateUserRole = async (req, res) => {
   }
 };
 
+/**
+ * Translate the audit-log filter query string into a Mongo query.
+ *
+ * Shared by the table and the CSV export on purpose: an export that quietly
+ * applies different filters than the screen it was clicked from is worse than no
+ * export at all, because the numbers look authoritative and are wrong.
+ */
+const buildAuditLogQuery = async ({ ip, status, device, captcha, score, country, search, from, to }) => {
+  const query = {};
+  if (ip) query.ip = { $regex: escapeRegex(ip), $options: 'i' };
+  if (status) query.status = status;
+  if (device) query.device = device;
+  if (country) query.country = { $regex: escapeRegex(country), $options: 'i' };
+
+  if (captcha === 'true') {
+    query.captchaPassed = true;
+  } else if (captcha === 'false') {
+    query.captchaPassed = { $ne: true };
+  }
+
+  if (score) {
+    const [min, max] = score.split('-').map(Number);
+    query.score = { $gte: min, $lte: max };
+  }
+
+  // Date range. `to` covers the WHOLE end day — someone asking for "1 Aug to 5
+  // Aug" means through the end of the 5th, not up to midnight as it begins.
+  // Invalid dates are ignored rather than turned into an empty result set.
+  const createdAt = {};
+  const fromDate = from ? new Date(from) : null;
+  const toDate = to ? new Date(to) : null;
+  if (fromDate && !isNaN(fromDate)) {
+    fromDate.setHours(0, 0, 0, 0);
+    createdAt.$gte = fromDate;
+  }
+  if (toDate && !isNaN(toDate)) {
+    toDate.setHours(23, 59, 59, 999);
+    createdAt.$lte = toDate;
+  }
+  if (Object.keys(createdAt).length) query.createdAt = createdAt;
+
+  if (search) {
+    const safe = escapeRegex(search);
+    // Find matching users first
+    const matchingUsers = await User.find({
+      $or: [
+        { name: { $regex: safe, $options: 'i' } },
+        { email: { $regex: safe, $options: 'i' } }
+      ]
+    }).select('_id');
+
+    const userIds = matchingUsers.map(u => u._id);
+
+    query.$or = [
+      { url: { $regex: safe, $options: 'i' } },
+      { userId: { $in: userIds } },
+      { guestEmail: { $regex: safe, $options: 'i' } }
+    ];
+  }
+
+  return query;
+};
+
 export const getAuditLogs = async (req, res) => {
   try {
-    const { 
-      page = 1, 
-      limit = 20, 
-      ip, 
-      status, 
-      device, 
-      captcha, 
-      score,
-      country,
-      search // email or url
-    } = req.query;
+    const { page = 1, limit = 20 } = req.query;
 
-    const query = {};
-    if (ip) query.ip = { $regex: escapeRegex(ip), $options: 'i' };
-    if (status) query.status = status;
-    if (device) query.device = device;
-    if (country) query.country = { $regex: escapeRegex(country), $options: 'i' };
-    
-    if (captcha === 'true') {
-      query.captchaPassed = true;
-    } else if (captcha === 'false') {
-      query.captchaPassed = { $ne: true };
-    }
-
-    if (score) {
-      const [min, max] = score.split('-').map(Number);
-      query.score = { $gte: min, $lte: max };
-    }
-
-    if (search) {
-      const safe = escapeRegex(search);
-      // Find matching users first
-      const matchingUsers = await User.find({
-        $or: [
-          { name: { $regex: safe, $options: 'i' } },
-          { email: { $regex: safe, $options: 'i' } }
-        ]
-      }).select('_id');
-
-      const userIds = matchingUsers.map(u => u._id);
-
-      query.$or = [
-          { url: { $regex: safe, $options: 'i' } },
-          { userId: { $in: userIds } },
-          { guestEmail: { $regex: safe, $options: 'i' } }
-      ];
-    }
+    const query = await buildAuditLogQuery(req.query);
 
     const logs = await AuditLog.find(query)
       .populate('userId', 'name email')
@@ -307,6 +326,103 @@ export const getAuditLogs = async (req, res) => {
   } catch (error) {
     logger.error('getAuditLogs Critical Error', error);
     res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
+  }
+};
+
+/* ===========================
+   Audit logs → CSV
+=========================== */
+
+/**
+ * One CSV cell.
+ *
+ * Quotes everything, so commas, quotes and newlines inside a URL or a name cannot
+ * shift the columns. The leading-apostrophe guard is for spreadsheets, not for
+ * CSV: Excel and Sheets execute a cell that starts with = + - @, and url and
+ * guestEmail are attacker-controlled, so an exported row could otherwise run a
+ * formula on the admin's machine that opens it.
+ */
+const csvCell = (value) => {
+  if (value == null) return '""';
+  // Collapse line breaks to a space. A quoted field containing a newline is legal
+  // CSV, but it makes one record span several physical lines, which every naive
+  // consumer (grep, wc -l, a quick script) then miscounts. Nothing in these
+  // columns — url, country, referrer — has a legitimate newline in it, so a row
+  // that stays a row is worth more than byte-exact fidelity to junk data.
+  let text = String(value).replace(/[\r\n]+/g, ' ');
+  if (/^[=+\-@\t]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+};
+
+const CSV_COLUMNS = [
+  ['Date (UTC)', (l) => l.createdAt?.toISOString?.() || ''],
+  ['URL', (l) => l.url],
+  ['User', (l) => l.userId?.name || ''],
+  ['Email', (l) => l.userId?.email || l.guestEmail || 'Guest'],
+  ['Status', (l) => l.status],
+  ['Score', (l) => (l.score == null ? '' : l.score)],
+  ['Grade', (l) => l.grade || ''],
+  ['Report Type', (l) => l.reportType || ''],
+  ['Device', (l) => l.device || ''],
+  ['Browser', (l) => l.browser || ''],
+  ['OS', (l) => l.os || ''],
+  ['Country', (l) => l.country || ''],
+  ['Region', (l) => l.region || ''],
+  ['City', (l) => l.city || ''],
+  ['IP', (l) => l.ip || ''],
+  ['Duration (s)', (l) => (l.auditDuration == null ? '' : Math.round(l.auditDuration / 1000))],
+  ['Referrer', (l) => l.referrer || ''],
+];
+
+/**
+ * Stream the filtered audit logs as a CSV download.
+ *
+ * Takes the same filters as the table (see buildAuditLogQuery) so the file always
+ * matches what the admin was looking at when they clicked Export. Streamed from a
+ * cursor rather than collected into an array first: a wide date range is tens of
+ * thousands of rows, and buffering all of them to build one string is how an
+ * export endpoint takes the process down. That also means no row cap is needed —
+ * the export is never quietly truncated.
+ */
+export const exportAuditLogs = async (req, res) => {
+  try {
+    const query = await buildAuditLogQuery(req.query);
+
+    const stamp = new Date().toISOString().slice(0, 10);
+    const range = [req.query.from, req.query.to].filter(Boolean).join('_to_');
+    const filename = `audit-logs_${range || stamp}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    // BOM so Excel opens UTF-8 (accented city names, non-Latin URLs) correctly
+    // instead of mojibake.
+    res.write('﻿');
+    res.write(CSV_COLUMNS.map(([header]) => csvCell(header)).join(',') + '\r\n');
+
+    let rows = 0;
+    const cursor = AuditLog.find(query)
+      .populate('userId', 'name email')
+      .sort({ createdAt: -1 })
+      .cursor();
+
+    for await (const log of cursor) {
+      res.write(CSV_COLUMNS.map(([, read]) => csvCell(read(log))).join(',') + '\r\n');
+      rows++;
+    }
+
+    logger.info(`[Admin] Exported ${rows} audit log rows (by ${req.user.userId})`);
+    res.end();
+
+  } catch (error) {
+    logger.error('[Admin] exportAuditLogs failed', error);
+    // Headers may already be out the door mid-stream; a half-written file the
+    // admin can see is better than a silent truncation that looks complete.
+    if (res.headersSent) {
+      res.end('\r\n"EXPORT FAILED — this file is incomplete"\r\n');
+    } else {
+      res.status(500).json({ error: 'Internal server error', code: 'SERVER_ERROR' });
+    }
   }
 };
 

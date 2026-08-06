@@ -2,6 +2,21 @@ import googleAPI from "../utils/googleAPI.js";
 import fetch from "node-fetch";
 import * as cheerio from "cheerio";
 import logger from "../utils/logger.js";
+import { isParamApplicable } from "../config/siteTypeProfiles.js";
+import { importanceFor } from "../config/parameterImportance.js";
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites.
+//
+// Scope note: this section's HEADLINE (`Percentage`) is PageSpeed's own
+// Lighthouse score, not a weighted roll-up of the rows below, so the tilt moves
+// the two derived numbers — Delivery_Hygiene and Graded_Percentage — and not the
+// headline. That is correct rather than a gap: Lighthouse's weighting is
+// Google's, and the matrix rates Technical as nearly flat across the four types
+// anyway ("physics does not care about business model"). Where the site type
+// genuinely changes what Technical is worth is at the section level, in
+// config/siteTypeProfiles.js.
+const importance = importanceFor("Technical Performance");
 
 // Abramowitz-Stegun erf approximation (max err ~1.5e-7) — needed for the log-normal CDF.
 function erf(x) {
@@ -2342,7 +2357,7 @@ async function evaluateSoldVehicleHandling(url, pageType) {
 //     Mobile Usability, Inventory/Service page-load, Rendering/Lazy/Third-party/JS)
 //     are no longer computed or returned — they double-counted CWV or were retired.
 //   • §0.5 confidence flag surfaced per-CWV and as a section-level summary.
-export default async function technicalMetrics(url, device, page, response, browser, pageType = null, psiPrefetch = null) {
+export default async function technicalMetrics(url, device, page, response, browser, pageType = null, psiPrefetch = null, siteSubType = null, market = null) {
 
   // Only call PageSpeed for the user-selected device strategy (1 API call, not 2).
   const wantDevice = String(device || "mobile").toLowerCase() === "desktop" ? "desktop" : "mobile";
@@ -2484,7 +2499,12 @@ export default async function technicalMetrics(url, device, page, response, brow
     { key: "Compression", metric: compression, weight: 4 },
     { key: "Caching", metric: caching, weight: 4 },
     { key: "Redirect_Chains", metric: redirect, weight: 3 },
-    ...(pageType === "vdp" || pageType === "srp" ? [{ key: "Sold_Vehicle", metric: soldVehicle, weight: 5 }] : []),
+    // Sold-vehicle / soft-404 handling only exists where VDPs expire. Nothing
+    // on a service or repair site goes out of stock this way, so it is N/A
+    // there — dropped from the denominator, not scored zero.
+    ...(isParamApplicable("Sold_Vehicle", siteSubType) && (pageType === "vdp" || pageType === "srp")
+      ? [{ key: "Sold_Vehicle", metric: soldVehicle, weight: 5 }]
+      : []),
   ];
   let hygEarned = 0, hygWeight = 0;
   const hygieneBreakdown = {};
@@ -2492,8 +2512,10 @@ export default async function technicalMetrics(url, device, page, response, brow
   for (const p of hygieneParts) {
     const m = p.metric;
     if (!m || typeof m.score !== "number") continue;
-    hygEarned += (m.score / 100) * p.weight;
-    hygWeight += p.weight;
+    const w = p.weight * importance(p.key, siteSubType);
+    if (w <= 0) continue;
+    hygEarned += (m.score / 100) * w;
+    hygWeight += w;
     hygieneBreakdown[p.key] = { score: m.score, status: m.status };
     if (m.status && m.status !== "pass") hygieneFailing.push(p.key.replace(/_/g, " "));
   }
@@ -2520,20 +2542,23 @@ export default async function technicalMetrics(url, device, page, response, brow
   // Diagnostic: the previous blended headline (CWV + infra at spec weights),
   // kept for continuity as Graded_Percentage.
   const components = [
-    { score: getScore(lcpPick),              weight: 22, present: true },
-    { score: getScore(inpTbtPick),           weight: 20, present: true },
-    { score: getScore(clsPick),              weight: 18, present: true },
-    { score: getScore(fcpPick),              weight: 8,  present: true },
-    { score: getScore(ttfbPick),             weight: 8,  present: true },
-    { score: getScore(si),                   weight: 6,  present: true },
-    { score: getScore(renderBlocking),       weight: 5,  present: true },
-    { score: getScore(resourceOptimization), weight: 5,  present: true },
-    { score: getScore(compression),          weight: 4,  present: true },
-    { score: getScore(caching),              weight: 4,  present: true },
-    { score: getScore(redirect),             weight: 3,  present: true },
-    { score: getScore(soldVehicle),          weight: 5,  present: pageType === "vdp" || pageType === "srp" },
+    { key: "LCP",                   score: getScore(lcpPick),              weight: 22, present: true },
+    { key: "INP",                   score: getScore(inpTbtPick),           weight: 20, present: true },
+    { key: "CLS",                   score: getScore(clsPick),              weight: 18, present: true },
+    { key: "FCP",                   score: getScore(fcpPick),              weight: 8,  present: true },
+    { key: "TTFB",                  score: getScore(ttfbPick),             weight: 8,  present: true },
+    { key: "SI",                    score: getScore(si),                   weight: 6,  present: true },
+    { key: "Render_Blocking",       score: getScore(renderBlocking),       weight: 5,  present: true },
+    { key: "Resource_Optimization", score: getScore(resourceOptimization), weight: 5,  present: true },
+    { key: "Compression",           score: getScore(compression),          weight: 4,  present: true },
+    { key: "Caching",               score: getScore(caching),              weight: 4,  present: true },
+    { key: "Redirect_Chains",       score: getScore(redirect),             weight: 3,  present: true },
+    { key: "Sold_Vehicle",          score: getScore(soldVehicle),          weight: 5,  present: isParamApplicable("Sold_Vehicle", siteSubType) && (pageType === "vdp" || pageType === "srp") },
   ];
-  const presentComponents = components.filter((c) => c.present);
+  const presentComponents = components
+    .filter((c) => c.present)
+    .map((c) => ({ ...c, weight: c.weight * importance(c.key, siteSubType) }))
+    .filter((c) => c.weight > 0);
   const totalWeight = presentComponents.reduce((s, c) => s + c.weight, 0);
   // Null when PSI is unusable — the CWV components are all "not calculated", so a
   // number here would reflect only the asset checks and read as a misleading low score.

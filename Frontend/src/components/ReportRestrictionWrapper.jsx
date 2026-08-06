@@ -6,6 +6,7 @@ import { useData } from "../context/DataContext.jsx";
 import { savePostAuthIntent } from "../utils/intentStore";
 import {
   isSectionGated,
+  sectionHasReported,
   GATE_HEADLINE,
   GATE_BODY,
 } from "../config/gatedSections.js";
@@ -62,6 +63,13 @@ const ReportRestrictionWrapper = ({ children, section }) => {
 
   const gated = !isAuthenticated && isSectionGated(section);
   if (!gated) return <>{children}</>;
+
+  // The audit is still running and this pillar has not reported yet — so there is
+  // nothing behind the blur to unlock. Rendering the gate now puts "Sign up free to
+  // see this" directly under the section's own "PROCESSING" shimmer, telling the
+  // visitor their findings are paywalled before those findings exist. Stay out of
+  // the way until the section actually lands; the shimmer above owns the wait.
+  if (!sectionHasReported(data, section)) return null;
 
   // Send them back to exactly this report once they have an account.
   const goTo = (path) => {

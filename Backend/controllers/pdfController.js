@@ -1,5 +1,8 @@
 import SingleAuditReport from "../models/singleAuditReport.js";
-import ActivityLog from "../models/ActivityLog.js";
+import ReportLead from "../models/ReportLead.js";
+import { logActivity, touchSession, trackingContext } from "../utils/activityTracker.js";
+import { sendReportPdfEmail } from "../utils/auditNotifier.js";
+import { markReportOutcome } from "./trackingController.js";
 import { chromium } from "playwright";
 import fs from "node:fs";
 import path from "node:path";
@@ -7,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
 import { acquireBrowserSlot, releaseBrowserSlot } from "../utils/browserManager.js";
+import { buildReportHtml, reportFileName, reportDomain } from "../utils/reportPdfTemplate.js";
 
 // The report HTML is handed to Playwright via setContent, so it has no origin to
 // resolve relative URLs against — and an absolute URL would make every export wait
@@ -23,38 +27,105 @@ const BRAND_LOGO_DATA_URI = (() => {
     }
 })();
 
-const brandLogoHtml = (extraStyle = "") =>
-    BRAND_LOGO_DATA_URI
-        ? `<img class="logo" src="${BRAND_LOGO_DATA_URI}" alt="DealerSiteAudit" style="${extraStyle}">`
-        : `<div class="logo-text" style="${extraStyle}">DealerSiteAudit</div>`;
+// Chromium renders header/footer templates in their own document — the page's own
+// stylesheet does not reach them, so every rule here has to be inline. `pageNumber`
+// and `totalPages` are the two class names Chromium substitutes.
+const footerTemplate = (domain, stamp) => `
+  <div style="width:100%;padding:0 40px;font-family:Helvetica,Arial,sans-serif;
+              font-size:8px;color:#8B949E;display:flex;justify-content:space-between;
+              align-items:center;border-top:1px solid #E4E1D9;padding-top:5px;margin:0 0 4px;">
+    <span>${domain} &middot; ${stamp}</span>
+    <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+  </div>`;
+
+/**
+ * Resolve the report this caller is allowed to export, or null.
+ *
+ * Same access rule as singleAuditController.canAccessReport — admins see all,
+ * signed-out callers get guest runs only, signed-in users get their own plus
+ * unowned guest runs (so signing in does not take the download button away from
+ * the report they were just reading).
+ */
+const loadAccessibleReport = async (req, id) => {
+    const isAdmin = !!req.user && (req.user.role === 'admin' || req.user.role === 'super_admin');
+
+    // A completed report may still be buffered in memory (not yet flushed to Mongo).
+    const live = auditStore.get(id);
+    if (live) {
+        const allowed = isAdmin
+            || !live.userId
+            || (!!req.user && String(live.userId) === String(req.user.userId || ""));
+        return allowed ? live : null;
+    }
+
+    const query = { _id: id };
+    if (!req.user) {
+        query.userId = null;
+    } else if (!isAdmin) {
+        query.$or = [{ userId: req.user.userId }, { userId: null }];
+    }
+    return SingleAuditReport.findOne(query);
+};
+
+/**
+ * Render one report to a PDF buffer.
+ *
+ * Takes a global browser permit for the duration — a PDF export is a full
+ * headless Chrome, and browserManager exists so those cannot outnumber the
+ * machine. Both export paths (direct download and emailed copy) go through here,
+ * so the file a visitor downloads and the file we mail them are the same document.
+ */
+const renderReportPdf = async (report) => {
+    let slotId = null;
+    let browser = null;
+    try {
+        slotId = await acquireBrowserSlot({ label: 'pdf-export' });
+        browser = await chromium.launch({
+            headless: true,
+            args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        });
+
+        const context = await browser.newContext();
+        const page = await context.newPage();
+
+        const htmlContent = buildReportHtml(report, { logoDataUri: BRAND_LOGO_DATA_URI });
+
+        // `load` rather than `networkidle`: the document is fully self-contained
+        // (inlined logo, inlined screenshot, no remote font), so there is no network
+        // to go idle — waiting for it only added the idle timer to every export.
+        await page.setContent(htmlContent, { waitUntil: "load" });
+
+        const domain = reportDomain(report.url);
+        const stamp = new Date(report.createdAt || Date.now())
+            .toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+        const pdfBuffer = await page.pdf({
+            format: "A4",
+            printBackground: true,
+            displayHeaderFooter: true,
+            // An empty headerTemplate makes Chromium fall back to its own date/title
+            // header, so it is explicitly blanked instead of omitted.
+            headerTemplate: `<div style="display:none"></div>`,
+            footerTemplate: footerTemplate(domain, stamp),
+            margin: {
+                top: "26px",
+                bottom: "42px",
+                left: "0px",
+                right: "0px",
+            },
+        });
+
+        return Buffer.from(pdfBuffer);
+    } finally {
+        if (browser) await browser.close().catch(() => {});
+        if (slotId) await releaseBrowserSlot(slotId);
+    }
+};
 
 export const generatePDFReport = async (req, res) => {
     try {
         const { id } = req.params;
-        let report;
-
-        // Same access rule as singleAuditController.canAccessReport — admins see all,
-        // signed-out callers get guest runs only, signed-in users get their own plus
-        // unowned guest runs (so signing in does not take the download button away
-        // from the report they were just reading).
-        const isAdmin = !!req.user && (req.user.role === 'admin' || req.user.role === 'super_admin');
-
-        // A completed report may still be buffered in memory (not yet flushed to Mongo).
-        const live = auditStore.get(id);
-        if (live) {
-            const allowed = isAdmin
-                || !live.userId
-                || (!!req.user && String(live.userId) === String(req.user.userId || ""));
-            report = allowed ? live : null;
-        } else {
-            const query = { _id: id };
-            if (!req.user) {
-                query.userId = null;
-            } else if (!isAdmin) {
-                query.$or = [{ userId: req.user.userId }, { userId: null }];
-            }
-            report = await SingleAuditReport.findOne(query);
-        }
+        const report = await loadAccessibleReport(req, id);
 
         if (!report) {
             return res.status(404).json({ error: "Report not found or access denied" });
@@ -64,519 +135,188 @@ export const generatePDFReport = async (req, res) => {
             return res.status(400).json({ error: "Audit is not completed yet" });
         }
 
-        let slotId = null;
-        let browser = null;
-        try {
-          slotId = await acquireBrowserSlot({ label: 'pdf-export' });
-          browser = await chromium.launch({
-              headless: true,
-              args: ["--no-sandbox", "--disable-setuid-sandbox"],
-          });
-
-        const context = await browser.newContext();
-        const page = await context.newPage();
-
-        const sections = [
-            { key: 'technicalPerformance', title: 'Technical Performance' },
-            { key: 'onPageSEO', title: 'On-Page SEO' },
-            { key: 'accessibility', title: 'Accessibility' },
-            { key: 'securityOrCompliance', title: 'Security & Compliance' },
-            { key: 'UXOrContentStructure', title: 'UX & Content Structure' },
-            { key: 'conversionAndLeadFlow', title: 'Conversion & Lead Flow' },
-            { key: 'aioReadiness', title: 'AIO Readiness' }
-        ];
-
-        let dynamicContent = "";
-        let sectionNum = 0;
-
-        // Skip top-level non-metric keys; every parameter is included in the report.
-        const SKIP_KEYS = ['Percentage', 'Section_Score', 'score', 'grade', 'Graded_Percentage', 'Score_Breakdown'];
-        const isMetricVisible = (mKey) => !SKIP_KEYS.includes(mKey);
-
-        // Escape any value that ends up in the PDF HTML. Report fields derive from
-        // the scanned site's content (recommendations, causes, details) and the
-        // user-supplied URL, and the HTML is rendered by Chromium — so unescaped
-        // values are an HTML/script-injection vector.
-        const escapeHtml = (val) => String(val ?? '')
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-
-        const formatValue = (val) => {
-            if (typeof val === 'object' && val !== null) return escapeHtml(JSON.stringify(val));
-            return escapeHtml(String(val || 'N/A'));
-        }
-
-        sections.forEach((sec) => {
-            const data = report[sec.key];
-            if (data && typeof data === 'object') {
-                // Skip a whole section that has no renderable metric keys.
-                const hasVisible = Object.keys(data).some(isMetricVisible);
-                if (!hasVisible) return;
-
-                sectionNum += 1;
-                dynamicContent += `<div class="page-break"></div><h2 class="section-main-title">Section ${sectionNum}: ${sec.title}</h2>`;
-
-                Object.entries(data).forEach(([mKey, mVal]) => {
-                    if (!isMetricVisible(mKey)) return;
-
-                    const processMetric = (metric, subName = "") => {
-                        if (!metric || typeof metric !== 'object' || Array.isArray(metric)) return;
-
-                        let title = mKey.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
-                        if (subName) title += ` (${subName})`;
-
-                        const detailsObj = metric.description || metric.Description || metric.details || metric.Details || metric.value || "No detailed description provided by the scan.";
-                        let detailsStr = typeof detailsObj === 'object' ? JSON.stringify(detailsObj) : detailsObj;
-                        if (detailsStr.startsWith('{') && detailsStr.length > 50) detailsStr = "Complex Object Evaluated (See Advanced Diagnostic Data)";
-
-                        const score = metric.score ?? metric.Score ?? 100;
-                        const status = metric.status || metric.Status || (score >= 90 ? 'Pass' : score >= 50 ? 'Warning' : 'Fail');
-                        const cause = metric.cause || (metric.analysis && metric.analysis.cause) || (metric.meta && metric.meta.why_this_occurred) || metric.failureMessage || "";
-                        const recommendation = metric.recommendation || (metric.analysis && metric.analysis.recommendation) || (metric.meta && metric.meta.how_to_fix) || metric.suggestion || metric.Suggestion || "";
-
-                        const statusClass = status.toLowerCase().includes('pass') ? 'status-pass' : status.toLowerCase().includes('fail') ? 'status-fail' : 'status-warn';
-
-                        let advancedDataHtml = "";
-
-                        if (!statusClass.includes('pass')) {
-                            let diagnosticData = {};
-                            // Safely collect diagnostic data specifically for errors
-                            if (metric.meta) diagnosticData = { ...diagnosticData, ...metric.meta };
-                            if (metric.details && typeof metric.details === 'object') diagnosticData = { ...diagnosticData, ...metric.details };
-                            if (metric.items) diagnosticData.items = metric.items;
-                            if (metric.nodes) diagnosticData.nodes = metric.nodes;
-
-                            // Remove redundant standard fields before dumping
-                            delete diagnosticData.cause;
-                            delete diagnosticData.recommendation;
-                            delete diagnosticData.score;
-                            delete diagnosticData.status;
-
-                            if (Object.keys(diagnosticData).length > 0) {
-                                const rawString = JSON.stringify(diagnosticData, null, 2).replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                                advancedDataHtml = `
-                           <div class="nodes-box mt-10" style="background:#f8fafc; padding: 20px; border-left: 6px solid #475569; border-radius: 0 12px 12px 0;">
-                                <strong style="color: var(--dark); font-size: 16px;">Advanced Diagnostic Data (All Contextual Metrics):</strong>
-                                <pre style="font-family: monospace; font-size: 11px; color: #334155; margin-top: 15px; background: #f1f5f9; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">${rawString}</pre>
-                           </div>`;
-                            }
-                        }
-
-                        dynamicContent += `
-                   <div class="metric-detailed-card">
-                       <div class="metric-detailed-header">
-                           <h3>${escapeHtml(title)}</h3>
-                           <span class="badge ${statusClass}">${escapeHtml(status)}</span>
-                       </div>
-                       <div class="metric-detailed-body">
-                           <p style="font-size: 16px; line-height: 2;"><strong>Status Description:</strong> ${escapeHtml(detailsStr)}</p>
-
-                           ${cause && statusClass.includes('fail') ? `<div class="error-box mt-10"><strong>Why It Failed (Root Cause Analysis):</strong> <br/><span style="color: #991b1b; display:inline-block; margin-top: 8px;">${escapeHtml(cause)}</span></div>` : ''}
-
-                           ${advancedDataHtml}
-
-                           ${recommendation ? `<div class="recommendation-box mt-10"><strong>Recommended Engineering Action:</strong> <br/><span style="color: #166534; display:inline-block; margin-top: 8px;">${escapeHtml(recommendation)}</span></div>` : ''}
-                           
-                           <div style="margin-top: 30px; font-size: 14px; color: #94a3b8; border-top: 2px dashed #e2e8f0; padding-top: 15px; font-weight: bold;">
-                               Recorded Metric Score: ${score}/100
-                           </div>
-                       </div>
-                   </div>
-                   `;
-                    };
-
-                    if (mVal && typeof mVal === 'object' && (mVal.lab || mVal.crux)) {
-                        if (mVal.lab) processMetric(mVal.lab, "Lab Data");
-                        if (mVal.crux) processMetric(mVal.crux, "Real-World Data");
-                    } else if (mVal && typeof mVal === 'object' && ('details' in mVal || 'Details' in mVal || 'value' in mVal || 'score' in mVal || 'status' in mVal)) {
-                        processMetric(mVal);
-                    } else {
-                        const title = mKey.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/_/g, ' ');
-                        dynamicContent += `
-                    <div class="metric-detailed-card">
-                        <div class="metric-detailed-header">
-                            <h3>${escapeHtml(title)}</h3>
-                            <span class="badge status-pass">Info</span>
-                        </div>
-                        <div class="metric-detailed-body">
-                            <p style="font-size: 16px; line-height: 2;"><strong>Recorded Data:</strong> ${formatValue(mVal)}</p>
-                        </div>
-                    </div>
-                    `;
-                    }
-                });
-            }
-        });
-
-        // Professional HTML Template for PDF
-        const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
-            
-            :root {
-                --primary: #3b82f6;
-                --success: #10b981;
-                --warning: #f59e0b;
-                --danger: #ef4444;
-                --dark: #0f172a;
-                --light: #f8fafc;
-                --border: #e2e8f0;
-            }
-
-            body {
-                font-family: 'Inter', sans-serif;
-                margin: 0;
-                padding: 40px;
-                color: var(--dark);
-                background: white;
-                line-height: 1.6;
-            }
-
-            .header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 2px solid var(--border);
-                padding-bottom: 20px;
-                margin-bottom: 40px;
-            }
-
-            .logo {
-                height: 44px;
-                width: auto;
-                display: block;
-            }
-
-            /* Only rendered if the logo file could not be read at boot. */
-            .logo-text {
-                font-size: 24px;
-                font-weight: 800;
-                color: var(--dark);
-                letter-spacing: -1px;
-            }
-
-            .url-info h1 {
-                margin: 0;
-                font-size: 18px;
-                color: var(--dark);
-            }
-
-            .url-info p {
-                margin: 5px 0 0;
-                font-size: 12px;
-                color: #64748b;
-            }
-
-            .hero {
-                background: var(--light);
-                border-radius: 24px;
-                padding: 40px;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 40px;
-                border: 1px solid var(--border);
-            }
-
-            .score-circle {
-                width: 120px;
-                height: 120px;
-                border-radius: 50%;
-                background: white;
-                border: 8px solid var(--primary);
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-                align-items: center;
-                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            }
-
-            .score-value {
-                font-size: 32px;
-                font-weight: 800;
-                color: var(--dark);
-            }
-
-            .score-label {
-                font-size: 10px;
-                font-weight: 700;
-                color: #64748b;
-                text-transform: uppercase;
-            }
-
-            .grade-badge {
-                padding: 8px 20px;
-                border-radius: 100px;
-                font-weight: 800;
-                font-size: 14px;
-                background: var(--primary);
-                color: white;
-                text-transform: uppercase;
-            }
-
-            .section-grid {
-                display: grid;
-                grid-template-columns: repeat(2, 1fr);
-                gap: 20px;
-                margin-bottom: 40px;
-            }
-
-            .section-card {
-                padding: 20px;
-                border: 1px solid var(--border);
-                border-radius: 16px;
-                background: white;
-            }
-
-            .section-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-
-            .section-title {
-                font-weight: 700;
-                font-size: 14px;
-                color: #475569;
-            }
-
-            .section-score {
-                font-weight: 800;
-                font-size: 16px;
-                color: var(--primary);
-            }
-
-            .page-break {
-                page-break-after: always;
-            }
-
-            .section-main-title {
-                font-size: 28px;
-                color: var(--dark);
-                border-bottom: 4px solid var(--primary);
-                padding-bottom: 15px;
-                margin-bottom: 40px;
-                margin-top: 40px;
-            }
-
-            .metric-detailed-card {
-                border: 2px solid var(--border);
-                border-radius: 16px;
-                padding: 40px;
-                margin-bottom: 60px;
-                background: white;
-                page-break-inside: avoid;
-                min-height: 400px; /* Forces large vertical space ensuring high page count */
-            }
-
-            .metric-detailed-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 2px solid var(--border);
-                padding-bottom: 20px;
-                margin-bottom: 20px;
-            }
-
-            .metric-detailed-header h3 {
-                margin: 0;
-                font-size: 22px;
-                font-weight: 800;
-                color: var(--dark);
-            }
-
-            .badge {
-                padding: 10px 20px;
-                border-radius: 8px;
-                font-size: 14px;
-                font-weight: 800;
-                text-transform: uppercase;
-            }
-
-            .status-pass { background: #dcfce7; color: #166534; }
-            .status-warn { background: #fef9c3; color: #854d0e; }
-            .status-fail { background: #fee2e2; color: #991b1b; }
-
-            .error-box {
-                background: #fef2f2;
-                border-left: 6px solid #ef4444;
-                padding: 25px;
-                color: #7f1d1d;
-                border-radius: 0 12px 12px 0;
-                font-size: 16px;
-                line-height: 1.8;
-                page-break-inside: avoid;
-            }
-
-            .recommendation-box {
-                background: #f0fdf4;
-                border-left: 6px solid #22c55e;
-                padding: 25px;
-                color: #14532d;
-                border-radius: 0 12px 12px 0;
-                font-size: 16px;
-                line-height: 1.8;
-                page-break-inside: avoid;
-            }
-
-            .mt-10 { margin-top: 25px; }
-
-            .footer {
-                margin-top: 60px;
-                text-align: center;
-                font-size: 14px;
-                color: #94a3b8;
-                border-top: 1px solid var(--border);
-                padding-top: 30px;
-            }
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            ${brandLogoHtml()}
-            <div class="url-info">
-                <h1>${escapeHtml(report.url)}</h1>
-                <p>Audit Date: ${new Date(report.createdAt).toLocaleDateString()}</p>
-                <p>Device: ${escapeHtml(report.device)} | Report Type: ${escapeHtml(report.report)}</p>
-            </div>
-        </div>
-
-        <div class="hero">
-            <div>
-                <h2 style="border:none; padding: 0; margin-bottom: 10px;">Audit Performance Summary</h2>
-                <p style="color: #64748b; font-size: 16px; max-width: 500px; line-height: 1.6;">
-                    Detailed analysis of your website's performance, SEO, accessibility, and security compliance benchmarks.
-                </p>
-                <div style="margin-top: 25px;">
-                    <span class="grade-badge" style="background: ${report.grade.startsWith('A') ? 'var(--success)' : report.grade === 'B' ? 'var(--primary)' : 'var(--danger)'}">
-                        Grade ${report.grade}
-                    </span>
-                </div>
-            </div>
-            <div class="score-circle" style="border-color: ${report.score >= 90 ? 'var(--success)' : report.score >= 70 ? 'var(--primary)' : 'var(--danger)'}">
-                <span class="score-value">${report.score}%</span>
-                <span class="score-label">OVERALL SCORE</span>
-            </div>
-        </div>
-
-        <h2 style="font-size: 24px;">Category Breakdown</h2>
-        <div class="section-grid">
-            ${report.sectionScore ? report.sectionScore.map(s => `
-                <div class="section-card">
-                    <div class="section-header">
-                        <span class="section-title">${escapeHtml(s.name)}</span>
-                        <span class="section-score" style="color: ${s.score >= 90 ? 'var(--success)' : s.score >= 70 ? 'var(--primary)' : 'var(--danger)'}">
-                            ${s.score}%
-                          </span>
-                    </div>
-                    <div style="height: 6px; width: 100%; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
-                        <div style="height: 100%; width: ${s.score}%; background: ${s.score >= 90 ? 'var(--success)' : s.score >= 70 ? 'var(--primary)' : 'var(--danger)'};"></div>
-                    </div>
-                </div>
-            `).join('') : `
-                <div class="section-card" style="grid-column: span 2; text-align: center; color: #94a3b8; padding: 40px;">
-                    No detailed category metrics available for this report type.
-                </div>
-            `}
-        </div>
-
-        <div class="page-break"></div>
-        <div class="methodology-section" style="padding: 40px; border: 2px solid var(--border); border-radius: 16px; background: white; margin-bottom: 40px; min-height: 300px;">
-             <h2 style="font-size: 28px; color: var(--dark); border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px;">Methodology & Legend</h2>
-             <p style="font-size: 16px; line-height: 2;">
-                 This comprehensive audit report evaluates the target URL across hundreds of automated parameters.
-                 Each parameter has been meticulously analyzed, graded, and formatted to ensure maximum clarity and actionability.
-             </p>
-             <ul style="font-size: 16px; line-height: 2.2; margin-top: 20px; color: #475569;">
-                <li><strong style="color: #166534;">PASS (Green):</strong> Optimal performance. No immediate action required.</li>
-                <li><strong style="color: #854d0e;">WARNING (Yellow):</strong> Fair performance. Action recommended.</li>
-                <li><strong style="color: #991b1b;">FAIL (Red):</strong> Poor performance. Critical attention required.</li>
-             </ul>
-        </div>
-        
-        ${dynamicContent}
-
-        <div class="page-break"></div>
-        <div class="methodology-section" style="padding: 40px; border: 2px solid var(--border); border-radius: 16px; background: white; margin-bottom: 40px; min-height: 800px;">
-             <h2 style="font-size: 28px; color: var(--dark); border-bottom: 4px solid var(--primary); padding-bottom: 15px; margin-bottom: 20px;">Glossary & Next Steps</h2>
-             <p style="font-size: 18px; font-weight: bold; margin-bottom: 20px;">What's next?</p>
-             <p style="font-size: 16px; line-height: 2.5; color: #475569;">
-                 1. Distribute this comprehensive audit to the lead engineering and SEO teams.<br/>
-                 2. Prioritize failing elements (Red metrics) immediately.<br/>
-                 3. Remediate warning elements (Yellow metrics) within current sprint cycles.<br/>
-                 4. Use the recorded recommendations to configure standard operating procedures.<br/>
-                 5. Re-run the Site Audit tool after deployments to verify changes in Lab/Crux data.<br/>
-             </p>
-             <div style="margin-top: 150px; text-align: center;">
-                 ${brandLogoHtml("height: 56px; opacity: 0.3; margin: 0 auto;")}
-                 <p style="color: #94a3b8; margin-top: 10px;">End of Report</p>
-             </div>
-        </div>
-
-        <div class="footer">
-            Generated by Site Audit AI Engine. © 2026 Site Audit. All Rights Reserved.
-            <br/>
-            This document is a technical analysis and should be used as a reference for website optimization.
-        </div>
-    </body>
-    </html>
-    `;
-
-        await page.setContent(htmlContent, { waitUntil: "networkidle" });
-
-        const pdfBuffer = await page.pdf({
-            format: "A4",
-            printBackground: true,
-            margin: {
-                top: "20px",
-                bottom: "20px",
-                left: "20px",
-                right: "20px",
-            },
-        });
+        const pdfBuffer = await renderReportPdf(report);
 
         res.contentType("application/pdf");
         res.setHeader(
             "Content-Disposition",
-            `attachment; filename=Site Audit-Report-${report.url.replace(/[^a-z0-9]/gi, "-")}.pdf`
+            `attachment; filename="${reportFileName(report)}"`
         );
 
-        // Activity Log for analytics (Admin Dashboard)
-        if (req.user) {
-            await ActivityLog.create({
-                userId: req.user.userId,
-                sessionId: req.tracking?.sessionId || 'DOWNLOAD_SESSION',
-                ip: req.tracking?.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || '0.0.0.0',
-                device: req.tracking?.device || 'Desktop',
-                browser: req.tracking?.browser || 'Browser',
-                os: req.tracking?.os || 'OS',
-                action: 'REPORT_DOWNLOAD',
-                metadata: {
-                    reportId: id,
-                    url: report.url,
-                    reportType: report.report,
-                    deviceProfile: report.device
-                }
-            });
-        }
+        // Activity Log for analytics (Admin Dashboard).
+        //
+        // Guests are logged too. This used to be gated on `req.user`, which meant
+        // every guest PDF export was invisible: the download count on the dashboard
+        // only ever counted logged-in users, while the export route itself is open
+        // to guests reading their own report.
+        logActivity(req, {
+            action: 'REPORT_DOWNLOAD',
+            url: report.url,
+            metadata: {
+                reportId: id,
+                reportType: report.report,
+                deviceProfile: report.device,
+                score: report.score ?? null,
+                delivery: 'download',
+            },
+        });
+        touchSession(req, { reportsDownloaded: 1 });
+        // Also stamp the audit's own journey row, so "did they download it?" is
+        // answerable from the journey table without a second lookup.
+        markReportOutcome(report._id, 'download');
 
-        res.send(Buffer.from(pdfBuffer));
-
-        } finally {
-            if (browser) await browser.close().catch(() => {});
-            if (slotId) await releaseBrowserSlot(slotId);
-        }
+        res.send(pdfBuffer);
 
     } catch (error) {
         logger.error("PDF generation error", error);
         res.status(500).json({ error: "Failed to generate PDF report" });
+    }
+};
+
+// Deliberately permissive but structural: one @, a dot-bearing domain, no spaces.
+// Real validation is the delivery attempt — an address that does not exist bounces,
+// and the lead is stored with `delivered: false` either way.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/**
+ * Render the report and mail it, AFTER the visitor has been answered.
+ *
+ * Measured on a real report: building the PDF is ~0.5s, but pushing the ~600 KB
+ * attachment through Gmail's SMTP took 11s once and 85s the next time — same
+ * file, same code, so the variance is the mail provider's, not ours. Holding the
+ * HTTP request open for that meant the visitor watched a spinner for over a
+ * minute, and a dev-server restart mid-send lost the request entirely.
+ *
+ * So the request ends at "we're sending it" and delivery happens here. Nothing is
+ * lost by that: the lead row is already written, and `delivered` / `deliveryError`
+ * on it stay the record of what actually happened. A synchronous wait was never
+ * buying real certainty anyway — Gmail accepts mail for a non-existent mailbox
+ * and bounces it minutes later, long after any response we could have sent.
+ *
+ * A lead left at `delivered: false` with no `deliveryError` means this never
+ * finished — the process died mid-send. That is still visible in the admin list
+ * as an undelivered lead, which is the outcome that matters.
+ *
+ * Never throws: it runs detached, so a rejection here has no caller to catch it.
+ */
+const deliverReportInBackground = async (lead, report) => {
+    try {
+        const pdfBuffer = await renderReportPdf(report);
+        await sendReportPdfEmail({
+            to: lead.email,
+            name: lead.name,
+            url: report.url,
+            reportId: String(report._id),
+            score: report.score ?? null,
+            grade: report.grade ?? null,
+            filename: reportFileName(report),
+            pdf: pdfBuffer,
+        });
+        await ReportLead.updateOne(
+            { _id: lead._id },
+            { delivered: true, deliveredAt: new Date(), deliveryError: null }
+        ).catch(() => {});
+    } catch (err) {
+        logger.error(`[emailReport] delivery FAILED for ${lead.email} / report ${lead.reportId}`, err);
+        await ReportLead.updateOne(
+            { _id: lead._id },
+            { delivered: false, deliveryError: String(err?.message || err).slice(0, 300) }
+        ).catch(() => {});
+    }
+};
+
+/**
+ * POST /single-audit/:id/email-report
+ *
+ * The signed-out path to the report. A guest gives a name and an address, we keep
+ * the lead, answer immediately, and mail the PDF from the background (see above).
+ * The details are recorded BEFORE anything can fail: if the send never lands, the
+ * contact is still ours and the row says so — a lead to chase by hand rather than
+ * one that quietly evaporated.
+ *
+ * Rate-limited at the route — an endpoint that mails a file to any address a
+ * stranger types is a spam relay if it is not.
+ */
+export const emailReportToLead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const name = String(req.body?.name ?? "").trim();
+        const email = String(req.body?.email ?? "").trim().toLowerCase();
+
+        if (name.length < 2 || name.length > 80) {
+            return res.status(400).json({ error: "Please enter your name.", code: "INVALID_NAME" });
+        }
+        if (!EMAIL_RE.test(email) || email.length > 254) {
+            return res.status(400).json({ error: "Please enter a valid email address.", code: "INVALID_EMAIL" });
+        }
+
+        const report = await loadAccessibleReport(req, id);
+        if (!report) {
+            return res.status(404).json({ error: "Report not found or access denied" });
+        }
+        if (report.status !== "completed") {
+            return res.status(400).json({ error: "Audit is not completed yet" });
+        }
+
+        const ctx = trackingContext(req);
+        const lead = await ReportLead.create({
+            name,
+            email,
+            reportId: report._id,
+            url: report.url,
+            domain: reportDomain(report.url),
+            score: report.score ?? null,
+            grade: report.grade ?? null,
+            reportType: report.report ?? null,
+            auditDevice: report.device ?? null,
+            userId: req.user?.userId || null,
+            sessionId: ctx.sessionId,
+            ip: ctx.ip,
+            country: ctx.country,
+            region: ctx.region,
+            city: ctx.city,
+            visitorDevice: ctx.device,
+            browser: ctx.browser,
+            os: ctx.os,
+            userAgent: ctx.userAgent,
+            referrer: ctx.referrer,
+        });
+
+        // Same journey bookkeeping the direct download does — an emailed report is a
+        // downloaded report as far as "did they take it away?" is concerned, and that
+        // is true the moment they ask, not whenever SMTP gets around to it. The
+        // address rides along on `guestEmail`, which is what makes an anonymous
+        // session on the activity log resolvable to a person.
+        logActivity(req, {
+            action: 'REPORT_DOWNLOAD',
+            url: report.url,
+            guestEmail: email,
+            metadata: {
+                reportId: id,
+                reportType: report.report,
+                deviceProfile: report.device,
+                score: report.score ?? null,
+                delivery: 'email',
+                leadId: String(lead._id),
+                name,
+            },
+        });
+        touchSession(req, { reportsDownloaded: 1 });
+        markReportOutcome(report._id, 'download');
+
+        // Detached on purpose — not awaited, so the response below goes out now.
+        // The .catch() is belt-and-braces: deliverReportInBackground swallows its
+        // own failures, and an unhandled rejection escaping a detached promise is
+        // exactly the kind of thing that should not be able to reach the process.
+        deliverReportInBackground(lead, report).catch(() => {});
+
+        return res.json({
+            success: true,
+            message: `Sending the report to ${email}. It usually arrives within a minute — check spam if you don't see it.`,
+        });
+
+    } catch (error) {
+        logger.error("Report email error", error);
+        return res.status(500).json({ error: "Failed to send the report. Please try again." });
     }
 };

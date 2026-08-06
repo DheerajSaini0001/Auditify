@@ -297,6 +297,17 @@ export const generatePDF = (data) => {
             const processMetric = (metric, subName = "") => {
                 if (!metric || typeof metric !== 'object' || Array.isArray(metric)) return;
 
+                // A parameter that DOESN'T APPLY to this page is dropped from the
+                // export entirely, matching what the on-screen report does — e.g.
+                // Finance_Form_Security on a page with no finance form, or XSS on a
+                // URL with no query params. It is already out of the score
+                // denominator server-side, so an "N/A" row is pure noise and reads
+                // to an owner like something is wrong.
+                // NOTE: this is only `not_applicable` (didn't apply). A metric that
+                // COULDN'T be measured still renders, with its "why this wasn't
+                // calculated" reason — that is information, not noise.
+                if (metric.status === "not_applicable") return;
+
                 const name = subName ? `${cleanKey(k)} (${subName})` : cleanKey(k);
                 const valDetails = metric.details || metric.Details || (metric.value != null ? String(metric.value) : "");
                 // Renormalized-N/A metrics carry a null score/status — show as N/A, not Fail.

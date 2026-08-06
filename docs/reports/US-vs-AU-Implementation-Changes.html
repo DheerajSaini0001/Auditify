@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What Changed — US vs AU Implementation | DealerSiteAudit</title>
+<style>
+:root{
+--paper:#F7F5F0;--paper-2:#EFEDE7;--paper-3:#E0DFD9;--ink:#101C2C;--ink-2:#303945;--ink-3:#4E5762;--ink-4:#6C7581;
+--rule:#E0DFD9;--rule-soft:#EFEDE7;--accent:#F26419;--accent-ink:#AC420C;--accent-bg:#FDEEE5;
+--ok:#308D5C;--ok-bg:#E7F2EC;--ok-ink:#1F5C3D;--warn:#D18E14;--warn-bg:#FDF7E9;--warn-ink:#8B5B0D;
+--bad:#DA3D51;--bad-bg:#FCEBED;--bad-ink:#972533;--info:#3F6A99;--info-bg:#ECF1F6;--info-ink:#2A4563;
+--violet:#835795;--violet-bg:#F3EDF5;--violet-ink:#563761;
+--shadow:0 1px 2px rgba(16,28,44,.05),0 8px 24px -12px rgba(16,28,44,.14);
+--sans:'Manrope',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;--maxw:1240px;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--paper:#101C2C;--paper-2:#1E2833;--paper-3:#303945;--ink:#EFEDE7;--ink-2:#E0DFD9;--ink-3:#C9CBCC;--ink-4:#A9AFB6;
+--rule:#303945;--rule-soft:#1E2833;--accent:#F58A50;--accent-ink:#F9B389;--accent-bg:#2E1A0E;
+--ok:#4FB37F;--ok-bg:#12261C;--ok-ink:#7ACCA1;--warn:#E9A72C;--warn-bg:#2B1F07;--warn-ink:#EFBD55;
+--bad:#E86B7B;--bad-bg:#2B1116;--bad-ink:#F09AA5;--info:#6E96BF;--info-bg:#131F2C;--info-ink:#9CBBD8;
+--violet:#A57FB4;--violet-bg:#241729;--violet-ink:#C4A6CE;
+--shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px -12px rgba(0,0,0,.6);}}
+:root[data-theme="dark"]{--paper:#101C2C;--paper-2:#1E2833;--paper-3:#303945;--ink:#EFEDE7;--ink-2:#E0DFD9;--ink-3:#C9CBCC;--ink-4:#A9AFB6;
+--rule:#303945;--rule-soft:#1E2833;--accent:#F58A50;--accent-ink:#F9B389;--accent-bg:#2E1A0E;
+--ok:#4FB37F;--ok-bg:#12261C;--ok-ink:#7ACCA1;--warn:#E9A72C;--warn-bg:#2B1F07;--warn-ink:#EFBD55;
+--bad:#E86B7B;--bad-bg:#2B1116;--bad-ink:#F09AA5;--info:#6E96BF;--info-bg:#131F2C;--info-ink:#9CBBD8;
+--violet:#A57FB4;--violet-bg:#241729;--violet-ink:#C4A6CE;color-scheme:dark;}
+:root[data-theme="light"]{color-scheme:light;}
+*,*::before,*::after{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:86px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15.5px;line-height:1.65;-webkit-font-smoothing:antialiased}
+.topbar{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--paper) 88%,transparent);backdrop-filter:saturate(1.6) blur(12px);-webkit-backdrop-filter:saturate(1.6) blur(12px);border-bottom:1px solid var(--rule)}
+.topbar-in{max-width:var(--maxw);margin:0 auto;padding:10px 22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:9px;font-weight:800;letter-spacing:-.02em}
+.brand .dot{width:9px;height:9px;border-radius:50%;background:var(--accent);align-self:center;flex:none}
+.brand small{font-weight:600;color:var(--ink-4);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase}
+.topbar .spacer{flex:1 1 auto}
+.search{position:relative;flex:0 1 300px;min-width:170px}
+.search input{width:100%;padding:7px 11px 7px 30px;border:1px solid var(--rule);border-radius:8px;background:var(--paper-2);color:var(--ink);font:inherit;font-size:13.5px}
+.search input:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);opacity:.5}
+.hitcount{font-size:12px;color:var(--ink-4);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tbtn{border:1px solid var(--rule);background:var(--paper-2);color:var(--ink-3);border-radius:8px;padding:6px 10px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;line-height:1;text-decoration:none;display:inline-block}
+.tbtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.shell{max-width:var(--maxw);margin:0 auto;padding:0 22px 110px}
+main{padding-top:26px}
+.hero{border-bottom:1px solid var(--rule);padding-bottom:26px;margin-bottom:32px}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent-ink);font-weight:800;margin:0 0 10px}
+h1{font-size:clamp(28px,4.4vw,42px);line-height:1.1;letter-spacing:-.03em;margin:0 0 14px;font-weight:800}
+.lede{font-size:17px;color:var(--ink-3);margin:0 0 18px;max-width:66ch}
+.meta{display:flex;gap:10px 20px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-4)}
+.meta b{color:var(--ink-2);font-weight:700}
+section{margin:0 0 52px;scroll-margin-top:84px}
+h2.sec{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:800;color:var(--ink-4);margin:0 0 6px;display:flex;align-items:center;gap:10px}
+h2.sec::before{content:attr(data-n);font-variant-numeric:tabular-nums;color:var(--accent)}
+h3.title{font-size:clamp(21px,2.6vw,27px);letter-spacing:-.02em;margin:0 0 12px;font-weight:800;line-height:1.2}
+h4{font-size:15px;margin:28px 0 10px;font-weight:800;letter-spacing:-.01em;color:var(--ink-2)}
+p{margin:0 0 14px}.dim{color:var(--ink-3)}
+code,.k{font-family:var(--mono);font-size:.87em;background:var(--paper-2);border:1px solid var(--rule-soft);padding:1px 5px;border-radius:5px;white-space:nowrap}
+.path{font-family:var(--mono);font-size:12.2px;color:var(--ink-4)}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2.5px 8px;border-radius:999px;white-space:nowrap;line-height:1.5;border:1px solid transparent}
+.p-new{background:var(--ok-bg);color:var(--ok-ink);border-color:color-mix(in srgb,var(--ok) 32%,transparent)}
+.p-fix{background:var(--bad-bg);color:var(--bad-ink);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}
+.p-swap{background:var(--violet-bg);color:var(--violet-ink);border-color:color-mix(in srgb,var(--violet) 30%,transparent)}
+.p-same{background:var(--paper-2);color:var(--ink-4);border-color:var(--rule)}
+.p-warn{background:var(--warn-bg);color:var(--warn-ink);border-color:color-mix(in srgb,var(--warn) 34%,transparent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:20px 0 26px}
+.card{background:var(--paper-2);border:1px solid var(--rule);border-radius:12px;padding:15px 16px;box-shadow:var(--shadow)}
+.card .n{font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.05;font-variant-numeric:tabular-nums}
+.card .l{font-size:12px;color:var(--ink-4);margin-top:4px;line-height:1.45}
+.card.acc .n{color:var(--accent)}.card.good .n{color:var(--ok)}.card.bad .n{color:var(--bad)}
+.callout{border-left:3px solid var(--accent);background:var(--accent-bg);padding:14px 16px;border-radius:0 10px 10px 0;margin:20px 0}
+.callout.warn{border-left-color:var(--warn);background:var(--warn-bg)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-bg)}
+.callout.good{border-left-color:var(--ok);background:var(--ok-bg)}
+.callout p:last-child{margin-bottom:0}
+.callout .h{font-weight:800;font-size:13px;letter-spacing:.02em;margin-bottom:5px;display:block}
+.tw{overflow-x:auto;border:1px solid var(--rule);border-radius:12px;margin:16px 0 22px;background:var(--paper-2);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;font-size:13.4px;min-width:760px}
+thead th{text-align:left;font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-4);font-weight:800;padding:11px 14px;border-bottom:1px solid var(--rule);background:var(--paper-3);position:sticky;top:0;z-index:1}
+tbody td{padding:12px 14px;border-bottom:1px solid var(--rule-soft);vertical-align:top;line-height:1.55}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+td.param{font-weight:700;width:210px}
+.col-us{background:color-mix(in srgb,var(--info) 5%,transparent)}
+.col-au{background:color-mix(in srgb,var(--violet) 5%,transparent)}
+.pillar-head td{background:var(--paper-3);font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:9px 14px}
+.was{display:block;font-size:12px;color:var(--ink-4);margin-top:4px}
+.was b{color:var(--bad-ink);font-weight:700}
+ul.tight{margin:0 0 14px;padding-left:20px}ul.tight li{margin-bottom:6px}
+pre{background:var(--paper-2);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.6px;line-height:1.6;margin:14px 0}
+.empty{display:none;padding:22px;text-align:center;color:var(--ink-4);font-size:13.5px}
+body.filtering .no-hits{display:none!important}
+body.filtering .empty.show{display:block}
+footer{border-top:1px solid var(--rule);margin-top:56px;padding-top:22px;font-size:12.5px;color:var(--ink-4)}
+@media print{.topbar{display:none}.tw{overflow:visible;box-shadow:none}section{page-break-inside:avoid}body{font-size:10pt}}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="topbar-in">
+  <div class="brand"><span class="dot"></span>DealerSiteAudit <small>Implementation changes</small></div>
+  <div class="spacer"></div>
+  <div class="search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+    <input id="q" type="search" placeholder="Filter parameters…  PPSR, ACL, phone" autocomplete="off" spellcheck="false">
+  </div>
+  <span class="hitcount" id="hits"></span>
+  <button class="tbtn" id="theme" type="button">Theme</button>
+</div></div>
+
+<div class="shell"><main>
+
+<div class="hero">
+  <p class="eyebrow">Implementation changelog</p>
+  <h1>What changed — US vs AU<br>market-aware scoring</h1>
+  <p class="lede">Every parameter whose behaviour now depends on the selected market, with what each market does. Selecting <b>United States</b> scores against US norms; selecting <b>Australia</b> scores against Australian norms.</p>
+  <div class="meta">
+    <span><b>23</b> parameters made market-aware</span>
+    <span><b>4</b> new modules</span>
+    <span><b>32</b> pillar call-sites plumbed</span>
+    <span>Companion to <b>US-vs-AU-Norms-Implementation-Status.html</b></span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<section id="summary" class="no-hits">
+  <h2 class="sec" data-n="01">Summary</h2>
+  <h3 class="title">Kya bana, kya badla</h3>
+
+  <div class="cards">
+    <div class="card good"><div class="n">23</div><div class="l">Parameters jo ab market ke hisaab se score karte hain</div></div>
+    <div class="card acc"><div class="n">4</div><div class="l">Naye modules — locale pack, formats, resolver</div></div>
+    <div class="card"><div class="n">32</div><div class="l">Pillar call-sites (8 pillars × 4 audit flows)</div></div>
+    <div class="card bad"><div class="n">5</div><div class="l">Outright bugs fix hue jo AU pe galat jawaab de rahe the</div></div>
+  </div>
+
+  <h4>Naye files</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:290px">File</th><th>Kya karta hai</th></tr></thead>
+    <tbody>
+      <tr><td class="param"><span class="path">config/locale/us.js</span><br><span class="path">config/locale/au.js</span></td>
+        <td>Locale packs — formats, vocabulary, vehicle taxonomy, directories, credentials, history &amp; valuation providers, authorities, aur pricing / finance / privacy / accessibility law ka basis. <b>Yeh data hai, logic nahi.</b></td></tr>
+      <tr><td class="param"><span class="path">config/locale/index.js</span></td>
+        <td><code>getLocale(market)</code> registry, shared global data (marques, CTA verbs), aur term-matching helpers. Koi check <code>us.js</code>/<code>au.js</code> ko seedha import nahi karta aur na hi <code>market === "AU"</code> par branch karta hai.</td></tr>
+      <tr><td class="param"><span class="path">utils/localeFormats.js</span></td>
+        <td>Market-aware address parser, phone normaliser, date parser, aur locale-contamination detector. Yahin Phase-1 ke saare "outright broken" bugs fix hue.</td></tr>
+      <tr><td class="param"><span class="path">utils/marketResolver.js</span></td>
+        <td>Step 0 — run ke top pe market resolve karta hai, signals collect karta hai, aur selection vs page ka conflict record karta hai.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Plumbing</h4>
+  <pre>HeroSection dropdown (US / AU)
+   └─ DataContext.fetchData(… country)
+       └─ singleAuditController → workerData.market
+           └─ singleAuditWorker: resolveMarket() once, before any pillar runs
+               └─ all 8 pillars × 4 audit flows  =  32 call-sites
+                   └─ every check: getLocale(market) → grade against that list
+
+persisted on the report:  market  +  marketResolution { source, confidence, signals, conflict }</pre>
+
+  <div class="callout">
+    <span class="h">Ek design decision jo reference doc se alag hai</span>
+    <p>Reference doc kehta hai page signals ko selection override karni chahiye. Yahan <b>explicit selection hamesha jeetti hai</b> — kyunki dropdown ek promise hai: AU chunne wale ko Australian report milni chahiye. Page ke ulte signals silently override nahi karte, wo ek <b>finding</b> ban jaate hain. Selection na ho to reference doc ka order exactly lagta hai: ccTLD → schema country → page signals → html lang → US.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<section id="params">
+  <h2 class="sec" data-n="02">The table</h2>
+  <h3 class="title">Parameter × US × AU</h3>
+  <p class="dim no-hits"><span class="pill p-fix">bug fix</span> = pehle galat jawaab de raha tha &nbsp; <span class="pill p-swap">dictionary</span> = reference list badli &nbsp; <span class="pill p-new">new rule</span> = nayi detection logic &nbsp; <span class="pill p-warn">us changed</span> = US behaviour bhi badla</p>
+
+  <div class="tw"><table>
+    <thead><tr><th>Parameter</th><th class="col-us" style="width:36%">🇺🇸 United States</th><th class="col-au" style="width:36%">🇦🇺 Australia</th></tr></thead>
+    <tbody>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Pillar 4 · Security &amp; Compliance</td></tr>
+
+      <tr data-s="Cookie_Consent banner opt-out GPC APP 3 APP 5 cookie law false positive">
+        <td class="param"><span class="k">Cookie_Consent</span><br><span class="pill p-warn">us changed</span> <span class="pill p-new">new rule</span><span class="was">Pehle: banner nahi → <b>fail, score 0</b>, dono markets mein</span></td>
+        <td class="col-us">Banner ab bhi pass karta hai. Banner na ho to <b>opt-out control</b> dhoondta hai — "Do Not Sell or Share" link, sensitive-info limit, GPC. Mil gaya → pass. Nahi mila → warning (60), fail nahi.</td>
+        <td class="col-au">Same shape, par requirement alag: <b>Australia mein cookie law hai hi nahi.</b> APP 5 notice-at-collection aur APP 3 dhoondta hai. Banner na hone par AU site ab score down nahi hoti — yeh product ka sabse bada false positive tha.</td>
+      </tr>
+
+      <tr data-s="Privacy_Policy Privacy rights notice CCPA CPRA GDPR APP OAIC Privacy Act 1988 regime">
+        <td class="param"><span class="k">Privacy_Policy</span> (rights notice)<br><span class="pill p-swap">dictionary</span><span class="was">Pehle: <code>checkGDPRCCPA</code> — sirf gdpr / ccpa / "do not sell" dhoondta tha</span></td>
+        <td class="col-us">Regime = <b>CCPA / CPRA + state laws</b>. Keyword list mein original 10 terms jaise ke waise (GDPR samet — wo US site pe bhi lagta hai jo EU visitors serve karti hai), plus CPRA-era wording additive.</td>
+        <td class="col-au">Regime = <b>Privacy Act 1988 + 13 APPs</b>, regulator OAIC. Ab APP / Privacy Act / OAIC / notifiable data breach / access-and-correction terms dhoondta hai. Ek sahi Australian policy pehle <b>fail</b> hoti thi kyunki usmein "CCPA" shabd nahi tha.</td>
+      </tr>
+
+      <tr data-s="Privacy_Compliance overseas disclosure APP 1.3(f) countries GLBA FCRA DPPA policy content checklist">
+        <td class="param"><span class="k">Privacy_Compliance</span><br><span class="pill p-new">new rule</span> <span class="pill p-warn">us changed</span><span class="was">Pehle: sirf 2 signal (rights + data collection), policy ka content kabhi padha hi nahi jaata tha</span></td>
+        <td class="col-us">Base scoring waisa hi (100 / 70 / 0). Ab privacy policy ek isolated tab mein fetch hoti hai aur uska content coverage <code>meta</code> mein aata hai — par US mein score par asar nahi (<code>overseasDisclosureRequired: false</code>).</td>
+        <td class="col-au"><b>Naya AU check:</b> policy naam se batati hai ki data kin countries mein jaata hai? (APP 1.3(f)). Nahi → score 70 pe cap + named finding. Doc ke mutabik yeh AU dealer sites pe "almost universally missing" hai, aur US-hosted CRM/chat/analytics ke saath pair hota hai.</td>
+      </tr>
+
+      <tr data-s="Legal_Disclaimers Reg Z Reg M FTC ACL s48 comparison rate credit licence drive away total price">
+        <td class="param"><span class="k">Legal_Disclaimers</span><br><span class="pill p-new">new rule</span><span class="was">Pehle: <code>DISCLAIMER_GROUPS</code> hardcoded Reg-Z / Reg-M / FTC — ek bhi AU term nahi</span></td>
+        <td class="col-us">Groups: <b>finance (Reg-Z APR + triggering terms)</b>, <b>lease (Reg-M)</b>, <b>price (FTC + fee escapes)</b>, expiry. Required-by-page-type waisa hi: finance→[finance, price], lease→[lease, price], specials→[price, expiry], vdp→[price].</td>
+        <td class="col-au">Groups: <b>finance (comparison rate + prescribed warning)</b>, <b>price (drive-away total, ACL s48)</b>, <b>licence (ACL number, regex-matched)</b>, expiry. Lease group hai hi nahi — Reg-M ka AU analogue nahi. finance page → [finance, price, <b>licence</b>]. Component-only price ("+ on-road costs") alag se evidence mein record hota hai.</td>
+      </tr>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Pillar 8 · Conversion &amp; Lead Flow</td></tr>
+
+      <tr data-s="Pricing_Transparency MSRP doc fee out-the-door ACL s48 drive away no more to pay on-road costs ACCC">
+        <td class="param"><span class="k">Pricing_Transparency</span><br><span class="pill p-new">new rule</span><span class="was">Pehle: fee-disclosure regex sirf US — <code>doc fee | destination charge | out-the-door | tax, title</code></span></td>
+        <td class="col-us">Model = <b>component-plus-fees</b>. Middle 30 points fee disclosure se milte hain. Price labels: MSRP, sale/internet/selling price. Behaviour pehle jaisa.</td>
+        <td class="col-au">Model = <b>single-total-price (ACL s48)</b>. Middle 30 points <b>drive-away total</b> dikhane se milte hain. Price labels: drive away, RRP. Aur component-only price bina total ke → <b>score 45 pe cap</b> + quotable finding, kyunki wahi cheez hai jispe ACCC action leta hai.</td>
+      </tr>
+
+      <tr data-s="Vehicle_History CARFAX AutoCheck NMVTIS PPSR certificate REVS CarHistory encumbrance written off stolen">
+        <td class="param"><span class="k">Vehicle_History</span><br><span class="pill p-fix">bug fix</span> <span class="pill p-swap">dictionary</span><span class="was">Pehle: sirf <code>/carfax/</code> aur <code>/autocheck/</code> regex — AU VDP <b>0/100</b></span></td>
+        <td class="col-us">Providers: <b>CARFAX, AutoCheck</b> (NMVTIS-backed). Language: accident-free, one-owner, clean title, clean carfax.</td>
+        <td class="col-au">Providers: <b>PPSR certificate</b> (PPS Act 2009), CarHistory, REVS. Language: ppsr checked, encumbrance, finance owing, not written off, stolen check, clear title. CARFAX Australia mein operate hi nahi karta.</td>
+      </tr>
+
+      <tr data-s="TradeIn_Flow KBB Black Book J.D. Power RedBook Glass's Guide payout encumbered valuation">
+        <td class="param"><span class="k">TradeIn_Flow</span><br><span class="pill p-fix">bug fix</span> <span class="pill p-swap">dictionary</span><span class="was">Pehle: widget signals sirf kbb / blackbook / accutrade — complete AU tool ~zero</span></td>
+        <td class="col-us">Providers: <b>KBB Instant Cash Offer, Black Book, J.D. Power, Edmunds</b>. Vendor markers (accutrade, icoapi, instantcashoffer) US pack se aate hain.</td>
+        <td class="col-au">Providers: <b>RedBook, Glass's Guide</b> + domains. Locale mein ek <code>payoutCheck</code> bhi hai — encumbered trade-in ka PPSR payout, jo AU sites routinely omit karti hain aur jiska US analogue nahi.</td>
+      </tr>
+
+      <tr data-s="Finance_Calculator APR Reg Z comparison rate warning statement lending criteria repayment weekly">
+        <td class="param"><span class="k">Finance_Calculator</span><br><span class="pill p-new">new rule</span><span class="was">Pehle: calculator mila = flat 100, disclosure kabhi check hi nahi hota tha</span></td>
+        <td class="col-us">Text keywords waise hi. Naya: agar page ek rate/repayment quote karta hai aur <b>APR</b> nahi dikhta → 75 (warning). Reg-Z 1026.24.</td>
+        <td class="col-au">Keywords mein AU wording add — "repayment calculator", "weekly repayment", "car loan calculator". Naya: rate quote hai par <b>comparison rate</b> nahi → 75. Warning statement, "fees and charges apply", ACL number bhi <code>meta</code> mein record hote hain.</td>
+      </tr>
+
+      <tr data-s="Financing_Flow ACL number NCCP Act credit assistance ASIC RG 234 GLBA FCRA ECOA">
+        <td class="param"><span class="k">Financing_Flow</span><br><span class="pill p-new">new rule</span><span class="was">Pehle: finance flow mila = flat 100</span></td>
+        <td class="col-us">Koi licence disclosure requirement nahi (<code>licenceDisclosure: null</code>), to scoring bilkul pehle jaisa — flat 100.</td>
+        <td class="col-au"><b>Naya AU check:</b> finance offer karne wale page pe <b>Australian Credit Licence number</b> hai? Regex se actual 6-digit number match hota hai, sirf phrase se nahi — "we are a credit licensee" bina number ke exactly wahi case hai jo pakadna hai. Nahi → 75 + finding. NCCP Act 2009.</td>
+      </tr>
+
+      <tr data-s="Certifications_Awards ASE NADA BBB DealerRater LMCT ABN AADA VACC MTA RACV NRMA RACQ Certificate III">
+        <td class="param"><span class="k">Certifications_Awards</span><br><span class="pill p-swap">dictionary</span> <span class="pill p-warn">us changed</span><span class="was">Pehle: signals hardcoded — bbb, dealerrater, edmunds, kbb, ase certified</span></td>
+        <td class="col-us">Universal signals (certified, award, ratings, manufacturer-certified) + US credentials: ASE, NADA, BBB accredited, Google Guaranteed, CARFAX Advantage, DealerRater awards.</td>
+        <td class="col-au">Universal + AU credentials: <b>LMCT / dealer licence, ABN, ACN, AADA, VACC, MTA-NSW/QLD/SA/WA, RACV / NRMA / RACQ, PPSR-checked, Certificate III in Light Vehicle</b>. ASE, NADA, BBB — teeno Australia mein exist hi nahi karte.</td>
+      </tr>
+
+      <tr data-s="Trust_Badges SSL secure LMCT VACC dealer licence accreditation">
+        <td class="param"><span class="k">Trust_Badges</span><br><span class="pill p-swap">dictionary</span><span class="was">Pehle: sirf generic security badges (ssl, secure, verified)</span></td>
+        <td class="col-us">Generic security seals + US credential marks alt/src text mein.</td>
+        <td class="col-au">Generic + AU accreditation marks. Ek AU dealer jo apna <b>LMCT number aur VACC membership</b> dikha raha hai wo strong trust signals display kar raha hai — jo purani list dekh hi nahi paati thi.</td>
+      </tr>
+
+      <tr data-s="Reviews DealerRater Cars.com Edmunds Yelp ProductReview carsales Facebook platform links">
+        <td class="param"><span class="k">Reviews</span><br><span class="pill p-swap">dictionary</span><span class="was">Pehle: sirf class/id mein "review"/"rating" dhoondta tha, platform links kabhi nahi</span></td>
+        <td class="col-us">Ab outbound platform links bhi count hote hain: <b>Yelp, Cars.com, DealerRater, Edmunds, KBB, BBB</b>.</td>
+        <td class="col-au">Platform links: <b>carsales.com.au, Autotrader.com.au, CarsGuide, Drive, ProductReview.com.au, Yellow Pages AU, True Local, ABN Lookup</b>. Yelp aur BBB AU mein meaningless hain.</td>
+      </tr>
+
+      <tr data-s="CTA_Clarity enquire now book test drive drive-away price verb list">
+        <td class="param"><span class="k">CTA_Clarity</span><br><span class="pill p-swap">dictionary</span> <span class="pill p-warn">us changed</span><span class="was">Pehle: 11 verbs, "enquire" list mein tha hi nahi</span></td>
+        <td class="col-us">Global verbs (ab "contact", "call", "request", "schedule", "apply" bhi) + US idiom: get ePrice, value your trade, get pre-qualified, schedule service.</td>
+        <td class="col-au">Global + <b>"enquire", "enquire now", "book a test drive", "get a drive-away price", "trade-in valuation", "book a service"</b>. "Enquire" AU ka dominant lead verb hai — pehle lagbhag har Australian dealer ka primary CTA "unclear" score karta tha.</td>
+      </tr>
+
+      <tr data-s="Click_To_Call tel link 13 number 1300 1800 six digits NANP">
+        <td class="param"><span class="k">Click_To_Call</span><br><span class="pill p-fix">bug fix</span><span class="was">Pehle: fallback branch mein hardcoded 10–11 digit rule</span></td>
+        <td class="col-us">Valid lengths <code>[10]</code> (+ country code / trunk zero). Behaviour pehle jaisa.</td>
+        <td class="col-au">Valid lengths <code>[10, 6]</code>. <b>"13 12 34" chhe digits ka hota hai</b> — pehle reject ho jaata tha, to bina tel: link wala AU page 50 ki jagah 0 score karta tha. <code>tel:</code> link wala primary path dono mein waisa hi tha aur hai.</td>
+      </tr>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Pillar 5 · AEO</td></tr>
+
+      <tr data-s="EEAT_Composite expertise credentials ASE NADA BBB dealer licence ABN AADA VACC RACQ">
+        <td class="param"><span class="k">EEAT_Composite</span> (expertise)<br><span class="pill p-swap">dictionary</span><span class="was">Pehle: <code>CERTIFICATIONS</code> regex hardcoded ASE / NADA / BBB</span></td>
+        <td class="col-us">Universal credential vocabulary + US pack. Issue text: "ASE, manufacturer-certified, BBB accredited, licensed".</td>
+        <td class="col-au">Universal + AU pack. Issue text ab AU credentials naam leti hai. <b>Verified:</b> ek asli AU dealer page pe credentials <code>US: 0</code> se <code>AU: 6</code> ho gaye.</td>
+      </tr>
+
+      <tr data-s="Citations_Attribution authority NHTSA EPA IIHS ANCAP Green Vehicle Guide ACCC VicRoads">
+        <td class="param"><span class="k">Citations_Attribution</span> (authority)<br><span class="pill p-swap">dictionary</span><span class="was">Pehle: <code>AUTH_DOMAINS</code> + <code>TRUST_BADGES</code> hardcoded US</span></td>
+        <td class="col-us">Authorities: <b>NHTSA, EPA, IIHS, fueleconomy.gov, KBB, Edmunds</b> + .gov/.edu/Wikipedia.</td>
+        <td class="col-au">Authorities: <b>ANCAP, Green Vehicle Guide, PPSR, ACCC, ASIC, Vehicle Recalls Australia, Service NSW, VicRoads, TMR Queensland</b>. Ek AU dealer jo ANCAP link kar raha hai use pehle koi credit nahi milta tha.</td>
+      </tr>
+
+      <tr data-s="Citation_NAP_Consistency phone normaliser address parser country detection market">
+        <td class="param"><span class="k">Citation_NAP_Consistency</span><br><span class="pill p-fix">bug fix</span><span class="was">Pehle: apni country detection thi, par local <code>isPhoneLikeDigits</code> 13-numbers reject karta tha</span></td>
+        <td class="col-us">Resolved market ab authoritative hai (pehle sirf page se detect hota tha). Phone lengths US pack se.</td>
+        <td class="col-au">Market selection detection ko override karti hai, aur phone-length rule shared helper se aata hai. <b>Verified:</b> phoneConsistency <code>US: 0/25</code> → <code>AU: 25/25</code> usi page pe.</td>
+      </tr>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Pillar 1 · On-Page SEO</td></tr>
+
+      <tr data-s="Title_Location_Optimization tuParseUsAddress address parser suburb postcode state QLD Washington">
+        <td class="param"><span class="k">Title_Location_Optimization</span><br><span class="k">Location_Targeting</span><br><span class="pill p-fix">bug fix</span><span class="was">Pehle: <code>tuParseUsAddress</code> — "City, ST 12345" hardcoded, 51 US states inline</span></td>
+        <td class="col-us">Ab <code>parseLocalAddress</code> use hota hai. US patterns: "Springfield, IL 62704", "Austin, Texas". State names US pack se.</td>
+        <td class="col-au"><b>"Fortitude Valley QLD 4006" ab parse hota hai</b> — comma optional, 3-letter code, 4-digit postcode. Aur <b>"Perth, WA 6000" ab Western Australia hai, Washington nahi</b> — yeh silent false positive tha jo AU report ko galat state suggest karta tha.</td>
+      </tr>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Pillar 3 · Accessibility</td></tr>
+
+      <tr data-s="Legal_Frameworks ADA Section 508 DDA AODA EAA jurisdiction market null">
+        <td class="param"><span class="k">Legal_Frameworks</span><br><span class="pill p-fix">bug fix</span><span class="was">Pehle: filter bana hua tha par worker <code>market = null</code> bhejta tha → saare 6 frameworks</span></td>
+        <td class="col-us"><code>WCAG 2.2 AA · ADA · Section 508</code>. Enforcement copy: private litigation, Unruh Act $4,000 minimum.</td>
+        <td class="col-au"><code>WCAG 2.2 AA · DDA</code>. AODA aur EAA ab AU dealer ko dikhte hi nahi. Enforcement copy: AHRC conciliation, Maguire v SOCOG.</td>
+      </tr>
+
+      <tr data-s="Html_Has_Lang en-US en-AU regional subtag screen reader pronunciation">
+        <td class="param"><span class="k">Html_Has_Lang</span><br><span class="pill p-new">new rule</span> <span class="pill p-same">score unchanged</span><span class="was">Pehle: bare <code>en</code> pass, koi regional check nahi</span></td>
+        <td class="col-us">Expected <code>en-US</code>. Bare <code>en</code> ab bhi pass — <b>score nahi hilta</b>.</td>
+        <td class="col-au">Expected <code>en-AU</code>. <code>meta</code> mein <code>regionallyCorrect</code> aur <code>wrongRegion</code> aate hain + recommendation. Deliberately non-scoring: Critical ×3 parameter ko subtag ke liye cap karna disproportionate hota aur "threshold kabhi mat hilao" rule todta.</td>
+      </tr>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Pillar 7 · UX &amp; Content · Pillar 6 · AIO</td></tr>
+
+      <tr data-s="Inventory_Filtering facets kilometres ute wagon petrol 4x4 demo badge variant">
+        <td class="param"><span class="k">Inventory_Filtering</span><br><span class="pill p-swap">dictionary</span><span class="was">Pehle: facet regex sirf US — miles, gas, sedan/truck, awd/fwd/rwd</span></td>
+        <td class="col-us">Facets waise hi: mileage/miles, body/suv/sedan/truck, fuel/gas, drivetrain/awd/fwd/rwd, condition/new/used/cpo. <b>Bilkul unchanged.</b></td>
+        <td class="col-au">Additive AU terms: <b>kilometres/km, ute/wagon/hatch/dual cab, petrol + L/100km, 4x4 / 2WD, demo/demonstrator/second-hand, badge/variant</b>. Ek poora AU filter set pehle sparse dikhta tha.</td>
+      </tr>
+
+      <tr data-s="Content_Updated_Regularly date parser DD/MM MM/DD freshness ISO 8601">
+        <td class="param"><span class="k">Content_Updated_Regularly</span><br><span class="pill p-fix">bug fix</span><span class="was">Pehle: <code>new Date(str)</code> — month-first, to 25/12/2026 reject</span></td>
+        <td class="col-us">Order MDY. <code>04/08/2026 → 8 April</code>. ISO 8601 dono mein identical.</td>
+        <td class="col-au">Order DMY. <code>04/08/2026 → 4 August</code>, aur <b><code>25/12/2026</code> ab parse hota hai</b> — pehle reject hota tha, jo "no freshness signal on the page" ban ke dikhta tha ek aisi site pe jo apni dates theek publish kar rahi thi.</td>
+      </tr>
+
+      <tr class="pillar-head no-hits"><td colspan="3">Infrastructure (parameter nahi, par sab kuch inpe tika hai)</td></tr>
+
+      <tr data-s="market resolution conflict unlocalised template signals ccTLD schema addressCountry">
+        <td class="param">Market resolution<br><span class="pill p-new">new</span></td>
+        <td class="col-us">Signals: ccTLD, schema <code>addressCountry</code>, phone country code (+1), place tokens, currency/pricing language (USD, MSRP), html lang.</td>
+        <td class="col-au">Wahi signals AU ke liye (.au, +61, NSW/VIC/QLD…, AUD / drive-away). Selection aur page conflict karein to <b>conflict finding</b>: "This audit was run for Australia, but the page carries United States signals."</td>
+      </tr>
+
+      <tr data-s="address phone date contamination primitives localeFormats">
+        <td class="param">Format primitives<br><span class="pill p-new">new</span></td>
+        <td class="col-us">ZIP 5-digit, NANP 10-digit, MM/DD, miles/MPG, USD.</td>
+        <td class="col-au">Postcode 4-digit, +61 incl 1300/1800/<b>13 (6 digits)</b>, DD/MM, km / L/100km, AUD. Contamination detector likh diya hai (US terms on an AU page) — abhi wire nahi kiya.</td>
+      </tr>
+
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<section id="us-changes" class="no-hits">
+  <h2 class="sec" data-n="03">Honesty</h2>
+  <h3 class="title">US scores bhi thoda shift honge</h3>
+  <p>Yeh bit-for-bit identical nahi raha. Teen jagah US behaviour badla, aur teeno correctness improvements hain — par aapko pata hona chahiye:</p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:200px">Parameter</th><th>Kya badla</th><th style="width:220px">Kis par asar</th></tr></thead>
+    <tbody>
+      <tr><td class="param"><span class="k">CTA_Clarity</span></td>
+        <td>Verb list mein "contact", "call", "request", "schedule", "apply", "shop", "find", "view" add hue. Purani list 11 verbs ki thi — adhoori thi, American nahi.</td>
+        <td>Jis US page ka ekmatra CTA "Contact Us" tha wo <b>0 → 100</b>.</td></tr>
+      <tr><td class="param"><span class="k">Cookie_Consent</span></td>
+        <td>Banner na hone par <code>fail(0)</code> ki jagah opt-out control dhoondta hai → pass ya warning(60). US mein bhi koi banner mandate nahi hai.</td>
+        <td>Banner-less US sites <b>0 → 60 ya 100</b>.</td></tr>
+      <tr><td class="param"><span class="k">Privacy_Compliance</span></td>
+        <td>Ek extra tab khulta hai privacy policy fetch karne ke liye (12s timeout, fail-open). Score par US mein asar nahi — sirf <code>meta.policyCoverage</code> add hota hai.</td>
+        <td>Ek extra navigation per audit.</td></tr>
+      <tr><td class="param"><span class="k">Certifications_Awards</span> · <span class="k">Reviews</span></td>
+        <td>"accredited" universal signals mein aa gaya; Reviews ab directory links par bhi pass karta hai.</td>
+        <td>Kuch US pages thoda upar.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <p>Agar aap chahte hain ki US bilkul purana behave kare, ye teeno gate ho sakte hain — bol dijiye.</p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<section id="notdone" class="no-hits">
+  <h2 class="sec" data-n="04">Baaki</h2>
+  <h3 class="title">Jo abhi nahi kiya</h3>
+  <div class="tw"><table>
+    <thead><tr><th style="width:250px">Item</th><th>Kyun abhi tak nahi</th></tr></thead>
+    <tbody>
+      <tr><td class="param"><span class="k">Navigation_Discoverability</span> — Demo vs CPO</td><td>Check abhi expected sections grade karta hi nahi, sirf nav + search presence dekhta hai. Dictionary swap se kaam nahi chalega — naya sub-check likhna padega.</td></tr>
+      <tr><td class="param"><span class="k">Vehicle_Image_Gallery</span> shots</td><td>Compliance plate / rego label / fuel-consumption label vs Monroney sticker. Locale pack mein list ready hai, check mein wire nahi.</td></tr>
+      <tr><td class="param"><span class="k">FAQ_QA_Blocks</span> topics</td><td>Expected-topic lists dono packs mein maujood hain, consuming check tak nahi pahunchi.</td></tr>
+      <tr><td class="param"><span class="k">Entity_Recognition</span> — ABN sub-signal</td><td><code>businessIdentifiers</code> (ABN/ACN/dealer licence patterns) AU pack mein hain, signal mein wire nahi.</td></tr>
+      <tr><td class="param"><span class="k">Keywords_Entities_Annotated</span></td><td>Vehicle taxonomy (HiLux, Ranger, D-MAX, LDV, GWM…) pack mein hai, AIO check mein wire nahi.</td></tr>
+      <tr><td class="param"><span class="k">Terminology_Consistency</span> — contamination</td><td><code>detectLocaleContamination()</code> likha aur test ho chuka hai, kisi check ne abhi call nahi kiya.</td></tr>
+      <tr><td class="param"><span class="k">Schema_Markup</span> / <span class="k">Structured_Data</span></td><td>Expected <code>priceCurrency</code> (USD/AUD) aur mileage unit (SMI/KMT) validate nahi hote.</td></tr>
+      <tr><td class="param"><span class="k">Lead_Magnets</span> — pre-ticked consent</td><td>AU-only check (Spam Act opt-in). Locale mein <code>marketingConsent.preTickedAllowed</code> hai, DOM check nahi bana.</td></tr>
+      <tr><td class="param"><span class="k">Topical_Authority</span> — AU gazetteer</td><td>Suburb list ek data asset hai jo abhi maujood nahi.</td></tr>
+      <tr><td class="param">Origin / CDN geography</td><td>TTFB ka AU insight — derived finding, abhi nahi bana.</td></tr>
+      <tr><td class="param">Frontend surfacing</td><td><code>market</code> aur <code>marketResolution</code> report par store hote hain par UI mein kahin dikhte nahi — conflict finding samet.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ══════════════════════════════════════════════ -->
+<section id="proof" class="no-hits">
+  <h2 class="sec" data-n="05">Proof</h2>
+  <h3 class="title">Verification</h3>
+  <p class="dim">Ek hi legitimate Australian dealer page, dono markets ke against score kiya:</p>
+  <pre>  Parameter                    US       AU   Δ
+  ------------------------------------------------
+  Expertise (credentials)       0       35  +35
+  Authority (badges/links)      0       34  +34
+  Citation NAP consistency     70       95  +25
+
+    credentials found     US: 0   AU: 6   (LMCT, ABN, VACC, RACQ, PPSR, roadworthy)
+    NAP phoneConsistency  US: 0   AU: 25  (13-number ab reject nahi hota)</pre>
+  <p class="dim">Format primitives:</p>
+  <pre>AU  "Fortitude Valley QLD 4006"  -> {city:"Fortitude Valley", state:"QLD", postcode:"4006"}   <span style="color:var(--bad)">pehle null</span>
+AU  "Perth, WA 6000"             -> Western Australia                                          <span style="color:var(--bad)">pehle "Washington"</span>
+AU  "13 12 34"                   -> phoneLike=true, +61131234                                  <span style="color:var(--bad)">pehle reject</span>
+AU  "25/12/2026"                 -> Fri Dec 25 2026                                            <span style="color:var(--bad)">pehle reject</span>
+US  "04/08/2026" -> Apr 08        AU  "04/08/2026" -> Aug 04
+
+Legal frameworks:  US -> WCAG, ADA, Section 508     AU -> WCAG, DDA        <span style="color:var(--bad)">pehle dono ko saare 6</span>
+
+Market resolution:
+  AU site, picked AU      => market=AU | src=audit form selection | conflict=no
+  AU site, no selection   => market=AU | src=ccTLD, schema, phone, place tokens | conf=high
+  US-shaped page, pick AU => market=AU | conflict=YES
+     "This audit was run for Australia, but the page carries United States signals
+      (phone country code, currency / pricing language)."</pre>
+  <p class="dim">Saare 40 changed backend files <code>node --check</code> pass karte hain aur poora module graph clean import hota hai.</p>
+</section>
+
+<div class="empty" id="empty">Koi row match nahi hui. <b>PPSR</b>, <b>ACL</b>, <b>phone</b>, <b>CARFAX</b>, <b>drive away</b> try karo.</div>
+
+<footer>
+  <p><b>DealerSiteAudit — US vs AU market-aware scoring, implementation changelog.</b><br>
+  Companion to <span class="path">docs/reports/US-vs-AU-Norms-Implementation-Status.html</span>, whose §01 (“only 1 parameter is live”) this work supersedes. Norms sourced from <span class="path">docs/reference/US-vs-AU-Audit-Norms.pdf</span> v2. Engineering reference; not legal advice.</p>
+</footer>
+
+</main></div>
+
+<script>
+(function(){
+var root=document.documentElement,btn=document.getElementById('theme'),order=['auto','light','dark'],saved=null;
+try{saved=localStorage.getItem('dsa-changes-theme')}catch(e){}
+if(saved)root.setAttribute('data-theme',saved);
+function label(){var t=root.getAttribute('data-theme')||'auto';btn.textContent=t==='auto'?'Theme: Auto':t==='light'?'Theme: Light':'Theme: Dark';}
+btn.addEventListener('click',function(){var c=root.getAttribute('data-theme')||'auto',n=order[(order.indexOf(c)+1)%order.length];root.setAttribute('data-theme',n);try{localStorage.setItem('dsa-changes-theme',n)}catch(e){}label();});
+label();
+
+var q=document.getElementById('q'),hits=document.getElementById('hits'),empty=document.getElementById('empty');
+var rows=[].slice.call(document.querySelectorAll('tbody tr')).filter(function(r){return !r.classList.contains('pillar-head')});
+rows.forEach(function(r){r._hay=((r.getAttribute('data-s')||'')+' '+r.textContent).toLowerCase().replace(/\s+/g,' ');});
+function run(){
+  var t=q.value.trim().toLowerCase();
+  if(!t){document.body.classList.remove('filtering');
+    rows.forEach(function(r){r.style.display=''});
+    document.querySelectorAll('.pillar-head,.tw,section').forEach(function(e){e.style.display=''});
+    empty.classList.remove('show');hits.textContent='';return;}
+  document.body.classList.add('filtering');
+  var n=0;
+  rows.forEach(function(r){var on=r._hay.indexOf(t)!==-1;r.style.display=on?'':'none';if(on)n++;});
+  document.querySelectorAll('.pillar-head').forEach(function(h){h.style.display='none'});
+  document.querySelectorAll('.tw').forEach(function(tw){
+    var any=[].slice.call(tw.querySelectorAll('tbody tr')).some(function(r){return !r.classList.contains('pillar-head')&&r.style.display!=='none'});
+    tw.style.display=any?'':'none';});
+  document.querySelectorAll('section').forEach(function(s){
+    var any=[].slice.call(s.querySelectorAll('.tw')).some(function(t2){return t2.style.display!=='none'});
+    s.style.display=any?'':'none';});
+  empty.classList.toggle('show',n===0);
+  hits.textContent=n+(n===1?' row':' rows');
+}
+q.addEventListener('input',run);
+q.addEventListener('keydown',function(e){if(e.key==='Escape'){q.value='';run();q.blur();}});
+document.addEventListener('keydown',function(e){if(e.key==='/'&&document.activeElement!==q){e.preventDefault();q.focus();q.select();}});
+})();
+</script>
+</body>
+</html>

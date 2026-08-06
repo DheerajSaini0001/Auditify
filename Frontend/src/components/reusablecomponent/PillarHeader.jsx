@@ -21,7 +21,7 @@ import { scoreToStatus, statusSolidBg } from "../../utils/statusColors";
  *   badge         { icon, label } — the small pill above the title
  *   chips         optional node — pills sitting beside the badge
  *   note          optional node directly under the description, where most pages
- *                 already put their coverage / confidence / "Auditify Index" copy
+ *                 already put their coverage / confidence / "DealerSiteAudit  Index" copy
  *   title         leading words, rendered in ink
  *   titleAccent   trailing word rendered in Performance Orange
  *   description   one line under the title

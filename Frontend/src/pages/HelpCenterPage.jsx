@@ -105,7 +105,7 @@ const FAQS = [
     id: 14,
     cat: "Account",
     q: "Can I see my earlier reports?",
-    a: "Your recent checks appear in your audit history. Full reports are removed automatically after a few hours, so download the PDF if you want to keep one.",
+    a: "Your recent checks appear in your audit history. Full reports are removed automatically after 24 hours, so download the PDF if you want to keep one.",
   },
   {
     id: 15,

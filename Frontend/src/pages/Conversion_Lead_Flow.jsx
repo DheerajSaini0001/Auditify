@@ -967,11 +967,11 @@ const Conversion_Lead_Flow_Inner = React.memo(({ data, loading, darkMode }) => {
               </>}
               note={<>
                 <span
-                  title="This score is Auditify's own composite index for dealership lead flow. No industry-standard external tool produces a comparable conversion score to cross-check against."
+                  title="This score is DealerSiteAudit 's own composite index for dealership lead flow. No industry-standard external tool produces a comparable conversion score to cross-check against."
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                  Auditify Index · no external equivalent
+                  DealerSiteAudit  Index · no external equivalent
                 </span>
               </>}
               title="Conversion &"

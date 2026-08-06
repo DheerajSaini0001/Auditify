@@ -15,7 +15,9 @@
 // locator/press/about/content) rather than a 4th duplicated regex set here —
 // re-exported so callers that already import classifyPageType from this module
 // (e.g. singleAuditController.js's section-reuse path) can pick the right one.
-export { classifyCorporatePageType } from "./pageClassifier.js";
+export { classifyCorporatePageType, classifyServicePageType } from "./pageClassifier.js";
+
+import { siteWeightMultipliers } from "../config/siteTypeProfiles.js";
 
 // Canonical section order (A..H) — matches singleAuditWorker's OverAll() ordering.
 export const SECTION_ORDER = [
@@ -38,6 +40,15 @@ export const SECTION_ORDER = [
 // engines), funded by Accessibility/UX. Transactional pages (trade-in, finance)
 // stay lower (~16) — bots don't fill out credit apps. This is a strategic,
 // forward-looking tilt (AI referral growth), not a current-traffic-share claim.
+//
+// THIS IS THE ONLY COPY. singleAuditWorker.js used to carry a byte-identical
+// second table under a slightly different vocabulary (`trade`/`specials` where
+// this one says `tradein`/`offers`, because each matched its own classifier),
+// kept aligned by a comment in both files saying "keep BOTH tables in sync".
+// They were identical right up until they wouldn't have been. The worker now
+// reads this table through weightsForPageType() below, which resolves either
+// vocabulary — so there is one row per page type and no synchronisation to
+// forget.
 export const SECTION_PAGE_WEIGHTS = {
   generic: [18, 17,  8, 12, 11, 14, 8, 12],
   home:    [18, 18,  8, 12, 10, 14, 8, 12],
@@ -58,7 +69,32 @@ export const SECTION_PAGE_WEIGHTS = {
   // "content", not "blog" — same weights as the dealer "blog" row above so the
   // two classifiers' vocab differences don't change the actual tilt applied.
   content: [14, 22,  9,  9, 15,  7, 10, 14],
+  // Service/repair page types (mirrors singleAuditWorker's table). `booking` is
+  // the whole funnel for those sites; `pricing` is both a conversion surface and
+  // the thing answer engines quote; `locations` is local discovery.
+  booking:  [15, 12, 11, 10, 14, 25, 6,  7],
+  pricing:  [14, 16,  9,  8, 13, 20, 8, 12],
+  locations:[15, 18,  9,  8, 16, 14, 7, 13],
 };
+
+// The dealer classifier in utils/pageClassifier.js names three buckets
+// differently from the local classifyPageType() below, which the controller's
+// section-reuse path uses. Same page, same row — only the label differs, so
+// they are aliased rather than duplicated.
+const PAGE_TYPE_ALIASES = {
+  trade:    "tradein",   // pageClassifier: "trade"    · local: "tradein"
+  specials: "offers",    // pageClassifier: "specials" · local: "offers"
+  content:  "content",   // both, and identical to "blog" — listed for completeness
+};
+
+/**
+ * The 8-entry weight row for a page type, in either vocabulary.
+ * Falls back to the `generic` spec base row for anything unrecognised.
+ */
+export const weightsForPageType = (pageType) =>
+  SECTION_PAGE_WEIGHTS[pageType]
+  || SECTION_PAGE_WEIGHTS[PAGE_TYPE_ALIASES[pageType]]
+  || SECTION_PAGE_WEIGHTS.generic;
 
 // URL → page-type classifier (spec §1 / §5.6 columns). URL-pattern based, mirroring
 // the existing cvfClassifyPageType (Conversion) and aeoClassifyPageType (AEO) so the
@@ -95,11 +131,23 @@ export const classifyPageType = (rawUrl) => {
 
 const indexOfSection = (name) => SECTION_ORDER.indexOf(name);
 
+// The page tilt above says what kind of PAGE this is; the site profile in
+// config/siteTypeProfiles.js says what kind of BUSINESS runs it. They multiply:
+// a franchise dealer's Finance page keeps its heavy Security tilt, while a
+// repair shop's contact page never inherits a franchise dealer's compliance
+// weighting in the first place. Sites with no profile (corporate, or a type the
+// detector couldn't resolve) get the page tilt alone, exactly as before.
+const combinedWeights = (pageType, siteSubType) => {
+  const pageWeights = weightsForPageType(pageType);
+  const mult = siteWeightMultipliers(siteSubType);
+  return mult ? pageWeights.map((w, i) => w * mult[i]) : pageWeights;
+};
+
 // Weighted, renormalized page score.
 // `pcts` is an array of length 8 in SECTION_ORDER; entries that are not finite
 // numbers (null/undefined/NaN) are treated as N/A and dropped from the denominator.
-export const computePageScore = (pcts, pageType) => {
-  const weights = SECTION_PAGE_WEIGHTS[pageType] || SECTION_PAGE_WEIGHTS.generic;
+export const computePageScore = (pcts, pageType, siteSubType = null) => {
+  const weights = combinedWeights(pageType, siteSubType);
   let num = 0;
   let den = 0;
   for (let i = 0; i < weights.length; i++) {
@@ -113,11 +161,11 @@ export const computePageScore = (pcts, pageType) => {
 
 // Convenience for the subset / section-extract paths: take a {sectionName: pct} map,
 // place each into its SECTION_ORDER slot (others null), and score with the page tilt.
-export const computePageScoreFromMap = (pctBySection, pageType) => {
+export const computePageScoreFromMap = (pctBySection, pageType, siteSubType = null) => {
   const pcts = new Array(SECTION_ORDER.length).fill(null);
   for (const [name, pct] of Object.entries(pctBySection || {})) {
     const idx = indexOfSection(name);
     if (idx >= 0) pcts[idx] = pct;
   }
-  return computePageScore(pcts, pageType);
+  return computePageScore(pcts, pageType, siteSubType);
 };

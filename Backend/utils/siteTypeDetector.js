@@ -4,6 +4,7 @@ import { validateUrlSafety } from "./ssrfGuard.js";
 import { detectSiteType as classifySiteType } from "./dealershipDetector.js";
 import { classifyPageType, classifyCorporatePageType } from "./pageClassifier.js";
 import { fetchWithBotBypass } from "./puppeteer_cheerio.js";
+import { cachedSiteType } from "./siteTypeCache.js";
 import logger from "./logger.js";
 
 // Stealth-browser escalations here are now bounded by the SINGLE global browser
@@ -19,17 +20,40 @@ import logger from "./logger.js";
 // reasons a stealth browser can fix: (1) a Cloudflare/Turnstile/hCaptcha
 // challenge page instead of the real site, or (2) a JS-only SPA shell whose
 // real content only renders client-side (fastFetch just sees an empty <div
-// id="root">). Both cases would otherwise be misclassified as "unknown" and
-// (by design) fail open to the dealer taxonomy — a site never actually gets
-// evaluated, it just silently defaults. Escalate to the same stealth browser
-// the full audit uses whenever that's a real risk (see shouldEscalate below).
+// id="root">). Both cases would otherwise be misclassified as "unknown" — and
+// "unknown" is REFUSED, not failed open (see the gate in discoveryController.js
+// and singleAuditController.js), so a real dealership that happens to sit
+// behind a WAF is told it isn't one. Escalating is therefore the only thing
+// standing between a transient block and a hard HTTP 400: use the same stealth
+// browser the full audit uses whenever that's a real risk (see below).
 //
-// fetchWithBotBypass bounds itself internally (~45s worst case) rather than
-// being raced against an external timeout — racing would occasionally orphan
-// a still-launching browser with no reference left to close it, leaking a
-// Chromium process. Awaiting it directly and closing in `finally` guarantees
-// cleanup no matter how long it takes.
+// fetchWithBotBypass bounds itself internally rather than being raced against
+// an external timeout — racing would occasionally orphan a still-launching
+// browser with no reference left to close it, leaking a Chromium process.
+// Awaiting it directly and closing in `finally` guarantees cleanup no matter
+// how long it takes.
+//
+// That internal bound is NOT the "~45s" this comment used to claim. Adding up
+// puppeteer_cheerio.js's own budgets — 15s to acquire a pool permit, 15s goto
+// + 10s goto retry, then up to 2 bot-retry reloads at 10s — gives ~60s, on top
+// of fastFetch's 8s + 8s. Measured against a host that black-holes packets:
+// kwik-fit.com 84s, and 158s once the WAF guard's cooldown lands on top. A
+// user is waiting on this at audit start, so treat those as the real numbers;
+// shortening them means tightening puppeteer_cheerio.js's budgets, which the
+// full audit path shares.
 const MIN_HOMEPAGE_LINKS = 6;
+
+// Visible-text floor below which the static HTML is treated as a shell rather
+// than the page. Chosen from the gap in the measured distribution (see
+// looksLikeJsShell), not tuned: shells topped out at 462 chars, real pages
+// started at 2,722.
+const MIN_HOMEPAGE_TEXT = 1200;
+
+// The stock "this page needs JS" notice that every CRA/Vite/Next shell ships in
+// its <noscript>. Matched against the <noscript> text only — the same words can
+// appear in a cookie banner or an accessibility statement on a fully-rendered
+// page, and treating those as shells would escalate half the web to a browser.
+const JS_REQUIRED_RE = /\b(enable|turn on)\s+(java\s?script|js)\b|\bjava\s?script\s+(is\s+)?(required|must be enabled|disabled)\b/i;
 
 // Homepage evidence alone is often too thin to confirm "dealer" — the anchor
 // signals (VIN/stock#/inventory listings) usually live on a VDP/SRP subpage,
@@ -49,8 +73,8 @@ const MAX_PROBE_PAGES = 2;
 // sits in a legal/ethical gray area (ToS violations, jurisdiction-dependent
 // legality) that isn't worth it for this feature. A site whose WAF blocks
 // this app's IP/ASN outright (a static 403 with no solvable JS challenge) is
-// a genuine, accepted limitation: it stays "unknown" and fails open to the
-// dealer taxonomy exactly like any other inconclusive result — see
+// a genuine, accepted limitation: it stays "unknown"/inconclusive, and the
+// controller gate then refuses the audit with HTTP 400 — see
 // dealershipDetector.js's unknownType()/inconclusive handling.
 async function detectViaBrowser(url) {
   // Concurrency is now enforced globally inside fetchWithBotBypass's shared
@@ -71,6 +95,20 @@ async function runBrowserFetch(url) {
   } catch (err) {
     logger.warn(`[siteTypeDetector] Browser escalation failed for ${url}: ${err.message}`);
     return null;
+  }
+}
+
+// Visible-text length of a loaded document, scripts/styles excluded — the same
+// notion of "text" collectPageSignals uses to match keywords, so the shell test
+// and the signal engine agree on what the page actually says.
+function visibleTextLength($doc) {
+  if (!$doc) return 0;
+  try {
+    const $body = $doc("body").clone();
+    $body.find("script, style, noscript, template").remove();
+    return ($body.text() || "").replace(/\s+/g, " ").trim().length;
+  } catch (_) {
+    return 0;
   }
 }
 
@@ -140,8 +178,10 @@ async function fetchProbePages(candidateUrls) {
 }
 
 /**
- * Fetch a site's homepage and classify it as dealer / corporate / unknown via
- * dealershipDetector's signal engine. Tries a fast plain HTTP GET first; if
+ * Fetch a site's homepage and classify it as dealer / service / corporate /
+ * unknown (plus the `siteSubType` that keys parameter applicability — see
+ * dealershipDetector.js's header) via its signal engine. Tries a fast plain
+ * HTTP GET first; if
  * that fetch was inconclusive (blocked, timed out, empty) OR the page came
  * back looking like a JS-only SPA shell (real content, but almost no links in
  * the raw HTML), escalates to a stealth browser that can render/bypass it. If
@@ -163,9 +203,15 @@ async function fetchProbePages(candidateUrls) {
  * even though classification itself succeeded against the working hostname.
  *
  * @param {string} url
- * @returns {Promise<{siteType: 'dealer'|'corporate'|'unknown', inconclusive: boolean, confidence: number, detectedBy: string[], reason: string, report: string, resolvedUrl: string}>}
+ * @returns {Promise<{siteType: 'dealer'|'service'|'corporate'|'unknown', siteSubType: 'franchise'|'independent'|'service'|'repair'|'corporate'|null, inconclusive: boolean, confidence: number, detectedBy: string[], reason: string, report: string, resolvedUrl: string}>}
  */
-export async function detectSiteType(url) {
+export async function detectSiteType(url, { bypassCache = false } = {}) {
+  return cachedSiteType(url, () => detectSiteTypeUncached(url), { bypass: bypassCache });
+}
+
+// The real work. Wrapped by detectSiteType above so repeat audits of the same
+// host skip the homepage fetch (+ probes, + any browser escalation) entirely.
+async function detectSiteTypeUncached(url) {
   const result = await detectSiteTypeForUrl(url);
   if (!result.inconclusive) return { ...result, resolvedUrl: url }; // got a real, confident read either way — done
 
@@ -199,6 +245,7 @@ export async function detectSiteType(url) {
 async function detectSiteTypeForUrl(url) {
   const unknown = (reason, inconclusive = true) => ({
     siteType: "unknown",
+    siteSubType: null,
     inconclusive,
     confidence: 0,
     detectedBy: [],
@@ -233,7 +280,31 @@ async function detectSiteTypeForUrl(url) {
   // a JS-rendered SPA shell (React/Vue/Angular) — the actual nav/inventory
   // links only exist after client-side JS runs, which fastFetch never does.
   const linkCount = $homepage ? $homepage("a[href]").length : 0;
-  const looksLikeJsShell = result && result.siteType === "unknown" && !result.inconclusive && linkCount < MIN_HOMEPAGE_LINKS;
+
+  // The link count alone badly under-detects, because a shell that
+  // server-renders its top nav clears MIN_HOMEPAGE_LINKS while carrying no page
+  // content whatsoever. Two better tells, measured across the corpus:
+  //
+  //   TEXT VOLUME — how much visible text the static HTML actually has. The
+  //     separation is not marginal, it is a chasm: every confirmed shell came
+  //     in at 0–462 characters (valvoline.com 0, driveway.com 20,
+  //     texasdirectauto.com 152, discounttire.com 256, polestar.com 442,
+  //     mclaren.com 462) while every fully-rendered page cleared 2,700
+  //     (macktrucks.com 2,722 … longotoyota.com 14,690). MIN_HOMEPAGE_TEXT sits
+  //     in the empty middle, so it is not a tuned number.
+  //   DECLARED JS REQUIREMENT — the stock CRA/Vite <noscript>. discounttire.com
+  //     ships ~10 nav links AND that notice; the link count alone let it
+  //     through and a national tyre chain was refused an audit.
+  // Strip script/style before measuring, exactly as collectPageSignals does.
+  // Without that, a shell's inline bundles and JSON-LD count as "text" and the
+  // thinnest pages in the corpus measure as the fattest — polestar.com (442
+  // real characters) and mclaren.com (462) both sailed past the floor and were
+  // never escalated.
+  const bodyTextLength = visibleTextLength($homepage);
+  const declaresJsRequired = $homepage ? JS_REQUIRED_RE.test($homepage("noscript").text() || "") : false;
+  const looksLikeJsShell =
+    result && result.siteType === "unknown" && !result.inconclusive &&
+    (linkCount < MIN_HOMEPAGE_LINKS || bodyTextLength < MIN_HOMEPAGE_TEXT || declaresJsRequired);
 
   // A confident "unknown" verdict where the static page ALREADY shows real
   // automotive vocabulary (hasAutomotiveContext) is a different failure mode
@@ -284,18 +355,18 @@ async function detectSiteTypeForUrl(url) {
       logger.info(`[siteTypeDetector] Homepage inconclusive for ${url} — probing ${candidates.length} subpage(s): ${candidates.join(", ")}`);
       const extraPages = await fetchProbePages(candidates);
       if (!extraPages.length) {
-        logger.info(`[siteTypeDetector] All probe candidate fetches failed for ${url} — staying with homepage-only result (unknown → fails open to dealer)`);
+        logger.info(`[siteTypeDetector] All probe candidate fetches failed for ${url} — staying with homepage-only result (unknown → audit refused at the controller gate)`);
       } else {
         const probed = await classifySiteType({ url, $: $homepage, statusCode: homepageStatus, extraPages });
         if (probed.siteType !== "unknown") {
           logger.info(`[siteTypeDetector] Probing resolved ${url} to "${probed.siteType}"`);
           result = probed;
         } else {
-          logger.info(`[siteTypeDetector] Probing fetched ${extraPages.length} page(s) but still not enough evidence for ${url} — staying unknown (fails open to dealer)`);
+          logger.info(`[siteTypeDetector] Probing fetched ${extraPages.length} page(s) but still not enough evidence for ${url} — staying unknown (audit refused at the controller gate)`);
         }
       }
     } else {
-      logger.info(`[siteTypeDetector] No inventory/locator-looking links found on ${url}'s homepage to probe — staying unknown (fails open to dealer)`);
+      logger.info(`[siteTypeDetector] No inventory/locator-looking links found on ${url}'s homepage to probe — staying unknown (audit refused at the controller gate)`);
     }
   }
 

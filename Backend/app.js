@@ -18,6 +18,7 @@ import userRoutes from "./routes/userRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import adminConfigRoutes from "./routes/adminConfigRoutes.js";
 import aeoRoutes from "./routes/aeoRoutes.js";
+import trackingRoutes from "./routes/trackingRoutes.js";
 import healthRoutes from "./modules/health/health.routes.js";
 import seoRoutes from "./modules/seo/seo.routes.js";
 
@@ -75,7 +76,11 @@ export const createApp = ({ FRONTEND_URL, SESSION_SECRET, IS_PROD }) => {
 
   app.use(cors({
     origin: allowedOrigins,
-    credentials: true
+    credentials: true,
+    // The PDF export names the file in Content-Disposition. That is not a CORS-safe
+    // response header, so without this the browser hides it and every download page
+    // has to reinvent the name — which is how four of them ended up disagreeing.
+    exposedHeaders: ['Content-Disposition']
   }));
 
   // ── 4. SECURITY (Helmet - single place) ──
@@ -206,6 +211,9 @@ export const createApp = ({ FRONTEND_URL, SESSION_SECRET, IS_PROD }) => {
   app.use("/api/admin/config", adminConfigRoutes);
   app.use("/api/websites", websiteRoutes);
   app.use("/api/aeo", aeoRoutes);
+  // Client-side analytics beacons (button clicks, report views, session end).
+  // Unauthenticated on purpose — see routes/trackingRoutes.js.
+  app.use("/api/track", trackingRoutes);
   app.post("/api/screenshot", tryAuthenticate, captureScreenshot);
   app.get("/api/screenshot/view/:auditId", getScreenshotImage);
 

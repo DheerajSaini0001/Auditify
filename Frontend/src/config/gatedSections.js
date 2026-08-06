@@ -15,13 +15,15 @@
  * payload for signed-out requests. Adding a section here without adding it to the
  * backend list gives you a paywall that DevTools defeats in ten seconds.
  */
-export const FREE_SECTIONS = [
+// Nothing is free in full any more. A signed-out visitor keeps every pillar's
+// score — that is the hook — and the findings, causes and fixes behind all eight
+// require an account.
+export const FREE_SECTIONS = [];
+
+export const GATED_SECTIONS = [
   'Technical Performance',
   'On Page SEO',
   'Accessibility',
-];
-
-export const GATED_SECTIONS = [
   'Security/Compliance',
   'UX & Content Structure',
   'Conversion & Lead Flow',
@@ -31,6 +33,42 @@ export const GATED_SECTIONS = [
 
 /** True when this section's detail requires an account. */
 export const isSectionGated = (section) => GATED_SECTIONS.includes(section);
+
+/**
+ * Canonical section name → the key its findings live under on the report document.
+ *
+ * Same three-way coupling as GATED_SECTIONS above: these keys must match what the
+ * worker writes and what Backend/utils/reportGating.js strips. Rename one, rename
+ * all three.
+ */
+export const SECTION_DATA_KEY = {
+  'Technical Performance': 'technicalPerformance',
+  'On Page SEO': 'onPageSEO',
+  'Accessibility': 'accessibility',
+  'Security/Compliance': 'securityOrCompliance',
+  'UX & Content Structure': 'UXOrContentStructure',
+  'Conversion & Lead Flow': 'conversionAndLeadFlow',
+  'AIO (AI-Optimization) Readiness': 'aioReadiness',
+  'AEO (Answer Engine Optimization)': 'aeo',
+};
+
+/**
+ * Has this section actually reported yet?
+ *
+ * The eight pillars stream in one at a time over a multi-minute run, so for most of
+ * that run a given section simply does not exist on the report yet. A signed-out
+ * visitor's gated copy DOES count as reported — the server strips the detail but
+ * still sends `{ locked, Percentage, passedCount… }`, which is a real result.
+ *
+ * Callers with no section (or an unmapped one) get `true`: never hold back a gate
+ * we cannot reason about.
+ */
+export const sectionHasReported = (report, section) => {
+  const key = SECTION_DATA_KEY[section];
+  if (!key) return true;
+  const s = report?.[key];
+  return !!s && typeof s === 'object' && Object.keys(s).length > 0;
+};
 
 /** Copy for the unlock overlay. Kept here so all gated sections read consistently. */
 export const GATE_HEADLINE = 'Sign up free to see this';

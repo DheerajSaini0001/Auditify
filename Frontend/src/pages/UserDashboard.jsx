@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { History, FileText, Download, Calendar, ExternalLink, Activity, LayoutDashboard } from 'lucide-react';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
+import { pdfFileNameFrom } from '../utils/reportDownload';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -180,6 +182,7 @@ const UserDashboard = () => {
                                   const token = localStorage.getItem('dealerpulse_token');
                                   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
                                   const response = await fetch(`${API_URL}/single-audit/${audit.reportId}/export/pdf`, {
+                                    credentials: 'include',
                                     headers: {
                                       ...(token ? { 'Authorization': `Bearer ${token}` } : {})
                                     }
@@ -190,7 +193,7 @@ const UserDashboard = () => {
                                   const url = window.URL.createObjectURL(blob);
                                   const link = document.createElement('a');
                                   link.href = url;
-                                  link.download = `Site Audit-Report-${audit.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+                                  link.download = pdfFileNameFrom(response, audit.url, audit.createdAt);
                                   document.body.appendChild(link);
                                   link.click();
                                   document.body.removeChild(link);

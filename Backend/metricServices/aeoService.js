@@ -17,7 +17,12 @@ import analyzeExperienceSignals from './signals/experienceSignals.js';
 import analyzeExpertiseSignals from './signals/expertiseSignals.js';
 import analyzeAuthoritySignals from './signals/authoritySignals.js';
 import logger from '../utils/logger.js';
-import { classifyPageType } from '../utils/pageClassifier.js';
+import { classifyPageType, classifyServicePageType } from '../utils/pageClassifier.js';
+import { importanceFor } from '../config/parameterImportance.js';
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites.
+const importance = importanceFor('AEO (Answer Engine Optimization)');
 
 // Safety net: no single signal may stall the whole AEO. If one exceeds this budget
 // it resolves to a NOT-CALCULATED fallback (score null) so the rest of the audit
@@ -159,13 +164,29 @@ class AEOService {
     // Spec §2.8 weighted SECTION score (the report headline). Graded aggregator over
     // the applicable params; page-specific params (FAQ/Q&A, sameAs, E-E-A-T) drop out
     // of the denominator on page types where they don't apply (rule-6 N/A renorm).
-    static computeSectionScore(signals, url) {
-        const pageType = classifyPageType(url);
+    static computeSectionScore(signals, url, siteSubType = null) {
+        // Classify against the taxonomy that matches the business. On a service
+        // or repair site the dealer classifier buckets /book-online and
+        // /price-list as "generic", so all three page-specific params below
+        // would drop out on exactly the pages that carry them.
+        const isServicingSite = siteSubType === 'service' || siteSubType === 'repair';
+        const pageType = isServicingSite ? classifyServicePageType(url) : classifyPageType(url);
 
-        // Page-specific applicability.
-        const faqApplies = ['content', 'finance', 'service', 'vdp'].includes(pageType);
-        const eeatApplies = ['about', 'content', 'service'].includes(pageType);
-        const sameAsApplies = ['home', 'about'].includes(pageType);
+        // Page-specific applicability. On a servicing site the pricing page is
+        // added to the FAQ set: a published service price list is where those
+        // businesses answer the cost questions that dominate their AI query mix.
+        const faqApplies = ['content', 'finance', 'service', 'vdp'].includes(pageType)
+            || (isServicingSite && pageType === 'pricing');
+        // Home was added because no dealer crawl plan fetches an about, content
+        // or service page — both plans spend all six slots on the sale funnel —
+        // so E-E-A-T, the second-heaviest parameter in this section at 0.10,
+        // never scored on a dealer audit at all. A dealer home page carries the
+        // same evidence the check looks for (who we are, how long we have
+        // traded, named staff, review counts), so this opens the gate where the
+        // signal genuinely is rather than papering over the plan.
+        const eeatApplies = ['about', 'content', 'service', 'home'].includes(pageType);
+        const sameAsApplies = ['home', 'about'].includes(pageType)
+            || (isServicingSite && pageType === 'locations');
 
         // Not-calculated plumbing (rule 4 / §7 policy 4): a crashed or timed-out
         // probe carries score null. `scored` distinguishes "measured a number"
@@ -214,7 +235,13 @@ class AEOService {
         let parametersNotCalculated = 0;
         const params = {};
 
-        Object.entries(rows).forEach(([key, [score, weight, applicable]]) => {
+        Object.entries(rows).forEach(([key, [score, baseWeight, applicable]]) => {
+            // Per-site-type tilt. This is the section where service and repair
+            // systematically outrank dealers: their customers ask questions that
+            // answer engines now resolve directly, and a local business with no
+            // brand equity gains the most from being the cited source. 1.0 for a
+            // franchise dealer and for corporate/unresolved sites.
+            const weight = baseWeight * importance(key, siteSubType);
             if (typeof score !== 'number') {
                 // Probe didn't run — shown as "not calculated", renormalized out.
                 params[key] = { score: null, weight, applicable, status: null, notCalculated: true, infoOnly: true };
@@ -282,7 +309,13 @@ class AEOService {
         if (!$) {
             $ = cheerio.load(htmlBody);
         }
-        
+
+        // Market whose reference lists the signals compare against. This pillar
+        // is the most exposed of the eight — nine of its sixteen parameters
+        // grade against a list of identifiers, directories, authorities or
+        // credentials, and every one of those lists used to be American.
+        const market = options.market || null;
+
         // Execute all signals
         const results = await Promise.all([
             withTimeout(analyzeAnswerFirst($), 'answerFirst'),
@@ -293,13 +326,13 @@ class AEOService {
             withTimeout(analyzeMarkdownHeaders($), 'markdownHeaders'),
             withTimeout(analyzeCitations($, url), 'citations'),
             withTimeout(analyzeIndexCoverage(url), 'indexCoverage'),
-            withTimeout(analyzeEntityRecognition(url, $), 'entityRecognition'),
+            withTimeout(analyzeEntityRecognition(url, $, market), 'entityRecognition'),
             withTimeout(analyzeBrandEntityStrength(url, $), 'brandEntityStrength'),
-            withTimeout(analyzeCitationConsistency(url, $), 'citationConsistency'),
+            withTimeout(analyzeCitationConsistency(url, $, market), 'citationConsistency'),
             withTimeout(analyzeTopicalAuthority(url, $), 'topicalAuthority'),
             withTimeout(analyzeExperienceSignals(url, $), 'experienceSignals'),
-            withTimeout(analyzeExpertiseSignals(url, $), 'expertiseSignals'),
-            withTimeout(analyzeAuthoritySignals(url, $), 'authoritySignals')
+            withTimeout(analyzeExpertiseSignals(url, $, market), 'expertiseSignals'),
+            withTimeout(analyzeAuthoritySignals(url, $, market), 'authoritySignals')
         ]);
 
         const signals = {
@@ -363,7 +396,7 @@ class AEOService {
         const recommendations = getAEORecommendations(signals);
 
         // Spec §2.8 weighted section score (report headline).
-        const section = this.computeSectionScore(signals, url);
+        const section = this.computeSectionScore(signals, url, options.siteSubType || null);
 
         return {
             url,
@@ -471,7 +504,7 @@ class AEOService {
         const recommendations = getAEORecommendations(signals);
 
         // Spec §2.8 weighted section score (report headline).
-        const section = this.computeSectionScore(signals, url);
+        const section = this.computeSectionScore(signals, url, options.siteSubType || null);
 
         return {
             url,

@@ -72,8 +72,30 @@ export const chargeReportBudget = (req, res, next) => {
 
   if (runs.length >= max) return reject(res, runs, now, windowMs, max);
 
-  runs.push({ host, startedAt: now, lastSeenAt: now });
+  const run = { host, startedAt: now, lastSeenAt: now };
+  runs.push(run);
   runsByIp.set(ip, runs);
+
+  // Refund when no run actually started. startAudit does its real validation well
+  // AFTER this middleware — missing fields, the SSRF guard, the existence check and
+  // the automotive site-type gate all reject there — so without this a visitor who
+  // mistypes a URL (or tries a site we don't audit) five times burns the entire
+  // 15-minute quota having never seen a single report.
+  //
+  // Only the entry THIS request opened is refunded: a request continuing a warm run
+  // returns above and never reaches here, so a failed page inside a live batch can
+  // never refund the batch's own charge.
+  res.on('finish', () => {
+    if (res.statusCode < 400) return;
+    const list = runsByIp.get(ip);
+    if (!list) return;
+    const i = list.indexOf(run);
+    if (i === -1) return; // already swept out of the window
+    list.splice(i, 1);
+    if (list.length) runsByIp.set(ip, list);
+    else runsByIp.delete(ip);
+  });
+
   next();
 };
 

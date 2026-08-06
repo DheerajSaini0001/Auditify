@@ -3415,6 +3415,15 @@ const On_Page_SEO_Inner = React.memo(function On_Page_SEO_Inner({ data, loading,
 
   // Calculate metrics stats using useMemo for performance
   const metricStats = useMemo(() => {
+    // Signed-out visitors get this section stripped, so the parameters below are all
+    // absent and would tally to 0/0/0. Fall back to the server's own counts.
+    if (seo?.locked) {
+      const passed = seo.passedCount ?? 0;
+      const warning = seo.warningCount ?? 0;
+      const failed = seo.failedCount ?? 0;
+      return { passed, warning, failed, total: passed + warning + failed };
+    }
+
     const metrics = [
       seo.Title,
       seo.Title_Uniqueness,

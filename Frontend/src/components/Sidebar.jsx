@@ -22,6 +22,8 @@ import { useData } from "../context/DataContext";
 import { useAuth } from "../context/AuthContext";
 import toast from 'react-hot-toast';
 import { savePostAuthIntent } from "../utils/intentStore";
+import { pdfFileNameFrom } from "../utils/reportDownload";
+import GuestReportEmailModal from "./GuestReportEmailModal";
 
 export default function Sidebar({ darkMode }) {
   const { data, loading, clearData } = useData();
@@ -49,6 +51,48 @@ export default function Sidebar({ darkMode }) {
   const handleGoHome = () => {
     clearData();
     navigate("/", { replace: true });
+  };
+
+  // Download for people we can already identify; email capture for everyone else.
+  // A guest has no account and no address on file, so streaming them the PDF is
+  // the one moment of leverage this product has — they want the file, we want to
+  // know who they are. GuestReportEmailModal does the swap.
+  const [emailModalOpen, setEmailModalOpen] = React.useState(false);
+
+  const handleDownloadReport = async () => {
+    const reportId = data?._id;
+    if (!reportId) return toast.error("Report ID not found");
+
+    if (!isAuthenticated) return setEmailModalOpen(true);
+
+    const toastId = toast.loading('Preparing professional PDF report...');
+    try {
+      const token = localStorage.getItem('dealerpulse_token');
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
+      const response = await fetch(`${API_URL}/single-audit/${reportId}/export/pdf`, {
+        // Carries the sessionId cookie so the download is attributed to
+        // the visitor's real session (see UrlHeader.handleDownloadPDF).
+        credentials: 'include',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        }
+      });
+
+      if (!response.ok) throw new Error('Failed to generate PDF');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = pdfFileNameFrom(response, data.url, data.createdAt);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success('Report downloaded!', { id: toastId });
+    } catch {
+      toast.error('Failed to generate PDF', { id: toastId });
+    }
   };
 
   // Define menu items configuration
@@ -236,38 +280,7 @@ export default function Sidebar({ darkMode }) {
         {data?.sectionScore ? (
           <>
             <button
-              onClick={async () => {
-                // Guests may download too (they verified their email via OTP before the audit).
-                const reportId = data._id;
-                if (!reportId) return toast.error("Report ID not found");
-
-                const toastId = toast.loading('Preparing professional PDF report...');
-                try {
-                  const token = localStorage.getItem('dealerpulse_token');
-                  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-                  const response = await fetch(`${API_URL}/single-audit/${reportId}/export/pdf`, {
-                    headers: {
-                      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-                    }
-                  });
-
-                  if (!response.ok) throw new Error('Failed to generate PDF');
-
-                  const blob = await response.blob();
-                  const url = window.URL.createObjectURL(blob);
-                  const link = document.createElement('a');
-                  link.href = url;
-                  link.download = `Site Audit-Report-${data.url.replace(/[^a-z0-9]/gi, '-')}.pdf`;
-                  document.body.appendChild(link);
-                  link.click();
-                  link.remove();
-                  window.URL.revokeObjectURL(url);
-                  toast.success('Report downloaded!', { id: toastId });
-                } catch (error) {
-                  toast.error('Failed to generate PDF', { id: toastId });
-                }
-              }
-              }
+              onClick={handleDownloadReport}
               className={`group w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white shadow-md shadow-black/10 transition-all hover:shadow-black/20 active:scale-[0.98] ${darkMode ? "bg-slate-700 hover:bg-slate-600" : "bg-[#101C2C] hover:bg-[#2A3656]"}`}
             >
               <FileText className="w-4 h-4" />
@@ -302,6 +315,13 @@ export default function Sidebar({ darkMode }) {
         </div>
       </div>
 
+      <GuestReportEmailModal
+        open={emailModalOpen}
+        onClose={() => setEmailModalOpen(false)}
+        reportId={data?._id}
+        url={data?.url}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

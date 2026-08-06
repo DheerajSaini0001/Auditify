@@ -206,7 +206,7 @@ export default function TermsOfServicePage() {
                   be available. We may add features, change them, or take them away.
                 </p>
                 <p>
-                  Full reports are removed automatically a few hours after a check finishes, so
+                  Full reports are removed automatically 24 hours after a check finishes, so
                   download the PDF if you want to keep a copy. See our{" "}
                   <Link to="/privacy" className={darkMode ? "text-orange-400" : "text-accent"}>
                     privacy policy

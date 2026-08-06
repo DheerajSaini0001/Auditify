@@ -1,6 +1,6 @@
 // Calibration harness — SCORING_FORMAT.md §9.
 //
-// Verifies that Auditify section scores land close to their external reference
+// Verifies that DealerSiteAudit  section scores land close to their external reference
 // tools on real sites, so "is our score accurate?" is a repeatable report, not
 // an opinion. Run before every demo/release.
 //

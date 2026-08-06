@@ -1006,11 +1006,11 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
               badge={{ icon: Layout, label: "UX Audit" }}
               note={<>
                 <span
-                  title="This score is Auditify's own composite index. Each check's threshold cites public guidance (Google, WCAG, UX research), but no industry-standard external tool produces a comparable UX score to cross-check against."
+                  title="This score is DealerSiteAudit 's own composite index. Each check's threshold cites public guidance (Google, WCAG, UX research), but no industry-standard external tool produces a comparable UX score to cross-check against."
                   className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                  Auditify Index · no external equivalent
+                  DealerSiteAudit  Index · no external equivalent
                 </span>
               </>}
               title="UX &"
@@ -1030,31 +1030,31 @@ const UX_Content_Structure_Inner = React.memo(({ data, loading, darkMode }) => {
               const visibleKeys = section.keys.filter((key) => isVisibleForAudience(key, audienceMode));
               if (visibleKeys.length === 0) return null;
               return (
-              <Section key={idx} title={section.title} icon={section.icon} darkMode={darkMode}>
-                {visibleKeys.map((key) => {
-                  const metric = results[key];
-                  if (!metric) return null;
-                  // Hide "not applicable" params (no score returned), e.g. pricing on a page with no prices.
-                  if ((metric.Score ?? metric.score) === undefined) return null;
-                  return (
-                    <MetricCard
-                      key={key}
-                      type={key}
-                      title={key.replaceAll("_", " ")}
-                      description={metric.Details || metric.details}
-                      score={getScoreValue(key)}
-                      status={getStatus(key)}
-                      meta={metric.Meta || metric.meta}
-                      infoOnly={metric.infoOnly || (metric.Meta || metric.meta)?.infoOnly}
-                      analysis={metric.Analysis || metric.analysis}
-                      darkMode={darkMode}
-                      icon={iconMap[key] || Layout}
-                      className={spanMap[key] || ""}
-                      onInfo={(info) => setSelectedParameterInfo(info)}
-                    />
-                  );
-                })}
-              </Section>
+                <Section key={idx} title={section.title} icon={section.icon} darkMode={darkMode}>
+                  {visibleKeys.map((key) => {
+                    const metric = results[key];
+                    if (!metric) return null;
+                    // Hide "not applicable" params (no score returned), e.g. pricing on a page with no prices.
+                    if ((metric.Score ?? metric.score) === undefined) return null;
+                    return (
+                      <MetricCard
+                        key={key}
+                        type={key}
+                        title={key.replaceAll("_", " ")}
+                        description={metric.Details || metric.details}
+                        score={getScoreValue(key)}
+                        status={getStatus(key)}
+                        meta={metric.Meta || metric.meta}
+                        infoOnly={metric.infoOnly || (metric.Meta || metric.meta)?.infoOnly}
+                        analysis={metric.Analysis || metric.analysis}
+                        darkMode={darkMode}
+                        icon={iconMap[key] || Layout}
+                        className={spanMap[key] || ""}
+                        onInfo={(info) => setSelectedParameterInfo(info)}
+                      />
+                    );
+                  })}
+                </Section>
               );
             })}
           </div>

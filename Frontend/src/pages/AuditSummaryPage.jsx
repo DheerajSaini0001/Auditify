@@ -4,6 +4,7 @@ import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert, Globe, Externa
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../components/CircularProgress";
 import LivePreview from "../components/LivePreview";
+import CategoryScoreCards from "../components/CategoryScoreCards";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
@@ -503,6 +504,23 @@ const AuditSummaryPage = () => {
         return { siteScore: avg, siteGrade: gradeFor(avg), scoredPages: validPagesCount, excludedPages: excludedCount };
     }, [displayRows, auditPending]);
 
+    // Site-level score per category — the mean of that dimension across every page
+    // type that produced a number. This is the same arithmetic as a heatmap column,
+    // read downwards instead of across.
+    const categoryScores = useMemo(() => {
+        const out = {};
+        SECTIONS.forEach((s) => {
+            const vals = displayRows
+                .filter((r) => !r.excluded)
+                .map((r) => r.scores[s.key])
+                .filter((v) => typeof v === "number");
+            out[s.key] = vals.length
+                ? Math.round(vals.reduce((a, b) => a + b, 0) / vals.length)
+                : null;
+        });
+        return out;
+    }, [displayRows]);
+
     // Issue breakdown derived from every cell across the (collapsed) grid.
     const breakdown = useMemo(() => {
         const acc = { strong: 0, mid: 0, low: 0, na: 0 };
@@ -657,6 +675,35 @@ const AuditSummaryPage = () => {
                             ))}
                         </div>
                     </div>
+                </div>
+
+                {/* ── Category scorecards ──
+                    One card per dimension, scored across the whole site. The heatmap
+                    below answers "which page is weak"; these answer "what is wrong
+                    with this category, and what do I do about it". */}
+                <div>
+                    <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-2 mb-4">
+                        <div>
+                            <h2 className={`text-xl font-bold ${darkMode ? "text-white" : "text-ink"}`}>Category Scores</h2>
+                            <p className={`text-sm mt-1 ${darkMode ? "text-slate-400" : "text-muted"}`}>
+                                Averaged across every audited page type — open one for its findings, issues and fixes.
+                            </p>
+                        </div>
+                        {auditPending && (
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/20 w-fit">
+                                <Loader2 className="w-3 h-3 animate-spin" /> Still auditing…
+                            </span>
+                        )}
+                    </div>
+
+                    <CategoryScoreCards
+                        sections={SECTIONS}
+                        scores={categoryScores}
+                        reports={reports}
+                        primaryReportId={displayRows[0]?.id || null}
+                        darkMode={darkMode}
+                        onOpenSection={openCell}
+                    />
                 </div>
 
                 {/* ── Heatmap ── */}

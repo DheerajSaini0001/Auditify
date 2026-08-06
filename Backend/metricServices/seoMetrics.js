@@ -1,5 +1,16 @@
 import * as cheerio from "cheerio";
 import { classifyPageType } from "../utils/pageClassifier.js";
+import { isParamApplicable } from "../config/siteTypeProfiles.js";
+import { importanceFor } from "../config/parameterImportance.js";
+import { getLocale } from "../config/locale/index.js";
+import { parseLocalAddress } from "../utils/localeFormats.js";
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites. This section has the
+// widest spread of the eight: title/description uniqueness, canonicals and
+// internal linking are all scale problems a 15-page garage cannot have, while
+// title-location optimisation and sameAs are how it gets found at all.
+const importance = importanceFor("On Page SEO");
 
 // Helper to standardized return object
 const evaluateParameter = (score, details, meta = {}) => {
@@ -2008,7 +2019,7 @@ const checkSitemap = async (url, robotsContent = null, page) => {
   }
 };
 
-const checkStructuredData = async (page) => {
+const checkStructuredData = async (page, siteSubType = null) => {
   try {
     const result = await page.evaluate(() => {
       const scripts = Array.from(document.querySelectorAll('script[type="application/ld+json"]'))
@@ -2047,9 +2058,20 @@ const checkStructuredData = async (page) => {
 
     const LOCALBIZ = new Set(["LocalBusiness", "AutoDealer", "AutomotiveBusiness", "CarDealer", "Store", "AutoRepair", "AutoPartsStore", "MotorcycleDealer", "AutoBodyShop", "GasStation"]);
     const ORG = new Set(["Organization", "Corporation", "NGO", "GovernmentOrganization", "EducationalOrganization"]);
+
+    // Servicing-business @types. Previously these fell through to the generic
+    // LocalBusiness rules (name + address), which meant a repair site marked up
+    // correctly as AutoRepair and one marked up as a plain LocalBusiness scored
+    // identically — the specific markup earned nothing. They get their own rules
+    // here: a servicing business is found by phone and opening hours, and its
+    // service menu (hasOfferCatalog / makesOffer) is what an answer engine needs
+    // in order to quote what it does and what it costs.
+    const SERVICE_BIZ = new Set(["AutoRepair", "AutoBodyShop", "AutoPartsStore", "AutomotiveBusiness", "AutoWash", "MotorcycleRepair", "TireShop"]);
     const REQ = {
       Organization:    { required: ["name", "url"], recommended: ["logo", "sameAs", "contactPoint"] },
       LocalBusiness:   { required: ["name", "address"], recommended: ["telephone", "openingHours", "geo", "image", "url", "priceRange"] },
+      ServiceBusiness: { required: ["name", "address", "telephone"], recommended: ["openingHours", "geo", "priceRange", "url", "image", "areaServed", "hasOfferCatalog", "aggregateRating"] },
+      Service:         { required: ["name"], recommended: ["provider", "areaServed", "offers", "serviceType", "description"] },
       Product:         { required: ["name"], recommended: ["image", "offers", "brand", "description"] },
       Offer:           { required: ["price", "priceCurrency"], recommended: ["availability", "url"] },
       Vehicle:         { required: ["name"], recommended: ["brand", "model", "offers", "vehicleIdentificationNumber", "mileageFromOdometer"] },
@@ -2062,12 +2084,22 @@ const checkStructuredData = async (page) => {
       if (f === "url") return has(o, "url") || has(o, "@id");
       if (f === "telephone") return has(o, "telephone") || (o.contactPoint && [].concat(o.contactPoint).some(c => c && c.telephone));
       if (f === "name") return has(o, "name") || has(o, "legalName");
+      if (f === "hasOfferCatalog") return has(o, "hasOfferCatalog") || has(o, "makesOffer") || has(o, "offers");
       return has(o, f);
     };
 
     const validated = [];
     const otherTypes = new Set();
+    const typeMismatches = [];
     let errorCount = 0;
+
+    // A site with no vehicle inventory that declares itself an AutoDealer /
+    // CarDealer is telling search and answer engines it sells cars. That is a
+    // markup error with real consequences — it competes for inventory queries
+    // it cannot answer and misses the local service queries it can — so it is
+    // reported as a mismatch rather than silently validated as a LocalBusiness.
+    const sellsVehicles = isParamApplicable("Vehicle_History", siteSubType);
+    const DEALER_ONLY_TYPES = new Set(["AutoDealer", "CarDealer", "MotorcycleDealer"]);
 
     const validateGeneric = (o, rules, label) => {
       const missingRequired = rules.required.filter(f => !hasField(o, f));
@@ -2100,8 +2132,17 @@ const checkStructuredData = async (page) => {
       const types = typeOf(o);
       if (types.includes("FAQPage")) return validateFAQ(o);
       if (types.includes("BreadcrumbList")) return validateBreadcrumb(o);
+      if (types.includes("Service")) return validateGeneric(o, REQ.Service, "Service");
       const lb = types.find(t => LOCALBIZ.has(t));
-      if (lb) return validateGeneric(o, REQ.LocalBusiness, lb);
+      if (lb) {
+        if (!sellsVehicles && DEALER_ONLY_TYPES.has(lb)) {
+          typeMismatches.push(lb);
+          errorCount++;
+        }
+        // Servicing @types are graded against the stricter servicing rules so
+        // correct, specific markup is actually worth something.
+        return validateGeneric(o, SERVICE_BIZ.has(lb) ? REQ.ServiceBusiness : REQ.LocalBusiness, lb);
+      }
       const og = types.find(t => ORG.has(t));
       if (og) return validateGeneric(o, REQ.Organization, og);
       const known = types.find(t => REQ[t]);
@@ -2112,13 +2153,34 @@ const checkStructuredData = async (page) => {
     const detectedTypes = [...new Set(validated.map(v => v.type))];
     const typesStr = [...detectedTypes, ...otherTypes].join(", ");
 
+    // A mismatch is a distinct defect from a missing field — the markup is
+    // complete, it just describes the wrong kind of business — so it gets its
+    // own sentence rather than being folded into the missing-fields list (which
+    // would otherwise render as an empty list when a mismatch is the only fault).
+    const mismatchNote = typeMismatches.length
+      ? `This site has no vehicle inventory but declares ${[...new Set(typeMismatches)].join(", ")} markup, which tells search and answer engines it sells vehicles.`
+      : "";
+    const mismatchFix = typeMismatches.length
+      ? `Replace ${[...new Set(typeMismatches)].join(", ")} with AutoRepair, AutoBodyShop or AutomotiveBusiness so engines match you to service and repair queries instead of inventory queries.`
+      : "";
+
     let score, details, explanation, recommendation;
     if (errorCount > 0) {
       const bad = validated.filter(v => !v.valid);
       score = 0.5;
-      details = `Structured Data incomplete (${errorCount} type(s) missing required fields)`;
-      explanation = `These schema types are missing required fields: ${bad.map(b => `${b.type} [${b.missingRequired.join(", ")}]`).join("; ")}.`;
-      recommendation = "Add the missing required Schema.org properties so the markup qualifies for rich results.";
+      const faults = [
+        bad.length ? `${bad.length} type(s) missing required fields` : "",
+        typeMismatches.length ? "site-type mismatch" : "",
+      ].filter(Boolean).join(", ");
+      details = `Structured Data incomplete (${faults})`;
+      explanation = [
+        bad.length ? `These schema types are missing required fields: ${bad.map(b => `${b.type} [${b.missingRequired.join(", ")}]`).join("; ")}.` : "",
+        mismatchNote,
+      ].filter(Boolean).join(" ");
+      recommendation = [
+        bad.length ? "Add the missing required Schema.org properties so the markup qualifies for rich results." : "",
+        mismatchFix,
+      ].filter(Boolean).join(" ");
     } else if (validated.length === 0) {
       score = 0.7;
       details = `Structured Data present but no rich-result types (${[...otherTypes].join(", ") || "generic"})`;
@@ -2142,6 +2204,7 @@ const checkStructuredData = async (page) => {
       otherTypes: [...otherTypes],
       validated,
       errorCount,
+      typeMismatches: [...new Set(typeMismatches)],
       why_this_occurred: explanation,
       how_to_fix: recommendation,
     });
@@ -2332,22 +2395,9 @@ const tuExtractBodyText = (html) => {
 };
 
 // ── Location helpers (Title Location Optimization) ──────────────────────────
-const TU_STATES = {
-  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
-  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
-  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
-  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
-  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi",
-  MO: "Missouri", MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire",
-  NJ: "New Jersey", NM: "New Mexico", NY: "New York", NC: "North Carolina",
-  ND: "North Dakota", OH: "Ohio", OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania",
-  RI: "Rhode Island", SC: "South Carolina", SD: "South Dakota", TN: "Tennessee",
-  TX: "Texas", UT: "Utah", VT: "Vermont", VA: "Virginia", WA: "Washington",
-  WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming", DC: "District of Columbia",
-};
-const TU_STATE_BY_NAME = Object.fromEntries(
-  Object.entries(TU_STATES).map(([abbr, name]) => [name.toLowerCase(), abbr])
-);
+// The 51-entry US state table that used to live here moved to the locale packs
+// (config/locale/us.js and au.js) — see tuParseUsAddress / tuStateName below.
+// Keeping a second copy here would mean an AU audit reading US state names.
 
 // Collect EVERY geographic term the business itself declares — country-agnostic, no
 // hardcoded place lists. The business is the source of truth for its own locations, so
@@ -2443,26 +2493,29 @@ const tuFindSchemaAddress = (node) => {
   return null;
 };
 
-// Parse a US-style "City, ST ZIP" (or full state name) out of free text.
-const tuParseUsAddress = (text) => {
-  if (!text) return null;
-  const abbr = text.match(/(?:^|,)\s*([A-Za-z][A-Za-z .'-]{1,40}?)\s*,\s*([A-Z]{2})\b\s*(?:\d{5})?/);
-  if (abbr && TU_STATES[abbr[2].toUpperCase()]) {
-    return { city: abbr[1].trim(), state: abbr[2].toUpperCase() };
-  }
-  const names = Object.values(TU_STATES).join("|");
-  const full = text.match(
-    new RegExp(`(?:^|,)\\s*([A-Za-z][A-Za-z .'-]{1,40}?)\\s*,\\s*(${names})\\b`, "i")
-  );
-  if (full) {
-    const stateName = full[2];
-    return {
-      city: full[1].trim(),
-      state: TU_STATE_BY_NAME[stateName.toLowerCase()] || null,
-      stateName,
-    };
-  }
-  return null;
+// ── Market-aware address parsing ─────────────────────────────────────────────
+//
+// The parser this replaces was hardcoded to "City, ST 12345" and could not read
+// an Australian address at all: "Fortitude Valley QLD 4006" has no comma before
+// the state and a 3-letter code, so it matched nothing and every location-based
+// parameter here silently failed. Worse, "Perth, WA 6000" DID match — as Perth,
+// *Washington* — so an AU audit could be told to put the wrong state in its
+// title. utils/localeFormats.js now owns the shape, driven by the locale pack.
+//
+// TU_MARKET is module state, which is safe here for the same reason the link
+// cache in uxContentStructure.js is: module state is per worker_thread is per
+// audit, and the market is resolved once at the top of the run and never
+// changes within it (see workers/singleAuditWorker.js). Unlike a per-page value
+// it therefore cannot vary between concurrently-running pillars.
+let TU_MARKET = null;
+
+const tuParseUsAddress = (text) => parseLocalAddress(text, TU_MARKET);
+
+/** Spelled-out name for a state/territory code, in the audited market. */
+const tuStateName = (code) => {
+  if (!code) return null;
+  const states = getLocale(TU_MARKET).address.states || {};
+  return states[String(code).toUpperCase()] || null;
 };
 
 // Does the title mention the city or state? Abbreviations are matched
@@ -2477,7 +2530,7 @@ const tuTitleHasLocation = (title, loc) => {
   const stateAbbr = loc.state ? loc.state.toUpperCase() : null;
   if (stateAbbr) {
     if (new RegExp(`\\b${stateAbbr}\\b`).test(title)) hits.push(loc.state);
-    const full = TU_STATES[stateAbbr] || loc.stateName;
+    const full = tuStateName(stateAbbr) || loc.stateName;
     if (full && t.includes(full.toLowerCase())) hits.push(full);
   }
   if (loc.stateName && t.includes(loc.stateName.toLowerCase())) hits.push(loc.stateName);
@@ -2861,7 +2914,7 @@ const checkTitleLocationOptimization = async (url, $, page, titleText, structure
       title,
       city: loc.city || null,
       state: loc.state || null,
-      stateName: loc.stateName || (loc.state ? TU_STATES[loc.state.toUpperCase()] : null),
+      stateName: loc.stateName || tuStateName(loc.state),
       location: locStr,
       source,
       matched: match.hits,
@@ -3978,7 +4031,7 @@ const localCheckTargeting = ($, loc, title, metaDesc) => {
   const inMeta = tuTitleHasLocation(metaDesc, loc).found;
   const body = ($("body").text() || "").toLowerCase();
   const cityLc = loc.city ? loc.city.toLowerCase() : null;
-  const stateFull = loc.state ? (TU_STATES[loc.state.toUpperCase()] || "").toLowerCase() : null;
+  const stateFull = loc.state ? (tuStateName(loc.state) || "").toLowerCase() : null;
   const inBody = (cityLc && cityLc.length > 2 && body.includes(cityLc)) ||
     (stateFull && body.includes(stateFull));
 
@@ -4555,7 +4608,12 @@ const checkVdpUniqueness = async (url, $, page, sitemapContent = null) => {
   }
 };
 
-export default async function seoMetrics(url, $, page) {
+// `siteSubType` (franchise/independent/service/repair) gates parameter
+// applicability — see config/siteTypeProfiles.js. The 4th argument is pageType,
+// passed by the worker but deliberately re-derived here from the URL.
+export default async function seoMetrics(url, $, page, _pageType = null, siteSubType = null, market = null) {
+  // Fix the market for every address/location helper below, for this run.
+  TU_MARKET = market;
 
   const pageType = tuClassifyPageType(url);
   const titleMetric = checkTitle($);
@@ -4582,7 +4640,7 @@ export default async function seoMetrics(url, $, page) {
   const uniquenessSample = await tuSamplePages(url, $, page, sitemapMetric?.meta?.content);
   const titleUniquenessMetric = checkTitleUniqueness(uniquenessSample);
   const metaDescUniquenessMetric = checkMetaDescriptionUniqueness(uniquenessSample);
-  const structuredDataMetric = await checkStructuredData(page);
+  const structuredDataMetric = await checkStructuredData(page, siteSubType);
   const titleLocationMetric = await checkTitleLocationOptimization(
     url,
     $,
@@ -4602,12 +4660,18 @@ export default async function seoMetrics(url, $, page) {
   // Viewport applies to every page; the VDP/SRP add-ons are computed only on
   // their page type and added to the weight set below (renormalizing the
   // common params downward for that page type, per spec §5.2).
+  //
+  // All three add-ons are inventory-scoped: VDP boilerplate uniqueness, faceted
+  // SRP index control and the SRP→VDP crawl path presuppose a page listing
+  // vehicles for sale. On a service or repair site they are N/A (config/
+  // siteTypeProfiles.js) — left null, which the Σ-weight roll-up below already
+  // drops from the denominator rather than scoring as a failure.
   const viewportMetric = checkViewport($);
-  const vdpUniquenessMetric = pageType === "vdp"
+  const vdpUniquenessMetric = pageType === "vdp" && isParamApplicable("VDP_Content_Uniqueness", siteSubType)
     ? await checkVdpUniqueness(url, $, page, sitemapMetric?.meta?.content)
     : null;
-  const srpIndexMetric = pageType === "srp" ? checkSrpIndexControl($, url) : null;
-  const srpVdpLinksMetric = pageType === "srp" ? checkSrpToVdpLinks($, url) : null;
+  const srpIndexMetric = pageType === "srp" && isParamApplicable("SRP_Index_Control", siteSubType) ? checkSrpIndexControl($, url) : null;
+  const srpVdpLinksMetric = pageType === "srp" && isParamApplicable("SRP_To_VDP_Links", siteSubType) ? checkSrpToVdpLinks($, url) : null;
 
   // ── Spec-aligned On-Page SEO weights (AUDIT_FRAMEWORK_SPECIFICATION.md §2.2 / §5.1) ──
   // The product splits some spec parameters into sub-cards whose weights SUM to
@@ -4702,8 +4766,10 @@ export default async function seoMetrics(url, $, page) {
   let totalWeight = 0;
   for (const key of Object.keys(weights)) {
     if (metricOf[key]?.meta?.present === false) continue;
-    weightedScore += scoreOf(key) * weights[key];
-    totalWeight += weights[key];
+    const w = weights[key] * importance(key, siteSubType);
+    if (w <= 0) continue;
+    weightedScore += scoreOf(key) * w;
+    totalWeight += w;
   }
 
   const actualPercentage = totalWeight > 0 ? parseFloat((weightedScore / totalWeight).toFixed(0)) : 0;

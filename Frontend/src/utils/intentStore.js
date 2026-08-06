@@ -1,5 +1,21 @@
 const INTENT_KEY = 'dealerpulse_post_auth_intent';
 
+const OBJECT_ID = /^[0-9a-f]{24}$/i;
+
+/**
+ * The audit this intent is about, or null.
+ *
+ * Callers do not always have the id to hand — Navbar and ReportRestrictionWrapper
+ * save the placeholders 'temp' and LoginPage saves 'o_auth' — but the path they
+ * save alongside it is a report URL, which carries the id. Falling back to the
+ * path means every intent that points at a report can still be claimed.
+ */
+const resolveAuditId = (auditId, path) => {
+    if (typeof auditId === 'string' && OBJECT_ID.test(auditId)) return auditId;
+    const match = String(path || '').match(/([0-9a-f]{24})(?:[/?#]|$)/i);
+    return match ? match[1] : null;
+};
+
 /**
  * Saves a navigation intent (e.g., target report ID and path) to localStorage.
  * Used to resume complex flows after the user registers or logs in.
@@ -32,7 +48,7 @@ export const peekPostAuthIntent = () => {
         const item = localStorage.getItem(INTENT_KEY);
         if (!item) return null;
 
-        const { path, action, expires } = JSON.parse(item);
+        const { auditId, path, action, expires } = JSON.parse(item);
 
         if (Date.now() > expires) {
             localStorage.removeItem(INTENT_KEY);
@@ -40,7 +56,11 @@ export const peekPostAuthIntent = () => {
             return null;
         }
 
-        return { path: String(path || ''), action: action || null };
+        return {
+            path: String(path || ''),
+            action: action || null,
+            auditId: resolveAuditId(auditId, path),
+        };
     } catch (e) {
         console.error('[IntentStore] Peek failed:', e);
         return null;
@@ -59,8 +79,8 @@ export const consumePostAuthIntent = () => {
         
         if (!item) return null;
 
-        const { path, action, expires } = JSON.parse(item);
-        
+        const { auditId, path, action, expires } = JSON.parse(item);
+
         if (Date.now() > expires) {
             console.warn('[IntentStore] Intent expired.');
             localStorage.removeItem(INTENT_KEY);
@@ -68,11 +88,12 @@ export const consumePostAuthIntent = () => {
         }
 
         localStorage.removeItem(INTENT_KEY);
-        console.log('[IntentStore] Intent consumed:', { path, action });
-        
-        return { 
+        console.log('[IntentStore] Intent consumed:', { auditId, path, action });
+
+        return {
             path: String(path || ''),
-            action: action || null
+            action: action || null,
+            auditId: resolveAuditId(auditId, path),
         };
     } catch (e) {
         console.error('[IntentStore] Consume failed:', e);

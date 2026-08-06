@@ -94,44 +94,44 @@ const AEO_Inner = React.memo(({ data, loading, darkMode }) => {
             showed a white card. AEOPage returns null while loading now. */}
         <div className={`rounded-3xl overflow-hidden transition-all duration-300 ${darkMode ? "bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 shadow-xl shadow-black/20" : "bg-card border border-line shadow-xl shadow-slate-200/50"}`}>
           {!hasAeoData ? (
-          <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
-            {/* Left Panel: Live Preview (Only if not All) */}
-            {data?.report !== "All" && (
-              <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-cardsoft border-line"}`}>
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
-                <div className="w-full relative z-10">
-                  <LivePreview data={data} loading={loading} variant="plain" />
+            <div className={`flex flex-col xl:flex-row ${data?.report === "All" ? "" : "min-h-[300px]"}`}>
+              {/* Left Panel: Live Preview (Only if not All) */}
+              {data?.report !== "All" && (
+                <div className={`w-full xl:w-[45%] p-3 lg:p-4 flex items-center justify-center border-b xl:border-b-0 xl:border-r relative overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-cardsoft border-line"}`}>
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-blue-500/5 blur-3xl rounded-full pointer-events-none"></div>
+                  <div className="w-full relative z-10">
+                    <LivePreview data={data} loading={loading} variant="plain" />
+                  </div>
                 </div>
+              )}
+              {/* Right Panel: Shimmer */}
+              <div className="flex-1 flex flex-col justify-center">
+                <AuditShimmer darkMode={darkMode} steps={AEO_AUDIT_STEPS} />
               </div>
-            )}
-            {/* Right Panel: Shimmer */}
-            <div className="flex-1 flex flex-col justify-center">
-              <AuditShimmer darkMode={darkMode} steps={AEO_AUDIT_STEPS} />
             </div>
-          </div>
           ) : (
-          <div className="flex flex-col xl:flex-row">
-            <PillarHeader
-              darkMode={darkMode}
-              fullReport={data?.report === "All"}
-              badge={{ icon: Sparkles, label: "AEO Audit" }}
-              chips={<>
-                <span
-                  title="This score is Auditify's own composite index for answer-engine readiness. No industry-standard external tool produces a comparable AEO score to cross-check against."
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
-                  Auditify Index · no external equivalent
-                </span>
-              </>}
-              title="Answer Engine"
-              titleAccent="Optimization"
-              description="Measuring your site's readiness for the next generation of AI search."
-              stats={aeoStats}
-              score={headlineScore}
-              onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
-            />
-          </div>
+            <div className="flex flex-col xl:flex-row">
+              <PillarHeader
+                darkMode={darkMode}
+                fullReport={data?.report === "All"}
+                badge={{ icon: Sparkles, label: "AEO Audit" }}
+                chips={<>
+                  <span
+                    title="This score is DealerSiteAudit 's own composite index for answer-engine readiness. No industry-standard external tool produces a comparable AEO score to cross-check against."
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${darkMode ? "bg-slate-800/60 text-slate-400 border-slate-700" : "bg-cardsoft text-muted border-line"}`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${darkMode ? "bg-slate-500" : "bg-slate-400"}`} />
+                    DealerSiteAudit  Index · no external equivalent
+                  </span>
+                </>}
+                title="Answer Engine"
+                titleAccent="Optimization"
+                description="Measuring your site's readiness for the next generation of AI search."
+                stats={aeoStats}
+                score={headlineScore}
+                onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
+              />
+            </div>
           )}
         </div>
 

@@ -7,7 +7,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--app-surface, #F7F5F0);
-  color: var(--app-ink, #101C2C);
+  color: var(--app-ink, #0F1C2C);
 }
 
 input, button, textarea, select {
@@ -338,8 +338,8 @@ input, button, textarea, select {
   --app-surface-2: #EFEBE3;      /* deeper ivory for banded sections   */
   --app-card: #FFFFFF;           /* cards / panels                     */
   --app-card-soft: #FBFAF7;      /* subtle card / inset                */
-  --app-ink: #101C2C;            /* Heritage Navy — headings           */
-  --app-ink-soft: #303945;       /* Graphite — strong body copy        */
+  --app-ink: #0F1C2C;            /* headings / primary text            */
+  --app-ink-soft: #0F1C2C;       /* strong body copy — same dark as ink */
   --app-muted: #5C6674;          /* secondary text (Graphite→Steel)    */
   --app-faint: #8B949E;          /* Steel Gray — tertiary text         */
   --app-line: #E4E1D9;           /* borders / dividers (warm neutral)  */

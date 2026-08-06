@@ -1,0 +1,2186 @@
+<meta charset="utf-8">
+<title>Automotive Site-Type Parameter Importance Matrix</title>
+<style>
+  @page { size: A4; margin: 14mm 12mm 16mm 12mm; }
+  @page :first { margin: 0; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: "Manrope", -apple-system, "Helvetica Neue", Arial, sans-serif;
+    color: #0F1C2C; font-size: 8.6pt; line-height: 1.5; margin: 0;
+  }
+  h1, h2, h3, h4 { margin: 0; font-weight: 800; letter-spacing: -0.01em; }
+  p { margin: 0 0 7px; }
+
+  /* ── cover ── */
+  .cover {
+    height: 297mm; background: #0F1C2C; color: #fff; padding: 30mm 22mm;
+    display: flex; flex-direction: column; justify-content: space-between;
+    page-break-after: always;
+  }
+  .cover .kicker { color: #F26419; font-size: 10pt; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; }
+  .cover h1 { font-size: 34pt; line-height: 1.08; margin: 14px 0 16px; max-width: 15em; }
+  .cover .sub { font-size: 12pt; color: #A9AFB6; max-width: 34em; line-height: 1.6; }
+  .cover .rule { height: 4px; width: 84px; background: #F26419; margin: 22px 0; }
+  .cover .meta { font-size: 9pt; color: #8B949E; }
+  .cover .meta b { color: #fff; font-weight: 700; }
+  .cover .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 26px; }
+  .cover .grid4 div { border-top: 2px solid #F26419; padding-top: 8px; font-size: 8.5pt; color: #E0DFD9; }
+  .cover .grid4 b { display: block; color: #fff; font-size: 9.5pt; margin-bottom: 3px; }
+
+  /* ── page furniture ── */
+  .page { page-break-before: always; }
+  h2.pt {
+    font-size: 15pt; color: #0F1C2C; border-bottom: 2.5px solid #F26419;
+    padding-bottom: 6px; margin: 0 0 12px;
+  }
+  h2.pt span { color: #F26419; font-size: 9pt; display: block; letter-spacing: .16em; text-transform: uppercase; margin-bottom: 3px; }
+  .lead { font-size: 9pt; line-height: 1.6; color: #26364a; margin-bottom: 10px; }
+
+  /* ── tables ── */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+  th { background: #0F1C2C; color: #fff; font-size: 7.4pt; font-weight: 700; text-align: left;
+       padding: 6px 6px; text-transform: uppercase; letter-spacing: .05em; }
+  td { padding: 4.5px 6px; border-bottom: .5px solid #E4E1D9; vertical-align: top; }
+  tr { page-break-inside: avoid; }
+  tbody tr:nth-child(even) { background: #FBFAF7; }
+  .matrix th.c, .matrix td.c { text-align: center; width: 15.5%; }
+  .matrix td.pname, .whytable td.pname { font-weight: 600; font-size: 8.2pt; }
+  .m { font-size: 8pt; letter-spacing: -1px; white-space: nowrap; }
+  .m3 { color: #B34410; font-weight: 900; }
+  .m2 { color: #F26419; }
+  .m1 { color: #A9AFB6; }
+  .m0 { color: #C9CDD2; }
+  .gapdot { display: inline-block; margin-left: 5px; background: #FDE9DD; color: #B34410;
+            font-size: 6pt; font-weight: 800; padding: 1px 4px; border-radius: 3px;
+            text-transform: uppercase; letter-spacing: .06em; vertical-align: 1px; }
+
+  .whytable td.pname { width: 21%; }
+  .whytable th.pat, .whytable td.pat { width: 8%; text-align: center; white-space: nowrap; }
+  .whytable td.why { font-size: 8pt; color: #26364a; }
+  .pat i { display: inline-block; width: 12px; height: 12px; line-height: 12px; margin: 0 1px;
+           font-style: normal; font-size: 6.6pt; font-weight: 800; text-align: center; border-radius: 2px; }
+  .p3 { background: #B34410; color: #fff; }
+  .p2 { background: #F26419; color: #fff; }
+  .p1 { background: #E4E1D9; color: #5C6674; }
+  .p0 { background: #F2F1ED; color: #B7BCC2; }
+  .drv { display: inline-block; background: #0F1C2C; color: #fff; font-size: 6pt; font-weight: 700;
+         padding: 1px 5px; border-radius: 3px; letter-spacing: .05em; white-space: nowrap; }
+
+  .sec { margin-bottom: 14px; }
+  .sec.keep { page-break-before: auto; }
+  .sech { font-size: 11pt; margin: 14px 0 7px; color: #0F1C2C; }
+  .sech em { font-style: normal; font-size: 7.5pt; color: #8B949E; font-weight: 600; margin-left: 6px; }
+  .sid { display: inline-block; background: #F26419; color: #fff; width: 17px; height: 17px;
+         line-height: 17px; text-align: center; border-radius: 4px; font-size: 8pt; margin-right: 7px; vertical-align: 1px; }
+
+  /* ── blocks ── */
+  .legend { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+  .legend div { border: 1px solid #E4E1D9; border-left: 3px solid #F26419; padding: 7px 9px; background: #FBFAF7; }
+  .legend b { display: block; font-size: 8.5pt; margin-bottom: 2px; }
+  .legend span { font-size: 7.6pt; color: #5C6674; }
+
+  .typecards { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 12px; }
+  .typecards article { border: 1px solid #E4E1D9; padding: 9px 11px; background: #fff; page-break-inside: avoid; }
+  .typecards h4 { font-size: 9.4pt; color: #0F1C2C; margin-bottom: 3px; }
+  .typecards .col { font-size: 7pt; color: #F26419; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+  .typecards p { font-size: 7.9pt; color: #26364a; margin: 4px 0 0; }
+  .typecards ul { margin: 5px 0 0; padding-left: 14px; font-size: 7.7pt; color: #5C6674; }
+  .typecards li { margin-bottom: 2px; }
+
+  .drivers article { border-left: 3px solid #F26419; padding: 3px 0 3px 11px; margin-bottom: 9px; page-break-inside: avoid; }
+  .drivers h4 { font-size: 9pt; }
+  .drivers h4 b { color: #F26419; margin-right: 6px; }
+  .drivers p { font-size: 8.2pt; color: #26364a; margin: 2px 0 0; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 4px 0 14px; }
+  .kpis div { background: #0F1C2C; color: #fff; padding: 9px 11px; }
+  .kpis b { display: block; font-size: 19pt; color: #F26419; line-height: 1; margin-bottom: 4px; }
+  .kpis span { font-size: 7.4pt; color: #A9AFB6; line-height: 1.35; display: block; }
+
+  .callout { border: 1px solid #F26419; background: #FDE9DD; padding: 9px 12px; margin: 10px 0 14px; page-break-inside: avoid; }
+  .callout b { color: #B34410; }
+  .callout p { font-size: 8.3pt; margin: 0; }
+
+  ol.findings { padding-left: 16px; margin: 0 0 12px; }
+  ol.findings li { margin-bottom: 7px; font-size: 8.6pt; }
+  ol.findings b { color: #0F1C2C; }
+
+  .gap { border: 1px solid #E4E1D9; padding: 9px 11px; margin-bottom: 8px; page-break-inside: avoid; background: #fff; }
+  .gap h4 { font-size: 9pt; margin-bottom: 3px; }
+  .gap .aff { font-size: 7pt; font-weight: 800; color: #B34410; background: #FDE9DD; padding: 1px 5px;
+              border-radius: 3px; text-transform: uppercase; letter-spacing: .06em; }
+  .gap p { font-size: 8.1pt; margin: 5px 0 0; color: #26364a; }
+  .gap p.fix { color: #0F1C2C; border-top: 1px dashed #E4E1D9; padding-top: 5px; margin-top: 6px; }
+  .gap p.fix b { color: #F26419; }
+
+  .wt td.n { font-size: 7.7pt; color: #5C6674; }
+  .wt td.num { text-align: center; font-weight: 700; }
+  .wt td.hi { background: #FDE9DD; color: #B34410; }
+
+  footer.note { font-size: 7.4pt; color: #8B949E; border-top: 1px solid #E4E1D9; padding-top: 6px; margin-top: 10px; }
+</style>
+
+<!-- ═══════════════ COVER ═══════════════ -->
+<div class="cover">
+  <div>
+    <div class="kicker">Auditify &middot; Audit Framework Study</div>
+    <h1>Which parameters matter for which kind of automotive website</h1>
+    <div class="rule"></div>
+    <div class="sub">A parameter-by-parameter importance matrix across the four automotive website
+    types the platform audits, derived from the 164 parameters currently implemented in
+    <span style="color:#F26419">Backend/metricServices/</span> &mdash; with the reasoning behind every rating,
+    the recommended section-weight profile per type, and the coverage gaps the engine has today.</div>
+    <div class="grid4">
+      <div><b>1. Car Dealership</b>franchise / OEM new-car store</div><div><b>2. Automotive Dealer</b>independent / used-car lot</div><div><b>3. Automotive Service</b>service centre / chain</div><div><b>4. Mechanical / Repair</b>garage, body shop</div>
+    </div>
+  </div>
+  <div class="meta">
+    <b>164 parameters</b> &nbsp;&middot;&nbsp; 8 sections &nbsp;&middot;&nbsp; 4 site types &nbsp;&middot;&nbsp;
+    <b>98</b> shared core &nbsp;&middot;&nbsp; <b>23</b> that swing two levels or more
+    &nbsp;&middot;&nbsp; <b>12</b> inapplicable somewhere<br>
+    Source of truth: implemented parameter returns in <b>technicalMetrics, seoMetrics, accessibilityMetrics,
+    securityCompliance, uxContentStructure, conversionLeadFlow, aioReadiness, aeoService</b><br>
+    6 August 2026
+  </div>
+</div>
+
+<!-- ═══════════════ HOW TO READ ═══════════════ -->
+<div class="page">
+  <h2 class="pt"><span>Part 1</span>How to read this report</h2>
+
+  <p class="lead">Every parameter the engine implements is rated against each of the four automotive
+  website types on a three-level scale. A rating is not a statement about how good a parameter is &mdash;
+  it is a statement about how much that parameter moves the outcome <em>for that kind of business</em>.</p>
+
+  <div class="legend">
+    <div><b><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span> Most Important</b><span>Fix first. Either a hard gate, or the parameter that carries this site type's primary revenue mechanism. Failing it costs measurable business.</span></div>
+    <div><b><span class="m m2" title="Important">&#10004;&#10004;</span> Important</b><span>Materially weighted. Meaningfully affects ranking, conversion or compliance for this type, but is not the thing the site lives or dies on.</span></div>
+    <div><b><span class="m m1" title="Recommended">&#10004;</span> Recommended</b><span>Measure it and fix it when convenient. Real but low leverage for this type &mdash; usually diagnostic or polish.</span></div>
+    <div><b><span class="m m0" title="Not applicable">&ndash;</span> Not applicable</b><span>This site type has no page that carries the parameter. It is dropped from the denominator, never scored zero.</span></div>
+  </div>
+
+  <div class="callout">
+    <p><b>The N/A rule is the most important one here.</b> A parameter that does not apply must be
+    renormalised out of the score, not counted as a failure. A repair shop with no vehicle inventory
+    scoring zero on Vehicle Image Gallery, Trade-In Flow and VDP Content Uniqueness is the single
+    largest source of false-low scores in any audit product &mdash; and today all four of these site
+    types resolve to the same internal <code>siteType: "dealer"</code>, so that is exactly what happens.</p>
+  </div>
+
+  <h3 class="sech"><span class="sid">&#9679;</span>The four types, as used in this report</h3>
+  <p class="lead">&ldquo;Car dealership&rdquo; and &ldquo;automotive dealer&rdquo; are used interchangeably in
+  everyday language. To make two separate columns meaningful they are split here on the one distinction
+  that actually changes the parameter set: <b>franchise versus independent</b>. If you read them as
+  synonyms, columns 1 and 2 collapse &mdash; and the 22 parameters where they differ are precisely the franchise-versus-independent differences.</p>
+
+  <div class="typecards">
+    <article>
+      <div class="col">Column 1</div>
+      <h4>Car Dealership &mdash; franchise / OEM new-car store</h4>
+      <p>Manufacturer-appointed dealer. New, used and certified pre-owned inventory on one site.</p>
+      <ul>
+        <li>5,000&ndash;50,000 URLs; thousands of VDPs, faceted SRPs</li>
+        <li>Lease specials and advertised APR &rarr; Reg-Z / Reg-M exposure</li>
+        <li>Credit application, payment calculator, trade valuation</li>
+        <li>Full service department and parts counter</li>
+        <li>Dealer.com / DealerOn / Dealer Inspire / CDK platforms</li>
+      </ul>
+    </article>
+    <article>
+      <div class="col">Column 2</div>
+      <h4>Automotive Dealer &mdash; independent / used-car lot</h4>
+      <p>No manufacturer franchise. Mixed-brand used inventory, often feed-supplied.</p>
+      <ul>
+        <li>50&ndash;500 VDPs; far smaller crawl surface</li>
+        <li>No OEM incentives or lease programmes; subprime and buy-here-pay-here finance</li>
+        <li>FTC CARS Rule is the primary compliance exposure</li>
+        <li>Usually no service department</li>
+        <li>No brand halo &rarr; reviews, history reports and real photos do the trust work</li>
+      </ul>
+    </article>
+    <article>
+      <div class="col">Column 3</div>
+      <h4>Automotive Service &mdash; service centre or chain</h4>
+      <p>Servicing, tyres, fast-fit, dealership service microsites. No vehicle sales.</p>
+      <ul>
+        <li>No inventory at all &rarr; a whole block of parameters is N/A</li>
+        <li>The funnel is a booking scheduler, not a lead form</li>
+        <li>Service menu, published pricing, coupons and seasonal offers</li>
+        <li>Multi-location &rarr; local landing pages, NAP, Google Business Profile</li>
+        <li>Repeat-customer business; loyalty and reminders matter</li>
+      </ul>
+    </article>
+    <article>
+      <div class="col">Column 4</div>
+      <h4>Mechanical / Vehicle Repair &mdash; garage, body shop</h4>
+      <p>Independent mechanic, collision repair, specialist or mobile mechanic.</p>
+      <ul>
+        <li>10&ndash;40 pages, single location, frequently self-built</li>
+        <li>The conversion is a phone call &mdash; click-to-call is the funnel</li>
+        <li>Trust is technician credentials and accreditation, not brand</li>
+        <li>Demand is symptom-driven and answered increasingly by AI, not links</li>
+        <li>Highest incidence of basic hygiene failures: HTTPS, mobile, accessibility</li>
+      </ul>
+    </article>
+  </div>
+</div>
+
+<!-- ═══════════════ EXEC SUMMARY ═══════════════ -->
+<div class="page">
+  <h2 class="pt"><span>Part 2</span>What the matrix actually says</h2>
+
+  <div class="kpis">
+    <div><b>164</b><span>implemented parameters rated</span></div>
+    <div><b>98</b><span>Important or above for <em>all four</em> &mdash; the shared core (60%)</span></div>
+    <div><b>23</b><span>swing by two levels or more</span></div>
+    <div><b>12</b><span>genuinely N/A for at least one type</span></div>
+  </div>
+
+  <ol class="findings">
+    <li><b>60% of the parameter set does not care what kind of automotive business it is.</b>
+    98 of 164 parameters rate Important or Most Important for all four types &mdash;
+    Core Web Vitals, HTTPS, certificate validity, reputation, titles, H1, contrast, mobile experience,
+    CTA clarity, schema validity, server-rendered content, AI bot access. 63 of them carry
+    an <em>identical</em> rating in all four columns. The shared core is the product; the site type is a tilt on top of it.</li>
+
+    <li><b>Only 23 parameters swing by two levels or more, and 12 of those are pure applicability.</b>
+    78 more differ by exactly one level &mdash; a tilt, not a different job. Strip out the N/A
+    cases and just 11 parameters genuinely change character between site types:
+    title and description uniqueness, canonicals, internal linking (all four are the same
+    scale problem), CSP, Reg-Z/Reg-M disclaimers, breadcrumbs, CTA crowding, AI-friendly linking, and
+    appointment booking &mdash; the only one that runs the other way, from Important on a franchise site to
+    Most Important on a garage.</li>
+
+    <li><b>12 parameters are genuinely inapplicable somewhere, and every one of them is inventory-scoped.</b>
+    Sold-vehicle handling, VDP uniqueness, SRP index control, SRP&rarr;VDP links, inventory filtering,
+    no-results UX, vehicle gallery, vehicle history, trade-in flow, financing flow, finance calculator and
+    finance-form security exist only where vehicles are sold. On a service or repair site they must be
+    renormalised out, not scored zero. This is the whole ball game &mdash; scoring these as failures
+    would cost a garage roughly a section and a half of its total score.</li>
+
+    <li><b>The differences concentrate in three sections.</b> Conversion &amp; Lead Flow (26 of 33 rows differ),
+    Security &amp; Compliance (15 of 25) and On-Page SEO (13 of 22).
+    Technical Performance (7 of 15) and Accessibility (10 of 24) are nearly flat, because
+    physics and WCAG do not care about business model.</li>
+
+    <li><b>Franchise versus independent is a smaller distinction than either is from service.</b>
+    Columns 1 and 2 differ on 22 parameters; service and repair differ on 30;
+    but 75 parameters separate the two selling types from the two servicing types.
+    If you only ever build two profiles, build <em>sells vehicles</em> and <em>services vehicles</em>.</li>
+
+    <li><b>Compliance is the sharpest split, and it is not about site quality.</b> Anyone taking a credit
+    application is handling SSNs under the GLBA Safeguards Rule; anyone advertising APR or a lease payment
+    is under Reg-Z / Reg-M; independent lots are the FTC CARS Rule's primary target. A garage advertising a
+    $99 brake service carries almost none of that load &mdash; which is why Security &amp; Compliance should
+    weigh 13% on a dealer site and 8&ndash;9% on a repair site.</li>
+
+    <li><b>AEO inverts the usual hierarchy.</b> Service and repair rate higher than dealers on answer-first
+    structure, FAQ blocks, topical authority, E-E-A-T and per-engine platform scores. Their customers ask
+    questions AI engines now answer directly, and a local business with no brand equity gains the most from
+    being the cited source. Dealers gain from schema and index coverage &mdash; being present as structured
+    inventory &mdash; more than from being quoted.</li>
+
+    <li><b>Trust inverts too.</b> Testimonials, trust badges, certifications, vehicle history reports and
+    partner logos all rate <em>higher</em> for independents, service and repair than for franchise dealers.
+    A franchise store borrows the manufacturer's credibility; nobody else can.</li>
+
+    <li><b>The engine cannot currently act on any of this.</b> <code>siteTypeDetector</code> returns only
+    <code>dealer</code>, <code>corporate</code> or <code>unknown</code>. All four types collapse to
+    <code>dealer</code>, so a garage is scored against a franchise dealer's expectations. Seven concrete
+    coverage gaps follow in Part 6.</li>
+  </ol>
+
+  <h3 class="sech"><span class="sid">&#9679;</span>The six drivers behind every rating</h3>
+  <p class="lead">No cell in the matrix is a matter of taste. Every rating that differs between columns
+  traces to one of six structural differences between the businesses. The driver codes appear against each
+  row in Part 5.</p>
+  <div class="drivers">
+    <article><h4><b>D1</b>Page inventory</h4><p>Does the site actually contain the page type that carries this parameter? A VDP-scoped check cannot matter on a site with no VDPs — it is N/A, not low-priority. This is the single biggest source of difference between the four columns.</p></article><article><h4><b>D2</b>Conversion mechanism</h4><p>How a lead is actually captured. Franchise and independent dealers convert through forms (ePrice, trade valuation, credit app). Service converts through a booking scheduler. Repair converts through a phone call. Whatever carries the lead gets the weight.</p></article><article><h4><b>D3</b>Regulatory exposure</h4><p>Advertised finance/lease terms and collected PII. Reg-Z / Reg-M / FTC CARS Rule / GLBA Safeguards apply to anyone advertising APR or taking a credit application; a repair shop advertising a $99 brake service carries almost none of that load.</p></article><article><h4><b>D4</b>Site scale</h4><p>Crawl budget, index bloat, duplicate content and template consistency are functions of URL count. A 40,000-URL franchise site and a 15-page garage site have opposite failure modes — one drowns in near-duplicates, the other has too little to index.</p></article><article><h4><b>D5</b>Trust deficit</h4><p>A franchise dealer borrows credibility from the OEM badge. An independent lot, a service chain and a garage have no such halo, so reviews, credentials, real photos and transparent pricing have to do that work directly.</p></article><article><h4><b>D6</b>Query intent in AI answers</h4><p>Dealers are found through transactional inventory queries ('2022 RAV4 under $30k near me'). Service and repair are found through informational and symptom queries ('why is my car shaking', 'timing belt cost') — exactly the queries AI answer engines answer instead of ranking links for.</p></article>
+  </div>
+</div>
+
+<!-- ═══════════════ MASTER MATRIX ═══════════════ -->
+<div class="page">
+  <h2 class="pt"><span>Part 3</span>The master matrix</h2>
+  <p class="lead">All 164 implemented parameters, grouped by audit section.
+  <span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span> Most Important &nbsp;&middot;&nbsp; <span class="m m2" title="Important">&#10004;&#10004;</span> Important &nbsp;&middot;&nbsp;
+  <span class="m m1" title="Recommended">&#10004;</span> Recommended &nbsp;&middot;&nbsp; <span class="m m0" title="Not applicable">&ndash;</span> not applicable.
+  A <span class="gapdot">gap</span> tag means the engine does not currently measure that parameter for at
+  least one site type where this matrix says it matters &mdash; see Part 6.</p>
+  
+<section class="sec">
+  <h3 class="sech"><span class="sid">A</span>Technical Performance <em>18% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">LCP — Largest Contentful Paint</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">CLS — Cumulative Layout Shift</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">INP / TBT — interaction responsiveness</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">FCP — First Contentful Paint</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">TTFB — Time To First Byte</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Speed Index</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Total Blocking Time</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Render-blocking resources</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Resource optimisation (images/JS/CSS)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Compression (Brotli/Gzip)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Caching policy</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Redirect chains</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Sold-vehicle / soft-404 handling</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">PageSpeed / Lighthouse headline score (info)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Delivery hygiene composite (info)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">B</span>On-Page SEO <em>17% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Meta title</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Title uniqueness (cross-page)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Title location optimisation</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Meta description</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Meta description uniqueness</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">URL structure</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">URL slugs</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Canonical tag</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">H1</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Heading hierarchy</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Image optimisation (SEO view)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Semantic tags / HTML5 landmarks</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Internal link profile</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content relevance (title↔H1↔body)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Robots.txt / index intent</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Open Graph tags</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Twitter card</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Social profile links / sameAs</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Viewport meta</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">VDP content uniqueness (vs OEM boilerplate)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">SRP pagination &amp; faceted index control</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">SRP → VDP internal links</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">C</span>Accessibility (WCAG 2.2 AA) <em>8–11% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">WCAG 2.2 AA aggregate</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Colour contrast</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Form labels</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">HTML lang attribute</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Keyboard navigation</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Focus order / focusable content / tabindex / aria-hidden focus</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Image alt text</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Link name</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Button name</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">ARIA roles</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">ARIA allowed attributes</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Document title</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Meta viewport (zoom not disabled)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Target size (WCAG 2.2, 2.5.8)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Reflow at 320px / 400% zoom</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Heading order</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Landmarks</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">List markup</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Skip links</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Interactive element affordance</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Text spacing (info)</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Focus not obscured (info)</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Prefers-reduced-motion (info)</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Legal frameworks — ADA / §508 / DDA / EAA / AODA (info)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">D</span>Security &amp; Compliance <em>8–22% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">HTTPS + no mixed content</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">SSL certificate validity</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">SSL expiry window</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">TLS version</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">HSTS</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content-Security-Policy</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">X-Frame-Options / frame-ancestors</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">X-Content-Type-Options</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Referrer-Policy</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Permissions-Policy</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Cookie flags (Secure/HttpOnly/SameSite)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Third-party cookies</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Reputation — Safe Browsing / VirusTotal / blacklist</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">SQL-injection surface indicator</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">XSS surface indicator</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Forms use HTTPS</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Weak default credentials</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Admin panel public exposure</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">MFA posture</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Cookie consent banner</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Privacy policy link</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">GDPR / CCPA / Do-Not-Sell disclosure</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Finance-form PII security</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Legal / financial disclaimers (Reg-Z, Reg-M, FTC CARS)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Header security grade (info)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">E</span>UX &amp; Content Structure <em>9–15% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Text readability</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Intrusive interstitials</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Navigation discoverability</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Above-the-fold content</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Broken links</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Mobile experience</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Interactive click feedback</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Loading feedback</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Hierarchy &amp; flow clarity</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content density balance</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Layout consistency</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Sticky-header height</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">In-page navigation (anchors, back-to-top)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Breadcrumbs</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Inventory filtering usability</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">No-results UX</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Vehicle image gallery quality</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">F</span>Conversion &amp; Lead Flow <em>7–22% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">CTA presence / visibility</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">CTA clarity / messaging</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">CTA crowding</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">CTA flow alignment / funnel placement</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Form presence</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Form length / field count</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Required vs optional fields</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Inline validation</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Submit-button clarity</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Multi-step form progress</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Friendly error handling</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Microcopy clarity</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Thank-you page / lead confirmation</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Trust badges</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Testimonials</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Reviews / ratings visibility</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Client / partner logos</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Case studies / success stories</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Certifications &amp; awards</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Pricing transparency<span class="gapdot" title="Engine coverage gap">gap</span></td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Vehicle history report (CARFAX / AutoCheck)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Click-to-call</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Chat experience</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Lead magnets</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">GA4 installed</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">GTM configuration</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Conversion tracking</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">CRM integration</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Trade-in flow / valuation tool</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Financing flow / pre-approval</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Finance / payment calculator</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td><td class="c"><span class="m m0" title="Not applicable">&ndash;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Appointment booking scheduler</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Incentives / specials displayed</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">G</span>AIO — AI Optimisation (ingestion) <em>7–10% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Structured-data validity</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content NLP-friendly (server-rendered, semantic)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Answer-oriented structure</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Keywords / entities annotated</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content updated regularly / freshness markers</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Internal linking AI-friendly (crawlable anchors)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Topical focus clarity</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">AI agentic browsing / WebMCP readiness</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Duplicate-content readiness (info)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Structured content — lists &amp; tables (info)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Terminology consistency (info)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec">
+  <h3 class="sech"><span class="sid">H</span>AEO — Answer Engine Optimisation <em>9–14% base</em></h3>
+  <table class="matrix">
+    <thead>
+      <tr>
+        <th class="pname">Parameter</th>
+        <th class="c">Car Dealership</th><th class="c">Automotive Dealer</th><th class="c">Automotive Service</th><th class="c">Mechanical / Repair</th>
+      </tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Schema markup (page-appropriate type)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Answer-first structure / TL;DR lead</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Bot access (GPTBot, Google-Extended, PerplexityBot)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Structured content (tables / lists)</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">FAQ / Q&amp;A blocks + FAQPage schema</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Entity recognition (Organization / LocalBusiness)</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Citation / NAP consistency</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Citations / outbound attribution</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Topical authority / clustering</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Index coverage</td>
+      <td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">sameAs validation</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">E-E-A-T composite</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">llms.txt</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Brand entity strength (info)</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Markdown headers / clear heading structure (info)</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Page-speed signal in AEO (info)</td>
+      <td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td><td class="c"><span class="m m1" title="Recommended">&#10004;</span></td>
+    </tr>
+<tr>
+      <td class="pname">Platform scores — Gemini / ChatGPT / Perplexity</td>
+      <td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m2" title="Important">&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td><td class="c"><span class="m m3" title="Most Important">&#10004;&#10004;&#10004;</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+  <footer class="note">Column definitions in Part 1. Ratings are per site type, not per page &mdash;
+  a parameter marked Most Important still only runs on the page types that carry it.</footer>
+</div>
+
+<!-- ═══════════════ SUMMARY BY SECTION ═══════════════ -->
+<div class="page">
+  <h2 class="pt"><span>Part 4</span>Where the weight sits</h2>
+
+  <h3 class="sech"><span class="sid">&#9679;</span>The 23 parameters that actually swing</h3>
+  <p class="lead">Every row in the matrix that moves two or more levels between site types. If you only
+  read one table in this report, read this one &mdash; it is the entire practical difference between
+  auditing a franchise dealership and auditing a garage.</p>
+  <table class="whytable">
+    <thead><tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">What the swing is</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="pname">Sold-vehicle / soft-404 handling<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Technical Performance</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Only exists where VDPs expire. Inventory churn creates thousands of dead VINs a year, and a soft-404 (200 with 'no longer available') burns crawl budget silently. Nothing on a service or repair site expires this way. <span class="drv">D1</span></td>
+      </tr><tr>
+        <td class="pname">Title uniqueness (cross-page)<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">Templated dealer titles duplicate across thousands of VDPs — the classic dealer-platform defect. A 15-page repair site cannot generate enough pages to have a duplication problem. <span class="drv">D4</span></td>
+      </tr><tr>
+        <td class="pname">Meta description uniqueness<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+        <td class="why">Same scale logic as title uniqueness — OEM-boilerplate descriptions repeated across a large VDP set are a real problem only at franchise scale. <span class="drv">D4</span></td>
+      </tr><tr>
+        <td class="pname">Canonical tag<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">The primary defence against faceted-SRP duplicate content. On a franchise site every filter combination is a potential near-duplicate URL. A garage with 15 pages has almost nothing to canonicalise. <span class="drv">D4</span></td>
+      </tr><tr>
+        <td class="pname">Internal link profile<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">Crawl-depth-to-inventory is a real ranking constraint at 40,000 URLs. On a 15-page site every page is one click from the home page regardless. <span class="drv">D4</span></td>
+      </tr><tr>
+        <td class="pname">VDP content uniqueness (vs OEM boilerplate)<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">The single biggest VDP ranking killer: thousands of pages carrying identical manufacturer copy. Independent lots suffer it too, from feed-supplied descriptions. No VDPs on service/repair sites. <span class="drv">D1</span></td>
+      </tr><tr>
+        <td class="pname">SRP pagination &amp; faceted index control<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Index bloat scales with facet count multiplied by inventory size, so a franchise store with 20 filters and 900 vehicles is exposed far more than a lot with 4 filters and 60 vehicles. <span class="drv">D1 &middot; D4</span></td>
+      </tr><tr>
+        <td class="pname">SRP → VDP internal links<br><span style="font-weight:500;color:#8B949E;font-size:7pt">On-Page SEO</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Crawl path to inventory. Critical at franchise scale; a 60-car lot's whole inventory fits on one page. <span class="drv">D1 &middot; D4</span></td>
+      </tr><tr>
+        <td class="pname">Content-Security-Policy<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Security &amp; Compliance</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">Franchise dealer sites run the heaviest third-party tag stack in local retail — chat, CRM, inventory widget, trade tool, several tag managers — so the injection surface is genuinely largest there, and it sits on the same origin as the credit application. <span class="drv">D3 &middot; D4</span></td>
+      </tr><tr>
+        <td class="pname">Finance-form PII security<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Security &amp; Compliance</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">SSN and income fields must be HTTPS POST, never in a GET query string, with no sensitive autocomplete leakage. Both dealer types run credit applications; neither service nor repair collects this class of data. <span class="drv">D1 &middot; D3</span></td>
+      </tr><tr>
+        <td class="pname">Legal / financial disclaimers (Reg-Z, Reg-M, FTC CARS)<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Security &amp; Compliance</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">Franchise dealers advertise APR and lease terms and are directly exposed to Reg-Z and Reg-M. Independent lots are the primary target of the FTC's CARS Rule on advertised pricing and add-ons. Service coupons need only T&amp;Cs; repair shops rarely advertise credit terms at all. <span class="drv">D3</span></td>
+      </tr><tr>
+        <td class="pname">Breadcrumbs<br><span style="font-weight:500;color:#8B949E;font-size:7pt">UX &amp; Content Structure</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">Depth navigation and BreadcrumbList schema matter most where the path is Home → SRP → filtered SRP → VDP. A garage's deepest path is two levels. <span class="drv">D4</span></td>
+      </tr><tr>
+        <td class="pname">Inventory filtering usability<br><span style="font-weight:500;color:#8B949E;font-size:7pt">UX &amp; Content Structure</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">The core task on an SRP: filter clarity, applied-filter visibility, live result counts, clear-all and URL-stable filters. No inventory means no filters. <span class="drv">D1</span></td>
+      </tr><tr>
+        <td class="pname">No-results UX<br><span style="font-weight:500;color:#8B949E;font-size:7pt">UX &amp; Content Structure</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Rated equally high for independents specifically because a small lot hits zero-result searches far more often than a 900-car franchise store — recovering that dead end into a lead is worth more, not less. <span class="drv">D1</span></td>
+      </tr><tr>
+        <td class="pname">Vehicle image gallery quality<br><span style="font-weight:500;color:#8B949E;font-size:7pt">UX &amp; Content Structure</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Photo count, resolution and real-versus-stock detection. For an independent used lot this is the strongest available trust signal — stock manufacturer photography on a used car reads as concealment. <span class="drv">D1 &middot; D5</span></td>
+      </tr><tr>
+        <td class="pname">CTA crowding<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Conversion &amp; Lead Flow</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">A dealer VDP routinely presents eight competing primary CTAs in one viewport — value trade, get ePrice, check availability, schedule test drive, apply for finance, calculate payment, chat, call. Choice paralysis is a dealer-specific disease. <span class="drv">D2</span></td>
+      </tr><tr>
+        <td class="pname">Vehicle history report (CARFAX / AutoCheck)<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Conversion &amp; Lead Flow</span></td>
+        <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Rated higher for independent lots than franchise stores: with no manufacturer-certified pre-owned programme to point at, a VIN-specific history report is the primary objection handler. <span class="drv">D5</span></td>
+      </tr><tr>
+        <td class="pname">Trade-in flow / valuation tool<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Conversion &amp; Lead Flow</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">The reason the trade-in page exists, and one of the two highest-intent lead types in retail automotive. Absent by definition on service and repair. <span class="drv">D1 &middot; D2</span></td>
+      </tr><tr>
+        <td class="pname">Financing flow / pre-approval<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Conversion &amp; Lead Flow</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Credit application and lender pre-qualification. Present on both dealer types — independents lean subprime and buy-here-pay-here, but the page and its risks are the same. <span class="drv">D1 &middot; D2</span></td>
+      </tr><tr>
+        <td class="pname">Finance / payment calculator<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Conversion &amp; Lead Flow</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+        <td class="why">Franchise stores advertise APR and lease payments and need a real calculator; independent lots more often quote weekly buy-here-pay-here figures where a calculator is less central. <span class="drv">D1</span></td>
+      </tr><tr>
+        <td class="pname">Appointment booking scheduler<br><span style="font-weight:500;color:#8B949E;font-size:7pt">Conversion &amp; Lead Flow</span></td>
+        <td class="pat"><i class="p2">2</i><i class="p1">1</i><i class="p3">3</i><i class="p3">3</i></td>
+        <td class="why">The entire funnel for service and repair — date picker, service-type selection, vehicle details. Franchise dealers have a service department so it matters secondarily; independent lots usually have none. <span class="drv">D1 &middot; D2</span></td>
+      </tr><tr>
+        <td class="pname">Internal linking AI-friendly (crawlable anchors)<br><span style="font-weight:500;color:#8B949E;font-size:7pt">AIO — AI Optimisation (ingestion)</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+        <td class="why">JavaScript onclick navigation instead of real anchors hides inventory from every non-rendering ingest path, and the cost scales with how many pages are hidden. <span class="drv">D4</span></td>
+      </tr><tr>
+        <td class="pname">Duplicate-content readiness (info)<br><span style="font-weight:500;color:#8B949E;font-size:7pt">AIO — AI Optimisation (ingestion)</span></td>
+        <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+        <td class="why">Canonical and noindex used correctly so an ingesting model sees one version. Informational here because On-Page SEO owns and grades canonicals more thoroughly. <span class="drv">D4</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3 class="sech"><span class="sid">&#9679;</span>Most-Important count per section</h3>
+  <p class="lead">Counts of Most Important parameters per section per site type &mdash; the shape of each
+  column's priorities at a glance.</p>
+  <table class="wt">
+    <thead><tr><th>Section</th><th style="text-align:center">Car Dealership</th><th style="text-align:center">Automotive Dealer</th><th style="text-align:center">Automotive Service</th><th style="text-align:center">Mechanical / Repair</th><th style="text-align:center">Params</th></tr></thead>
+    <tbody>
+      <tr><td class="pname">Technical Performance</td><td class="num hi">6</td><td class="num hi">6</td><td class="num">1</td><td class="num">2</td><td class="num" style="color:#8B949E">15</td></tr><tr><td class="pname">On-Page SEO</td><td class="num hi">11</td><td class="num">8</td><td class="num">6</td><td class="num">6</td><td class="num" style="color:#8B949E">22</td></tr><tr><td class="pname">Accessibility (WCAG 2.2 AA)</td><td class="num hi">6</td><td class="num hi">6</td><td class="num">4</td><td class="num">3</td><td class="num" style="color:#8B949E">24</td></tr><tr><td class="pname">Security &amp; Compliance</td><td class="num hi">9</td><td class="num">8</td><td class="num">4</td><td class="num">4</td><td class="num" style="color:#8B949E">25</td></tr><tr><td class="pname">UX &amp; Content Structure</td><td class="num hi">9</td><td class="num">8</td><td class="num">3</td><td class="num">3</td><td class="num" style="color:#8B949E">17</td></tr><tr><td class="pname">Conversion &amp; Lead Flow</td><td class="num">14</td><td class="num hi">16</td><td class="num">12</td><td class="num">8</td><td class="num" style="color:#8B949E">33</td></tr><tr><td class="pname">AIO — AI Optimisation (ingestion)</td><td class="num hi">5</td><td class="num">4</td><td class="num hi">5</td><td class="num hi">5</td><td class="num" style="color:#8B949E">11</td></tr><tr><td class="pname">AEO — Answer Engine Optimisation</td><td class="num">4</td><td class="num">5</td><td class="num hi">11</td><td class="num hi">11</td><td class="num" style="color:#8B949E">17</td></tr>
+      <tr style="border-top:2px solid #0F1C2C;font-weight:800">
+        <td class="pname">Total &ldquo;Most Important&rdquo;</td>
+        <td class="num">64</td><td class="num">61</td><td class="num">46</td><td class="num">42</td>
+        <td class="num">164</td>
+      </tr>
+      <tr><td class="pname" style="color:#5C6674">Not applicable</td>
+        <td class="num" style="color:#8B949E">0</td><td class="num" style="color:#8B949E">0</td><td class="num" style="color:#8B949E">12</td><td class="num" style="color:#8B949E">12</td>
+        <td></td></tr>
+    </tbody>
+  </table>
+
+  <h3 class="sech"><span class="sid">&#9679;</span>Recommended section-weight profile per site type</h3>
+  <p class="lead">The engine already tilts section weights per <em>page</em> type in
+  <code>Backend/utils/sectionWeights.js</code>. This is the equivalent tilt per <em>site</em> type, which
+  does not exist yet &mdash; it would multiply into the page tilt, not replace it. Each row sums to 100.</p>
+  <table class="wt">
+    <thead><tr><th>Site type</th><th style="text-align:center">Technical</th><th style="text-align:center">On-Page SEO</th><th style="text-align:center">Accessibility</th><th style="text-align:center">Security</th><th style="text-align:center">UX &amp; Content</th><th style="text-align:center">Conversion</th><th style="text-align:center">AIO</th><th style="text-align:center">AEO</th></tr></thead>
+    <tbody>
+      <tr><td class="pname">Car Dealership (franchise)</td><td class="num hi">18</td><td class="num hi">18</td><td class="num">9</td><td class="num">13</td><td class="num">11</td><td class="num">17</td><td class="num">7</td><td class="num">7</td></tr>
+          <tr><td class="n" colspan="9" style="padding-top:0;border-bottom:1px solid #E4E1D9">Balanced retail profile. Security carries the finance/lease compliance load; Conversion carries the multi-tool funnel.</td></tr><tr><td class="pname">Automotive Dealer (independent)</td><td class="num hi">18</td><td class="num">17</td><td class="num">9</td><td class="num">13</td><td class="num">12</td><td class="num hi">18</td><td class="num">6</td><td class="num">7</td></tr>
+          <tr><td class="n" colspan="9" style="padding-top:0;border-bottom:1px solid #E4E1D9">Conversion up and On-Page slightly down versus franchise: fewer pages to optimise, more weight on turning a smaller audience into leads.</td></tr><tr><td class="pname">Automotive Service</td><td class="num">16</td><td class="num">16</td><td class="num">9</td><td class="num">9</td><td class="num">13</td><td class="num hi">19</td><td class="num">7</td><td class="num">11</td></tr>
+          <tr><td class="n" colspan="9" style="padding-top:0;border-bottom:1px solid #E4E1D9">Security down (no credit applications), Conversion and AEO up. Booking is the funnel and answer engines are a primary discovery surface.</td></tr><tr><td class="pname">Mechanical / Vehicle Repair</td><td class="num">16</td><td class="num">15</td><td class="num">9</td><td class="num">8</td><td class="num">14</td><td class="num hi">18</td><td class="num">7</td><td class="num">13</td></tr>
+          <tr><td class="n" colspan="9" style="padding-top:0;border-bottom:1px solid #E4E1D9">Highest AEO weight of the four and the lowest Security. Discovery is local and question-driven; the conversion is a phone call.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <p><b>Read alongside the page tilt, not instead of it.</b> A franchise dealer's Finance page should
+    still carry the existing 22% Security page tilt. The site-type profile above sets the baseline the
+    page tilt moves around &mdash; so a repair site's contact page never inherits a franchise dealer's
+    compliance weighting in the first place.</p>
+  </div>
+</div>
+
+<!-- ═══════════════ WHY ═══════════════ -->
+<div class="page">
+  <h2 class="pt"><span>Part 5</span>Why every row is rated the way it is</h2>
+  <p class="lead">One line per parameter, with the driver codes from Part 2. The pattern column reads
+  left to right as columns 1&ndash;4: <i class="p3">3</i> Most Important, <i class="p2">2</i> Important,
+  <i class="p1">1</i> Recommended, <i class="p0">&ndash;</i> not applicable.</p>
+  
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">A</span>Technical Performance</h3>
+  <p class="lead">Almost flat across all four types — Core Web Vitals are a universal ranking and bounce signal and nobody escapes them. The differences are entirely about payload shape and page churn: inventory sites carry 30–50 image galleries and heavy third-party tag stacks (D4), repair sites carry DIY page-builder bloat, and only inventory sites have URLs that die.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">LCP — Largest Contentful Paint</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal. Hero + gallery makes it the most-failed metric on dealer VDPs; on service/repair it is usually a single unoptimised hero image. Same weight, different root cause. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">CLS — Cumulative Layout Shift</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">On a VDP a shift under a finger moves 'Check Availability' — a lost lead. Dealer templates inject sale banners, price disclaimers and chat widgets late. Service/repair layouts are simpler and shift less. <span class="drv">D2 &middot; D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">INP / TBT — interaction responsiveness</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Dealer platforms load chat, CRM, inventory widget, trade tool and 2–3 tag managers on one page — the classic INP killer. Repair sites rarely have more than one script. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">FCP — First Contentful Paint</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Supporting CWV, same value everywhere. Perceived-speed proxy, no site-type sensitivity.</td>
+    </tr>
+<tr>
+      <td class="pname">TTFB — Time To First Byte</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">On dealer sites the SRP is a live database query against an inventory feed, so origin latency is the upstream cause of every other metric. Service/repair pages are largely static. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Speed Index</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Lab-only perceived-completeness proxy. Diagnostic value everywhere, decision value nowhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Total Blocking Time</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Lab arm of INP. Rated alongside it and never weighted twice.</td>
+    </tr>
+<tr>
+      <td class="pname">Render-blocking resources</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i></td>
+      <td class="why">Highest leverage on repair sites: Wix / GoDaddy / stacked WordPress themes ship several synchronous stylesheets and scripts in the head, and removing them is usually the single biggest speed win available. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Resource optimisation (images/JS/CSS)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">A VDP with 40 full-resolution photos is the dominant byte cost in the whole industry. Service and repair pages carry a fraction of that payload. <span class="drv">D1 &middot; D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Compression (Brotli/Gzip)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Cheap, universal, one server setting. No site-type sensitivity.</td>
+    </tr>
+<tr>
+      <td class="pname">Caching policy</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Universal. Slight edge to inventory sites because fingerprinted asset volume is larger.</td>
+    </tr>
+<tr>
+      <td class="pname">Redirect chains</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Inventory churn plus platform migrations stack http→https→www→path→new-VDP cascades on dealer sites. A 15-page garage site rarely accumulates hops. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Sold-vehicle / soft-404 handling</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Only exists where VDPs expire. Inventory churn creates thousands of dead VINs a year, and a soft-404 (200 with 'no longer available') burns crawl budget silently. Nothing on a service or repair site expires this way. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">PageSpeed / Lighthouse headline score (info)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Reporting surface, not an independent control. Same everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Delivery hygiene composite (info)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Rolls up TTFB, render-blocking, assets, compression, caching, redirects. Informational in all four.</td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">B</span>On-Page SEO</h3>
+  <p class="lead">The widest spread of any section, and almost all of it is scale (D4) versus locality (D6). Franchise dealers fight duplicate-content and index-bloat problems that a garage physically cannot have; garages and service centres fight for geo-modified queries that a franchise dealer often wins by brand alone.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Meta title</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Primary relevance and CTR signal on every site type. The only universal Critical in this section.</td>
+    </tr>
+<tr>
+      <td class="pname">Title uniqueness (cross-page)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Templated dealer titles duplicate across thousands of VDPs — the classic dealer-platform defect. A 15-page repair site cannot generate enough pages to have a duplication problem. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Title location optimisation</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Franchise dealers usually rank on brand+geo almost by default ('Toyota dealer Brisbane'). Independent lots, service centres and garages compete against 20 identical local businesses, so the geo modifier IS the ranking battleground. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Meta description</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">CTR lever, not a ranking factor. Equal value everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Meta description uniqueness</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Same scale logic as title uniqueness — OEM-boilerplate descriptions repeated across a large VDP set are a real problem only at franchise scale. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">URL structure</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Depth, extensions, IDs and length. Consistent value across types.</td>
+    </tr>
+<tr>
+      <td class="pname">URL slugs</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Descriptive, keyword-bearing slugs help everywhere; dealer platforms are the worst offenders with opaque stock IDs.</td>
+    </tr>
+<tr>
+      <td class="pname">Canonical tag</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">The primary defence against faceted-SRP duplicate content. On a franchise site every filter combination is a potential near-duplicate URL. A garage with 15 pages has almost nothing to canonicalise. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">H1</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">One descriptive H1 per page. Universal, and universally broken on page-builder sites.</td>
+    </tr>
+<tr>
+      <td class="pname">Heading hierarchy</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Structural clarity for both crawlers and screen readers. Flat across types.</td>
+    </tr>
+<tr>
+      <td class="pname">Image optimisation (SEO view)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Alt coverage, next-gen formats and descriptive filenames matter proportionally to image count — and VDP galleries dominate that count. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Semantic tags / HTML5 landmarks</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Shared evidence with Accessibility landmarks. Same value everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Internal link profile</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Crawl-depth-to-inventory is a real ranking constraint at 40,000 URLs. On a 15-page site every page is one click from the home page regardless. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content relevance (title↔H1↔body)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Dealers win on inventory match; service and repair win on written explanation of the problem and fix, so topic agreement between title, heading and body carries more of the ranking. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Robots.txt / index intent</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">An accidental noindex on money pages, or /inventory blocked in robots.txt, is catastrophic and invisible to users. The blast radius scales with the number of pages behind the rule. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Open Graph tags</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Controls social and AI-card rendering. Equal value; often entirely absent on all four.</td>
+    </tr>
+<tr>
+      <td class="pname">Twitter card</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Marginal incremental value over Open Graph in every case.</td>
+    </tr>
+<tr>
+      <td class="pname">Social profile links / sameAs</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Entity disambiguation. A franchise dealer is already resolvable via the OEM's dealer locator; a garage named 'Precision Auto' needs the GBP↔Facebook↔Yelp chain to be identified at all. <span class="drv">D5 &middot; D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Viewport meta</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Service and repair traffic is overwhelmingly mobile and often urgent ('mechanic near me' from the roadside), so a missing or zoom-locked viewport costs proportionally more. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">VDP content uniqueness (vs OEM boilerplate)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">The single biggest VDP ranking killer: thousands of pages carrying identical manufacturer copy. Independent lots suffer it too, from feed-supplied descriptions. No VDPs on service/repair sites. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">SRP pagination &amp; faceted index control</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Index bloat scales with facet count multiplied by inventory size, so a franchise store with 20 filters and 900 vehicles is exposed far more than a lot with 4 filters and 60 vehicles. <span class="drv">D1 &middot; D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">SRP → VDP internal links</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Crawl path to inventory. Critical at franchise scale; a 60-car lot's whole inventory fits on one page. <span class="drv">D1 &middot; D4</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">C</span>Accessibility (WCAG 2.2 AA)</h3>
+  <p class="lead">Legally, not commercially, differentiated. Car dealership websites are one of the most-sued verticals under ADA Title III in the US, and any page that collects financial PII makes a missing label or a contrast failure a blocking defect rather than a cosmetic one. Mobile-first criteria (target size, zoom) flip to critical on service and repair, whose traffic is phone-dominated.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">WCAG 2.2 AA aggregate</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Litigation exposure is materially higher for dealership websites; service and repair sites are sued far less often, though the obligation is identical. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Colour contrast</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">The most-cited automated violation on every site type, and the one most likely to affect a real user reading a price or a phone number.</td>
+    </tr>
+<tr>
+      <td class="pname">Form labels</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i></td>
+      <td class="why">On a credit application an unlabelled field is a blocking failure on a PII form. Service booking forms are close behind. Many repair sites have no form at all — just a phone number. <span class="drv">D2 &middot; D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">HTML lang attribute</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Binary, trivial to fix, screen-reader prerequisite. Same everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Keyboard navigation</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">A keyboard-trapped multi-step credit application or trade valuator locks a user out of the conversion entirely. Simpler sites have less to trap. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Focus order / focusable content / tabindex / aria-hidden focus</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Sub-parts of keyboard navigation. Weighted through the parent, shown individually for diagnosis.</td>
+    </tr>
+<tr>
+      <td class="pname">Image alt text</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Proportional to image count — a VDP gallery can carry 40 images with no alt, which is simultaneously an accessibility and an indexing failure. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Link name</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Icon-only nav and 'read more' links. Flat across types.</td>
+    </tr>
+<tr>
+      <td class="pname">Button name</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Discernible accessible names on controls. Flat across types.</td>
+    </tr>
+<tr>
+      <td class="pname">ARIA roles</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Misuse rises with widget complexity, which rises with inventory tooling.</td>
+    </tr>
+<tr>
+      <td class="pname">ARIA allowed attributes</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Same reasoning as ARIA roles.</td>
+    </tr>
+<tr>
+      <td class="pname">Document title</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Present, unique, descriptive. Overlaps the SEO title check; measured once.</td>
+    </tr>
+<tr>
+      <td class="pname">Meta viewport (zoom not disabled)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Disabling zoom on a mobile-dominant, often older customer base is a direct barrier. Service and repair skew both mobile and older. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Target size (WCAG 2.2, 2.5.8)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">The 'Book' and 'Call' buttons are the entire funnel on service and repair, and they are usually tapped one-handed on a phone. A sub-24px tap target loses the lead. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Reflow at 320px / 400% zoom</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Horizontal-scroll failures affect all four equally.</td>
+    </tr>
+<tr>
+      <td class="pname">Heading order</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Moderate tier. Fix it, but it rarely blocks a user.</td>
+    </tr>
+<tr>
+      <td class="pname">Landmarks</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">One main, plus nav/header/footer. Shared evidence with semantic structure.</td>
+    </tr>
+<tr>
+      <td class="pname">List markup</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Real ul/ol/li rather than faux lists. Moderate tier everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Skip links</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Most valuable behind long navigation, which favours dealers marginally.</td>
+    </tr>
+<tr>
+      <td class="pname">Interactive element affordance</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Div-buttons with no role. Equally common on all four.</td>
+    </tr>
+<tr>
+      <td class="pname">Text spacing (info)</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">WCAG 2.2 probe, informational, no weight.</td>
+    </tr>
+<tr>
+      <td class="pname">Focus not obscured (info)</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Ties to sticky-header height; informational.</td>
+    </tr>
+<tr>
+      <td class="pname">Prefers-reduced-motion (info)</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Informational probe; hero carousels on dealer sites are the usual offender.</td>
+    </tr>
+<tr>
+      <td class="pname">Legal frameworks — ADA / §508 / DDA / EAA / AODA (info)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Re-slice of the same axe results per jurisdiction. Rated high for dealers purely because that is where demand letters actually land. <span class="drv">D3</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">D</span>Security &amp; Compliance</h3>
+  <p class="lead">The most sharply differentiated section after Conversion, and the difference is regulatory, not technical (D3). Anyone who takes a credit application handles SSNs and falls under the GLBA Safeguards Rule; anyone who advertises APR or a lease payment falls under Reg-Z / Reg-M and the FTC CARS Rule. A garage advertising a $99 brake special carries almost none of that. Transport and reputation stay Critical for everyone because they are gates.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">HTTPS + no mixed content</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Hard gate. Missing HTTPS caps the whole section regardless of anything else passing.</td>
+    </tr>
+<tr>
+      <td class="pname">SSL certificate validity</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Expired or mismatched certificate produces a browser interstitial — total traffic loss for every site type.</td>
+    </tr>
+<tr>
+      <td class="pname">SSL expiry window</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Early warning on the above. Same value everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">TLS version</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">TLS 1.2 minimum. Legacy protocol support is a compliance finding on any site.</td>
+    </tr>
+<tr>
+      <td class="pname">HSTS</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Strongest justification where a session can carry financial PII; a brochure garage site has less to protect in transit. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content-Security-Policy</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Franchise dealer sites run the heaviest third-party tag stack in local retail — chat, CRM, inventory widget, trade tool, several tag managers — so the injection surface is genuinely largest there, and it sits on the same origin as the credit application. <span class="drv">D3 &middot; D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">X-Frame-Options / frame-ancestors</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Clickjacking a credit application or trade valuator has real value to an attacker; clickjacking a booking page has much less. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">X-Content-Type-Options</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">One header, always worth setting; consequence scales with the value of what is on the page.</td>
+    </tr>
+<tr>
+      <td class="pname">Referrer-Policy</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">A permissive policy leaks credit-application and VDP URLs (with query parameters) to every third-party script on the page. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Permissions-Policy</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Low impact in this vertical; worth setting, rarely decisive.</td>
+    </tr>
+<tr>
+      <td class="pname">Cookie flags (Secure/HttpOnly/SameSite)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Matters most where a session can be tied to a submitted finance application. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Third-party cookies</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Dealer sites carry the most third-party tracking, and 'Do Not Sell' obligations attach to lead data specifically. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Reputation — Safe Browsing / VirusTotal / blacklist</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Hard gate. A malware or phishing flag caps the section for every site type and removes the site from search results entirely.</td>
+    </tr>
+<tr>
+      <td class="pname">SQL-injection surface indicator</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Inventory search takes user-supplied parameters into a database query, which is the one genuinely dynamic input surface these sites have. Service/repair sites are usually static. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">XSS surface indicator</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Same reasoning — reflected search terms on an SRP are the usual reflection point. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Forms use HTTPS</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i></td>
+      <td class="why">A credit application or trade form posting over HTTP is a reportable finding. A repair site with only a contact form is lower-consequence but still fails. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Weak default credentials</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Active login testing. Equally applicable; findings cluster on self-hosted WordPress.</td>
+    </tr>
+<tr>
+      <td class="pname">Admin panel public exposure</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i></td>
+      <td class="why">Repair and small service sites are the most likely to be self-built WordPress with /wp-admin and /wp-login.php wide open and no rate limiting. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">MFA posture</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Only meaningful where a customer login surface exists, which is uncommon on all four.</td>
+    </tr>
+<tr>
+      <td class="pname">Cookie consent banner</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Required wherever non-essential cookies fire before consent — true for all four, most acute for dealers under GDPR/CCPA. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Privacy policy link</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Mandatory where financial PII is collected. Dealers taking credit applications in the US are financial institutions under GLBA and must publish a privacy notice. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">GDPR / CCPA / Do-Not-Sell disclosure</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Dealers monetise lead data, which is exactly what 'Do Not Sell or Share My Personal Information' addresses. Service and repair typically do not sell leads onward. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Finance-form PII security</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">SSN and income fields must be HTTPS POST, never in a GET query string, with no sensitive autocomplete leakage. Both dealer types run credit applications; neither service nor repair collects this class of data. <span class="drv">D1 &middot; D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Legal / financial disclaimers (Reg-Z, Reg-M, FTC CARS)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Franchise dealers advertise APR and lease terms and are directly exposed to Reg-Z and Reg-M. Independent lots are the primary target of the FTC's CARS Rule on advertised pricing and add-ons. Service coupons need only T&amp;Cs; repair shops rarely advertise credit terms at all. <span class="drv">D3</span></td>
+    </tr>
+<tr>
+      <td class="pname">Header security grade (info)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Observatory-style comparable sub-grade. Reporting value, not an independent control.</td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">E</span>UX &amp; Content Structure</h3>
+  <p class="lead">Splits along task complexity. Dealers ask the visitor to search, filter, compare and configure, so navigation, filtering and gallery quality carry the section. Service and repair ask the visitor to understand a problem and then call or book, so readability and above-the-fold clarity carry it instead.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Text readability</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Service and repair have to explain a mechanical problem to a non-mechanic before they can sell the fix. Dealer copy is largely specification data, which is read, not comprehended. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Intrusive interstitials</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Dealer sites routinely stack a chat proactive, an offer modal and a newsletter popup over the same viewport — a Google interstitial penalty and a measurable bounce driver. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Navigation discoverability</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">A franchise site has 8–12 top-level destinations and a mega-menu; a garage site has five links and is self-evident. Nav failures cost proportionally to IA depth. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Above-the-fold content</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal. For repair it is specifically 'phone number and what you fix, visible without scrolling'. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Broken links</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Inventory churn manufactures dead links continuously — every sold vehicle orphans links from SRPs, blog posts and specials pages. Static sites accumulate them far more slowly. <span class="drv">D1 &middot; D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Mobile experience</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal, and the majority traffic mode for all four. Non-negotiable everywhere. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Interactive click feedback</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Hover/active/focus states. Polish, not conversion-critical.</td>
+    </tr>
+<tr>
+      <td class="pname">Loading feedback</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Asynchronous inventory and filter results need skeletons or spinners; a static service menu does not. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Hierarchy &amp; flow clarity</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Scannable structure and labelled sections. Flat across types.</td>
+    </tr>
+<tr>
+      <td class="pname">Content density balance</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Text-to-element ratio. Low leverage everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">Layout consistency</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Template consistency across thousands of generated VDPs is a real quality signal. A 15-page site is consistent by construction. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Sticky-header height</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Obscured content and focus on mobile. Equal across types.</td>
+    </tr>
+<tr>
+      <td class="pname">In-page navigation (anchors, back-to-top)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Long VDP specification pages and long service menus both benefit; roughly equal value.</td>
+    </tr>
+<tr>
+      <td class="pname">Breadcrumbs</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Depth navigation and BreadcrumbList schema matter most where the path is Home → SRP → filtered SRP → VDP. A garage's deepest path is two levels. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Inventory filtering usability</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">The core task on an SRP: filter clarity, applied-filter visibility, live result counts, clear-all and URL-stable filters. No inventory means no filters. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">No-results UX</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Rated equally high for independents specifically because a small lot hits zero-result searches far more often than a 900-car franchise store — recovering that dead end into a lead is worth more, not less. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Vehicle image gallery quality</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Photo count, resolution and real-versus-stock detection. For an independent used lot this is the strongest available trust signal — stock manufacturer photography on a used car reads as concealment. <span class="drv">D1 &middot; D5</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">F</span>Conversion &amp; Lead Flow</h3>
+  <p class="lead">The most differentiated section in the product, and the reason a single automotive profile cannot serve all four types. The lead mechanism is genuinely different: form for dealers, scheduler for service, telephone for repair (D2). Trust also inverts — a franchise dealer borrows the OEM's credibility, everyone else has to manufacture it (D5).</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">CTA presence / visibility</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal. Only the wording changes: 'Check Availability' versus 'Book a Service' versus 'Call Now'. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">CTA clarity / messaging</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Action verbs and funnel-appropriate labelling. Equally critical on all four. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">CTA crowding</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">A dealer VDP routinely presents eight competing primary CTAs in one viewport — value trade, get ePrice, check availability, schedule test drive, apply for finance, calculate payment, chat, call. Choice paralysis is a dealer-specific disease. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">CTA flow alignment / funnel placement</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Rendered-geometry check: is the right CTA above the fold and repeated at the decision point. Highest value where the funnel has multiple stages. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Form presence</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i></td>
+      <td class="why">Expected on trade, finance, contact and service pages. On a repair site the absence of a form is often a deliberate, correct choice — the phone is the funnel. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Form length / field count</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Every extra field on a credit application or trade valuator measurably reduces completion. A four-field booking form has less to trim. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Required vs optional fields</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Friction control. Consistent value across types.</td>
+    </tr>
+<tr>
+      <td class="pname">Inline validation</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Value rises with form length, so it tracks the credit application.</td>
+    </tr>
+<tr>
+      <td class="pname">Submit-button clarity</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">'Get My Trade Value' beats 'Submit' on every site type.</td>
+    </tr>
+<tr>
+      <td class="pname">Multi-step form progress</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Credit applications and trade valuations are genuinely multi-step. Booking is usually one screen. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Friendly error handling</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Proportional to form complexity.</td>
+    </tr>
+<tr>
+      <td class="pname">Microcopy clarity</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Reassurance text next to PII fields ('this will not affect your credit score') is worth the most on finance forms.</td>
+    </tr>
+<tr>
+      <td class="pname">Thank-you page / lead confirmation</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Needed for conversion tracking as much as for UX; matters wherever a form exists.</td>
+    </tr>
+<tr>
+      <td class="pname">Trust badges</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Independent lots need visible security and accreditation marks next to a PII form more than a franchise store, which is already trading on the manufacturer's badge. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Testimonials</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">A franchise dealer inherits brand trust. An independent lot, a service chain and a garage are chosen almost entirely on other customers' word. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Reviews / ratings visibility</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal in automotive retail and service; star ratings also feed AI answers and the local pack, so this is a dual-purpose signal everywhere. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Client / partner logos</td>
+      <td class="pat"><i class="p1">1</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Lender panels for independents, NAPA AutoCare / Bosch Service / OEM-approved marks for service and repair. A franchise dealer's single OEM badge already does this job. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Case studies / success stories</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p2">2</i></td>
+      <td class="why">Body shops and specialist mechanics convert on before-and-after work galleries, which is the closest thing to a case study in this vertical. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Certifications &amp; awards</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">ASE, I-CAR, RAA, MTA, VACC, RACV approval is the core credibility currency in service and repair — a customer cannot evaluate mechanical competence directly, so they use accreditation as a proxy. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Pricing transparency</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">For dealers: no 'call for price', fees disclosed. For service and repair, published pricing is the single strongest differentiator in a market built on opacity — but the engine currently only runs this check on VDP, Offers, Lease and Finance pages, so it never fires on a service or repair site. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Vehicle history report (CARFAX / AutoCheck)</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Rated higher for independent lots than franchise stores: with no manufacturer-certified pre-owned programme to point at, a VIN-specific history report is the primary objection handler. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Click-to-call</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">The phone is the primary conversion mechanism for service and repair and a major one for used lots. A telephone number rendered as unlinked text on mobile is a direct lost lead. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Chat experience</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Standard on dealer platforms, useful for service, usually noise on a small garage site. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Lead magnets</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Price alerts, buying guides, maintenance schedules. Soft conversion, low weight everywhere.</td>
+    </tr>
+<tr>
+      <td class="pname">GA4 installed</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i></td>
+      <td class="why">Measurability is the precondition for optimisation. Slightly lower on repair only because many such sites have no analytics at all and a phone call is measured by the phone.</td>
+    </tr>
+<tr>
+      <td class="pname">GTM configuration</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Container present and non-empty. Tracks GA4.</td>
+    </tr>
+<tr>
+      <td class="pname">Conversion tracking</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i></td>
+      <td class="why">Form-submit, call and chat events. For service and repair specifically, call tracking is the conversion tracking that matters. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">CRM integration</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">VinSolutions / DealerSocket / eLead wiring on dealer sites; service schedulers on chains. Rarely present on independent garages. <span class="drv">D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Trade-in flow / valuation tool</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">The reason the trade-in page exists, and one of the two highest-intent lead types in retail automotive. Absent by definition on service and repair. <span class="drv">D1 &middot; D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Financing flow / pre-approval</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Credit application and lender pre-qualification. Present on both dealer types — independents lean subprime and buy-here-pay-here, but the page and its risks are the same. <span class="drv">D1 &middot; D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Finance / payment calculator</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p0">&ndash;</i><i class="p0">&ndash;</i></td>
+      <td class="why">Franchise stores advertise APR and lease payments and need a real calculator; independent lots more often quote weekly buy-here-pay-here figures where a calculator is less central. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Appointment booking scheduler</td>
+      <td class="pat"><i class="p2">2</i><i class="p1">1</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">The entire funnel for service and repair — date picker, service-type selection, vehicle details. Franchise dealers have a service department so it matters secondarily; independent lots usually have none. <span class="drv">D1 &middot; D2</span></td>
+    </tr>
+<tr>
+      <td class="pname">Incentives / specials displayed</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p3">3</i><i class="p2">2</i></td>
+      <td class="why">OEM incentives and manufacturer rebates for franchise stores; service coupons and seasonal offers for service centres. Independent lots and garages run fewer time-bound offers. <span class="drv">D2</span></td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">G</span>AIO — AI Optimisation (ingestion)</h3>
+  <p class="lead">Machine ingestibility. The universal failure here is identical across all four types — content that only exists after client-side JavaScript runs is invisible to crawlers that do not render. Beyond that, dealers need entity precision (make/model/trim naming) and freshness (inventory turns weekly); service and repair need answer-shaped structure because their queries are questions.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Structured-data validity</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">JSON-LD that parses, matches visible content and carries required properties. Universal Critical — only the schema type changes between site types.</td>
+    </tr>
+<tr>
+      <td class="pname">Content NLP-friendly (server-rendered, semantic)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal and the most common serious defect. A JavaScript-only inventory grid or service menu simply does not exist to a non-rendering crawler or LLM.</td>
+    </tr>
+<tr>
+      <td class="pname">Answer-oriented structure</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Service and repair content is inherently question-shaped ('why is my brake pedal soft', 'how often should I change the timing belt'), so question-headed self-contained blocks map directly onto how those pages get ingested. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Keywords / entities annotated</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Independent lots carry mixed-brand inventory with inconsistent make/model/trim naming from multiple feeds, which is exactly what breaks entity extraction. Franchise stores inherit a consistent OEM vocabulary. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Content updated regularly / freshness markers</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Inventory turns weekly, so dateModified, visible updated dates and Last-Modified headers carry genuine information on dealer sites. A service menu changes twice a year. <span class="drv">D1</span></td>
+    </tr>
+<tr>
+      <td class="pname">Internal linking AI-friendly (crawlable anchors)</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">JavaScript onclick navigation instead of real anchors hides inventory from every non-rendering ingest path, and the cost scales with how many pages are hidden. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Topical focus clarity</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">One topic per page with aligned title, H1 and URL. Service and repair sites are the ones that tend to pile every service onto one page. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">AI agentic browsing / WebMCP readiness</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p1">1</i></td>
+      <td class="why">Early-mover signal. Highest theoretical value where an agent could transact — searching inventory, valuing a trade, booking a service — and near zero on a brochure garage site. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Duplicate-content readiness (info)</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Canonical and noindex used correctly so an ingesting model sees one version. Informational here because On-Page SEO owns and grades canonicals more thoroughly. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">Structured content — lists &amp; tables (info)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Service price tables and maintenance-interval tables are exactly the format answer engines extract from. Dealer specification tables serve the same purpose on VDPs. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Terminology consistency (info)</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Consistent naming of models, services and locations across the site. Informational, equal value.</td>
+    </tr></tbody>
+  </table>
+</section>
+
+<section class="sec keep">
+  <h3 class="sech"><span class="sid">H</span>AEO — Answer Engine Optimisation</h3>
+  <p class="lead">The section where service and repair systematically outrank dealers in importance. Their customers ask questions that AI answer engines now answer directly, and a local business with no brand equity gains the most from being the cited source. Dealers gain from schema and index coverage — being present as structured inventory — more than from being quoted.</p>
+  <table class="whytable">
+    <thead>
+      <tr><th class="pname">Parameter</th><th class="pat">1&nbsp;2&nbsp;3&nbsp;4</th><th class="why">Why this pattern</th></tr>
+    </thead>
+    <tbody><tr>
+      <td class="pname">Schema markup (page-appropriate type)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal Critical, but the required type differs completely: AutoDealer + Vehicle + Offer + ItemList for dealers; AutoRepair + Service + Offer + LocalBusiness for service and repair. Marking a repair shop up as an AutoDealer is a real and common error.</td>
+    </tr>
+<tr>
+      <td class="pname">Answer-first structure / TL;DR lead</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">A direct answer in the first 40–60 words is what gets lifted into an AI answer. Service and repair queries have answers; 'inventory near me' does not. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Bot access (GPTBot, Google-Extended, PerplexityBot)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Universal. Blocking these agents in robots.txt removes the site from AI answers entirely — a self-inflicted wound that is equally fatal on all four types.</td>
+    </tr>
+<tr>
+      <td class="pname">Structured content (tables / lists)</td>
+      <td class="pat"><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Machine-parseable specification tables on VDPs and service price tables on service pages. Specifications rendered as an image are invisible on every site type. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">FAQ / Q&amp;A blocks + FAQPage schema</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Service and repair questions are the highest-volume automotive query class in AI answers — cost, symptom, interval, warranty. Dealers get most FAQ value only on finance pages. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Entity recognition (Organization / LocalBusiness)</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">A franchise dealer is already an established entity via the OEM's dealer locator and the manufacturer's own structured data. Independent lots, service chains and garages must establish identity themselves. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Citation / NAP consistency</td>
+      <td class="pat"><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">The local pack is the dominant discovery surface for service and repair, and it is gated on name, address and phone matching exactly across the site and Google Business Profile. <span class="drv">D5 &middot; D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Citations / outbound attribution</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Linking to NHTSA, IIHS, OEM service intervals or manufacturer specifications raises the credibility of an explanatory page. Dealers rarely publish that kind of content. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Topical authority / clustering</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Depth across a coherent topic set — a repair shop covering every brake symptom, cost and interval builds a citable cluster. Dealer inventory pages do not cluster topically. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Index coverage</td>
+      <td class="pat"><i class="p3">3</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Are the money pages actually indexed. At 40,000 URLs with faceted duplicates this is a genuine and frequently failing constraint; a 15-page site is either indexed or has a much simpler problem. <span class="drv">D4</span></td>
+    </tr>
+<tr>
+      <td class="pname">sameAs validation</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Resolvable, name-matching profile links (GBP, Facebook, Yelp, DealerRater, Trustpilot) are how an engine confirms a small local business is the one being asked about. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">E-E-A-T composite</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">For a repair shop, E-E-A-T is technician credentials, years in trade, workshop accreditation and named authors — and it is the only defence against being replaced by a generic AI answer. Dealers carry OEM authority instead. <span class="drv">D5 &middot; D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">llms.txt</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Emerging, low adoption, cheap to add. Equal marginal value; ChatGPT weights it heavily in the platform matrix, so it is the cheapest AEO win available on all four.</td>
+    </tr>
+<tr>
+      <td class="pname">Brand entity strength (info)</td>
+      <td class="pat"><i class="p1">1</i><i class="p2">2</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Informational to avoid double-counting entity recognition. Reads lowest for franchise dealers because the OEM supplies the brand strength. <span class="drv">D5</span></td>
+    </tr>
+<tr>
+      <td class="pname">Markdown headers / clear heading structure (info)</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p2">2</i><i class="p2">2</i></td>
+      <td class="why">Informational. Heavily weighted inside the ChatGPT platform score, which favours explanatory service and repair content. <span class="drv">D6</span></td>
+    </tr>
+<tr>
+      <td class="pname">Page-speed signal in AEO (info)</td>
+      <td class="pat"><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i><i class="p1">1</i></td>
+      <td class="why">Informational by design — owned by Technical Performance and never weighted twice.</td>
+    </tr>
+<tr>
+      <td class="pname">Platform scores — Gemini / ChatGPT / Perplexity</td>
+      <td class="pat"><i class="p2">2</i><i class="p2">2</i><i class="p3">3</i><i class="p3">3</i></td>
+      <td class="why">Per-engine roll-up. Rated higher for service and repair because a larger share of their total addressable demand is now resolved inside an AI answer rather than a click. <span class="drv">D6</span></td>
+    </tr></tbody>
+  </table>
+</section>
+</div>
+
+<!-- ═══════════════ GAPS ═══════════════ -->
+<div class="page">
+  <h2 class="pt"><span>Part 6</span>Where the engine cannot yet act on this</h2>
+  <p class="lead">Seven places where what this matrix says a site type needs and what
+  <code>Backend/metricServices/</code> actually measures diverge. Ordered by how much score distortion
+  each one causes today.</p>
+  <div class="gap">
+      <h4>Pricing transparency is VDP/Offers/Lease/Finance-scoped <span class="aff">Service, Repair</span></h4>
+      <p>checkPricingTransparency only runs when the page classifies as vdp, specials, lease or finance. Published service pricing is arguably the strongest differentiator on a service or repair site and is currently never measured there.</p>
+      <p class="fix"><b>Fix &rarr;</b> Extend the page-type gate to include service, and score 'is a price or price range published for each named service'.</p>
+    </div><div class="gap">
+      <h4>Appointment booking is service-page-scoped only <span class="aff">Repair</span></h4>
+      <p>checkAppointmentBooking runs only when classifyPageType returns 'service'. A repair shop's booking form frequently sits on the home page or a /book page that classifies as generic, so the single most important conversion parameter for that site type goes unscored.</p>
+      <p class="fix"><b>Fix &rarr;</b> Run the booking check on home and generic pages when the site type is service or repair.</p>
+    </div><div class="gap">
+      <h4>No site-type sub-classification <span class="aff">All four</span></h4>
+      <p>siteTypeDetector returns only dealer / corporate / unknown. All four of the types in this report collapse into 'dealer', so a garage is scored against a franchise dealer's expectations — including inventory, trade-in and finance parameters that it correctly does not have.</p>
+      <p class="fix"><b>Fix &rarr;</b> Add a sub-type resolver (franchise / independent / service / repair) and key a parameter-applicability profile off it, the same way SECTION_PAGE_WEIGHTS is keyed off page type today.</p>
+    </div><div class="gap">
+      <h4>Local SEO signals largely unimplemented <span class="aff">Service, Repair (most), Dealer (independent)</span></h4>
+      <p>NAP consistency exists only inside AEO's citationConsistency signal. Google Business Profile linkage, location-page completeness, local landing pages and review signals are not measured at all — and they are the dominant discovery surface for exactly the two site types that need them most.</p>
+      <p class="fix"><b>Fix &rarr;</b> Add a Local SEO parameter group scored only for service, repair and independent-dealer site types.</p>
+    </div><div class="gap">
+      <h4>Service / AutoRepair schema not type-validated <span class="aff">Service, Repair</span></h4>
+      <p>Structured-data validation covers Organization, LocalBusiness, Product, Offer, Vehicle, FAQPage, BreadcrumbList, Article and Review. AutoRepair, AutomotiveBusiness and Service are not in the required-field validator, so a repair site marked up correctly and a repair site marked up as a generic LocalBusiness score the same.</p>
+      <p class="fix"><b>Fix &rarr;</b> Add AutoRepair / AutoPartsStore / Service to the per-@type required-property validator, and flag AutoDealer markup on a site with no inventory as a type mismatch.</p>
+    </div><div class="gap">
+      <h4>Certifications &amp; awards is a generic check <span class="aff">Service, Repair</span></h4>
+      <p>checkCertificationsAwards looks for award-like language generically. For service and repair the specific accreditations (ASE, I-CAR, NAPA AutoCare, Bosch Service, RAA, MTA, VACC, RACV) are the credibility currency and deserve a named list.</p>
+      <p class="fix"><b>Fix &rarr;</b> Add a trade-accreditation dictionary keyed by market, reusing the country config already added in Frontend/src/config/countries.js.</p>
+    </div><div class="gap">
+      <h4>Call tracking not distinguished from conversion tracking <span class="aff">Service, Repair</span></h4>
+      <p>checkConversionTracking looks for form-submit and generic events. Where the phone is the funnel, the meaningful check is whether a call-tracking number or a tel: click event is wired to analytics.</p>
+      <p class="fix"><b>Fix &rarr;</b> Split a call-tracking sub-check out of Conversion_Tracking and weight it up for service and repair site types.</p>
+    </div>
+
+  <h3 class="sech"><span class="sid">&#9679;</span>How to wire this in</h3>
+  <ol class="findings">
+    <li><b>Add a site sub-type to the detector.</b> <code>dealershipDetector.js</code> already collects the
+    signals needed to separate these &mdash; inventory and VIN presence separates dealer from service;
+    OEM-franchise language, lease programmes and a manufacturer logo separate franchise from independent;
+    a booking scheduler with no inventory separates service from repair. Return
+    <code>siteSubType: 'franchise' | 'independent' | 'service' | 'repair'</code> alongside the existing
+    <code>siteType</code>, keeping the current fail-open behaviour when signals are inconclusive.</li>
+    <li><b>Encode applicability, not just weight.</b> Add an <code>appliesTo[siteSubType]</code> flag to each
+    parameter beside the existing per-page-type gating. The renormalising roll-up already in place then
+    removes N/A parameters from the denominator for free &mdash; no scoring change needed.</li>
+    <li><b>Key a site-type section profile off it</b>, multiplying into <code>SECTION_PAGE_WEIGHTS</code>
+    rather than replacing it.</li>
+    <li><b>Adjust page discovery expectations.</b> <code>pageDiscovery.js</code> currently looks for SRP and
+    VDP pages on every site. On a service or repair sub-type it should look for service-menu, booking,
+    location and pricing pages instead, and not report missing inventory as a finding.</li>
+    <li><b>Do the three cheap coverage fixes first</b> &mdash; pricing transparency on service pages,
+    booking detection outside <code>/service</code>, and AutoRepair schema validation. Between them they
+    cover the three highest-rated parameters that a service or repair site currently cannot score on at all.</li>
+  </ol>
+
+  <footer class="note">Parameter inventory read from the implemented return objects of
+  technicalMetrics.js, seoMetrics.js, accessibilityMetrics.js, securityCompliance.js,
+  uxContentStructure.js, conversionLeadFlow.js, aioReadiness.js and aeoService.js, cross-checked against
+  docs/specs/AUDIT_FRAMEWORK_SPECIFICATION.md. Informational (weight-0) parameters are included and
+  labelled, because they still appear in the report the customer reads.</footer>
+</div>

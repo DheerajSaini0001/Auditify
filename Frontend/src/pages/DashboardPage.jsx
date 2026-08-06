@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { scoreBand, scoreBandHex } from '../utils/statusColors.js';
+import { trackEvent } from '../utils/tracking.js';
 import { PAGE_TYPES, DEFAULT_PAGE_SCOPES } from '../config/pageTypes';
 import {
   Plus,
@@ -30,7 +31,6 @@ import {
   ChevronDown,
   Languages,
   HelpCircle,
-  Menu,
   ChevronRight,
   Sparkles,
   Users,
@@ -39,39 +39,39 @@ import {
   Moon
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { usePageSidebar } from '../context/PageSidebarContext.jsx';
 import { useProjectsCache } from '../hooks/useProjectsCache';
 import { useAuditPolling } from '../hooks/useAuditPolling';
 
 /* ─────────────────────────────────────────
-   Remembers that this account has already had its Search Console properties pulled
-   in once, so the automatic import does not keep resurrecting properties the user
-   deleted. Keyed per account so signing in as someone else still gets their first
-   import. Losing this key (cleared storage, new browser) costs exactly one extra
-   sync — deliberately cheap to be wrong about.
+   Search Console import used to fire on its own the first time an account
+   reached the dashboard, remembered in localStorage. That was both silent (the
+   user never agreed to it) and fragile (a cleared browser meant another import).
+   The answer now lives on the user record as `gscSyncPreference`, so we ask once
+   per account and the answer survives logouts and other browsers.
+
+   Auto-sync for accounts that said yes is still limited to once per browser
+   session — a fresh pull per login, not one per dashboard mount.
 ───────────────────────────────────────── */
-const GSC_AUTOSYNC_KEY = 'dealerpulse_gsc_autosynced';
+const GSC_SESSION_SYNC_KEY = 'dealerpulse_gsc_session_synced';
 
-const gscAutoSyncKeyFor = (user) => user?._id || user?.userId || user?.email || null;
+const gscIdFor = (user) => user?._id || user?.userId || user?.email || null;
 
-const hasAutoSyncedGsc = (user) => {
-  const id = gscAutoSyncKeyFor(user);
+const syncedThisSession = (user) => {
+  const id = gscIdFor(user);
   if (!id) return true; // no identity yet — don't fire a sync we can't attribute
   try {
-    const seen = JSON.parse(localStorage.getItem(GSC_AUTOSYNC_KEY) || '[]');
-    return Array.isArray(seen) && seen.includes(id);
+    return sessionStorage.getItem(GSC_SESSION_SYNC_KEY) === id;
   } catch {
     return false;
   }
 };
 
-const markGscAutoSynced = (user) => {
-  const id = gscAutoSyncKeyFor(user);
+const markSyncedThisSession = (user) => {
+  const id = gscIdFor(user);
   if (!id) return;
   try {
-    const seen = JSON.parse(localStorage.getItem(GSC_AUTOSYNC_KEY) || '[]');
-    const next = Array.isArray(seen) ? seen : [];
-    if (!next.includes(id)) next.push(id);
-    localStorage.setItem(GSC_AUTOSYNC_KEY, JSON.stringify(next));
+    sessionStorage.setItem(GSC_SESSION_SYNC_KEY, id);
   } catch {
     /* storage unavailable — worst case the import runs again next visit */
   }
@@ -124,7 +124,14 @@ const CircularProgress = ({ score, size = 66, strokeWidth = 4, darkMode = false 
 };
 
 const DashboardPage = () => {
-  const { user, apiFetch, logout } = useAuth();
+  const { user, apiFetch, logout, updateUser } = useAuth();
+
+  // Every audit started from the dashboard is by definition a signed-in run, so
+  // the "email me when it's done" address is the account's own — the user should
+  // never have to retype it here the way an anonymous visitor does on the home
+  // page. Falls back to null (no mail) rather than an empty string, because the
+  // API only accepts a value that passes its email regex.
+  const notifyEmailForRun = user?.email || null;
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
   const navigate = useNavigate();
@@ -141,8 +148,9 @@ const DashboardPage = () => {
   } = useProjectsCache(apiFetch);
 
   const [syncing, setSyncing] = useState(false);
+  const [gscPromptOpen, setGscPromptOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = usePageSidebar();
   const [activeTab, setActiveTab] = useState("Overview");
 
   // Starred websites — persisted to localStorage
@@ -162,6 +170,21 @@ const DashboardPage = () => {
       return next;
     });
   };
+
+  // Stars outlive the websites they point at: remove a site and its id stays in
+  // localStorage, so the sidebar badge keeps counting a project that can never be
+  // listed. Prune once the real list is in hand — the empty guard keeps a
+  // pre-fetch render (or a failed fetch) from wiping every star.
+  useEffect(() => {
+    if (loading || websites.length === 0) return;
+    const liveIds = new Set(websites.map(w => w._id));
+    setStarredIds(prev => {
+      const next = prev.filter(id => liveIds.has(id));
+      if (next.length === prev.length) return prev;
+      localStorage.setItem('auditify_starred_ids', JSON.stringify(next));
+      return next;
+    });
+  }, [websites, loading]);
 
   // Backend search with debouncing states
   const [apiSearchInput, setApiSearchInput] = useState("");
@@ -212,19 +235,55 @@ const DashboardPage = () => {
       refresh();
     }
 
-    // GSC sync runs automatically ONCE, to populate a Google account's very first
-    // visit. After that it is the "Sync GSC" button's job.
-    //
-    // It used to run on every mount, which quietly undid deletions: remove a
-    // property, refresh, and the sync pulled it straight back from Search Console.
-    // Deleting is a hard delete server-side (removeWebsite pulls it off the user),
-    // so there was nothing on the backend to remember the user's intent — the
-    // re-import always won.
-    if (user?.authProvider === 'google' && user?.googleAccessToken && !hasAutoSyncedGsc(user)) {
-      markGscAutoSynced(user);
-      handleSync();
-    }
   }, [refresh, location.state]);
+
+  // Search Console import, after login. Nothing is pulled in until the account
+  // has answered the prompt; 'unset' means we have not asked yet.
+  useEffect(() => {
+    if (user?.authProvider !== 'google' || !user?.googleAccessToken) return;
+
+    // The login response carries a trimmed user; the full record (with the
+    // preference) lands a moment later from /me. Waiting for it keeps the prompt
+    // from flashing at someone who already answered.
+    if (!user.gscSyncPreference) return;
+
+    if (user.gscSyncPreference === 'enabled') {
+      setGscPromptOpen(false);
+      if (syncedThisSession(user)) return;
+      markSyncedThisSession(user);
+      handleSync();
+      return;
+    }
+
+    setGscPromptOpen(user.gscSyncPreference === 'unset');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?._id, user?.gscSyncPreference, user?.authProvider, user?.googleAccessToken]);
+
+  const answerGscPrompt = async (wantsSync) => {
+    setGscPromptOpen(false);
+    const preference = wantsSync ? 'enabled' : 'disabled';
+
+    const { ok } = await apiFetch('/api/websites/gsc-preference', {
+      method: 'PATCH',
+      body: JSON.stringify({ preference })
+    });
+
+    if (!ok) {
+      toast.error('Could not save your choice. We will ask again next time.');
+      return;
+    }
+
+    // Keep the cached user in step so the prompt does not come back on the next
+    // render — the effect above keys off this field.
+    updateUser({ gscSyncPreference: preference });
+
+    if (wantsSync) {
+      markSyncedThisSession(user);
+      handleSync();
+    } else {
+      toast('Skipped. You can import them any time with "Sync GSC".', { icon: '👍' });
+    }
+  };
 
   // Auto-fill and auto-run audit from query parameters (e.g. from Audit History page)
   const isAutoAuditingRef = useRef(false);
@@ -259,7 +318,7 @@ const DashboardPage = () => {
 
         try {
           // Don't force delete existing data — let backend decide (cached vs new audit)
-          const result = await runAudit(urlToAudit, queryDevice, queryReport, null, null, false);
+          const result = await runAudit(urlToAudit, queryDevice, queryReport, false, null, notifyEmailForRun);
           toast.dismiss('auto-audit-toast');
 
           if (result?.success === false) {
@@ -380,7 +439,9 @@ const DashboardPage = () => {
   };
 
   const handleDelete = async (id, url) => {
-    if (!window.confirm(`Are you sure you want to remove ${url}?`)) return;
+    if (!window.confirm(
+      `Remove ${url}?\n\nIt stays removed — future Search Console syncs will not add it back. You can add it again from "Add website".`
+    )) return;
 
     const { ok } = await apiFetch(`/api/websites/${id}`, { method: 'DELETE' });
     if (ok) {
@@ -394,6 +455,11 @@ const DashboardPage = () => {
 
   // Run a single-page audit directly from the dashboard card
   const handleSingleAudit = async (projId, url) => {
+    // Tracked BEFORE the early return, so the admin funnel counts the click that
+    // was turned away as well as the ones that ran. A click that silently does
+    // nothing is precisely the drop-off worth seeing.
+    trackEvent('AUDIT_BUTTON_CLICK', { url, metadata: { source: 'dashboard_card', device: 'Desktop' } });
+
     if (auditingProjectId) {
       toast('An audit is already running. Please wait.', { icon: '⏳' });
       return;
@@ -404,7 +470,13 @@ const DashboardPage = () => {
     let urlToAudit = url.trim();
     if (!/^https?:\/\//i.test(urlToAudit)) urlToAudit = `https://${urlToAudit}`;
 
-    const result = await runAudit(urlToAudit, 'Desktop', 'All', null);
+    // Scope: THIS PAGE ONLY. Passing no scope is not "the default" — the backend
+    // reads a missing scope as "no restriction" and plans the widest run there
+    // is (plannedPages = every valid page type), so a one-click card run was
+    // silently kicking off the slowest possible audit. DEFAULT_PAGE_SCOPES
+    // (["home"]) restricts it to the URL on the card, which is what a per-project
+    // quick run is for. The home page is still where a visitor widens the scope.
+    const result = await runAudit(urlToAudit, 'Desktop', 'All', false, DEFAULT_PAGE_SCOPES, notifyEmailForRun);
 
     toast.dismiss('single-audit-toast');
     setAuditingProjectId(null);
@@ -413,6 +485,14 @@ const DashboardPage = () => {
       toast.error(result.error || 'Audit failed. Please try again.');
       return;
     }
+
+    // The audit is now running server-side, but this page's project cache still
+    // holds the pre-run snapshot (5-minute TTL) — so navigating to the report and
+    // coming back re-rendered the card as "Run audit", with nothing disabled.
+    // Dropping the cache makes the next mount refetch, which picks up the audit's
+    // pending/inprogress status and hands it to useAuditPolling. `auditingProjectId`
+    // alone can't do this: it is local state and dies with the component.
+    invalidateCache();
 
     // Navigate directly using the audit ID returned by runAudit
     // No useEffect needed — avoids triggering on stale DataContext data
@@ -557,7 +637,7 @@ const DashboardPage = () => {
       // Whatever the page-scope dropdown has selected. This used to pass null, which
       // the API reads as "every page type", so the quick-audit bar silently ran a far
       // heavier crawl than the home-page form.
-      const result = await runAudit(targetUrl, directDevice, directReport, false, directScopes);
+      const result = await runAudit(targetUrl, directDevice, directReport, false, directScopes, notifyEmailForRun);
       toast.dismiss('direct-audit-toast');
 
       if (result?.success === false) {
@@ -654,9 +734,12 @@ const DashboardPage = () => {
   })) : allProjects;
 
   const allDisplayProjects = sortProjects(filterByTimeRange(rawProjects));
-  const displayProjects = activeTab === "Starred"
-    ? allDisplayProjects.filter(proj => starredIds.includes(proj._id))
-    : allDisplayProjects;
+  // Starring is a bookmark, not a recent-activity view, so the Starred tab skips
+  // the time-range filter. It used to run on top of it, which meant a site added
+  // more than 30 days ago (the default range) was counted in the sidebar badge
+  // but never listed — the tab just looked empty.
+  const starredProjects = sortProjects(rawProjects.filter(proj => starredIds.includes(proj._id)));
+  const displayProjects = activeTab === "Starred" ? starredProjects : allDisplayProjects;
 
   // Sidebar content
   const SidebarContent = () => (
@@ -798,6 +881,49 @@ const DashboardPage = () => {
           className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
+      )}
+
+      {/* ── SEARCH CONSOLE IMPORT PROMPT ──
+          Asked once per account, right after signing in with Google. Answering
+          is recorded server-side, so it does not come back on another browser. */}
+      {gscPromptOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/50 animate-in fade-in duration-200">
+          <div className={`w-full max-w-md rounded-2xl border shadow-2xl p-6 animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>
+            <div className="flex items-start gap-4">
+              <div className={`p-3 rounded-2xl shrink-0 ${darkMode ? 'bg-emerald-500/10' : 'bg-emerald-50'}`}>
+                <Globe size={22} className="text-emerald-500" />
+              </div>
+              <div className="min-w-0">
+                <h2 className={`font-black text-lg tracking-tight ${darkMode ? 'text-white' : 'text-ink'}`}>
+                  Import your Search Console websites?
+                </h2>
+                <p className={`text-sm mt-2 leading-relaxed ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                  We can pull the properties from your Google Search Console account so they are
+                  ready to audit. Anything you have removed here before stays removed.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-6">
+              <button
+                onClick={() => answerGscPrompt(false)}
+                className={`px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98] ${darkMode ? 'border-slate-800 text-slate-300 hover:bg-slate-800' : 'border-line text-muted hover:bg-surface-2'}`}
+              >
+                No thanks
+              </button>
+              <button
+                onClick={() => answerGscPrompt(true)}
+                className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-md shadow-emerald-600/10 transition-all active:scale-[0.98]"
+              >
+                Yes, import them
+              </button>
+            </div>
+
+            <p className={`text-[11px] mt-4 text-center ${darkMode ? 'text-slate-600' : 'text-faint'}`}>
+              Either way you can import later with the “Sync GSC” button.
+            </p>
+          </div>
+        </div>
       )}
 
       {/* ── MAIN CONTENT AREA ── */}
@@ -958,16 +1084,8 @@ const DashboardPage = () => {
 
         {/* Section title & Tools bar */}
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
             <h1 className={`text-2xl font-black tracking-tight transition-colors duration-300 ${darkMode ? 'text-white' : 'text-ink'}`}>Projects</h1>
-            {/* Mobile Sidebar Toggle Button */}
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-surface-2'}`}
-            >
-              <Menu size={14} />
-              <span>Menu</span>
-            </button>
           </div>
 
           {/* Right dropdown filters */}
@@ -1139,6 +1257,29 @@ const DashboardPage = () => {
               <RefreshCw size={32} className="animate-spin text-emerald-500" />
               <p className={`text-xs font-semibold uppercase tracking-wider animate-pulse transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>Searching…</p>
             </div>
+          ) : activeTab === "Starred" && displayProjects.length === 0 ? (
+            /* Checked before the generic empty state — that one used to swallow this
+               branch, so an empty Starred tab said "No properties added yet" and
+               offered to add a website. */
+            <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>
+              <Star size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-faint'}`} />
+              <div>
+                <h3 className={`font-semibold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-ink'}`}>
+                  {starredIds.length === 0 ? 'No starred websites yet' : 'No starred websites match your search'}
+                </h3>
+                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>
+                  {starredIds.length === 0
+                    ? 'Click the ☆ star icon on any project card to bookmark it here.'
+                    : 'Clear the search box to see everything you have starred.'}
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveTab("Overview")}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-all duration-300 active:scale-[0.98]"
+              >
+                Browse All Projects
+              </button>
+            </div>
           ) : displayProjects.length === 0 ? (
             <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>
               <Globe size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-faint'}`} />
@@ -1158,24 +1299,6 @@ const DashboardPage = () => {
                   Add Website
                 </button>
               )}
-            </div>
-          ) : activeTab === "Starred" && starredIds.length === 0 ? (
-            <div className={`rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-4 animate-in fade-in duration-300 transition-all duration-300 border ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}>
-              <Star size={40} className={`transition-colors duration-300 ${darkMode ? 'text-slate-600' : 'text-faint'}`} />
-              <div>
-                <h3 className={`font-semibold text-sm transition-colors duration-300 ${darkMode ? 'text-white' : 'text-ink'}`}>
-                  No starred websites yet
-                </h3>
-                <p className={`text-xs mt-1 transition-colors duration-300 ${darkMode ? 'text-slate-500' : 'text-faint'}`}>
-                  Click the ☆ star icon on any project card to bookmark it here.
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveTab("Overview")}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-xs transition-all duration-300 active:scale-[0.98]"
-              >
-                Browse All Projects
-              </button>
             </div>
           ) : (
             displayProjects.map((proj, idx) => {
@@ -1307,7 +1430,7 @@ const DashboardPage = () => {
                       <div className="relative">
                         <button
                           onClick={() => setActiveMenuId(activeMenuId === proj._id ? null : proj._id)}
-                          className={`p-1.5 border rounded-lg text-faint hover:text-slate-750 transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 hover:bg-slate-800 hover:text-white' : 'bg-card border-line hover:bg-surface-2 hover:text-inksoft'}`}
+                          className={`p-1.5 border rounded-lg text-faint transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 hover:bg-slate-800 hover:text-white' : 'bg-card border-line hover:bg-surface-2 hover:text-ink'}`}
                         >
                           <MoreVertical size={14} />
                         </button>

@@ -78,8 +78,8 @@ const AddWebsitePage = () => {
         <div className="absolute -inset-1 bg-gradient-to-r from-blue-400 to-indigo-400 dark:from-blue-600 dark:to-indigo-600 rounded-[2.5rem] blur-xl opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
 
         <div className={`relative p-8 md:p-10 rounded-[2.5rem] backdrop-blur-3xl overflow-hidden transition-all duration-300 border shadow-2xl ${darkMode
-            ? 'bg-[#16161e]/90 text-white border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]'
-            : 'bg-card/90 text-ink border-line shadow-[0_20px_60px_rgba(0,0,0,0.05)]'
+          ? 'bg-[#16161e]/90 text-white border-white/5 shadow-[0_20px_50px_rgba(0,0,0,0.3)]'
+          : 'bg-card/90 text-ink border-line shadow-[0_20px_60px_rgba(0,0,0,0.05)]'
           }`}>
           {/* Animated Scan Line */}
           <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-blue-500 to-transparent animate-scan" />
@@ -106,7 +106,7 @@ const AddWebsitePage = () => {
             </h1>
             <p className={`text-xs font-semibold uppercase tracking-widest opacity-80 transition-colors duration-300 ${darkMode ? 'text-slate-400' : 'text-muted'
               }`}>
-              Auditify Pro Engine
+              DealerSiteAudit  Pro Engine
             </p>
           </div>
 
@@ -129,8 +129,8 @@ const AddWebsitePage = () => {
                   required
                   autoFocus
                   className={`block w-full pl-14 pr-5 py-4 rounded-2xl border-2 transition-all text-base font-semibold shadow-sm outline-none ${darkMode
-                      ? 'bg-white/5 border-white/5 text-white placeholder:text-slate-600 focus:bg-white/10 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10'
-                      : 'bg-cardsoft border-line text-ink placeholder:text-faint focus:bg-card focus:border-accent focus:ring-4 focus:ring-accent/10'
+                    ? 'bg-white/5 border-white/5 text-white placeholder:text-slate-600 focus:bg-white/10 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10'
+                    : 'bg-cardsoft border-line text-ink placeholder:text-faint focus:bg-card focus:border-accent focus:ring-4 focus:ring-accent/10'
                     }`}
                   placeholder="https://example.com"
                   value={url}
@@ -142,8 +142,8 @@ const AddWebsitePage = () => {
             <motion.div
               whileHover={{ scale: 1.01 }}
               className={`border rounded-2xl p-4 flex gap-4 items-start shadow-sm transition-all duration-300 ${darkMode
-                  ? 'bg-blue-500/5 border-blue-500/10 shadow-blue-500/5'
-                  : 'bg-blue-50/50 border-blue-100/50 shadow-blue-500/5'
+                ? 'bg-blue-500/5 border-blue-500/10 shadow-blue-500/5'
+                : 'bg-blue-50/50 border-blue-100/50 shadow-blue-500/5'
                 }`}
             >
               <div className="flex-shrink-0">

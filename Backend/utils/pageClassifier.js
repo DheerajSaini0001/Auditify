@@ -155,3 +155,74 @@ export function classifyCorporatePageType(rawUrl) {
 
   return "generic";
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Service / repair page-type classifier — the third sibling, used when the site
+// was detected as siteType "service" (sub-types "service" or "repair", see
+// Backend/utils/dealershipDetector.js). A servicing business has no inventory,
+// so the dealer taxonomy's SRP/VDP/trade/lease categories cannot match — and
+// letting them try is worse than useless: discovery would report four missing
+// inventory pages as findings against a business that correctly has none.
+//
+// The categories here are what the parameter matrix says actually carries the
+// score for these two site types: the service menu, the booking scheduler
+// (their entire funnel), published pricing, and location/NAP pages.
+//
+// Order matters — booking before service, because "/schedule-service" is a
+// booking page first; pricing before service for the same reason.
+// ─────────────────────────────────────────────────────────────────────────────
+const SERVICE_MATCH_ORDER = [
+  {
+    key: "booking",
+    test: (p) =>
+      /(book-?(online|now|a-service|an-appointment|your)?|booking|appointments?|make-?an-?appointment|request-?(an-?)?appointment|schedule-?(service|appointment|online|now)|scheduler|online-?booking)/.test(p),
+  },
+  {
+    key: "pricing",
+    test: (p) =>
+      /(pricing|prices?|price-?list|our-?prices|rates?|labou?r-?rates?|quote|quotes?|estimates?|get-?a-?quote|cost|service-?menu|capped-?price|fixed-?price)/.test(p),
+  },
+  {
+    key: "service",
+    test: (p) =>
+      /(services?|repairs?|maintenance|oil-?change|brakes?|tyres?|tires?|exhausts?|batter(?:y|ies)|clutch|transmission|diagnostics?|air-?con|a\/c|collision|body-?shop|panel-?beating|smash-?repairs?|mot\b|smog|roadworthy|inspection|servicing|parts|accessor|wheels?\b|alignment|windscreen|windshield)/.test(p),
+  },
+  {
+    key: "locations",
+    test: (p) =>
+      /(locations?|branch(?:es)?|centres?|centers?|stores?|find-?(a-?)?(location|us|centre|center|branch|store)|store-?locator|location-?finder|areas?-?we-?serve|service-?areas?)/.test(p),
+  },
+  {
+    key: "about",
+    test: (p) =>
+      /(about|our-story|our-team|meet-(the|our)|staff|technicians?|mechanics?|why-(us|choose)|who-we-are|our-history|contact|get-?directions?|directions?|hours|visit-us|accreditations?|certifications?|reviews?|testimonials?)/.test(p),
+  },
+  { key: "content", test: (p) => /(blog|news|articles?|resources?|tips|guides?|car-care|learn|faqs?|frequently-asked|how-?tos?|how-do-i)/.test(p) },
+];
+
+export function classifyServicePageType(rawUrl) {
+  let path, lower;
+  try {
+    const url = new URL(rawUrl);
+    path = normPath(url.pathname);
+    lower = rawUrl.toLowerCase();
+
+    if (path === "/" || path === "") {
+      return "home";
+    }
+  } catch {
+    path = normPath(String(rawUrl));
+    lower = String(rawUrl).toLowerCase();
+    if (path === "/" || path === "") {
+      return "home";
+    }
+  }
+
+  if (EXCLUDE_RE.test(path)) return "generic";
+
+  for (const def of SERVICE_MATCH_ORDER) {
+    if (def.test(path, lower)) return def.key;
+  }
+
+  return "generic";
+}

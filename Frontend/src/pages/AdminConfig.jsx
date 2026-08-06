@@ -8,10 +8,11 @@ import {
   Save, X, Trash2, Settings, ShieldCheck, Terminal, History,
   RotateCcw, Download, Upload, Filter, Clock, User, Activity,
   ChevronDown, AlertTriangle, CheckCircle2, Database, Zap, Globe,
-  LayoutDashboard, FileText, Star, Sun, Moon, Menu
+  LayoutDashboard, FileText, Star, Sun, Moon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { usePageSidebar } from '../context/PageSidebarContext.jsx';
 
 // ── Category & Environment Config ───────────────────────────────────
 const CATEGORIES = [
@@ -54,7 +55,7 @@ const AdminConfig = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = usePageSidebar();
   const [createDropdownOpen, setCreateDropdownOpen] = useState(false);
   const [searchInput, setSearchInput] = useState("");
   const [starredIds] = useState(() => {
@@ -417,17 +418,9 @@ const AdminConfig = () => {
               <div className={`p-4 rounded-2xl border ${dk ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-100'}`}>
                 <ShieldCheck size={28} className="text-indigo-500" />
               </div>
-              <div className="flex-grow">
-                <div className="flex items-center justify-between lg:justify-start w-full gap-4">
-                  <h1 className="text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
-                  {/* Mobile Sidebar Toggle Button */}
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-cardsoft'}`}
-                  >
-                    <Menu size={14} />
-                    <span>Menu</span>
-                  </button>
+              <div className="flex-grow min-w-0">
+                <div className="flex items-center lg:justify-start w-full gap-4">
+                  <h1 className="text-2xl md:text-3xl font-black tracking-tight">Super Admin Dashboard</h1>
                 </div>
                 <p className={`text-sm mt-1 ${dk ? 'text-white/30' : 'text-faint'}`}>
                   AES-256 encrypted • Hot reload • Version controlled

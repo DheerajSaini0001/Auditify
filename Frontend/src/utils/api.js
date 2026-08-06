@@ -53,6 +53,11 @@ const api = {
   get: (endpoint, options) => createFetchRequest(endpoint, { method: 'GET', ...options }),
   post: (endpoint, body, options) => createFetchRequest(endpoint, { method: 'POST', body: JSON.stringify(body), ...options }),
   put: (endpoint, body, options) => createFetchRequest(endpoint, { method: 'PUT', body: JSON.stringify(body), ...options }),
+  // PATCH was missing while the admin panel already called api.patch() to change a
+  // user's role. `undefined(...)` throws a TypeError, which the caller's catch block
+  // reported as its generic "Failed to update role" — so the request never left the
+  // browser and the failure looked like a server rejection.
+  patch: (endpoint, body, options) => createFetchRequest(endpoint, { method: 'PATCH', body: JSON.stringify(body), ...options }),
   delete: (endpoint, options) => createFetchRequest(endpoint, { method: 'DELETE', ...options }),
 };
 

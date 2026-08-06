@@ -72,6 +72,16 @@ const guestVerifyLimiter = makeLimiter(
   'Too many verification attempts from this IP. Please wait a few minutes.'
 );
 
+// Emailing a report PDF to an address a stranger typed. Without a cap this is an
+// open mail relay with our domain on the envelope: an attacker could point it at
+// anyone's inbox, and the resulting bounces and spam complaints land on OUR
+// sending reputation, not theirs. Six per hour is generous for a real visitor
+// (one report, plus retries and a colleague or two) and useless for bulk sending.
+const reportEmailLimiter = makeLimiter(
+  60 * 60 * 1000, 6,
+  'Too many report emails from this IP. Please wait an hour, or download the report directly.'
+);
+
 // ── Global backstop: a generous per-IP ceiling on state-changing requests. ──
 // GET/HEAD/OPTIONS are skipped so high-frequency polling (audit status, screenshot
 // views) and CORS preflight are never throttled; the expensive POST endpoints keep
@@ -93,5 +103,6 @@ export {
   otpLimiter,
   guestChallengeLimiter,
   guestVerifyLimiter,
+  reportEmailLimiter,
   globalLimiter,
 };

@@ -6,12 +6,17 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useData } from "../context/DataContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { savePostAuthIntent } from "../utils/intentStore";
+import { usePageSidebarNav } from "../context/PageSidebarContext";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
   const { theme } = useContext(ThemeContext);
   const darkMode = theme === "dark";
 
   const { data, clearData } = useData();
+  // Dashboard / Admin screens hand their mobile drawer up to the layout so the
+  // hamburger can live here instead of somewhere inside each page's content.
+  const pageSidebar = usePageSidebarNav();
+  const hasPageDrawer = !!pageSidebar?.hasDrawer;
   const { isAuthenticated, isLoading, logout, user } = useAuth();
   const [profileOpen, setProfileOpen] = React.useState(false);
   const [avatarError, setAvatarError] = React.useState(false);
@@ -133,8 +138,19 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
           {/* Left Section: Mobile Menu & Logo */}
           <div className="flex items-center gap-4">
 
-            {/* Sidebar Toggle (Only visible if data exists & on Mobile) */}
-            {data && (
+            {/* Page drawer toggle (Dashboard / Admin / Audit History, on Mobile) */}
+            {hasPageDrawer && (
+              <button
+                onClick={() => pageSidebar.setOpen(!pageSidebar.open)}
+                className={`md:hidden p-2 rounded-lg border transition-all duration-200 ${buttonClass}`}
+                aria-label="Toggle Menu"
+              >
+                {pageSidebar.open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </button>
+            )}
+
+            {/* Report sidebar toggle (Only visible if data exists & on Mobile) */}
+            {data && !hasPageDrawer && (
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
                 className={`lg:hidden p-2 rounded-lg border transition-all duration-200 ${buttonClass}`}

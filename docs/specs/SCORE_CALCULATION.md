@@ -181,7 +181,6 @@ Percentage = max(0, 100 − Σ deductions)   then apply gates:
 | | Forms_Use_HTTPS | 4 |
 | | Weak_Default_Credentials | 2 |
 | | Admin_Panel_Public | 1 |
-| | MFA_Enabled | 1 |
 | Privacy / legal | Privacy_Compliance | 4 |
 | | Cookie_Consent | 3 |
 | | Privacy_Policy | 3 |

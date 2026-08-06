@@ -1,5 +1,5 @@
-import React, { useContext } from "react";
-import { Routes, Route, useParams } from "react-router-dom";
+import React, { useContext, useEffect, useRef } from "react";
+import { Routes, Route, useParams, useLocation } from "react-router-dom";
 
 import Homepage from "./pages/LandingPage";
 import AboutPage from "./pages/AboutPage";
@@ -49,6 +49,7 @@ import { useData } from "./context/DataContext.jsx";
 import CanonicalTag from "./components/CanonicalTag.jsx";
 import GuestRoute from "./components/GuestRoute";
 import SeoDashboard from "./pages/SeoDashboard.jsx";
+import { trackEvent, trackHeartbeat, trackSessionEnd } from "./utils/tracking.js";
 
 /**
  * Wraps a report route. Reports are open to everyone — guests included, with no
@@ -87,8 +88,57 @@ const GuestRouteWrapper = ({ children }) => {
   return children;
 };
 
+/**
+ * Session-lifecycle tracking for the whole app.
+ *
+ * Three signals, each recorded where it is actually observable:
+ *  • a page view per route change (this is an SPA — the server sees exactly one
+ *    document request per visit, so every navigation after the first is invisible
+ *    to it);
+ *  • a periodic heartbeat, so a session that is genuinely still open is not swept
+ *    closed by the 30-minute idle rule;
+ *  • a SESSION_END beacon on pagehide.
+ *
+ * `pagehide` rather than `beforeunload`: Safari (and mobile browsers generally)
+ * do not reliably fire beforeunload, and a tab restored from the back/forward
+ * cache never fires unload at all. pagehide is the event that actually fires on
+ * both, which is why it is the one the beacon is hung off.
+ */
+const HEARTBEAT_MS = 5 * 60 * 1000; // well inside the 30-minute idle window
+
+const useSessionTracking = () => {
+  const location = useLocation();
+  const endedRef = useRef(false);
+
+  // One PAGE_VIEW per route change, including the first render.
+  useEffect(() => {
+    trackEvent('PAGE_VIEW', { url: location.pathname + location.search });
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    trackHeartbeat();
+    const timer = setInterval(trackHeartbeat, HEARTBEAT_MS);
+
+    const handleHide = () => {
+      // Guarded: pagehide can fire more than once (bfcache, tab switching on
+      // mobile), and a second beacon would move the session's recorded end time
+      // later than the moment the visitor actually left.
+      if (endedRef.current) return;
+      endedRef.current = true;
+      trackSessionEnd(window.location.pathname);
+    };
+
+    window.addEventListener('pagehide', handleHide);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('pagehide', handleHide);
+    };
+  }, []);
+};
+
 function AppContentInner() {
   const { theme } = useContext(ThemeContext);
+  useSessionTracking();
 
   return (
     <>

@@ -5,6 +5,17 @@ import { waitForChallengeResolution } from "../utils/puppeteer_cheerio.js";
 import { BROWSER_HEADERS, isWafCoolingDown } from "../utils/wafGuard.js";
 import configService from "../services/configService.js";
 import { classifyPageType } from "../utils/pageClassifier.js";
+import { humanizeSecuritySection } from "./securityCopy.js";
+import { isParamApplicable } from "../config/siteTypeProfiles.js";
+import { importanceFor } from "../config/parameterImportance.js";
+import { getLocale, anyTerm, matchedTerms, matchGroups, hay } from "../config/locale/index.js";
+
+// Per-parameter weight tilt for this section, by site sub-type — 1.0 for a
+// franchise dealer and for corporate/unresolved sites. The differences here are
+// regulatory, not technical: a garage advertising a $99 brake special carries
+// almost none of the GLBA / Reg-Z / CARS load a credit application does, but
+// transport and reputation stay Critical for everyone because they are gates.
+const importance = importanceFor("Security/Compliance");
 
 dotenv.config();
 
@@ -913,7 +924,7 @@ async function checkXSS(url, browser) {
 }
 
 // Cookie Consent
-async function checkCookieConsent(page) {
+async function checkCookieConsent(page, market = null) {
 
   // 🔍 STEP 1: Check tracking / cookies usage
   const trackingData = await page.evaluate(() => {
@@ -1002,7 +1013,23 @@ async function checkCookieConsent(page) {
     }
   }
 
-  // 🔥 STEP 3: SMART DECISION LOGIC
+  // 🔥 STEP 3: SMART DECISION LOGIC (market-aware)
+  //
+  // Neither market actually mandates a cookie banner, and scoring a site 0 for
+  // not having one was the single largest false-positive risk in the product —
+  // most damaging in Australia, which has no cookie law at all. What each market
+  // DOES require is a different mechanism:
+  //
+  //   US → an opt-out: a "Do Not Sell or Share" link, a sensitive-information
+  //        limit control, and honouring Global Privacy Control where required.
+  //   AU → notice at collection (APP 5) and collection limited to what is
+  //        reasonably necessary (APP 3), disclosed in the privacy policy.
+  //
+  // So a banner is still the strongest single piece of evidence and still
+  // passes exactly as before. The change is what happens WITHOUT one: instead
+  // of a flat failure, the market's own required mechanism is looked for, and
+  // its absence is a warning that names the real obligation.
+  const locale = getLocale(market);
 
   // ❌ No tracking → Not required
   if (!hasTracking) {
@@ -1010,34 +1037,60 @@ async function checkCookieConsent(page) {
       score: 100,
       status: "not_applicable",
       details: "No tracking or cookies detected, consent banner not required.",
-      meta: { trackingData },
+      meta: { trackingData, market: locale.code },
       analysis: null
     };
   }
 
-  // ✅ Tracking + Banner found → PASS
+  // ✅ Tracking + Banner found → PASS (unchanged in both markets)
   if (bannerFound) {
     return {
       score: 100,
       status: "pass",
       details: `Cookie consent banner detected (Pattern: ${foundSelector})`,
-      meta: {
-        selector: foundSelector,
-        trackingData
-      },
+      meta: { selector: foundSelector, trackingData, market: locale.code },
       analysis: null
     };
   }
 
-  // ❌ Tracking + No banner → FAIL
+  // No banner — look for what this market actually requires instead.
+  const rights = await page.evaluate((terms) => {
+    const text = (document.body.innerText || "").toLowerCase();
+    return terms.filter((t) => text.includes(t));
+  }, locale.privacy.rightsTerms).catch(() => []);
+
+  let rightsSelector = null;
+  for (const selector of locale.privacy.rightsSelectors) {
+    try {
+      const el = await page.$(selector);
+      if (!el) continue;
+      const box = await el.boundingBox();
+      if (box && box.height > 0 && box.width > 0) { rightsSelector = selector; break; }
+    } catch (_) { /* an invalid selector must not abort the pillar */ }
+  }
+
+  const meta = { trackingData, market: locale.code, bannerFound: false, rightsTerms: rights, rightsSelector };
+
+  if (rights.length || rightsSelector) {
+    return {
+      score: 100,
+      status: "pass",
+      details: `No banner, but this market's required mechanism is present (${rights[0] || rightsSelector}).`,
+      meta,
+      analysis: null
+    };
+  }
+
   return {
-    score: 0,
-    status: "fail",
-    details: "Tracking detected but no visible cookie consent banner found",
-    meta: { trackingData },
+    score: 60,
+    status: "warning",
+    details: `Tracking detected with no consent banner and no ${locale.code === "AU" ? "collection notice" : "opt-out control"}.`,
+    meta,
     analysis: {
-      cause: "Tracking scripts or cookies detected but no consent banner present.",
-      recommendation: "Implement a visible cookie consent banner compliant with GDPR/CCPA."
+      cause: `Tracking starts on load, and no mechanism required in ${locale.name} was found on the page. ${locale.privacy.consentBasis}`,
+      recommendation: locale.code === "AU"
+        ? "A banner is optional here. What is expected is that the privacy policy discloses the tracking tools in use and any overseas disclosure, and that collection is limited to what is reasonably necessary."
+        : "Add a \"Do Not Sell or Share My Personal Information\" link, a sensitive-information limit control, and honour Global Privacy Control signals.",
     }
   };
 }
@@ -1085,47 +1138,25 @@ async function checkPrivacyPolicy(page) {
   }
 }
 
-// GDPR/CCPA (General Data Protection Regulation/California Consumer Privacy Act)
-async function checkGDPRCCPA(page) {
-  // Check for specific GDPR/CCPA keywords in the page text
+// Privacy-rights notice — the regime named here is whichever one governs the
+// audited market. The check itself is unchanged (keyword scan + CMP widget
+// detection); only the reference list moves, which is the whole point: an
+// Australian policy that correctly cites the Privacy Act and the APPs used to
+// FAIL this check for not containing the string "CCPA".
+async function checkPrivacyRightsNotice(page, market = null) {
+  const locale = getLocale(market);
   const pageText = await page.evaluate(() => document.body.innerText.toLowerCase());
-  const keywords = [
-    "gdpr",
-    "ccpa",
-    "california consumer privacy act",
-    "general data protection regulation",
-    "do not sell my personal information",
-    "don't sell my personal information",
-    "cookie preferences",
-    "manage cookies",
-    "legal notice",
-    "imprint"
-  ];
 
-  const foundKeyword = keywords.find(k => pageText.includes(k));
-
-  // Also check for specific element identifiers related to compliance frameworks (CMP)
-  const complianceSelectors = [
-    "[id*='gdpr']",
-    "[class*='gdpr']",
-    "[id*='ccpa']",
-    "[class*='ccpa']",
-    "[data-ccpa]",
-    "#onetrust-pc-btn-handler", // OneTrust preference center
-    ".fc-preference-consent", // Funding Choices
-    "[aria-label*='privacy settings']"
-  ];
+  const foundKeyword = locale.privacy.rightsTerms.find((k) => pageText.includes(k));
 
   let foundSelector = null;
-  for (const selector of complianceSelectors) {
-    const element = await page.$(selector);
-    if (element) {
+  for (const selector of locale.privacy.rightsSelectors) {
+    try {
+      const element = await page.$(selector);
+      if (!element) continue;
       const box = await element.boundingBox();
-      if (box && box.height > 0 && box.width > 0) {
-        foundSelector = selector;
-        break;
-      }
-    }
+      if (box && box.height > 0 && box.width > 0) { foundSelector = selector; break; }
+    } catch (_) { /* an invalid selector must not abort the pillar */ }
   }
 
   if (foundKeyword || foundSelector) {
@@ -1133,12 +1164,9 @@ async function checkGDPRCCPA(page) {
       score: 100,
       status: "pass",
       details: foundKeyword
-        ? `GDPR/CCPA compliance text found: "${foundKeyword}"`
-        : `GDPR/CCPA compliance element found (${foundSelector})`,
-      meta: {
-        foundKeyword,
-        foundSelector
-      },
+        ? `${locale.privacy.regime} rights text found: "${foundKeyword}"`
+        : `Privacy-rights element found (${foundSelector})`,
+      meta: { foundKeyword, foundSelector, market: locale.code, regime: locale.privacy.regime },
       analysis: null
     };
   }
@@ -1146,11 +1174,13 @@ async function checkGDPRCCPA(page) {
   return {
     score: 0,
     status: "fail",
-    details: "No specific GDPR/CCPA notice or text found",
-    meta: {},
+    details: `No ${locale.privacy.regime} rights notice found`,
+    meta: { market: locale.code, regime: locale.privacy.regime },
     analysis: {
-      cause: "No text mentioning GDPR, CCPA, or data rights was found, nor were any standard compliance widgets detected.",
-      recommendation: "Ensure explicit mention of user rights (GDPR/CCPA) or a link to 'Do Not Sell My Personal Information' is present."
+      cause: `No text referencing ${locale.privacy.regime} or the rights it gives visitors was found, nor any standard consent-management widget.`,
+      recommendation: locale.code === "AU"
+        ? "State that the site is bound by the Privacy Act 1988 and the Australian Privacy Principles, and describe how a visitor accesses, corrects or complains about their personal information (including escalation to the OAIC)."
+        : "Ensure explicit mention of visitor rights (CCPA/CPRA) or a link to 'Do Not Sell or Share My Personal Information' is present."
     }
   };
 }
@@ -1504,95 +1534,6 @@ async function checkAdminPanelPublic(baseUrl, options = {}) {
       pathsChecked: adminPaths.length
     },
     analysis: null
-  };
-}
-
-// MFA Enabled
-// MFA is only meaningful when an authentication surface exists. Enforcement cannot be
-// proven black-box (no credentials), so we scope to whether a login exists and grade
-// the strength of the evidence honestly instead of passing on any stray keyword.
-async function checkMFAEnabled(page) {
-  const surface = await page.evaluate(() => {
-    const lc = (s) => (s || "").toLowerCase();
-    const bodyText = lc(document.body.innerText);
-
-    // Authentication surface: a password field or a login affordance
-    const hasPasswordField = !!document.querySelector('input[type="password"]');
-    const loginPatterns = ["login", "log in", "log-in", "signin", "sign in", "sign-in", "my account", "/account", "customer portal"];
-    let loginAffordance = false;
-    document.querySelectorAll("a, button").forEach(el => {
-      const hay = lc(el.innerText) + " " + lc(el.getAttribute("href")) + " " + lc(el.getAttribute("aria-label"));
-      if (loginPatterns.some(p => hay.includes(p))) loginAffordance = true;
-    });
-
-    // Genuine MFA signals
-    // Specific MFA tokens only — bare "code" is excluded so zip/postal/promo-code
-    // inputs don't false-positive as MFA fields.
-    const mfaNameRe = /\b(otp|mfa|2fa|totp|one[-_]?time[-_]?(code|password)|verification[-_]?code|auth(entication)?[-_]?code|security[-_]?code)\b/i;
-    const mfaInput = Array.from(document.querySelectorAll("input")).some(i =>
-      i.autocomplete === "one-time-code" ||
-      (i.name && mfaNameRe.test(i.name)) ||
-      (i.placeholder && /verification code|one-time|6-digit/i.test(i.placeholder))
-    );
-    const mfaKeywords = ["two-factor", "2fa", "multi-factor", "mfa", "authenticator app", "verification code", "security key", "one-time password", "backup code"];
-    const mfaKeyword = mfaKeywords.find(k => bodyText.includes(k)) || null;
-
-    // SSO / federated auth — may delegate MFA, but not proof of enforcement
-    const ssoKeywords = ["continue with google", "continue with microsoft", "continue with apple", "sign in with google", "login with", "okta", "auth0", "saml", "duo security"];
-    const ssoKeyword = ssoKeywords.find(k => bodyText.includes(k)) || null;
-
-    return { hasPasswordField, loginAffordance, mfaInput, mfaKeyword, ssoKeyword };
-  });
-
-  const hasAuthSurface = surface.hasPasswordField || surface.loginAffordance || surface.mfaInput || !!surface.ssoKeyword;
-
-  // No authentication surface -> MFA not applicable (info-only, excluded from the score)
-  if (!hasAuthSurface) {
-    return {
-      score: 100,
-      status: "not_applicable",
-      infoOnly: true,
-      details: "No customer login / authentication surface found — MFA not applicable.",
-      meta: { hasAuthSurface: false },
-      analysis: null
-    };
-  }
-
-  // Genuine MFA signal at the login surface
-  if (surface.mfaInput || surface.mfaKeyword) {
-    return {
-      score: 100,
-      status: "pass",
-      details: surface.mfaInput ? "MFA code input detected at login" : `MFA indicator found: "${surface.mfaKeyword}"`,
-      meta: { hasAuthSurface: true, method: surface.mfaInput ? "input" : "keyword", mfaKeyword: surface.mfaKeyword, note: "Presence detected; enforcement cannot be verified without credentials." },
-      analysis: null
-    };
-  }
-
-  // SSO present — delegated auth may carry MFA, but not proof of enforcement
-  if (surface.ssoKeyword) {
-    return {
-      score: 70,
-      status: "warning",
-      details: `SSO/federated login detected ("${surface.ssoKeyword}") — may delegate MFA, but native MFA is not confirmed`,
-      meta: { hasAuthSurface: true, method: "sso", ssoKeyword: surface.ssoKeyword },
-      analysis: {
-        cause: "Login is delegated to an SSO / identity provider. MFA may be enforced there, but it cannot be confirmed from this page.",
-        recommendation: "Verify the identity provider enforces MFA, or offer native MFA (authenticator / OTP) on the login flow."
-      }
-    };
-  }
-
-  // Auth surface exists but only single-factor (password), no MFA signals
-  return {
-    score: 40,
-    status: "warning",
-    details: "A login exists but no MFA / second-factor option was detected (single-factor).",
-    meta: { hasAuthSurface: true, method: "password-only", hasPasswordField: surface.hasPasswordField },
-    analysis: {
-      cause: "An authentication surface is present but only single-factor (password) login was detected; no MFA option was visible.",
-      recommendation: "Offer and enforce MFA (authenticator app, OTP, or security key) for customer and admin accounts. Note: a post-login MFA step may not be visible to this scan."
-    }
   };
 }
 
@@ -2255,31 +2196,111 @@ async function checkCookieFlags(page) {
 // ---------------------------------------------------------------------------
 // Privacy compliance — GDPR/CCPA rights notice + data-collection disclosure, as one param.
 // ---------------------------------------------------------------------------
-async function checkPrivacyCompliance(page) {
-  const gdpr = await checkGDPRCCPA(page);
+/**
+ * Read the privacy policy itself and grade it against the market's prescribed
+ * content list.
+ *
+ * Runs on an ISOLATED tab so it cannot destroy the execution context the other
+ * pillars are reading concurrently (same rule as checkXSS / checkWeakDefault-
+ * Credentials). Fails open: an unreachable policy returns null and the caller
+ * treats it as "not measured", never as a failure.
+ */
+async function fetchPrivacyPolicyContent(page, browser, market) {
+  if (!browser) return null;
+  const locale = getLocale(market);
+
+  const href = await page.evaluate(() => {
+    const links = Array.from(document.querySelectorAll("a"));
+    const hit = links.find((a) => {
+      const h = (a.href || "").toLowerCase();
+      const t = (a.innerText || "").toLowerCase();
+      return /privacy/.test(h) || /privacy/.test(t);
+    });
+    return hit ? hit.href : null;
+  }).catch(() => null);
+  if (!href || !/^https?:/i.test(href)) return null;
+
+  let tab = null;
+  try {
+    tab = await browser.newPage();
+    await tab.goto(href, { waitUntil: "domcontentloaded", timeout: 12000 });
+    const text = await tab.evaluate(() => (document.body?.innerText || "").slice(0, 60000));
+    const coverage = matchGroups(text, locale.privacy.policyContent);
+    return { url: href, ...coverage };
+  } catch (_) {
+    return null;
+  } finally {
+    if (tab) { try { await tab.close(); } catch {} }
+  }
+}
+
+async function checkPrivacyCompliance(page, browser = null, market = null) {
+  const locale = getLocale(market);
+  const rights = await checkPrivacyRightsNotice(page, market);
   const dataCollection = await checkDataCollection(page);
-  const gdprPass = gdpr?.status === "pass";
+  const rightsPass = rights?.status === "pass";
   const dcPass = dataCollection?.status === "pass";
 
+  // Base verdict — the original two-signal model, with only the regime NAME
+  // localised. Keeping this intact is deliberate: it is what US scores are
+  // calibrated against, and the market-specific work below is additive.
   let score, status, analysis = null;
-  if (gdprPass && dcPass) { score = 100; status = "pass"; }
-  else if (gdprPass || dcPass) {
+  if (rightsPass && dcPass) { score = 100; status = "pass"; }
+  else if (rightsPass || dcPass) {
     score = 70; status = "warning";
     analysis = {
-      cause: gdprPass ? "A GDPR/CCPA rights notice was found, but no explicit data-collection disclosure." : "A data-collection disclosure was found, but no GDPR/CCPA rights notice.",
-      recommendation: "Provide both a GDPR/CCPA rights notice (e.g. 'Do Not Sell My Personal Information') and a clear data-collection disclosure."
+      cause: rightsPass
+        ? `A ${locale.privacy.regime} rights notice was found, but no explicit data-collection disclosure.`
+        : `A data-collection disclosure was found, but no ${locale.privacy.regime} rights notice.`,
+      recommendation: `Provide both a ${locale.privacy.regime} rights notice and a clear data-collection disclosure.`
     };
   } else {
     score = 0; status = "fail";
     analysis = {
-      cause: "No GDPR/CCPA rights notice or data-collection disclosure was found.",
-      recommendation: "Add explicit privacy-rights language (GDPR/CCPA) and a data-collection disclosure, typically in the privacy policy and footer."
+      cause: `No ${locale.privacy.regime} rights notice or data-collection disclosure was found.`,
+      recommendation: `Add explicit privacy-rights language for ${locale.name} and a data-collection disclosure, typically in the privacy policy and footer.`
     };
   }
+
+  // Market-specific content requirement. Only markets that actually impose one
+  // reach this, so a US audit is unaffected by construction — see
+  // config/locale/us.js, where overseasDisclosureRequired is false.
+  const policy = await fetchPrivacyPolicyContent(page, browser, market);
+  let overseas = null;
+  if (locale.privacy.overseasDisclosureRequired && policy) {
+    const disclosed = policy.found.some((label) => /overseas/i.test(label));
+    overseas = { required: true, disclosed, policyUrl: policy.url };
+    if (!disclosed) {
+      // A real, checkable gap rather than a stylistic one — and one that pairs
+      // with the US-hosted CRM, chat and analytics vendors the Conversion and
+      // Cookie checks detect on the very same page.
+      score = Math.min(score, 70);
+      status = score >= 80 ? "pass" : "warning";
+      analysis = {
+        cause: `The privacy policy does not name the countries personal information is disclosed to. ${locale.privacy.overseasDisclosureBasis}`,
+        recommendation: "List the countries personal information is sent to. Most dealer sites disclose overseas without realising it, through a US-hosted CRM, chat widget or analytics tag — the third-party checks in this section show which ones were found here.",
+      };
+    }
+  }
+
   return {
     score, status, confidence: "heuristic",
-    details: status === "pass" ? "GDPR/CCPA notice and data-collection disclosure present" : status === "warning" ? "Partial privacy disclosure" : "No GDPR/CCPA or data-collection disclosure found",
-    meta: { gdpr: gdpr?.meta || null, dataCollection: dataCollection?.meta || null, gdprPass, dcPass, foundKeyword: gdpr?.meta?.foundKeyword || null, foundSelector: gdpr?.meta?.foundSelector || null },
+    details: status === "pass"
+      ? `${locale.privacy.regime} notice and data-collection disclosure present`
+      : status === "warning" ? "Partial privacy disclosure"
+        : `No ${locale.privacy.regime} notice or data-collection disclosure found`,
+    meta: {
+      market: locale.code,
+      regime: locale.privacy.regime,
+      regulator: locale.privacy.regulator,
+      rights: rights?.meta || null,
+      dataCollection: dataCollection?.meta || null,
+      rightsPass, dcPass,
+      foundKeyword: rights?.meta?.foundKeyword || null,
+      foundSelector: rights?.meta?.foundSelector || null,
+      policyCoverage: policy ? { url: policy.url, found: policy.found, missing: policy.missing } : null,
+      overseasDisclosure: overseas,
+    },
     analysis
   };
 }
@@ -2290,12 +2311,82 @@ async function checkPrivacyCompliance(page) {
 // is one of those types, else discover such a page from links and score the first that loads.
 // N/A (renormalized out) when no such page exists.
 // ---------------------------------------------------------------------------
-const DISCLAIMER_GROUPS = {
-  finance: { label: "Finance terms (Reg-Z)", terms: ["apr", "annual percentage rate", "with approved credit", "on approved credit", "w.a.c", "wac", "o.a.c", "finance charge", "qualified buyers", "qualified credit", "subject to credit approval"] },
-  lease: { label: "Lease terms (Reg-M)", terms: ["due at signing", "capitalized cost", "cap cost", "residual", "money factor", "total of payments", "lease term", "lessee", "acquisition fee", "disposition fee", "excess mileage", "security deposit"] },
-  price: { label: "Price disclaimer (FTC)", terms: ["plus tax", "plus tax and", "tax, title", "title and license", "doc fee", "documentation fee", "does not include", "see dealer for details", "see dealer for complete details", "dealer for details", "prior sale", "excludes tax", "additional fees", "fees not included"] },
-  expiry: { label: "Offer expiry", terms: ["offer ends", "offer expires", "valid through", "valid until", "must take delivery", "while supplies last", "ends on", "by the end of"] },
-};
+// Offer-expiry wording is the one group that genuinely does not differ: both
+// markets require an advertised offer to state when it ends and on what terms.
+const EXPIRY_TERMS = [
+  "offer ends", "offer expires", "valid through", "valid until",
+  "must take delivery", "while supplies last", "ends on", "by the end of",
+];
+
+// Generic "see the fine print" escapes. Kept out of the AU price group on
+// purpose: under ACL s48 a total price must actually be SHOWN, and "see dealer
+// for details" is not a substitute for showing it.
+const US_PRICE_ESCAPES = [
+  "does not include", "see dealer for details", "see dealer for complete details",
+  "dealer for details", "prior sale", "additional fees", "fees not included",
+];
+
+/**
+ * Build the disclaimer groups this market actually requires.
+ *
+ * This is the one place where the two markets need genuinely different
+ * detection rather than a swapped word list — the reference calls it out as
+ * such. Reg-Z's trigger model ("stating a payment forces the APR") and ACL
+ * s48's prominence model ("the GST-inclusive total must be at least as
+ * prominent as any component") are different obligations, so each market
+ * contributes its own groups from its own locale pack.
+ */
+function disclaimerGroupsFor(locale) {
+  const groups = {};
+
+  if (locale.finance.rateDisclosure) {
+    const rd = locale.finance.rateDisclosure;
+    groups.finance = { label: rd.label, terms: [...rd.requiredTerms, ...rd.supportingTerms], basis: rd.basis };
+  }
+  if (locale.finance.leaseDisclosure) {
+    const ld = locale.finance.leaseDisclosure;
+    groups.lease = { label: ld.label, terms: ld.requiredTerms, basis: ld.basis };
+  }
+  if (locale.finance.licenceDisclosure) {
+    const cd = locale.finance.licenceDisclosure;
+    groups.licence = { label: cd.label, terms: cd.terms, basis: cd.basis, pattern: cd.pattern };
+  }
+
+  groups.price = {
+    label: locale.pricing.totalPriceRequired ? "Total (drive-away) price" : "Price disclaimer (FTC)",
+    // Where a total price is legally required, only wording that actually
+    // states a total counts. Where it is not, fee disclosure plus the usual
+    // escapes is the market's standard.
+    terms: locale.pricing.totalPriceRequired
+      ? [...locale.pricing.totalPriceTerms, ...locale.pricing.feeDisclosureTerms]
+      : [...locale.pricing.feeDisclosureTerms, ...US_PRICE_ESCAPES],
+    basis: locale.pricing.basis,
+  };
+
+  groups.expiry = { label: "Offer expiry", terms: EXPIRY_TERMS, basis: null };
+  return groups;
+}
+
+/** Which groups each page type must carry, per market. */
+function requiredGroupsFor(locale, pageType) {
+  if (locale.code === "AU") {
+    // No Reg-M analogue exists, so a lease page is graded on price and finance
+    // like any other credit-advertising page rather than on a lease-specific
+    // vocabulary it has no obligation to use.
+    return {
+      finance: ["finance", "price", "licence"],
+      specials: ["price", "expiry"],
+      lease: ["finance", "price"],
+      vdp: ["price"],
+    }[pageType] || ["price"];
+  }
+  return {
+    finance: ["finance", "price"],
+    specials: ["price", "expiry"],
+    lease: ["lease", "price"],
+    vdp: ["price"],
+  }[pageType] || ["price"];
+}
 
 function classifyDisclaimerPageType(urlPath, hay) {
   const p = (urlPath || "").toLowerCase();
@@ -2318,9 +2409,10 @@ async function scanDisclaimerText(scanPage) {
   });
 }
 
-async function checkLegalDisclaimers(url, page, browser, pageType = null) {
-  const meta = { checkedUrl: null, pageType: null, groupsFound: [], groupsRequired: [], details: {} };
-  
+async function checkLegalDisclaimers(url, page, browser, pageType = null, market = null) {
+  const locale = getLocale(market);
+  const meta = { checkedUrl: null, pageType: null, market: locale.code, groupsFound: [], groupsRequired: [], details: {}, basis: {} };
+
   if (pageType !== "finance" && pageType !== "specials" && pageType !== "lease" && pageType !== "vdp") {
     return { score: 100, status: "not_applicable", infoOnly: true, confidence: "heuristic", details: "No finance / offers / lease / VDP page found to assess legal disclaimers", meta, analysis: null };
   }
@@ -2329,29 +2421,50 @@ async function checkLegalDisclaimers(url, page, browser, pageType = null) {
   meta.checkedUrl = page.url();
 
   try {
+    const GROUPS = disclaimerGroupsFor(locale);
     const scan = await scanDisclaimerText(page);
     const haystack = scan.bodyText + " \n " + scan.fineText;
-    const groupHit = (g) => DISCLAIMER_GROUPS[g].terms.some(t => haystack.includes(t));
 
-    const requiredByType = { finance: ["finance", "price"], specials: ["price", "expiry"], lease: ["lease", "price"], vdp: ["price"] };
-    const required = requiredByType[pageType] || ["price"];
-    meta.groupsRequired = required.map(g => DISCLAIMER_GROUPS[g].label);
+    // A group with a `pattern` (the Australian Credit Licence number) has to
+    // match the actual identifier, not merely the phrase — "we are a credit
+    // licensee" without a number is exactly the case the check exists to catch.
+    const groupHit = (g) => {
+      const grp = GROUPS[g];
+      if (!grp) return false;
+      if (grp.pattern && grp.pattern.test(haystack)) return true;
+      return grp.terms.some((t) => haystack.includes(t));
+    };
 
-    const allGroups = ["finance", "lease", "price", "expiry"];
+    const required = requiredGroupsFor(locale, pageType).filter((g) => GROUPS[g]);
+    meta.groupsRequired = required.map((g) => GROUPS[g].label);
+
+    const allGroups = Object.keys(GROUPS);
     const found = allGroups.filter(groupHit);
-    meta.groupsFound = found.map(g => DISCLAIMER_GROUPS[g].label);
-    allGroups.forEach(g => { meta.details[DISCLAIMER_GROUPS[g].label] = groupHit(g); });
+    meta.groupsFound = found.map((g) => GROUPS[g].label);
+    allGroups.forEach((g) => { meta.details[GROUPS[g].label] = groupHit(g); });
+    required.forEach((g) => { if (GROUPS[g].basis) meta.basis[GROUPS[g].label] = GROUPS[g].basis; });
+
+    // Where the market requires a prominent total price, a page that shows ONLY
+    // a component ("+ on-road costs") without one is a specific, nameable
+    // defect rather than a generic missing-disclaimer. Recorded as evidence so
+    // the finding can quote the page back to the customer.
+    if (locale.pricing.totalPriceRequired) {
+      const componentOnly = matchedTerms(haystack, locale.pricing.componentOnlyTerms || []);
+      const totalShown = anyTerm(haystack, locale.pricing.totalPriceTerms || []);
+      meta.totalPrice = { totalShown, componentOnlyTerms: componentOnly, basis: locale.pricing.basis };
+    }
 
     const requiredFound = required.filter(groupHit).length;
-    let score = Math.round((requiredFound / required.length) * 100);
+    const score = required.length ? Math.round((requiredFound / required.length) * 100) : 100;
     const status = score >= 80 ? "pass" : score >= 40 ? "warning" : "fail";
 
     let analysis = null;
     if (status !== "pass") {
-      const missing = required.filter(g => !groupHit(g)).map(g => DISCLAIMER_GROUPS[g].label);
+      const missing = required.filter((g) => !groupHit(g)).map((g) => GROUPS[g].label);
+      const bases = required.filter((g) => !groupHit(g)).map((g) => GROUPS[g].basis).filter(Boolean);
       analysis = {
-        cause: `Required disclaimers (${missing.join(", ")}) were not found on this ${pageType} page.`,
-        recommendation: `Add appropriate disclaimers (${missing.join(", ")}) in clear, legible print on the page, typically near pricing or calculation modules.`
+        cause: `Required disclosures (${missing.join(", ")}) were not found on this ${pageType} page.${bases.length ? " " + bases[0] : ""}`,
+        recommendation: `Add ${missing.join(", ")} in clear, legible print on the page, typically beside the price or the repayment calculator. Have the wording confirmed by someone who knows motor-dealer advertising rules in ${locale.name}.`
       };
     }
 
@@ -2359,7 +2472,7 @@ async function checkLegalDisclaimers(url, page, browser, pageType = null) {
       score,
       status,
       confidence: "heuristic",
-      details: `Regulated disclaimers present: ${requiredFound}/${required.length} required groups found`,
+      details: `Regulated disclosures present: ${requiredFound}/${required.length} required groups found (${locale.name} rules)`,
       meta,
       analysis,
     };
@@ -2368,7 +2481,7 @@ async function checkLegalDisclaimers(url, page, browser, pageType = null) {
   }
 }
 
-export default async function securityCompliance(url, page, response, browser, pageType = null) {
+export default async function securityCompliance(url, page, response, browser, pageType = null, siteSubType = null, market = null) {
 
   const domain = Domain(url);
   const resolvedPageType = pageType || classifyPageType(url);
@@ -2404,7 +2517,6 @@ export default async function securityCompliance(url, page, response, browser, p
     xssVulnerabilityResult,
     formsUseHTTPSResult,
     weakDefaultCredsResult,
-    mfaEnabledResult,
     adminPanelPublicResult,
     cookieConsentResult,
     privacyPolicyResult,
@@ -2426,15 +2538,14 @@ export default async function securityCompliance(url, page, response, browser, p
     checkXSS(url, browser),
     checkFormsUseHTTPS(page),
     checkWeakDefaultCredentials(page, browser),
-    checkMFAEnabled(page),
     checkAdminPanelPublic(url),
     // Privacy / legal
-    checkCookieConsent(page),
+    checkCookieConsent(page, market),
     checkPrivacyPolicy(page),
-    checkPrivacyCompliance(page),
+    checkPrivacyCompliance(page, browser, market),
     // Page-specific
     checkFinanceFormSecurity(url, page, browser, resolvedPageType),
-    checkLegalDisclaimers(url, page, browser, resolvedPageType),
+    checkLegalDisclaimers(url, page, browser, resolvedPageType, market),
   ]);
 
   // ── Wave 2: the one genuine data dependency ──
@@ -2472,18 +2583,46 @@ export default async function securityCompliance(url, page, response, browser, p
     { key: "SQLi_Exposure", metric: sqliExposureResult, weight: 4, confidence: "heuristic" },
     { key: "XSS", metric: xssVulnerabilityResult, weight: 4, confidence: "heuristic" },
     { key: "Forms_Use_HTTPS", metric: formsUseHTTPSResult, weight: 4, confidence: "heuristic" },
-    // Admin exposure / weak creds / MFA — spec groups as one High (≈0.04); split across the three.
+    // Admin exposure / weak creds — spec groups these as one High (≈0.04); split across the two.
+    // MFA_Enabled was removed as a parameter: enforcement cannot be proven black-box
+    // without credentials, so the check could only ever report whether a login form
+    // looked single-factor — too weak a signal to score a dealer on.
     { key: "Weak_Default_Credentials", metric: weakDefaultCredsResult, weight: 2, confidence: "heuristic" },
     { key: "Admin_Panel_Public", metric: adminPanelPublicResult, weight: 1, confidence: "heuristic" },
-    { key: "MFA_Enabled", metric: mfaEnabledResult, weight: 1, confidence: "heuristic" },
     // Privacy / legal
     { key: "Cookie_Consent", metric: cookieConsentResult, weight: 3, confidence: "heuristic" },
     { key: "Privacy_Policy", metric: privacyPolicyResult, weight: 3, confidence: "heuristic" },
     { key: "Privacy_Compliance", metric: privacyComplianceResult, weight: 4, confidence: "heuristic" },
     // Page-specific (renormalized out when no such page exists)
-    { key: "Finance_Form_Security", metric: financeFormSecurityResult, weight: 10, confidence: "heuristic" },
+    // Finance-form PII security is about SSN/income fields on a credit
+    // application. Neither a service centre nor a repair garage collects that
+    // class of data, so on those site types it is N/A rather than failed —
+    // which matters because a garage's /finance-options page (payment plans for
+    // a big repair bill) classifies as `finance` by URL and would otherwise be
+    // graded against a dealer's GLBA Safeguards obligations.
+    { key: "Finance_Form_Security", metric: isParamApplicable("Finance_Form_Security", siteSubType) ? financeFormSecurityResult : null, weight: 10, confidence: "heuristic" },
     { key: "Legal_Disclaimers", metric: legalDisclaimersResult, weight: 8, confidence: "heuristic" },
   ];
+
+  // Per-site-type redistribution, RESCALED to leave the deduction scale intact.
+  //
+  // Unlike every other section, this one is not a Σ(score×w)/Σ(w) average — the
+  // headline is an absolute deduction from 100 (see below), so it depends on the
+  // weights summing to roughly 100 points of deductible control. Multiplying the
+  // matrix's per-parameter tilt straight in would shrink that total on a repair
+  // site (most of its controls drop to Recommended), and a garage failing every
+  // single control would then still score in the 40s.
+  //
+  // Rescaling to the original sum keeps the tilt — CSP and the SQLi/XSS surface
+  // deduct less on a garage, HTTPS and reputation deduct more — while a total
+  // failure still lands at zero for every site type. How much Security is worth
+  // relative to the OTHER seven sections is a separate axis, handled by the
+  // section profile in config/siteTypeProfiles.js.
+  const tilted = weighted.map((w) => ({ ...w, weight: w.weight * importance(w.key, siteSubType) }));
+  const originalSum = weighted.reduce((s, w) => s + w.weight, 0);
+  const tiltedSum = tilted.reduce((s, w) => s + w.weight, 0);
+  const rescale = tiltedSum > 0 ? originalSum / tiltedSum : 1;
+  for (const w of tilted) w.weight *= rescale;
 
   const CONF_RANK = { heuristic: 1, estimate: 1, lab: 2, measured: 2, field: 3 };
   let totalWeight = 0, earned = 0;
@@ -2491,7 +2630,7 @@ export default async function securityCompliance(url, page, response, browser, p
   let lowestConf = "field";
   let deducted = 0;
   const deductionLog = [];
-  for (const w of weighted) {
+  for (const w of tilted) {
     const m = w.metric;
     // N/A / info-only params drop out of the denominator (rule 6). In the
     // deduction model an N/A check simply cannot deduct.
@@ -2564,7 +2703,11 @@ export default async function securityCompliance(url, page, response, browser, p
     } : null,
   };
 
-  return {
+  // Wording pass ONLY — humanizeSecuritySection rewrites details/cause/
+  // recommendation into language a dealer can act on, and keeps the original
+  // engineer-facing strings alongside as technicalCause/technicalRecommendation.
+  // Scores, statuses, weights and meta are untouched (see securityCopy.js).
+  return humanizeSecuritySection({
     Percentage: pct,
     Graded_Percentage: graded,
     Score_Breakdown: {
@@ -2601,7 +2744,6 @@ export default async function securityCompliance(url, page, response, browser, p
     Forms_Use_HTTPS: formsUseHTTPSResult,
     Weak_Default_Credentials: weakDefaultCredsResult,
     Admin_Panel_Public: adminPanelPublicResult,
-    MFA_Enabled: mfaEnabledResult,
     // Privacy / legal
     Cookie_Consent: cookieConsentResult,
     Privacy_Policy: privacyPolicyResult,
@@ -2609,5 +2751,5 @@ export default async function securityCompliance(url, page, response, browser, p
     // Page-specific
     Finance_Form_Security: financeFormSecurityResult,
     Legal_Disclaimers: legalDisclaimersResult,
-  };
+  });
 }

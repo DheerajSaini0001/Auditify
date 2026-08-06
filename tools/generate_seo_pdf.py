@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a detailed, designed SEO parameter implementation PDF for Auditify."""
+"""Generate a detailed, designed SEO parameter implementation PDF for DealerSiteAudit ."""
 
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -11,7 +11,7 @@ from reportlab.platypus import (
     PageBreak, ListFlowable, ListItem, HRFlowable, Flowable, KeepTogether
 )
 
-OUT = "/Users/dheeraj/Desktop/Auditify/SEO_Parameter_Implementation.pdf"
+OUT = "/Users/dheeraj/Desktop/DealerSiteAudit /SEO_Parameter_Implementation.pdf"
 DATE = "12 June 2026"
 
 # ---------- palette ----------
@@ -102,7 +102,7 @@ class Cover(Flowable):
         # kicker
         c.setFillColor(colors.HexColor("#60a5fa"))
         c.setFont("Helvetica-Bold", 11)
-        c.drawString(0, h - 34 * mm, "AUDITIFY  ·  TECHNICAL REFERENCE")
+        c.drawString(0, h - 34 * mm, "DealerSiteAudit   ·  TECHNICAL REFERENCE")
         # title
         c.setFillColor(colors.white)
         c.setFont("Helvetica-Bold", 33)
@@ -139,7 +139,7 @@ class Cover(Flowable):
         c.setFillColor(GREY)
         c.setFont("Helvetica", 9)
         c.drawString(0, 14 * mm, f"Generated {DATE}")
-        c.drawRightString(w, 14 * mm, "Auditify Engineering")
+        c.drawRightString(w, 14 * mm, "DealerSiteAudit  Engineering")
         c.setStrokeColor(BORDERLT)
         c.line(0, 19 * mm, w, 19 * mm)
 
@@ -294,7 +294,7 @@ story.append(PageBreak())
 story.append(section("1", "Executive summary", INDIGO))
 story.append(Spacer(1, 6))
 story.append(Paragraph(
-    "Auditify&rsquo;s On-Page SEO score is produced by a single module, "
+    "DealerSiteAudit &rsquo;s On-Page SEO score is produced by a single module, "
     "<font face='Courier'>seoMetrics.js</font>, which runs <b>27 independent checks</b> against a page. "
     "Each check inspects the live HTML, a headless-browser render, or fetched resources "
     "(robots.txt, sitemap, trust pages) and returns a normalized <b>0&ndash;1 fraction</b>. "
@@ -1024,7 +1024,7 @@ story.append(Spacer(1, 12))
 story.append(HRFlowable(width="100%", thickness=0.6, color=GREY))
 story.append(Paragraph(
     "Generated from <font face='Courier'>Backend/metricServices/seoMetrics.js</font> &mdash; "
-    "Auditify On-Page SEO audit. &nbsp;This document is a faithful description of the code as implemented.", META))
+    "DealerSiteAudit  On-Page SEO audit. &nbsp;This document is a faithful description of the code as implemented.", META))
 
 
 # ======================================================================
@@ -1038,7 +1038,7 @@ def later_pages(canvas, doc):
     canvas.line(20 * mm, 285 * mm, 190 * mm, 285 * mm)
     canvas.setFont("Helvetica-Bold", 7.5)
     canvas.setFillColor(GREY)
-    canvas.drawString(20 * mm, 287 * mm, "AUDITIFY")
+    canvas.drawString(20 * mm, 287 * mm, "DealerSiteAudit ")
     canvas.setFont("Helvetica", 7.5)
     canvas.drawRightString(190 * mm, 287 * mm, "SEO Parameter Implementation")
     # footer
@@ -1060,6 +1060,6 @@ doc = SimpleDocTemplate(OUT, pagesize=A4,
                         leftMargin=20 * mm, rightMargin=20 * mm,
                         topMargin=20 * mm, bottomMargin=18 * mm,
                         title="SEO Parameter Implementation",
-                        author="Auditify")
+                        author="DealerSiteAudit ")
 doc.build(story, onFirstPage=first_page, onLaterPages=later_pages)
 print(f"PDF written to {OUT}")

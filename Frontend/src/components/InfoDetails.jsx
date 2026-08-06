@@ -2507,27 +2507,6 @@ export const InfoDetails = {
             "Enforce strong authentication (MFA) on all administrative entry points"
         ]
     },
-    MFA_Enabled: {
-        title: "Multi-Factor Authentication (MFA)",
-        whatThisParameterIs: "MFA (Multi-Factor Authentication) adds an extra layer of security beyond just a password, like a code sent to your phone.",
-        whatItCalculates: "MFA only matters if a login exists, so we first check for an authentication surface (password field or login link). If none, this is marked Not Applicable and excluded from the score. If a login exists, we grade the evidence: genuine MFA signals (OTP input, '2FA' keywords) pass; SSO/federated login is a warning (it may delegate MFA but that can't be confirmed); single-factor password-only is a warning. Enforcement cannot be proven without credentials.",
-        whyItMatters: "Even if someone steals your password, MFA ensures they still can't get in. It's the strongest protection for sensitive customer and admin accounts.",
-        thresholds: {
-            good: "Genuine MFA signal detected at the login (OTP input / 2FA keywords)",
-            needsImprovement: "Login exists but only SSO or single-factor password detected",
-            poor: "Not applicable when no login exists (excluded from the score)"
-        },
-        actualReasonsForFailure: [
-            "A login exists but only single-factor (password) authentication was detected",
-            "Login is delegated to SSO; native MFA enforcement could not be confirmed",
-            "No MFA input or keyword was visible on the authentication surface"
-        ],
-        howToOvercomeFailure: [
-            "Offer and enforce MFA (authenticator app, OTP, or security key) for customer and admin accounts",
-            "If using SSO, confirm the identity provider enforces MFA",
-            "Note: a post-login MFA step may not be visible to an unauthenticated scan"
-        ]
-    },
     Forms_Use_HTTPS: {
         title: "Secure Form Submission",
         whatThisParameterIs: "Secure Form Submission ensures that any info someone types into your forms (like a password) is sent safely and privately.",
@@ -4436,7 +4415,7 @@ export const InfoDetails = {
                 <p>A graded weighted average over the parameters that apply to this page: <code>Σ(score × weight) ÷ Σ(weight)</code>. Each parameter is scored 0–100, then banded — <span className="font-semibold">≥75 passes</span>, <span className="font-semibold">25–74 warns</span>, <span className="font-semibold">below 25 fails</span>.</p>
                 <p>Because the divisor is the total weight of whichever parameters actually applied, the weights below <span className="font-semibold">do not need to add up to 100%</span>. Three parameters are page-specific and drop out where they are not relevant: FAQ / Q&amp;A blocks, sameAs breadth (home and about pages) and the E-E-A-T composite (editorial pages). A parameter whose probe could not run is renormalised out as well — never scored zero, which would punish you for a check that never happened.</p>
                 <p>Brand entity strength, markdown structure and page speed are shown for guidance but carry <span className="font-semibold">zero weight</span>, so the same signal is not counted twice here and in another section.</p>
-                <p>This is an Auditify composite index with heuristic confidence: no industry-standard external tool produces a comparable AEO score to check it against.</p>
+                <p>This is an DealerSiteAudit  composite index with heuristic confidence: no industry-standard external tool produces a comparable AEO score to check it against.</p>
             </div>
         ),
         weightage: [

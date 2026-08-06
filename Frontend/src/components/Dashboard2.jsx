@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   ResponsiveContainer,
   BarChart,
@@ -11,9 +11,10 @@ import {
   Cell,
   ReferenceLine
 } from "recharts";
-import { ArrowRight, Loader2, Bot, CheckCircle2, AlertCircle, Server, Search, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Globe } from "lucide-react";
+import { ArrowRight, ChevronDown, Loader2, Bot, CheckCircle2, AlertCircle, Server, Search, Eye, ShieldCheck, LayoutTemplate, TrendingUp, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import CircularProgress from "./CircularProgress";
+import { SectionDetailsPanel } from "./CategoryScoreCards";
 import { scoreBand } from "../utils/statusColors";
 import LivePreview from "./LivePreview";
 import UrlHeader from "./UrlHeader";
@@ -154,22 +155,29 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
     const headlineScore = Math.round(aioPct ?? aeoPct);
     const headlineLabel = aioPct != null ? "AIO Readiness" : "AEO Visibility";
-    // Per-engine reach comes from AEO; fall back to the headline when an engine
-    // hasn't reported its own score.
-    const engineScore = (key) =>
-      data?.aeo?.platforms?.[key]?.score != null
-        ? Math.round(data.aeo.platforms[key].score)
-        : headlineScore;
-
-    return {
-      headlineScore,
-      headlineLabel,
-      engines: [
-        { title: "Google Gemini", score: engineScore("gemini"), color: "#4285F4" },
-        { title: "OpenAI ChatGPT", score: engineScore("chatgpt"), color: "#10A37F" },
-        { title: "Perplexity", score: engineScore("perplexity"), color: "#A259FF" },
-      ],
+    // Per-engine reach comes from AEO, and ONLY from AEO. This used to fall back to
+    // the headline score, which meant that in the usual case — AIO Readiness lands
+    // first, AEO is still running — all three engine cards showed the same number,
+    // and that number was the AIO score wearing a "Google Gemini" label. It read as
+    // a measured per-engine result and was not one. `null` now means "this engine
+    // has not reported yet" and the card shows a spinner until the real score lands.
+    const engineScore = (key) => {
+      const score = data?.aeo?.platforms?.[key]?.score;
+      return score != null ? Math.round(score) : null;
     };
+
+    // A signed-out viewer gets `aeo` stripped to its headline by reportGating, so
+    // `platforms` is not "still loading" — it is never arriving for this viewer, and
+    // a spinner here would turn forever. Drop the grid instead.
+    const engines = data?.aeo?.locked
+      ? []
+      : [
+          { title: "Google Gemini", score: engineScore("gemini"), color: "#4285F4" },
+          { title: "OpenAI ChatGPT", score: engineScore("chatgpt"), color: "#10A37F" },
+          { title: "Perplexity", score: engineScore("perplexity"), color: "#A259FF" },
+        ];
+
+    return { headlineScore, headlineLabel, engines };
   }, [data?.aeo, data?.aioReadiness]);
 
   // Progress view is only for the window BEFORE any AI visibility result exists.
@@ -204,6 +212,14 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
 
     return () => clearInterval(interval);
   }, [completedSections, sectionMappings.length, auditSteps.length]);
+
+  // Which category card has its Findings / Issues / Recommendations open. One at a
+  // time — eight expanded panels at once is a wall of text, not an answer.
+  const [openSectionKey, setOpenSectionKey] = useState(null);
+
+  // The findings collector merges a section across every audited page. This view is
+  // one report, so that is a list of one.
+  const detailReportList = useMemo(() => (data ? [data] : []), [data]);
 
   const barData = useMemo(() => sectionMappings.map((section) => ({
     name: section.name,
@@ -294,18 +310,9 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                     <div className="flex flex-col justify-center h-full min-h-[300px] animate-in fade-in duration-500">
                       <div className="w-full max-w-lg mx-auto space-y-6">
 
-                        {/* Progress Bar */}
-                        <div className="w-full space-y-2">
-                          <div className="flex justify-end text-sm font-bold tracking-wide opacity-80">
-                            <span>{stageInfo.progress}%</span>
-                          </div>
-                          <div className="h-2 w-full bg-line dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-blue-500 transition-all duration-700 ease-out"
-                              style={{ width: `${stageInfo.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
+                        {/* No progress bar here on purpose: <AuditProgressPanel> already
+                            renders one at the top of the page off the same status poll, so
+                            a second copy just restated the same percentage twice on screen. */}
 
                         {/* Current audit phase / status — shown until the report is ready */}
                         <div className="relative overflow-hidden rounded-2xl border bg-cardsoft dark:bg-slate-800/30 border-line dark:border-slate-700/50 p-10 text-center transition-all duration-500 flex flex-col items-center">
@@ -364,15 +371,26 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                             </button>
                           </div>
 
-                          {/* Per-engine reach cards grid */}
+                          {/* Per-engine reach cards grid — absent entirely for a gated
+                              (signed-out) viewer, who has no per-engine data to wait for. */}
+                          {aiVisibility.engines.length > 0 && (
                           <div className="grid grid-cols-3 gap-3">
                             {aiVisibility.engines.map((eng) => (
                               <div key={eng.title} className={`p-3 rounded-2xl border flex flex-col items-center text-center ${darkMode ? "bg-slate-800/50 border-slate-700/60" : "bg-cardsoft border-line"}`}>
-                                <span className="text-xl font-black" style={{ color: eng.color }}>{eng.score}%</span>
+                                {/* Fixed-height slot so the card does not resize when the
+                                    spinner is replaced by the real score. */}
+                                <span className="h-7 flex items-center justify-center">
+                                  {eng.score != null ? (
+                                    <span className="text-xl font-black" style={{ color: eng.color }}>{eng.score}%</span>
+                                  ) : (
+                                    <Loader2 className="w-4 h-4 animate-spin" style={{ color: eng.color }} aria-label={`${eng.title} score still loading`} />
+                                  )}
+                                </span>
                                 <span className={`text-[11px] font-semibold mt-0.5 ${darkMode ? "text-slate-300" : "text-inksoft"}`}>{eng.title}</span>
                               </div>
                             ))}
                           </div>
+                          )}
 
                           {/* The AI result landed early — tell the user the rest is still running
                               (this replaces the progress bar, which is gone from this panel). */}
@@ -418,7 +436,9 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* Two per row at most — the cards carry a score, a status and an
+                  expandable findings panel, which needs the width to read well. */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {barData.map((item, index) => {
                   /* Determine Color & Status — a section without a Percentage keeps its
                      "Analyzing..." spinner even while the (provisional) report is open,
@@ -437,40 +457,80 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                   const statusColor = band ? band.text : "text-score-warn-ink";
                   const statusText = band ? band.label : "Analyzing...";
 
+                  const isOpen = openSectionKey === item.key;
+
                   return (
-                    <button
+                    /* A card, not a button: it now holds two separate actions — the
+                       ring opens the full section report, "View Details" expands the
+                       findings inline. Nesting those inside one <button> would be
+                       invalid markup and unreachable by keyboard. */
+                    <div
                       key={item.name}
-                      onClick={() => navigate(data?._id ? `/${item.Link}/${data._id}` : `/${item.Link}`)}
-                      className={`group relative p-6 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col items-center text-center ${darkMode ? "bg-slate-800/30 border-slate-700 hover:bg-slate-800" : "bg-card border-linesoft hover:border-slate-200"}`}
+                      className={`group relative rounded-2xl border transition-all duration-300 hover:shadow-xl flex flex-col ${isOpen ? "md:col-span-2" : ""} ${darkMode ? "bg-slate-800/30 border-slate-700" : "bg-card border-linesoft"}`}
                     >
-                      <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
-                        <ArrowRight className={`w-5 h-5 ${darkMode ? "text-slate-400" : "text-faint"}`} />
-                      </div>
-
-                      <div className="mb-6 mt-2 relative">
-                        {/* Glowing Background for Score */}
-                        {/* Hover glow reuses the card's own band, so it can never
-                            disagree with the ring or the label above it. */}
-                        <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${band ? band.solidBg : "bg-faint"}`}></div>
-                        <CircularProgress value={isDone ? score : 0} size={110} stroke={8} />
-                        <div className="absolute inset-0 flex flex-col items-center justify-center">
-                          {isDone ? (
-                            <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>
-                              {score}%
-                            </span>
-                          ) : (
-                            <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
-                          )}
+                      <button
+                        onClick={() => navigate(data?._id ? `/${item.Link}/${data._id}` : `/${item.Link}`)}
+                        title={`Open the full ${item.name} report`}
+                        className="p-6 pb-3 flex flex-col items-center text-center rounded-t-2xl"
+                      >
+                        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform group-hover:translate-x-1">
+                          <ArrowRight className={`w-5 h-5 ${darkMode ? "text-slate-400" : "text-faint"}`} />
                         </div>
+
+                        <div className="mb-5 mt-2 relative">
+                          {/* Glowing Background for Score */}
+                          {/* Hover glow reuses the card's own band, so it can never
+                              disagree with the ring or the label above it. */}
+                          <div className={`absolute inset-0 rounded-full blur-xl opacity-0 group-hover:opacity-20 transition-opacity duration-500 ${band ? band.solidBg : "bg-faint"}`}></div>
+                          <CircularProgress value={isDone ? score : 0} size={110} stroke={8} />
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            {isDone ? (
+                              <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>
+                                {score}%
+                              </span>
+                            ) : (
+                              <Loader2 className="w-6 h-6 animate-spin text-amber-500" />
+                            )}
+                          </div>
+                        </div>
+
+                        <h4 className={`text-base font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
+                          {item.name}
+                        </h4>
+                        {/* Score out of 100 in words as well as the ring — the ring
+                            reads as a proportion, the client asked for the number. */}
+                        <span className={`text-sm font-bold tabular-nums ${darkMode ? "text-slate-300" : "text-inksoft"}`}>
+                          {isDone ? `${score}/100` : "—/100"}
+                        </span>
+                        <span className={`text-xs font-semibold uppercase tracking-wider mt-1 ${statusColor}`}>
+                          {statusText}
+                        </span>
+                      </button>
+
+                      <div className="px-6 pb-5">
+                        <button
+                          onClick={() => setOpenSectionKey(isOpen ? null : item.key)}
+                          aria-expanded={isOpen}
+                          className={`w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98]
+                            ${darkMode ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-line text-inksoft hover:bg-surface-2"}`}
+                        >
+                          {/* Label tracks the state — a rotating chevron alone does not
+                              answer "did my click do anything?" */}
+                          {isOpen ? "Hide Details" : "View Details"}
+                          <ChevronDown size={13} className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />
+                        </button>
                       </div>
 
-                      <h4 className={`text-base font-semibold mb-1 ${darkMode ? "text-slate-200" : "text-inksoft"}`}>
-                        {item.name}
-                      </h4>
-                      <span className={`text-xs font-semibold uppercase tracking-wider ${statusColor}`}>
-                        {statusText}
-                      </span>
-                    </button>
+                      {isOpen && (
+                        <SectionDetailsPanel
+                          section={{ key: item.key, label: item.name, link: item.Link }}
+                          reportList={detailReportList}
+                          reportId={data?._id || null}
+                          darkMode={darkMode}
+                          onOpenSection={(id, link) => navigate(`/${link}/${id}`)}
+                        />
+                      )}
+                    </div>
                   );
                 })}
               </div>

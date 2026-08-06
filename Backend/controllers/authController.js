@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import User from '../models/User.js';
 import OTP from '../models/OTP.js';
 import PasswordReset from '../models/PasswordReset.js';
-import ActivityLog from '../models/ActivityLog.js';
+import { logActivity, touchSession } from '../utils/activityTracker.js';
 import sendEmail from '../utils/sendEmail.js';
 import generateOTP from '../utils/generateOTP.js';
 import configService from '../services/configService.js';
@@ -70,11 +70,11 @@ export const register = async (req, res) => {
     // Send OTP email
     await sendEmail({
       to: email.toLowerCase(),
-      subject: `Verify your Site Audit account – OTP: ${rawOTP}`,
+      subject: `Verify your DealerSiteAudit account – OTP: ${rawOTP}`,
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
           <h2 style="color: #1e3a8a;">Verify your account</h2>
-          <p>Please enter the following 6-digit code to verify your Site Audit account. This code is valid for 10 minutes.</p>
+          <p>Please enter the following 6-digit code to verify your DealerSiteAudit account. This code is valid for 10 minutes.</p>
           <div style="background: #f3f4f6; color: #1e3a8a; font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 5px; padding: 15px; margin: 20px 0; border-radius: 5px; font-family: monospace;">
             ${rawOTP}
           </div>
@@ -128,6 +128,13 @@ export const verifyOTP = async (req, res) => {
 
     // Successful Verification
     await OTP.deleteOne({ _id: doc._id });
+
+    // Read the verification flag BEFORE the update below flips it. This endpoint
+    // is also reachable for an already-verified account re-verifying, and without
+    // this snapshot every such visit would be counted as a fresh registration.
+    const priorState = await User.findOne({ email: email.toLowerCase() }).select('isEmailVerified');
+    const wasAlreadyVerified = !!priorState?.isEmailVerified;
+
     const user = await User.findOneAndUpdate(
       { email: email.toLowerCase() },
       {
@@ -140,17 +147,26 @@ export const verifyOTP = async (req, res) => {
       { new: true }
     );
 
-    // Log Activity
-    ActivityLog.create({
-      userId: user._id,
-      sessionId: req.tracking?.sessionId || 'N/A',
-      ip: req.tracking?.ip || '0.0.0.0',
-      device: req.tracking?.device || 'desktop',
-      browser: req.tracking?.browser || 'unknown',
-      os: req.tracking?.os || 'unknown',
+    // Log Activity.
+    //
+    // A local signup only becomes a real account HERE — register() just creates an
+    // unverified row and mails an OTP, and an unverified row can be overwritten by
+    // the next attempt. Counting registrations at register() therefore over-counted
+    // abandoned signups; the REGISTER row is written on the first verification
+    // instead, which is the moment the account starts to exist.
+    if (!wasAlreadyVerified) {
+      logActivity(req, {
+        action: 'REGISTER',
+        userId: user._id,
+        metadata: { method: 'local', email: user.email },
+      });
+    }
+    logActivity(req, {
       action: 'LOGIN',
-      metadata: { method: 'otp_verify' }
-    }).catch(err => logger.error('[ActivityLog] Failed to log OTP login', err));
+      userId: user._id,
+      metadata: { method: 'otp_verify' },
+    });
+    touchSession(req, {}, user._id);
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -169,7 +185,8 @@ export const verifyOTP = async (req, res) => {
         isEmailVerified: user.isEmailVerified,
         authProvider: user.authProvider,
         avatar: user.avatar,
-        role: user.role
+        role: user.role,
+        gscSyncPreference: user.gscSyncPreference
       }
     });
 
@@ -207,7 +224,7 @@ export const resendOTP = async (req, res) => {
 
     await sendEmail({
       to: email.toLowerCase(),
-      subject: `Verify your Site Audit account – New OTP: ${rawOTP}`,
+      subject: `Verify your DealerSiteAudit account – New OTP: ${rawOTP}`,
       html: `<h2>Verify your account</h2><p>Your new code is: <b>${rawOTP}</b>. Expired in 10 minutes.</p>`
     });
 
@@ -239,6 +256,15 @@ export const login = async (req, res) => {
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      // A wrong password is exactly the kind of FAILURE row the activity log is
+      // for — a burst of them from one IP is the signal an admin is looking for.
+      logActivity(req, {
+        action: 'FAILED_LOGIN',
+        status: 'FAILURE',
+        userId: user._id,
+        errorMessage: 'Invalid password',
+        metadata: { method: 'local_password', email: user.email },
+      });
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
@@ -259,16 +285,8 @@ export const login = async (req, res) => {
     await user.save();
 
     // Log Activity
-    ActivityLog.create({
-      userId: user._id,
-      sessionId: req.tracking?.sessionId || 'N/A',
-      ip: req.tracking?.ip || '0.0.0.0',
-      device: req.tracking?.device || 'desktop',
-      browser: req.tracking?.browser || 'unknown',
-      os: req.tracking?.os || 'unknown',
-      action: 'LOGIN',
-      metadata: { method: 'local_password' }
-    }).catch(err => logger.error('[ActivityLog] Failed to log local login', err));
+    logActivity(req, { action: 'LOGIN', userId: user._id, metadata: { method: 'local_password' } });
+    touchSession(req, {}, user._id);
 
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
@@ -286,7 +304,8 @@ export const login = async (req, res) => {
         isEmailVerified: user.isEmailVerified,
         authProvider: user.authProvider,
         avatar: user.avatar,
-        role: user.role
+        role: user.role,
+        gscSyncPreference: user.gscSyncPreference
       }
     });
 
@@ -329,7 +348,7 @@ export const forgotPassword = async (req, res) => {
 
     await sendEmail({
       to: email.toLowerCase(),
-      subject: isFirstPassword ? 'Set a password for your Site Audit account' : 'Reset your Site Audit password',
+      subject: isFirstPassword ? 'Set a password for your DealerSiteAudit account' : 'Reset your DealerSiteAudit password',
       html: `
         <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; text-align: center;">
           <h2>${isFirstPassword ? 'Set a password' : 'Reset password'}</h2>
@@ -396,17 +415,18 @@ export const googleCallback = async (req, res) => {
       user.loginCount += 1;
       await user.save();
 
-      // Log Activity
-      ActivityLog.create({
-        userId: user._id,
-        sessionId: req.tracking?.sessionId || 'N/A',
-        ip: req.tracking?.ip || '0.0.0.0',
-        device: req.tracking?.device || 'desktop',
-        browser: req.tracking?.browser || 'unknown',
-        os: req.tracking?.os || 'unknown',
-        action: 'LOGIN',
-        metadata: { method: 'google_oauth' }
-      }).catch(err => logger.error('[ActivityLog] Failed to log google login', err));
+      // Log Activity. A Google account that has just been created by the passport
+      // strategy has never logged in before, so its first callback IS its
+      // registration — that is the only place a Google signup can be counted.
+      if ((user.loginCount || 0) <= 1) {
+        logActivity(req, {
+          action: 'REGISTER',
+          userId: user._id,
+          metadata: { method: 'google', email: user.email },
+        });
+      }
+      logActivity(req, { action: 'LOGIN', userId: user._id, metadata: { method: 'google_oauth' } });
+      touchSession(req, {}, user._id);
     }
 
     const token = jwt.sign(

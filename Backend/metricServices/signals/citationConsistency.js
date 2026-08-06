@@ -44,8 +44,24 @@ const hasValue = (v) => {
 };
 
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { isPhoneLikeDigits as localeIsPhoneLike } from '../../utils/localeFormats.js';
 
-const detectCountryCode = (url, $, org) => {
+const detectCountryCode = (url, $, org, market = null) => {
+    // 0. An explicitly resolved market wins outright.
+    //
+    // This signal predates the locale pack and grew its own country detection,
+    // which is why it was the one parameter that already worked for Australia.
+    // Now that the run resolves a market once at the top (utils/marketResolver.js),
+    // that decision has to be authoritative here too — otherwise a visitor who
+    // selects Australia could still get US phone parsing on a .com domain whose
+    // schema and footer are silent, and the run would be scoring two different
+    // markets at once. The detection below stays as the fallback for callers
+    // that have no market to give.
+    if (market) {
+        const m = String(market).trim().toUpperCase();
+        if (/^[A-Z]{2}$/.test(m)) return m;
+    }
+
     // 1. Schema address (addressCountry)
     const addr = org && org.address && typeof org.address === 'object' ? org.address : null;
     const schemaCountry = addr?.addressCountry || (org && typeof org.address === 'object' && org.address?.addressCountry);
@@ -124,33 +140,35 @@ const normPhone = (s, countryCode = 'US') => {
     } catch (e) {
         // fallback
     }
+    // Market-aware fallback: an AU 13-number is a real, dialable number that
+    // libphonenumber does not consider "valid", so slicing to 10 digits would
+    // discard it entirely.
     const d = String(s || '').replace(/\D/g, '');
-    return d.length >= 10 ? d.slice(-10) : null;
+    if (!d) return null;
+    return localeIsPhoneLike(d, countryCode) ? d : null;
 };
 
 // Normalize a brand name for loose comparison.
 const normName = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
 
-// A real phone's national number is 10 digits, optionally with a country code
-// (+1 → 11, +91 → 12, leading 0 → 11). Anything else — times, prices, and
-// hour-ranges like "11.49 - 21.29" (8 digits) — is rejected.
-const isPhoneLikeDigits = (d) => {
-    if (d.length === 10) return true;
-    if (d.length === 11 && (d[0] === '0' || d[0] === '1')) return true;
-    if (d.length === 12 && d.startsWith('91')) return true;
-    return false;
-};
+// A real phone's national number length is a property of the MARKET, not a
+// constant. The rule this replaces was 10 digits (+ country code / trunk zero),
+// which is correct for the US and the UK but silently rejected every Australian
+// 13-number — "13 12 34" is six digits — so a dealer whose only published
+// number was a 13-number read as having no phone at all.
+// utils/localeFormats.js owns the per-market lengths.
+const isPhoneLikeDigits = (d, market) => localeIsPhoneLike(d, market);
 
 // Pull the first plausible phone number out of a blob of text. Candidates that span
 // a numeric range (a hyphen with surrounding spaces, e.g. opening hours "11.49 - 21.29")
-// are skipped, and the remainder must have a valid 10-digit phone length.
-const PHONE_RE = /\(?\+?\d[\d\s().\-]{6,13}\d/g;
-const phoneFromText = (text) => {
+// are skipped, and the remainder must be a valid length in this market.
+const PHONE_RE = /\(?\+?\d[\d\s().\-]{4,13}\d/g;
+const phoneFromText = (text, market) => {
     const candidates = String(text || '').match(PHONE_RE) || [];
     for (const c of candidates) {
         if (/\d\s*[-–—]\s+\d|\d\s+[-–—]\s*\d/.test(c)) continue; // a "21 - 49" style range, not a phone
         const digits = c.replace(/\D/g, '');
-        if (isPhoneLikeDigits(digits)) return c.replace(/\s+/g, ' ').trim();
+        if (isPhoneLikeDigits(digits, market)) return c.replace(/\s+/g, ' ').trim();
     }
     return null;
 };
@@ -158,17 +176,17 @@ const phoneFromText = (text) => {
 // Find a phone shown to humans. Try the most specific sources first (tel: link, then
 // elements explicitly marked as phone/contact), and only fall back to the whole
 // footer/body — scanning broad containers first would catch address digits by mistake.
-const findPagePhone = ($) => {
+const findPagePhone = ($, market) => {
     if (!$) return null;
     const tel = $('a[href^="tel:"]').first().attr('href');
     if (tel) { const t = tel.replace(/^tel:/i, '').trim(); if (t) return t; }
     const selectors = ['[itemprop="telephone"]', '[class*="phone" i]', '[class*="tel" i]', '[id*="phone" i]', '[class*="contact" i]', '[id*="contact" i]', 'footer', 'address'];
     for (const sel of selectors) {
         let found = null;
-        $(sel).each((_, el) => { if (found) return; found = phoneFromText($(el).text()); });
+        $(sel).each((_, el) => { if (found) return; found = phoneFromText($(el).text(), market); });
         if (found) return found;
     }
-    return phoneFromText($('body').text());
+    return phoneFromText($('body').text(), market);
 };
 
 // Find a human-visible address: <address> tag → elements/areas marked as an address.
@@ -191,7 +209,7 @@ const namesAgree = (a, b) => {
     return nb.split(' ').some((w) => w.length >= 3 && ta.has(w));
 };
 
-const analyzeCitationConsistency = (url, $) => {
+const analyzeCitationConsistency = (url, $, market = null) => {
     try {
         // ── Gather org schema ──
         const objects = [];
@@ -205,7 +223,7 @@ const analyzeCitationConsistency = (url, $) => {
         const addr = org && org.address && typeof org.address === 'object' ? org.address : null;
         const addrString = org && typeof org.address === 'string' ? org.address : null;
 
-        const countryCode = detectCountryCode(url, $, org);
+        const countryCode = detectCountryCode(url, $, org, market);
 
         // ── Brand-name sources ──
         const ogSiteName = $('meta[property="og:site_name"]').attr('content') || null;
@@ -299,7 +317,7 @@ const analyzeCitationConsistency = (url, $) => {
         });
         const distinctPhoneDisplays = [...phoneMap.values()];
         
-        let pagePhone = findPagePhone($);
+        let pagePhone = findPagePhone($, countryCode);
         if (pagePhone && (pagePhone.trim() === '0' || pagePhone.replace(/\D/g, '') === '0' || pagePhone.replace(/\D/g, '') === '')) {
             pagePhone = null;
         }

@@ -56,74 +56,106 @@ function table(widths, headerLabels, rows) {
 const H1 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_1, children: [new TextRun(t)] });
 const H2 = (t) => new Paragraph({ heading: HeadingLevel.HEADING_2, children: [new TextRun(t)] });
 const P = (runs, opts = {}) =>
-  new Paragraph({ spacing: { after: 120 }, ...opts,
-    children: Array.isArray(runs) ? runs : [new TextRun({ text: runs, size: 22 })] });
+  new Paragraph({
+    spacing: { after: 120 }, ...opts,
+    children: Array.isArray(runs) ? runs : [new TextRun({ text: runs, size: 22 })]
+  });
 const bullet = (runs) =>
-  new Paragraph({ numbering: { reference: "bullets", level: 0 }, spacing: { after: 60 },
-    children: Array.isArray(runs) ? runs : [new TextRun({ text: runs, size: 22 })] });
+  new Paragraph({
+    numbering: { reference: "bullets", level: 0 }, spacing: { after: 60 },
+    children: Array.isArray(runs) ? runs : [new TextRun({ text: runs, size: 22 })]
+  });
 const code = (t) =>
-  new Paragraph({ spacing: { after: 60 }, shading: { fill: "F2F2F2", type: ShadingType.CLEAR },
-    children: [new TextRun({ text: t, font: "Consolas", size: 18 })] });
+  new Paragraph({
+    spacing: { after: 60 }, shading: { fill: "F2F2F2", type: ShadingType.CLEAR },
+    children: [new TextRun({ text: t, font: "Consolas", size: 18 })]
+  });
 const b = (t) => new TextRun({ text: t, bold: true, size: 22 });
 const r = (t) => new TextRun({ text: t, size: 22 });
 
 const doc = new Document({
-  creator: "Auditify",
+  creator: "DealerSiteAudit ",
   title: "Work Log — 10 June 2026",
   styles: {
     default: { document: { run: { font: "Arial", size: 22, color: "222222" } } },
     paragraphStyles: [
-      { id: "Title", name: "Title", basedOn: "Normal", next: "Normal",
+      {
+        id: "Title", name: "Title", basedOn: "Normal", next: "Normal",
         run: { size: 56, bold: true, color: NAVY, font: "Arial" },
-        paragraph: { spacing: { after: 80 } } },
-      { id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
+        paragraph: { spacing: { after: 80 } }
+      },
+      {
+        id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true,
         run: { size: 30, bold: true, color: NAVY, font: "Arial" },
-        paragraph: { spacing: { before: 320, after: 160 }, outlineLevel: 0,
-          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: BLUE, space: 4 } } } },
-      { id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
+        paragraph: {
+          spacing: { before: 320, after: 160 }, outlineLevel: 0,
+          border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: BLUE, space: 4 } }
+        }
+      },
+      {
+        id: "Heading2", name: "Heading 2", basedOn: "Normal", next: "Normal", quickFormat: true,
         run: { size: 24, bold: true, color: BLUE, font: "Arial" },
-        paragraph: { spacing: { before: 220, after: 100 }, outlineLevel: 1 } },
+        paragraph: { spacing: { before: 220, after: 100 }, outlineLevel: 1 }
+      },
     ],
   },
   numbering: {
     config: [
-      { reference: "bullets",
-        levels: [{ level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT,
-          style: { paragraph: { indent: { left: 540, hanging: 260 } } } }] },
+      {
+        reference: "bullets",
+        levels: [{
+          level: 0, format: LevelFormat.BULLET, text: "•", alignment: AlignmentType.LEFT,
+          style: { paragraph: { indent: { left: 540, hanging: 260 } } }
+        }]
+      },
     ],
   },
   sections: [{
     properties: {
-      page: { size: { width: 12240, height: 15840 },
-        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 } },
+      page: {
+        size: { width: 12240, height: 15840 },
+        margin: { top: 1440, right: 1440, bottom: 1440, left: 1440 }
+      },
     },
     headers: {
-      default: new Header({ children: [new Paragraph({
-        tabStops: [{ type: TabStopType.RIGHT, position: 9360 }],
-        border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "BFBFBF", space: 4 } },
-        children: [
-          new TextRun({ text: "Auditify — Development Work Log", color: GREY, size: 16 }),
-          new TextRun({ text: "\tDheeraj Saini", color: GREY, size: 16 }),
-        ] })] }),
+      default: new Header({
+        children: [new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: 9360 }],
+          border: { bottom: { style: BorderStyle.SINGLE, size: 4, color: "BFBFBF", space: 4 } },
+          children: [
+            new TextRun({ text: "Auditify — Development Work Log", color: GREY, size: 16 }),
+            new TextRun({ text: "\tDheeraj Saini", color: GREY, size: 16 }),
+          ]
+        })]
+      }),
     },
     footers: {
-      default: new Footer({ children: [new Paragraph({
-        tabStops: [{ type: TabStopType.RIGHT, position: 9360 }],
-        children: [
-          new TextRun({ text: "Confidential", color: GREY, size: 16 }),
-          new TextRun({ text: "\tPage ", color: GREY, size: 16 }),
-          new TextRun({ children: [PageNumber.CURRENT], color: GREY, size: 16 }),
-          new TextRun({ text: " of ", color: GREY, size: 16 }),
-          new TextRun({ children: [PageNumber.TOTAL_PAGES], color: GREY, size: 16 }),
-        ] })] }),
+      default: new Footer({
+        children: [new Paragraph({
+          tabStops: [{ type: TabStopType.RIGHT, position: 9360 }],
+          children: [
+            new TextRun({ text: "Confidential", color: GREY, size: 16 }),
+            new TextRun({ text: "\tPage ", color: GREY, size: 16 }),
+            new TextRun({ children: [PageNumber.CURRENT], color: GREY, size: 16 }),
+            new TextRun({ text: " of ", color: GREY, size: 16 }),
+            new TextRun({ children: [PageNumber.TOTAL_PAGES], color: GREY, size: 16 }),
+          ]
+        })]
+      }),
     },
     children: [
-      new Paragraph({ style: "Title", spacing: { before: 2200, after: 80 },
-        children: [new TextRun("Daily Work Log")] }),
-      new Paragraph({ spacing: { after: 40 },
-        children: [new TextRun({ text: "Auditify — Dealership Website Audit Platform", size: 26, color: BLUE })] }),
-      new Paragraph({ spacing: { after: 600 },
-        children: [new TextRun({ text: "Work performed on Wednesday, 10 June 2026", size: 22, italics: true, color: GREY })] }),
+      new Paragraph({
+        style: "Title", spacing: { before: 2200, after: 80 },
+        children: [new TextRun("Daily Work Log")]
+      }),
+      new Paragraph({
+        spacing: { after: 40 },
+        children: [new TextRun({ text: "Auditify — Dealership Website Audit Platform", size: 26, color: BLUE })]
+      }),
+      new Paragraph({
+        spacing: { after: 600 },
+        children: [new TextRun({ text: "Work performed on Wednesday, 10 June 2026", size: 22, italics: true, color: GREY })]
+      }),
 
       table([3120, 6240], ["Field", "Detail"], [
         ["Date", "Wednesday, 10 June 2026"],
@@ -136,8 +168,10 @@ const doc = new Document({
 
       new Paragraph({ children: [new PageBreak()] }),
 
-      new Paragraph({ spacing: { after: 120 },
-        children: [new TextRun({ text: "Contents", bold: true, size: 28, color: NAVY })] }),
+      new Paragraph({
+        spacing: { after: 120 },
+        children: [new TextRun({ text: "Contents", bold: true, size: 28, color: NAVY })]
+      }),
       new TableOfContents("Contents", { hyperlink: true, headingStyleRange: "1-2" }),
 
       new Paragraph({ children: [new PageBreak()] }),

@@ -17,10 +17,14 @@
  * schema keys they correspond to.
  */
 
-// securityOrCompliance / UXOrContentStructure / conversionAndLeadFlow / aioReadiness / aeo
-// map to the five gated display names. technicalPerformance, onPageSEO and
-// accessibility are free and are never touched.
+// Every pillar. Three of these (technicalPerformance, onPageSEO, accessibility)
+// used to be free in full — a signed-out visitor read their whole findings and fix
+// list. The product line is now "basic score for everyone, detail behind sign-up",
+// so the detail behind all eight is stripped and only the score survives.
 const GATED_SECTION_KEYS = [
+  "technicalPerformance",
+  "onPageSEO",
+  "accessibility",
   "securityOrCompliance",
   "UXOrContentStructure",
   "conversionAndLeadFlow",

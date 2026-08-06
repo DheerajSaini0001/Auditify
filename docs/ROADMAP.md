@@ -1,4 +1,4 @@
-# 🚀 Auditify — Master Implementation Roadmap
+# 🚀 DealerSiteAudit  — Master Implementation Roadmap
 
 > **Source Documents:** `new.txt`, `Automotive_Dealer_Website_Audit_Framework.docx`, `Dealership Audit.docx`
 > **Generated:** 2026-06-08 | **Status:** PLANNING
@@ -325,7 +325,7 @@
 - **Files:** `Backend/utils/sendEmail.js`, `Backend/controllers/pdfController.js`, new endpoint
 - **Required Implementation:**
   1. `POST /api/report/:id/email` — validate email, generate PDF, send via Nodemailer
-  2. Email template with branding (Auditify/Site Audit header)
+  2. Email template with branding (DealerSiteAudit /Site Audit header)
   3. Option to send Dealer Report or Developer Report (or both)
   4. Rate limit email sending (max 3 per audit per hour)
   5. Track email sends in AuditLog

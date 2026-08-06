@@ -145,7 +145,7 @@ export default function PrivacyPolicyPage() {
               <Section id="keep" title="How long we keep it">
                 <Bullets
                   items={[
-                    "Full reports are deleted automatically about three hours after the check finishes. Download the PDF if you want to keep a copy.",
+                    "Full reports are deleted automatically 24 hours after the check finishes. Download the PDF if you want to keep a copy.",
                     "A short record of each check — the address, the score and the date, along with the visit details listed above — stays in our logs.",
                     "Sign-in codes expire in 10 minutes. Password reset links expire in 1 hour.",
                     "Your account details are kept until you ask us to delete your account.",

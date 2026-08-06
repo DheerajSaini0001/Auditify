@@ -11,18 +11,38 @@
  *   • Author / staff credentials     — bylines with titles, Person jobTitle schema       (max 20)
  */
 
-const CERTIFICATIONS = /\base.?certified\b|ase certified|manufacturer.?certified|factory.?certified|certified (technician|pre.?owned|dealer|service)|\bcpo\b|accredited|bbb accredited|\blicensed\b|state.?certified|iso ?\d{3,}|nada certified|master technician/gi;
+import { getLocale } from "../../config/locale/index.js";
+
+// Credential vocabulary that means the same thing in any market.
+const CERT_UNIVERSAL = "manufacturer.?certified|factory.?certified|certified (technician|pre.?owned|dealer|service)|\\bcpo\\b|accredited|\\blicensed\\b|state.?certified|iso ?\\d{3,}|master technician|authorised dealer|authorized dealer";
+
+const escapeRe = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Build the certification matcher for a market.
+ *
+ * This is the swap the norms reference ranks 6th by score impact: ASE, NADA and
+ * BBB are the American credential set and none of the three exists in
+ * Australia, where statutory and trade credibility comes from the dealer
+ * licence number, ABN, AADA, the state motor-trades associations and the
+ * auto-club approvals. Grading an Australian dealer against the US list read a
+ * fully-credentialled business as having none.
+ */
+const certificationsFor = (market) => {
+  const creds = getLocale(market).credentials.map(escapeRe).join("|");
+  return new RegExp(`${CERT_UNIVERSAL}|${creds}`, "gi");
+};
 const AWARDS = /award.?winning|award winner|dealer of the year|best of \w+|top.?rated|#1 (dealer|volume|rated)|five.?star dealer|president'?s award|excellence award|customer satisfaction award|recognized (as|for)/i;
 const TENURE = /since (18|19|20)\d{2}|established (in )?(18|19|20)\d{2}|for (over|more than) ?\d{1,3}\+? years|\d{2,3}\+? years (of|in) (business|experience|service|the)|serving .* (since|for)|family.?owned (since|for)/i;
 const AUTHOR_LANG = /about the author|written by|reviewed by|our (certified|expert|specialist)|meet our (specialist|expert|advisor)/i;
 
-const analyzeExpertiseSignals = (url, $) => {
+const analyzeExpertiseSignals = (url, $, market = null) => {
     try {
         const text = $('body').text();
         const ld = $('script[type="application/ld+json"]').text() || '';
 
         // ── Certifications (max 35) ──
-        const certHits = new Set((text.match(CERTIFICATIONS) || []).map((m) => m.toLowerCase())).size;
+        const certHits = new Set((text.match(certificationsFor(market)) || []).map((m) => m.toLowerCase())).size;
         const credentials = certHits >= 3 ? 35 : certHits === 2 ? 26 : certHits === 1 ? 16 : 0;
 
         // ── Awards (max 25) ──
@@ -42,7 +62,9 @@ const analyzeExpertiseSignals = (url, $) => {
         const score = Math.min(100, credentials + awards + tenure + authorExpertise);
 
         const issues = [];
-        if (credentials < 35) issues.push('Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page.');
+        if (credentials < 35) issues.push(getLocale(market).code === 'AU'
+            ? 'Surface your credentials prominently — dealer licence number (LMCT/MD), ABN, AADA or state motor-trades membership (VACC, MTA), and RACV/NRMA/RACQ approval.'
+            : 'Surface certifications/accreditations (ASE, manufacturer-certified, BBB accredited, licensed) prominently on the page.');
         if (!awards) issues.push('Showcase any awards or recognition ("Dealer of the Year", "Top-Rated", customer-satisfaction awards).');
         if (!tenure) issues.push('State your track record — years in business ("Serving the area since 1995", "30+ years").');
         if (authorExpertise < 20) issues.push('Attribute content to credentialed people — author bylines with titles and Person/jobTitle schema.');

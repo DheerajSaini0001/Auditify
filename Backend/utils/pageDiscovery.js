@@ -4,7 +4,8 @@ import { parseStringPromise } from "xml2js";
 import { validateUrlSafety } from "./ssrfGuard.js";
 import discoverPages, { fetchRenderedPageLinks } from "./sitemapCrawler.js"; // Playwright fallback (bot-protected / JS-only sites)
 import logger from "./logger.js";
-import { classifyPageType, classifyCorporatePageType } from "./pageClassifier.js";
+import { classifyPageType, classifyCorporatePageType, classifyServicePageType } from "./pageClassifier.js";
+import { keyPagesFor } from "../config/siteTypeProfiles.js";
 
 /**
  * Dealership page discovery.
@@ -191,6 +192,21 @@ const CORPORATE_DISPLAY = [
   { key: "content", label: "Content", hint: "Blog, guides & FAQ" },
 ];
 
+// The checklist for a service centre or repair garage (siteType "service").
+// No SRP/VDP/trade/lease — these businesses sell labour, not vehicles, and
+// reporting four missing inventory pages against them was exactly the
+// false-negative the parameter matrix flagged. Booking leads the list after
+// Home because it is the entire conversion funnel for both sub-types.
+const SERVICE_DISPLAY = [
+  { key: "home", label: "Home", hint: "Homepage" },
+  { key: "booking", label: "Book / Appointment", hint: "Online booking or appointment request — the main funnel" },
+  { key: "service", label: "Services", hint: "Service menu, repairs, parts & tyres" },
+  { key: "pricing", label: "Pricing & Quotes", hint: "Published prices, labour rates, quote or estimate form" },
+  { key: "locations", label: "Locations", hint: "Branches, service areas & directions" },
+  { key: "about", label: "About", hint: "The business, its technicians & accreditations" },
+  { key: "content", label: "Content", hint: "Blog, car-care tips & FAQ" },
+];
+
 // Conventional URL slugs per category, hub-first. Dealership sites overwhelmingly
 // use these paths, so when a page exists but is absent from the sitemap AND not
 // linked from the homepage (reachable only by a secondary route), probing the
@@ -231,7 +247,11 @@ const conditionOf = (rawUrl) => {
 // is meaningless for a corporate site (which never has srp/vdp), so it simply
 // never early-exits there and falls back to the bounded read limits instead.
 function categoryOf(raw, siteType = "dealer") {
-  const key = siteType === "corporate" ? classifyCorporatePageType(raw) : classifyPageType(raw);
+  const classify =
+    siteType === "corporate" ? classifyCorporatePageType
+      : siteType === "service" ? classifyServicePageType
+        : classifyPageType;
+  const key = classify(raw);
   if (key === "generic") return null;
   let path, lower;
   try {
@@ -549,13 +569,15 @@ async function sampleVdps(byCat, srpPages, origin) {
  *   Out-of-scope categories skip the expensive resolution (live-status checks,
  *   SRP planning, VDP sampling) so the backend does no work for pages the user
  *   excluded in the form.
- * @param {'dealer'|'corporate'} siteType  which taxonomy to discover against
+ * @param {string|null} siteSubType  franchise/independent/service/repair/corporate —
+ *   picks WHICH pages of that taxonomy the audit will crawl (config/siteTypeProfiles.js)
+ * @param {'dealer'|'service'|'corporate'} siteType  which taxonomy to discover against
  *   (see Backend/utils/siteTypeDetector.js). Defaults to "dealer" — the
  *   original, unchanged behavior — for "unknown"/unset siteType too, so nothing
  *   regresses when the classifier can't confidently tell.
  * @returns {Promise<object>} discovery result (source, steps, categories, …)
  */
-export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dealer") {
+export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dealer", siteSubType = null) {
   // A category is in scope when no filter was passed, or the filter includes it.
   const scopeSet = Array.isArray(scopes) && scopes.length ? new Set(scopes) : null;
   const inScope = (key) => !scopeSet || scopeSet.has(key);
@@ -700,13 +722,25 @@ export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dea
   // but that fan-out is a DEALER-only concept (inventory/vehicle sampling); a
   // corporate site has no SRP/VDP category at all, so every one of its
   // categories resolves like the dealer path's single-URL categories.
+  // A service/repair site has no inventory either, so it takes the same
+  // single-URL resolution path as a corporate site — the SRP fan-out and VDP
+  // sampling below are inventory concepts that simply don't exist for it.
   const isCorporate = siteType === "corporate";
+  const isService = siteType === "service";
+  const noInventory = isCorporate || isService;
   const ranked = rankCandidates(pool, siteType);
-  const DISPLAY_TABLE = isCorporate ? CORPORATE_DISPLAY : DISPLAY;
+
+  // Report exactly the pages an audit of this site type will actually crawl —
+  // the plan in config/siteTypeProfiles.js, plus home. Reporting the full
+  // taxonomy here while the worker crawls six of it would promise a checklist
+  // the run never delivers.
+  const planned = new Set(["home", ...keyPagesFor(siteSubType)]);
+  const fullTable = isCorporate ? CORPORATE_DISPLAY : isService ? SERVICE_DISPLAY : DISPLAY;
+  const DISPLAY_TABLE = fullTable.filter((d) => planned.has(d.key));
 
   // Only resolve the categories the user kept in scope — out-of-scope ones skip the
   // live-status checks / SRP planning / VDP sampling entirely (no wasted backend work).
-  const SINGLE_KEYS = Object.keys(ranked).filter((k) => (isCorporate || (k !== "srp" && k !== "vdp")) && inScope(k));
+  const SINGLE_KEYS = Object.keys(ranked).filter((k) => (noInventory || (k !== "srp" && k !== "vdp")) && inScope(k));
   const picks = {};
   const resolved = await Promise.all(
     SINGLE_KEYS.map(async (key) => [key, await firstLiveUrl(ranked[key])])
@@ -714,9 +748,9 @@ export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dea
   for (const [key, url] of resolved) if (url) picks[key] = url;
 
   // SRP: both new + used listing pages when separate, else the single page.
-  const srpPages = !isCorporate && inScope("srp") ? await planSrp(ranked) : [];
+  const srpPages = !noInventory && inScope("srp") ? await planSrp(ranked) : [];
   // VDP: a 2-car sample (1 used + 1 new when both exist), mined off the SRP(s) too.
-  const vdpPages = !isCorporate && inScope("vdp") ? await sampleVdps(ranked, srpPages, origin) : [];
+  const vdpPages = !noInventory && inScope("vdp") ? await sampleVdps(ranked, srpPages, origin) : [];
 
   // Build the per-category page lists the audit will fan out over. Each entry is
   // { url, label, condition } — `label` distinguishes the multiple SRP/VDP samples.

@@ -1,6 +1,6 @@
 import {
   Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
-  MapPin, Megaphone, Building2,
+  MapPin, Megaphone, Building2, CalendarCheck, Receipt,
 } from "lucide-react";
 
 /**
@@ -38,9 +38,32 @@ export const CORPORATE_PAGE_TYPES = [
 ];
 
 /**
+ * Service centres and repair garages — shown once discovery reports siteType
+ * "service" (sub-types "service" and "repair" share this catalog; they differ in
+ * how parameters are weighted, not in which pages exist). No inventory pages:
+ * these businesses sell labour, and offering SRP/VDP/trade/lease scopes for them
+ * would only produce "not found" rows for pages they correctly do not have.
+ */
+export const SERVICE_PAGE_TYPES = [
+  { key: 'home', label: 'Home Page', desc: 'Hero, services, primary CTAs', Icon: Home },
+  { key: 'booking', label: 'Book / Appointment', desc: 'Online booking — the main funnel', Icon: CalendarCheck },
+  { key: 'service', label: 'Services', desc: 'Service menu, repairs, parts & tyres', Icon: Wrench },
+  { key: 'pricing', label: 'Pricing & Quotes', desc: 'Prices, labour rates, quote form', Icon: Receipt },
+  { key: 'locations', label: 'Locations', desc: 'Branches, service areas, directions', Icon: MapPin },
+  { key: 'about', label: 'About / Contact', desc: 'Team, accreditations, hours', Icon: Info },
+  { key: 'content', label: 'Content / Blog', desc: 'Car-care tips, FAQ, guides', Icon: Newspaper },
+];
+
+/** The catalog for a given detected siteType. Falls back to the dealer set. */
+export const pageTypesFor = (siteType) =>
+  siteType === 'corporate' ? CORPORATE_PAGE_TYPES
+    : siteType === 'service' ? SERVICE_PAGE_TYPES
+      : PAGE_TYPES;
+
+/**
  * The default scope for a new audit: just the URL the user typed.
  *
- * 'home' is the one key present in BOTH catalogs, so it survives whichever site
+ * 'home' is the one key present in EVERY catalog, so it survives whichever site
  * type discovery comes back with — no cross-catalog union needed.
  */
 export const DEFAULT_PAGE_SCOPES = ['home'];

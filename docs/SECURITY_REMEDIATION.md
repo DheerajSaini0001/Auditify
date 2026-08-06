@@ -1,4 +1,4 @@
-# Auditify — Security Remediation
+# DealerSiteAudit  — Security Remediation
 
 Status of the vulnerability review and fixes. **Code-level critical + high issues have been
 fixed in the working tree** (see "Fixed in code" below). The items in sections 1–3 require

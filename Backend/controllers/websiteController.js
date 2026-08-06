@@ -11,6 +11,32 @@ const normalize = (u) =>
     .replace(/^https?:\/\//, "")
     .replace(/^sc-domain:/, "");
 
+/* ===========================
+   🪦 Deleted-property tombstones
+   ===========================
+   A deleted property has to stay deleted across syncs, logins and browsers.
+   Google keeps returning it, so the only thing that can remember the user's
+   intent is us. `removedWebsites` holds normalized urls; adding a property back
+   by hand clears its tombstone, which is the intended way to undo a deletion. */
+const isTombstoned = (user, url) => {
+  const norm = normalize(url);
+  return (user.removedWebsites || []).some(entry => entry.url === norm);
+};
+
+const addTombstone = (user, url) => {
+  const norm = normalize(url);
+  if (!user.removedWebsites) user.removedWebsites = [];
+  if (!user.removedWebsites.some(entry => entry.url === norm)) {
+    user.removedWebsites.push({ url: norm, removedAt: new Date() });
+  }
+};
+
+const clearTombstone = (user, url) => {
+  const norm = normalize(url);
+  if (!user.removedWebsites?.length) return;
+  user.removedWebsites = user.removedWebsites.filter(entry => entry.url !== norm);
+};
+
 
 /* ===========================
    1. Add Website
@@ -38,6 +64,10 @@ export const addWebsite = async (req, res) => {
     if (exists) {
       return res.status(409).json({ success: false, message: 'Website already added' });
     }
+
+    // Adding a property by hand is how a user undoes an earlier deletion, so it
+    // lifts the tombstone and lets future syncs manage it again.
+    clearTombstone(req.user, url);
 
     req.user.websites.push({
       url,
@@ -159,6 +189,13 @@ export const removeWebsite = async (req, res) => {
   try {
     const { websiteId } = req.params;
 
+    const website = req.user.websites.id(websiteId);
+    if (!website) {
+      return res.status(404).json({ success: false, message: 'Website not found' });
+    }
+
+    // Record the tombstone before the pull — afterwards the url is gone.
+    addTombstone(req.user, website.url);
     req.user.websites.pull({ _id: websiteId });
     await req.user.save();
 
@@ -172,7 +209,36 @@ export const removeWebsite = async (req, res) => {
 
 
 /* ===========================
-   5. Sync Websites (ROBUST VERSION)
+   5. GSC sync preference
+   ===========================
+   Nothing is imported from Search Console until the user has answered the
+   prompt, so a first sign-in can no longer silently fill the dashboard with
+   properties the user did not ask for. */
+export const setGscSyncPreference = async (req, res) => {
+  try {
+    const { preference } = req.body;
+
+    if (!['enabled', 'disabled'].includes(preference)) {
+      return res.status(400).json({
+        success: false,
+        message: "preference must be 'enabled' or 'disabled'"
+      });
+    }
+
+    req.user.gscSyncPreference = preference;
+    await req.user.save();
+
+    res.json({ success: true, gscSyncPreference: preference });
+
+  } catch (err) {
+    logger.error('[Set GSC Sync Preference]', err);
+    res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+
+/* ===========================
+   6. Sync Websites (ROBUST VERSION)
 =========================== */
 export const syncWebsites = async (req, res) => {
   try {
@@ -233,12 +299,21 @@ export const syncWebsites = async (req, res) => {
 
     let added = 0;
     let updated = 0;
+    const skipped = [];
 
     // Define valid permission levels to prevent Mongoose validation errors
     const validPermissions = ['siteOwner', 'siteFullUser', 'siteRestrictedUser', 'siteUnverifiedUser'];
 
     for (const site of siteEntries) {
       const norm = normalize(site.siteUrl);
+
+      // The user deleted this one. Google still lists it, but re-adding it here
+      // is exactly the resurrection this sync used to be guilty of.
+      if (isTombstoned(req.user, site.siteUrl)) {
+        skipped.push(site.siteUrl);
+        continue;
+      }
+
       const existingIdx = updatedWebsites.findIndex(s => normalize(s.url) === norm);
 
       const permission = validPermissions.includes(site.permissionLevel)
@@ -281,10 +356,15 @@ export const syncWebsites = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User record not found' });
     }
 
+    const skippedNote = skipped.length
+      ? ` ${skipped.length} previously removed ${skipped.length === 1 ? 'property was' : 'properties were'} left out.`
+      : '';
+
     res.json({
       success: true,
-      message: `Successfully synced ${siteEntries.length} properties. (Added: ${added}, Updated: ${updated})`,
-      websites: updatedUser.websites
+      message: `Synced ${siteEntries.length - skipped.length} properties. (Added: ${added}, Updated: ${updated})${skippedNote}`,
+      websites: updatedUser.websites,
+      skipped
     });
 
   } catch (err) {

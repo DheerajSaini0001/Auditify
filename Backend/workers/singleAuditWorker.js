@@ -15,10 +15,43 @@ import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
-import { classifyPageType, classifyCorporatePageType } from "../utils/pageClassifier.js";
+import { classifyPageType, classifyCorporatePageType, classifyServicePageType } from "../utils/pageClassifier.js";
 import { applyWorkerConfig } from "../utils/workerConfig.js";
+import { siteWeightMultipliers, keyPagesFor, MAX_CRAWL_PAGES } from "../config/siteTypeProfiles.js";
+import { weightsForPageType } from "../utils/sectionWeights.js";
+import { resolveMarket } from "../utils/marketResolver.js";
 
-const { url, device, report, auditId, pageType: initialPageType, siteType, pageScopes, config: workerConfig } = workerData;
+const { url, device, report, auditId, pageType: initialPageType, siteType, siteSubType, pageScopes, market: selectedMarket, config: workerConfig } = workerData;
+
+// ── Market resolution (utils/marketResolver.js) ──────────────────────────────
+// Resolved BEFORE any pillar runs and never re-decided afterwards, because the
+// market chooses which reference lists every check grades against — letting it
+// change mid-run would mean two pages of the same audit scored against different
+// norms. An explicit selection is decisive on its own, so this first pass needs
+// no page content and there is no window where a pillar could see the wrong one.
+//
+// `refineMarket` is called once the landing page's DOM is available. It cannot
+// change `market` when the visitor picked one; it exists to fill in the page
+// SIGNALS, which is what turns a selection/page mismatch into the unlocalised-
+// template finding rather than a silent override.
+let marketInfo = resolveMarket({ url, selected: selectedMarket });
+const market = marketInfo.market;
+
+const refineMarket = ($) => {
+  if (!$) return marketInfo;
+  try {
+    const refined = resolveMarket({ url, $, selected: selectedMarket });
+    // Guard the invariant above: only ever adopt a refinement that agrees with
+    // the market the pillars have already been scoring against.
+    if (refined.market === market) marketInfo = refined;
+    else marketInfo = { ...refined, market, locale: marketInfo.locale };
+  } catch (err) {
+    logger.warn(`🌏 [Worker] Market signal collection failed: ${err.message}`);
+  }
+  return marketInfo;
+};
+
+logger.info(`🌏 [Worker] Scoring against ${market} norms (${marketInfo.source}, ${marketInfo.confidence} confidence).`);
 
 // Seed this thread's configService cache from the main thread's snapshot BEFORE
 // any metric service runs — googleAPI (PageSpeed) and securityCompliance read
@@ -40,9 +73,15 @@ if (seededConfigKeys.length) {
 const scopeSet = Array.isArray(pageScopes) && pageScopes.length ? new Set(pageScopes) : null;
 const scopedExtraTypes = scopeSet ? [...scopeSet].filter((k) => k !== "home") : null;
 // Corporate/OEM sites have no VDP/SRP/trade/lease/finance/service of their own —
-// classify against the corporate taxonomy instead. "unknown"/unset siteType
-// falls back to the dealer classifier, matching the app's original behavior.
-const classify = siteType === "corporate" ? classifyCorporatePageType : classifyPageType;
+// classify against the corporate taxonomy instead. Service/repair sites have no
+// inventory either, but a completely different page set (booking, service menu,
+// pricing, locations), so they get their own taxonomy too. "unknown"/unset
+// siteType falls back to the dealer classifier, matching the app's original
+// behavior.
+const classify =
+  siteType === "corporate" ? classifyCorporatePageType
+    : siteType === "service" ? classifyServicePageType
+      : classifyPageType;
 const pageType = initialPageType || classify(url);
 
 // `report` is one of: "All" (full audit), a single section name, or a comma-joined
@@ -211,46 +250,35 @@ const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || "75000", 10
 const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || "90000", 10);
 const PILLAR_TIMEOUT_MS = parseInt(process.env.PILLAR_TIMEOUT_MS || "60000", 10);
 
-// AI-forward weighting (July 2026 product decision, mirrors utils/sectionWeights.js):
-// AIO+AEO ≈ 20 combined on customer-facing pages (AEO leads), funded by A11y/UX;
-// transactional pages (trade/finance) stay ~16. Keep BOTH tables in sync.
-const SECTION_WEIGHTS_BY_PAGE_TYPE = {
-  home:    { tech: 18, seo: 18, a11y: 8,  sec: 12, ux: 10, conv: 14, aio: 8, aeo: 12 },
-  srp:     { tech: 20, seo: 20, a11y: 7,  sec: 8,  ux: 11, conv: 14, aio: 8, aeo: 12 },
-  vdp:     { tech: 18, seo: 18, a11y: 8,  sec: 8,  ux: 11, conv: 18, aio: 7, aeo: 12 },
-  specials:{ tech: 15, seo: 16, a11y: 8,  sec: 13, ux: 11, conv: 17, aio: 8, aeo: 12 },
-  lease:   { tech: 15, seo: 16, a11y: 8,  sec: 14, ux: 11, conv: 16, aio: 8, aeo: 12 },
-  trade:   { tech: 14, seo: 12, a11y: 9,  sec: 16, ux: 11, conv: 22, aio: 7, aeo: 9 },
-  finance: { tech: 14, seo: 12, a11y: 9,  sec: 22, ux: 9,  conv: 18, aio: 7, aeo: 9 },
-  service: { tech: 16, seo: 16, a11y: 8,  sec: 10, ux: 11, conv: 19, aio: 8, aeo: 12 },
-  about:   { tech: 14, seo: 16, a11y: 11, sec: 10, ux: 15, conv: 12, aio: 10,aeo: 12 },
-  content: { tech: 14, seo: 22, a11y: 9,  sec: 9,  ux: 15, conv: 7,  aio: 10,aeo: 14 },
-  generic: { tech: 18, seo: 17, a11y: 8,  sec: 12, ux: 11, conv: 14, aio: 8, aeo: 12 },
-  // Corporate/OEM page types (siteType "corporate" — no per-vehicle lead flow of
-  // its own, so Conversion weight drops and SEO/AEO — brand & answer-engine
-  // visibility — rise). `locator`'s "conversion" is successfully finding a
-  // dealer, so it keeps real Conversion weight tied to UX (map/store-finder
-  // usability). `about`/`content` reuse the existing dealer rows above.
-  models:  { tech: 18, seo: 20, a11y: 10, sec: 8,  ux: 14, conv: 10, aio: 9, aeo: 11 },
-  locator: { tech: 16, seo: 14, a11y: 8,  sec: 8,  ux: 14, conv: 20, aio: 8, aeo: 12 },
-  press:   { tech: 14, seo: 18, a11y: 10, sec: 8,  ux: 14, conv: 6,  aio: 10,aeo: 20 },
-};
+// Page tilt comes from utils/sectionWeights.js — the single copy. This file used
+// to carry a byte-identical duplicate under a slightly different vocabulary
+// (`trade`/`specials` rather than `tradein`/`offers`, matching its own
+// classifier), aligned by a "keep BOTH tables in sync" comment in each file.
+// weightsForPageType() resolves either vocabulary, so the duplicate is gone.
 
 const OverAll = (A, B, C, D, E, F, G, H, pageType = "generic") => {
-  const w = SECTION_WEIGHTS_BY_PAGE_TYPE[pageType] || SECTION_WEIGHTS_BY_PAGE_TYPE.generic;
+  // [Tech, OnPage, A11y, Security, UX, Conversion, AIO, AEO] — SECTION_ORDER.
+  const w = weightsForPageType(pageType);
+
+  // The page tilt says what kind of PAGE this is; the site profile says what
+  // kind of BUSINESS runs it (a repair shop lives on AEO and barely touches
+  // finance compliance; a franchise dealer is the reverse). They multiply.
+  // `null` for corporate/unresolved sites, in which case the page tilt stands
+  // alone exactly as it did before site sub-types existed.
+  const m = siteWeightMultipliers(siteSubType) || [1, 1, 1, 1, 1, 1, 1, 1];
 
   // A section score of null = "Not Run" (e.g. PageSpeed unavailable → Technical). It is
   // EXCLUDED from the overall and the remaining section weights are renormalized, rather
   // than counted as 0 — a measurement gap shouldn't be scored as a real failure.
   const parts = [
-    { name: "Technical Performance", score: A, weight: w.tech },
-    { name: "On-Page SEO", score: B, weight: w.seo },
-    { name: "Accessibility", score: C, weight: w.a11y },
-    { name: "Security/Compliance", score: D, weight: w.sec },
-    { name: "UX & Content Structure", score: E, weight: w.ux },
-    { name: "Conversion & Lead Flow", score: F, weight: w.conv },
-    { name: "AIO Readiness", score: G, weight: w.aio },
-    { name: "AEO", score: H, weight: w.aeo },
+    { name: "Technical Performance", score: A, weight: w[0] * m[0] },
+    { name: "On-Page SEO", score: B, weight: w[1] * m[1] },
+    { name: "Accessibility", score: C, weight: w[2] * m[2] },
+    { name: "Security/Compliance", score: D, weight: w[3] * m[3] },
+    { name: "UX & Content Structure", score: E, weight: w[4] * m[4] },
+    { name: "Conversion & Lead Flow", score: F, weight: w[5] * m[5] },
+    { name: "AIO Readiness", score: G, weight: w[6] * m[6] },
+    { name: "AEO", score: H, weight: w[7] * m[7] },
   ];
 
   let sum = 0, wsum = 0;
@@ -324,15 +352,15 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
     // [PERF] Technical runs apart from the other seven (same split as Stage 1): it waits
     // on PageSpeed (~50–75s), so the seven-pillar provisional below makes this page's
     // report viewable early; the final rollup replaces it when PageSpeed lands.
-    const techPromise = (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })();
+    const techPromise = (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch, siteSubType, market), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })();
     const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
-      (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
-      (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt), PILLAR_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
-      (async () => { const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(pageUrl, page, response, pageBrowser, pt), SEC_TIMEOUT_MS, "Security/Compliance")); send({ securityOrCompliance: r }); return r; })(),
-      (async () => { const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(dev, page, pt), PILLAR_TIMEOUT_MS, "UX & Content Structure")); send({ UXOrContentStructure: r }); return r; })(),
-      (async () => { const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pt), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow")); send({ conversionAndLeadFlow: r }); return r; })(),
-      (async () => { const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(pageUrl, page, $, pt), PILLAR_TIMEOUT_MS, "AIO Readiness")); send({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge }); return r; })(),
-      (async () => { const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(pageUrl, $, null, 100, { pageType: pt }), PILLAR_TIMEOUT_MS, "AEO")); send({ aeo: r }); return r; })(),
+      (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt, siteSubType, market), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
+      (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt, market, siteSubType), PILLAR_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
+      (async () => { const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(pageUrl, page, response, pageBrowser, pt, siteSubType, market), SEC_TIMEOUT_MS, "Security/Compliance")); send({ securityOrCompliance: r }); return r; })(),
+      (async () => { const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(dev, page, pt, siteSubType, market), PILLAR_TIMEOUT_MS, "UX & Content Structure")); send({ UXOrContentStructure: r }); return r; })(),
+      (async () => { const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pt, siteSubType, market), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow")); send({ conversionAndLeadFlow: r }); return r; })(),
+      (async () => { const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(pageUrl, page, $, pt, siteSubType, market), PILLAR_TIMEOUT_MS, "AIO Readiness")); send({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge }); return r; })(),
+      (async () => { const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(pageUrl, $, null, 100, { pageType: pt, siteSubType, market }), PILLAR_TIMEOUT_MS, "AEO")); send({ aeo: r }); return r; })(),
     ]);
 
     // Seven pillars in — publish this page's provisional rollup (Technical renormalized
@@ -455,22 +483,43 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
       service: "Service & Parts",
       trade: "Trade-In Tool",
       finance: "Financing / Credit App",
-      specials: "Lease Specials / Offers",
+      lease: "Lease Specials",
+      specials: "Offers & Specials",
       about: "About / Contact Us",
       content: "Content / Blog",
       home: "Home Page",
       generic: "Key Domain Page",
+      // Corporate/OEM taxonomy
+      models: "Models & Lineup",
+      locator: "Dealer Locator",
+      press: "Press & News",
+      // Service/repair taxonomy
+      booking: "Book / Appointment",
+      pricing: "Pricing & Quotes",
+      locations: "Locations",
     };
 
     // Classify all discovered URLs
     const classified = (discovered || [])
       .filter((u) => u !== baseUrl)
-      .map((u) => ({ url: u, type: classifyPageType(u) }));
+      .map((u) => ({ url: u, type: classify(u) }));
 
-    // Filter out excluded/generic pages (/login, /signup, /privacy), and anything
-    // the user unticked in the page picker.
+    // Which pages, and in what order, for THIS kind of business — see
+    // config/siteTypeProfiles.js. This ordering is the whole point of the cap:
+    // the slots used to go to whichever categories the crawler happened to
+    // surface first, so a dealer could spend all of them on About, Blog,
+    // Specials and Service and never fetch a VDP — the one page that unlocks
+    // VDP uniqueness, the vehicle gallery, vehicle history and sold-vehicle
+    // handling. Anything the plan doesn't name is not crawled at all.
+    const plan = keyPagesFor(siteSubType);
+    const planRank = new Map(plan.map((k, i) => [k, i]));
+    const byPlanOrder = (a, b) => planRank.get(a.type) - planRank.get(b.type);
+
+    // Filter out excluded/generic pages (/login, /signup, /privacy), anything the
+    // user unticked in the page picker, and anything this site type's plan
+    // doesn't ask for.
     const inScope = (type) => !scopeSet || scopeSet.has(type);
-    const wantedPages = classified.filter((item) => item.type !== "generic" && inScope(item.type));
+    const wantedPages = classified.filter((item) => planRank.has(item.type) && inScope(item.type));
 
     // Select 1 representative URL per wanted category
     const categoryMap = {};
@@ -488,12 +537,14 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
     // the missing-key lookup — so nothing waits for the slowest discovery step.
     //
     // MAX_KEY_PAGES is the single biggest lever on audit cost: every key page is a
-    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). Default 6 — the core
-    // dealer page set. On small servers set the MAX_KEY_PAGES env var lower
-    // (e.g. 3 on a 1-vCPU box — 7 renders serialize brutally there), or 0 to skip
-    // key pages entirely (Stage 1 / homepage only).
+    // FULL Chromium render + 8-pillar pass (~12-14 CPU-s). The default is
+    // MAX_CRAWL_PAGES minus one, because Stage 1 has already audited the home
+    // page — six pages TOTAL, not six on top of it. On small servers set the
+    // MAX_KEY_PAGES env var lower (e.g. 3 on a 1-vCPU box — renders serialize
+    // brutally there), or 0 to skip key pages entirely (homepage only).
     const envKeyPages = parseInt(process.env.MAX_KEY_PAGES ?? "", 10);
-    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : 6;
+    const MAX_KEY_PAGES = Number.isFinite(envKeyPages) && envKeyPages >= 0 ? envKeyPages : MAX_CRAWL_PAGES - 1;
+    logger.info(`🗺️ [Stage 2a] Crawl plan for ${siteSubType || "unresolved"} site: home + ${plan.join(", ")} (max ${MAX_KEY_PAGES} key pages)`);
     // Valid 24-hex ObjectId string (4-byte unix time + 8 random bytes — the same
     // shape Mongo itself generates, so mongoose casts it losslessly). Hand-rolled
     // because this id was the worker's ONLY use of mongoose, and importing all of
@@ -539,11 +590,19 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
       return jobs;
     };
 
+    // Sorted by plan order, NOT by whatever order discovery surfaced them in —
+    // when the site has more categories than the cap allows, the ones that get
+    // cut have to be the ones the plan ranked last.
     const allJobs = [];
-    allJobs.push(...release(Object.entries(categoryMap).map(([type, url]) => ({ url, type }))));
+    allJobs.push(...release(
+      Object.entries(categoryMap).map(([type, url]) => ({ url, type })).sort(byPlanOrder)
+    ));
 
-    // Ensure key automotive categories (VDP, Service, Trade, Specials) are present
-    const missingKeys = ["vdp", "service", "trade", "specials"].filter((k) => !categoryMap[k] && inScope(k));
+    // Anything the plan asked for that discovery didn't turn up. Was hard-coded
+    // to the dealer set (vdp/service/trade/specials), which meant a service or
+    // repair site never got a second look for its booking or pricing page — the
+    // two pages its whole score rests on.
+    const missingKeys = plan.filter((k) => !categoryMap[k] && inScope(k));
 
     // [PERF] …but only when there is still room for one. This lookup renders a whole
     // extra page in its own browser (measured 22.6s on a sitemap-less site) and the
@@ -563,7 +622,7 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
           for (const href of allHrefs) {
             try {
               const full = href.startsWith("http") ? href : new URL(href, baseUrl).href;
-              const t = classifyPageType(full);
+              const t = classify(full);
               if (missingKeys.includes(t) && !categoryMap[t]) {
                 categoryMap[t] = full;
                 logger.info(`🚗 Discovered missing key page (${t}): ${full}`);
@@ -582,14 +641,17 @@ async function discoverKeyPages(baseUrl, currentAuditId, device) {
 
     // Anything the missing-key lookup just added (it appends to categoryMap, so the
     // dedupe in `release` skips everything already queued).
-    allJobs.push(...release(Object.entries(categoryMap).map(([type, url]) => ({ url, type }))));
+    allJobs.push(...release(
+      Object.entries(categoryMap).map(([type, url]) => ({ url, type })).sort(byPlanOrder)
+    ));
 
-    // If still under 6 pages, backfill from remaining non-generic discovered pages.
-    // Skipped once the user restricted the page types — backfilling would quietly
-    // pull back in the very pages they unticked. Deliberately LAST: backfill depends on
-    // how many real categories exist, so it can only be decided once discovery is done.
-    if (releasedCount < MAX_KEY_PAGES && !scopeSet) {
-      allJobs.push(...release(classified.map((item) => ({ url: item.url, type: item.type }))));
+    // A site that genuinely doesn't have some of its plan's pages ends up under
+    // the cap. That is now the correct outcome and it is left alone: the old
+    // backfill topped the run up with whatever else the crawl had found, which
+    // on a 4-page garage meant auditing a random /careers page and reporting it
+    // as a key page. A short run on a small site is an honest result.
+    if (releasedCount < MAX_KEY_PAGES) {
+      logger.info(`🗺️ [Stage 2a] ${releasedCount}/${MAX_KEY_PAGES} planned pages found — this site doesn't have the rest (${plan.filter((k) => !categoryMap[k]).join(", ") || "none"}).`);
     }
 
     if (allJobs.length === 0) {
@@ -805,6 +867,28 @@ async function auditKeyPages(currentAuditId, device) {
     const screenshotUrl = screenshot ? `/api/screenshot/view/${currentAuditId}` : null;
     postProgress({ screenshot, screenshotUrl, isBotProtected });
 
+    // Landing-page DOM is available: fill in the market SIGNALS. This never
+    // changes which norms the pillars score against (see refineMarket) — it
+    // exists so a selection that contradicts the page becomes a reportable
+    // finding instead of a silent mismatch.
+    const resolvedMarket = refineMarket($);
+    postProgress({
+      market: resolvedMarket.market,
+      marketResolution: {
+        market: resolvedMarket.market,
+        marketName: resolvedMarket.locale.name,
+        source: resolvedMarket.source,
+        confidence: resolvedMarket.confidence,
+        selected: resolvedMarket.selected,
+        detected: resolvedMarket.detected,
+        signals: resolvedMarket.signals.map((s) => ({ market: s.market, source: s.source, evidence: s.evidence })),
+        conflict: resolvedMarket.conflict,
+      },
+    });
+    if (resolvedMarket.conflict) {
+      logger.info(`🌏 [Worker] Market conflict — ${resolvedMarket.conflict.summary}`);
+    }
+
     // [NEW] — Guard: if page is null (Puppeteer_Cheerio returned a partial result due to
     // a top-level detached frame), complete audit gracefully with zero scores
     if (!page) {
@@ -853,43 +937,43 @@ async function auditKeyPages(currentAuditId, device) {
       // field name + percentage so we can build the final patch + score rollup.
       const sectionRunners = {
         "Technical Performance": async () => {
-          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType, stage1Psi));
+          const r = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType, stage1Psi, siteSubType, market));
           postProgress({ technicalPerformance: r });
           return { field: "technicalPerformance", value: r, pct: r?.Percentage ?? null };
         },
         "On Page SEO": async () => {
-          const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
+          const r = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType, siteSubType, market));
           postProgress({ onPageSEO: r, siteSchema: r?.Schema });
           return { field: "onPageSEO", value: r, pct: r?.Percentage ?? null, extra: { siteSchema: r?.Schema } };
         },
         "Accessibility": async () => {
-          const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
+          const r = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType, market, siteSubType));
           postProgress({ accessibility: r });
           return { field: "accessibility", value: r, pct: r?.Percentage ?? null };
         },
         "Security/Compliance": async () => {
-          const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
+          const r = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType, siteSubType, market));
           postProgress({ securityOrCompliance: r });
           return { field: "securityOrCompliance", value: r, pct: r?.Percentage ?? null };
         },
         "UX & Content Structure": async () => {
-          const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
+          const r = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType, siteSubType, market));
           postProgress({ UXOrContentStructure: r });
           return { field: "UXOrContentStructure", value: r, pct: r?.Percentage ?? null };
         },
         "Conversion & Lead Flow": async () => {
-          const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
+          const r = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType, siteSubType, market));
           postProgress({ conversionAndLeadFlow: r });
           return { field: "conversionAndLeadFlow", value: r, pct: r?.Percentage ?? null };
         },
         "AIO (AI-Optimization) Readiness": async () => {
-          const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
+          const r = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType, siteSubType, market));
           postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
           return { field: "aioReadiness", value: r, pct: r?.Percentage ?? null, extra: { aioCompatibilityBadge: r?.AIO_Compatibility_Badge } };
         },
         "AEO (Answer Engine Optimization)": async () => {
           // AEO is a TOP-LEVEL `aeo` section field; headline is the spec-weighted Percentage.
-          const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType }));
+          const r = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType, siteSubType, market }));
           postProgress({ aeo: r });
           return { field: "aeo", value: r, pct: r?.Percentage ?? null };
         },
@@ -903,16 +987,22 @@ async function auditKeyPages(currentAuditId, device) {
         timeTaken: `${((performance.now() - start) / 1000).toFixed(0)}s`,
       };
       
-      const w = SECTION_WEIGHTS_BY_PAGE_TYPE[pageType] || SECTION_WEIGHTS_BY_PAGE_TYPE.generic;
-      const keyMap = {
-        "Technical Performance": "tech",
-        "On Page SEO": "seo",
-        "Accessibility": "a11y",
-        "Security/Compliance": "sec",
-        "UX & Content Structure": "ux",
-        "Conversion & Lead Flow": "conv",
-        "AIO (AI-Optimization) Readiness": "aio",
-        "AEO (Answer Engine Optimization)": "aeo"
+      // Same page tilt × site profile the full path uses. The site multiplier
+      // was previously missing here, so a subset audit of a repair site was
+      // weighted as if it were a dealer's — the one place the site profile
+      // wasn't reaching.
+      const w = weightsForPageType(pageType);
+      const m = siteWeightMultipliers(siteSubType) || [1, 1, 1, 1, 1, 1, 1, 1];
+      // Section name → its slot in the weight row (SECTION_ORDER).
+      const slotOf = {
+        "Technical Performance": 0,
+        "On Page SEO": 1,
+        "Accessibility": 2,
+        "Security/Compliance": 3,
+        "UX & Content Structure": 4,
+        "Conversion & Lead Flow": 5,
+        "AIO (AI-Optimization) Readiness": 6,
+        "AEO (Answer Engine Optimization)": 7,
       };
 
       let sumOfScoresTimesWeights = 0;
@@ -924,8 +1014,8 @@ async function auditKeyPages(currentAuditId, device) {
         updateData[res.field] = res.value;
         if (res.extra) Object.assign(updateData, res.extra);
         
-        const weightKey = keyMap[selected[i]];
-        const weightVal = w[weightKey] || 0;
+        const slot = slotOf[selected[i]];
+        const weightVal = slot === undefined ? 0 : w[slot] * m[slot];
         const name = SECTION_DISPLAY_NAMES[selected[i]] || selected[i];
         // null pct = "Not Run" (e.g. PageSpeed unavailable) — excluded from the weighted
         // average and renormalized, not counted as 0.
@@ -958,28 +1048,28 @@ async function auditKeyPages(currentAuditId, device) {
       // [NEW] — Each metric wrapped in safeMetric() to catch detached frame errors
       switch (report) {
         case "Technical Performance":
-          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType, stage1Psi));
+          result = await safeMetric("Technical Performance", () => technicalMetrics(url, device, page, response, browser, pageType, stage1Psi, siteSubType, market));
           break;
         case "On Page SEO":
-          result = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType));
+          result = await safeMetric("On Page SEO", () => seoMetrics(url, $, page, pageType, siteSubType, market));
           break;
         case "Accessibility":
-          result = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType));
+          result = await safeMetric("Accessibility", () => accessibilityMetrics(page, $, pageType, market, siteSubType));
           break;
         case "Security/Compliance":
-          result = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType));
+          result = await safeMetric("Security/Compliance", () => securityCompliance(url, page, response, browser, pageType, siteSubType, market));
           break;
         case "UX & Content Structure":
-          result = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType));
+          result = await safeMetric("UX & Content Structure", () => uxContentStructure(device, page, pageType, siteSubType, market));
           break;
         case "Conversion & Lead Flow":
-          result = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType));
+          result = await safeMetric("Conversion & Lead Flow", () => conversionLeadFlow(page, $, pageType, siteSubType, market));
           break;
         case "AIO (AI-Optimization) Readiness":
-          result = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType));
+          result = await safeMetric("AIO Readiness", () => aioReadiness(url, page, $, pageType, siteSubType, market));
           break;
         case "AEO (Answer Engine Optimization)":
-          result = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType }));
+          result = await safeMetric("AEO", () => AEOService.runAudit(url, $, null, 100, { pageType, siteSubType, market }));
           break;
       }
 
@@ -1033,44 +1123,44 @@ async function auditKeyPages(currentAuditId, device) {
     // (Technical renormalized out, psiPending: true) and the final score patches in below
     // once PageSpeed answers. Not awaited yet — only after the seven-pillar rollup posts.
     const techPromise = (async () => {
-      const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi), TECH_TIMEOUT_MS, "Technical Performance"));
+      const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi, siteSubType, market), TECH_TIMEOUT_MS, "Technical Performance"));
       postProgress({ technicalPerformance: r });
       return r;
     })();
 
     const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => {
-        const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(url, $, page, pageType), SEO_TIMEOUT_MS, "On Page SEO"));
+        const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(url, $, page, pageType, siteSubType, market), SEO_TIMEOUT_MS, "On Page SEO"));
         postProgress({ onPageSEO: r, siteSchema: r?.Schema });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pageType), PILLAR_TIMEOUT_MS, "Accessibility"));
+        const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pageType, market, siteSubType), PILLAR_TIMEOUT_MS, "Accessibility"));
         postProgress({ accessibility: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(url, page, response, browser, pageType), SEC_TIMEOUT_MS, "Security/Compliance"));
+        const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(url, page, response, browser, pageType, siteSubType, market), SEC_TIMEOUT_MS, "Security/Compliance"));
         postProgress({ securityOrCompliance: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(device, page, pageType), PILLAR_TIMEOUT_MS, "UX & Content Structure"));
+        const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(device, page, pageType, siteSubType, market), PILLAR_TIMEOUT_MS, "UX & Content Structure"));
         postProgress({ UXOrContentStructure: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pageType), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow"));
+        const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pageType, siteSubType, market), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow"));
         postProgress({ conversionAndLeadFlow: r });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(url, page, $, pageType), PILLAR_TIMEOUT_MS, "AIO Readiness"));
+        const r = await safeMetric("AIO Readiness", () => withTimeout(aioReadiness(url, page, $, pageType, siteSubType, market), PILLAR_TIMEOUT_MS, "AIO Readiness"));
         postProgress({ aioReadiness: r, aioCompatibilityBadge: r?.AIO_Compatibility_Badge });
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(url, $, null, 100, { pageType }), PILLAR_TIMEOUT_MS, "AEO"));
+        const r = await safeMetric("AEO", () => withTimeout(AEOService.runAudit(url, $, null, 100, { pageType, siteSubType, market }), PILLAR_TIMEOUT_MS, "AEO"));
         postProgress({ aeo: r });
         return r;
       })(),

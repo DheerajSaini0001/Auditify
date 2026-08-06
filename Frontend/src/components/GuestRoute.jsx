@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 import { getRedirectPath } from '../utils/roleRedirect';
 import { consumePostAuthIntent } from '../utils/intentStore';
+import { claimAuditForCurrentUser } from '../utils/claimAudit';
 
 /**
  * Component: GuestRoute
@@ -37,6 +38,12 @@ const GuestRoute = ({ children }) => {
     // Consume localStorage intent (set by LoginOverlay / GuestReportPage).
     // This is the authoritative redirect — it takes precedence over everything else.
     const intent = consumePostAuthIntent();
+
+    // The report they signed in to read is still an ownerless guest run. Adopt it
+    // now, otherwise it never appears under their past reports. Safe to fire from
+    // render: the call is idempotent, and the intent has already been consumed so
+    // a re-render cannot repeat it.
+    claimAuditForCurrentUser(intent?.auditId);
 
     const defaultDest = getRedirectPath(user?.role) || '/dashboard';
     const stateFrom = location.state?.from;

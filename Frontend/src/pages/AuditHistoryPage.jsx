@@ -27,7 +27,6 @@ import {
   Lock,
   History,
   Star,
-  Menu,
   HelpCircle,
   ShieldCheck,
   Settings,
@@ -36,7 +35,9 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-hot-toast';
+import { usePageSidebar } from '../context/PageSidebarContext.jsx';
 import { useNavigate } from 'react-router-dom';
+import { pdfFileNameFrom } from '../utils/reportDownload';
 
 const AuditHistoryPage = () => {
   const { user } = useAuth();
@@ -44,13 +45,13 @@ const AuditHistoryPage = () => {
   const navigate = useNavigate();
   const darkMode = theme === "dark";
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = usePageSidebar();
   const [searchInput, setSearchInput] = useState("");
 
   // Read starred IDs from the same localStorage key used by DashboardPage
   const [starredIds] = useState(() => {
     try {
-      const stored = localStorage.getItem('auditify_starred_ids');
+      const stored = localStorage.getItem('DealerSiteAudit _starred_ids');
       return stored ? JSON.parse(stored) : [];
     } catch {
       return [];
@@ -144,7 +145,7 @@ const AuditHistoryPage = () => {
 
       </div>
 
-  
+
     </div>
   );
 
@@ -344,18 +345,10 @@ const AuditHistoryPage = () => {
                     Logged in as {user?.name || user?.email}
                   </span>
                 </div>
-                <div className="flex items-center justify-between md:justify-start gap-4">
+                <div className="flex items-center gap-4">
                   <h1 className={`text-4xl font-semibold tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>
                     Your <span className="text-indigo-600">past checks</span>
                   </h1>
-                  {/* Mobile Sidebar Toggle Button */}
-                  <button
-                    onClick={() => setSidebarOpen(true)}
-                    className={`md:hidden flex items-center gap-1.5 px-3 py-1.5 border rounded-xl text-xs font-semibold transition-all duration-300 ${darkMode ? 'bg-slate-900 border-slate-800 text-slate-300 hover:bg-slate-800' : 'bg-card border-line text-muted hover:bg-cardsoft'}`}
-                  >
-                    <Menu size={14} />
-                    <span>Menu</span>
-                  </button>
                 </div>
                 <p className={`text-lg mt-2 ${darkMode ? "text-slate-400" : "text-muted"}`}>
                   Every check you have run, newest first.
@@ -501,7 +494,7 @@ const AuditHistoryPage = () => {
                             {audit.status === 'success' && isExpired(audit.createdAt) && (
                               <span
                                 className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-500 border border-slate-500/20 text-[8px] font-semibold uppercase tracking-widest self-start"
-                                title="Full reports are removed a few hours after the check. Run it again to get a fresh one."
+                                title="Full reports are removed 24 hours after the check. Run it again to get a fresh one."
                               >
                                 <Clock size={8} /> Report removed
                               </span>
@@ -568,85 +561,87 @@ const AuditHistoryPage = () => {
 
                                 {/* Download PDF button — temporarily hidden */}
                                 {false && (
-                                <button
-                                  onClick={() => {
-                                    // ONLY download PDF
-                                    const rId = audit.reportId || null;
+                                  <button
+                                    onClick={() => {
+                                      // ONLY download PDF
+                                      const rId = audit.reportId || null;
 
-                                    if (!rId) {
-                                      return toast.error(
-                                        'PDF unavailable for this audit'
-                                      );
-                                    }
-
-                                    toast.promise(
-                                      (async () => {
-                                        const token = localStorage.getItem(
-                                          'dealerpulse_token'
+                                      if (!rId) {
+                                        return toast.error(
+                                          'PDF unavailable for this audit'
                                         );
-
-                                        const API_URL =
-                                          import.meta.env.VITE_API_URL ||
-                                          'http://localhost:2000';
-
-                                        const response = await fetch(
-                                          `${API_URL}/single-audit/${rId}/export/pdf`,
-                                          {
-                                            headers: {
-                                              ...(token
-                                                ? {
-                                                  Authorization: `Bearer ${token}`
-                                                }
-                                                : {})
-                                            }
-                                          }
-                                        );
-
-                                        if (!response.ok) {
-                                          throw new Error(
-                                            'Failed to generate PDF'
-                                          );
-                                        }
-
-                                        const blob = await response.blob();
-
-                                        const url =
-                                          window.URL.createObjectURL(blob);
-
-                                        const link =
-                                          document.createElement('a');
-
-                                        link.href = url;
-
-                                        link.download = `Auditify-Report-${audit.url.replace(
-                                          /[^a-z0-9]/gi,
-                                          '-'
-                                        )}.pdf`;
-
-                                        document.body.appendChild(link);
-
-                                        link.click();
-
-                                        document.body.removeChild(link);
-
-                                        window.URL.revokeObjectURL(url);
-                                      })(),
-                                      {
-                                        loading: 'Generating PDF report...',
-                                        success: 'Report downloaded!',
-                                        error: 'Failed to generate PDF',
                                       }
-                                    );
-                                  }}
-                                  className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode
-                                    ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700"
-                                    : "bg-card hover:bg-emerald-50 text-muted hover:text-emerald-600 border-line"
-                                    }`}
-                                  title="Download PDF"
-                                  aria-label="Download PDF"
-                                >
-                                  <Download size={18} />
-                                </button>
+
+                                      toast.promise(
+                                        (async () => {
+                                          const token = localStorage.getItem(
+                                            'dealerpulse_token'
+                                          );
+
+                                          const API_URL =
+                                            import.meta.env.VITE_API_URL ||
+                                            'http://localhost:2000';
+
+                                          const response = await fetch(
+                                            `${API_URL}/single-audit/${rId}/export/pdf`,
+                                            {
+                                              credentials: 'include',
+                                              headers: {
+                                                ...(token
+                                                  ? {
+                                                    Authorization: `Bearer ${token}`
+                                                  }
+                                                  : {})
+                                              }
+                                            }
+                                          );
+
+                                          if (!response.ok) {
+                                            throw new Error(
+                                              'Failed to generate PDF'
+                                            );
+                                          }
+
+                                          const blob = await response.blob();
+
+                                          const url =
+                                            window.URL.createObjectURL(blob);
+
+                                          const link =
+                                            document.createElement('a');
+
+                                          link.href = url;
+
+                                          link.download = pdfFileNameFrom(
+                                            response,
+                                            audit.url,
+                                            audit.createdAt
+                                          );
+
+                                          document.body.appendChild(link);
+
+                                          link.click();
+
+                                          document.body.removeChild(link);
+
+                                          window.URL.revokeObjectURL(url);
+                                        })(),
+                                        {
+                                          loading: 'Generating PDF report...',
+                                          success: 'Report downloaded!',
+                                          error: 'Failed to generate PDF',
+                                        }
+                                      );
+                                    }}
+                                    className={`p-2.5 rounded-xl transition-all shadow-lg border ${darkMode
+                                      ? "bg-slate-800 hover:bg-emerald-600 text-slate-400 hover:text-white border-slate-700"
+                                      : "bg-card hover:bg-emerald-50 text-muted hover:text-emerald-600 border-line"
+                                      }`}
+                                    title="Download PDF"
+                                    aria-label="Download PDF"
+                                  >
+                                    <Download size={18} />
+                                  </button>
                                 )}
                               </>
                             )}
@@ -757,7 +752,7 @@ const AuditHistoryPage = () => {
           >
             <Info size={18} className="text-indigo-500 mt-0.5 shrink-0" />
             <p className="text-sm font-medium leading-relaxed">
-              <span className="font-semibold text-indigo-500">Note:</span> Audit reports are automatically cleared from active storage after 3 hours for security and performance reasons. You can always run a fresh audit for any URL using the <strong>Run Again</strong> button.
+              <span className="font-semibold text-indigo-500">Note:</span> Audit reports are automatically cleared from active storage after 24 hours for security and performance reasons. You can always run a fresh audit for any URL using the <strong>Run Again</strong> button.
             </p>
           </motion.div>
         </div>

@@ -6,6 +6,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import ScrollToTop from "./ScrollToTop";
 import Footer from "./Footer";
 import { useData } from "../context/DataContext";
+import { PageSidebarProvider } from "../context/PageSidebarContext";
 
 export default function MainLayout() {
     const { theme } = useContext(ThemeContext);
@@ -27,6 +28,7 @@ export default function MainLayout() {
     const showSidebar = !!data && data.report === "All" && isReportPath;
 
     return (
+        <PageSidebarProvider>
         <div>
             {/* Skip to Main Content Link */}
             <a
@@ -80,5 +82,6 @@ export default function MainLayout() {
                 </main>
             </div>
         </div>
+        </PageSidebarProvider>
     );
 }

@@ -1,15 +1,30 @@
 // =============================================================================
-// SITE TYPE DETECTION (dealer / corporate / unknown)
-// Autonomous | 3-Way Classification | Zero Human Interaction
+// SITE TYPE DETECTION (dealer / service / corporate / unknown)
+// Autonomous | 4-Way Classification + Sub-Type | Zero Human Interaction
 //
 // Classifies an audited site as one of:
 //   "dealer"    — an individual dealership (has inventory/VIN/trade-in/finance)
+//   "service"   — a servicing business with no vehicle sales inventory of its
+//                 own (service centre/chain, or a repair garage/body shop)
 //   "corporate" — an OEM/manufacturer or multi-dealer corporate site (dealer
 //                 locator, build & price configurator, press/investor pages —
 //                 no per-vehicle inventory of its own)
 //   "unknown"   — inconclusive, or a marketplace/media/non-automotive site.
-//                 Callers FAIL OPEN on "unknown": treat it exactly like the
-//                 dealer pipeline always has, so nothing regresses.
+//                 Callers reject "unknown" at the discovery/audit gate.
+//
+// and returns a `siteSubType` alongside it — the four columns of
+// docs/reports/Automotive-Site-Type-Parameter-Matrix.html:
+//   dealer    -> "franchise"   (manufacturer-appointed, new + used + CPO)
+//             -> "independent" (no franchise, mixed-brand used inventory)
+//   service   -> "service"     (service centre or chain, multi-location)
+//             -> "repair"      (single-location garage, body shop, mechanic)
+//   corporate -> "corporate"
+//   unknown   -> null
+//
+// The sub-type is what the scoring pipeline keys parameter APPLICABILITY and
+// the section-weight tilt off (see Backend/config/siteTypeProfiles.js) — the 12
+// inventory-scoped parameters are renormalised out of the denominator on the
+// two servicing types rather than scored as failures.
 //
 // Decision order (disqualifiers ALWAYS first):
 //   1. Inaccessible / bot-challenge page        -> unknown (inconclusive)
@@ -17,7 +32,8 @@
 //   3. D1 OEM domain                            -> corporate (fast path)
 //   4. 3+ matched signals (Group A + B)         -> dealer
 //   5. 2+ matched signals (Group C)             -> corporate
-//   6. Otherwise                                -> unknown
+//   6. 2+ matched signals (Group S) + anchor    -> service
+//   7. Otherwise                                -> unknown
 //
 // NOTE: a single signal is intentionally NOT enough for "dealer". A site must
 // match at least THREE parameters total (combining dealership-exclusive Group A
@@ -278,9 +294,16 @@ const LISTING_FIELD_KEYWORDS = [
 const STRONG_LISTING_FIELD_KEYWORDS = [
   "stock number", "stock #", "stock#",
   "msrp", "odometer", "exterior color", "interior color",
-  "drivetrain", "fuel economy", "city mpg", "highway mpg",
+  "fuel economy", "city mpg", "highway mpg",
   "vehicle history report", "carfax", "autocheck",
   "value your trade", "schedule test drive", "vehicle overview",
+  // NOTE: "drivetrain" was removed. It is a COMPONENT, not a listing field —
+  // it turns up in ordinary prose wherever anyone discusses how a machine is
+  // driven, which is not confined to vehicle listings or even to cars. It fired
+  // A2 (and so a DEALER verdict) on halfords.com, whose "drivetrain" is a
+  // BICYCLE drivetrain, and on christianbrothersautomotive.com, a repair-only
+  // franchise describing a service it performs. Every other entry in this list
+  // is a field name off a spec table or a body type, which is the bar here.
   // RV / towable / powersports body-type names. Each of these is unambiguously
   // a recreational-vehicle listing term — a clothing/electronics/real-estate
   // store would never carry them — so they're safe to gate A2 alongside an
@@ -288,7 +311,10 @@ const STRONG_LISTING_FIELD_KEYWORDS = [
   // none of the car-specific fields above but are full of these). NOTE: generic
   // words that also mean something else ("floorplan" → real estate, "sleeps")
   // are deliberately left out; only RV-exclusive vehicle names are here.
-  "travel trailer", "fifth wheel", "5th wheel", "toy hauler", "motorhome",
+  // (Bare "motorhome" is likewise gone: it reads as an ordinary noun in any
+  // copy aimed at RV owners, and fired A2 on garmin.com, which sells satnavs
+  // FOR motorhomes. The qualified class-A/B/C forms are listing terms.)
+  "travel trailer", "fifth wheel", "5th wheel", "toy hauler",
   "class a motorhome", "class b motorhome", "class c motorhome",
   "truck camper", "pop-up camper", "destination trailer", "park model",
 ];
@@ -888,6 +914,208 @@ const SERVICE_KEYWORDS = [
   "complimentary inspection",
   "maintenance plan"
 ];
+
+// --- Group S vocabularies (service centre / repair shop) --------------------
+// SERVICE_PATHS/SERVICE_KEYWORDS above deliberately stay dealer-flavoured: a
+// franchise store's service department trips them, which is why B4 alone was
+// never allowed to mean "this is a service business". The lists below are the
+// opposite — language a site only uses when servicing IS the business, not a
+// department attached to a showroom.
+
+// S1 — the site describes ITSELF as a garage / body shop / mechanic. These are
+// self-descriptions ("we are an independent repair shop"), not service-menu
+// items, so a dealership's service page does not match them.
+const REPAIR_SHOP_KEYWORDS = [
+  "auto repair shop", "automotive repair shop", "car repair shop", "repair shop",
+  "auto body shop", "body shop", "collision center", "collision centre",
+  "collision repair center", "collision repair centre", "accident repair centre",
+  "independent garage", "auto garage", "car garage", "repair garage",
+  "mobile mechanic", "local mechanic", "independent mechanic", "master mechanic",
+  "auto mechanic", "car mechanic", "mechanic shop", "mechanical repairs",
+  "automotive workshop", "repair workshop", "service garage",
+  "smash repairs", "panel beater", "panel beating", "spray painting",
+  "tyre shop", "tire shop", "tyre centre", "tire center", "muffler shop",
+  "transmission shop", "engine rebuild", "engine rebuilding",
+  "mot test", "mot testing", "smog check", "smog test", "emissions testing",
+  "roadworthy certificate", "safety inspection", "pink slip",
+];
+const REPAIR_SHOP_PATHS = [
+  "/auto-repair", "/car-repair", "/repairs", "/body-shop", "/bodyshop",
+  "/collision", "/collision-center", "/collision-centre", "/panel-beating",
+  "/smash-repairs", "/mechanic", "/mechanical", "/workshop", "/garage",
+  "/mot", "/smog", "/roadworthy", "/emissions", "/diagnostics",
+];
+
+// S2 — an actual booking funnel, not a "call us to schedule" line. Service and
+// repair convert through this (driver D2 in the matrix), so it is the strongest
+// single positive signal for the two servicing types.
+const BOOKING_SCHEDULER_KEYWORDS = [
+  "book online", "book your service", "book an appointment", "book a service",
+  "book now", "schedule online", "schedule your appointment", "online booking",
+  "booking form", "request an appointment", "make an appointment",
+  "choose a date", "select a date", "pick a time", "available times",
+  "appointment request", "service booking", "book my car in", "get a quote online",
+];
+const BOOKING_SCHEDULER_PATHS = [
+  "/book", "/booking", "/book-online", "/book-now", "/book-a-service",
+  "/appointment", "/appointments", "/make-appointment", "/request-appointment",
+  "/schedule", "/scheduler", "/online-booking",
+];
+
+// S3 — a published service menu with prices. The matrix rates pricing
+// transparency Most Important for both servicing types precisely because a
+// dealer service department almost never publishes flat pricing and an
+// independent shop competes on it.
+const SERVICE_MENU_KEYWORDS = [
+  "service menu", "service pricing", "price list", "our prices", "pricing guide",
+  "labour rate", "labor rate", "hourly rate", "flat rate pricing",
+  "free quote", "free estimate", "instant quote", "get an estimate",
+  "upfront pricing", "transparent pricing", "no hidden fees", "fixed price servicing",
+  "capped price servicing", "logbook servicing", "log book service",
+  "minor service", "major service", "interim service", "full service",
+];
+
+// S4 — trade accreditation. A garage has no OEM badge to borrow (driver D5),
+// so third-party accreditation IS the trust mechanism. Deliberately split by
+// market (US / UK / AU) because the matrix's country config already exists.
+const TRADE_ACCREDITATION_KEYWORDS = [
+  // US
+  "ase certified", "ase-certified", "ase master", "national institute for automotive service excellence",
+  "i-car", "i-car gold", "icar gold class", "napa autocare", "aaa approved auto repair",
+  "bosch car service", "bosch service", "carquest", "technet professional",
+  // UK / IE
+  "good garage scheme", "motor codes", "the motor ombudsman", "imi accredited",
+  "rmi approved", "trustmark approved", "vosa approved", "dvsa approved",
+  // AU / NZ
+  "vacc member", "mta member", "mta approved", "racv approved", "raa approved",
+  "nrma approved", "aaaa member", "repco authorised", "capricorn member",
+];
+
+// S5 — tyres / parts retail, the other common servicing-business shape (fast-fit
+// chains). Kept separate from the dealer parts-counter language in
+// SERVICE_KEYWORDS so it can support a service verdict on its own.
+// Every entry names a vehicle part or a vehicle-only fitting job — bare "spare
+// parts" was deliberately left out because industrial and appliance suppliers
+// use it verbatim, and this list has to be strong enough to anchor a verdict
+// on its own (see STRONG_SERVICE_ANCHORS in the decision step).
+const TYRE_PARTS_RETAIL_KEYWORDS = [
+  "tyre fitting", "tire fitting", "wheel balancing", "puncture repair",
+  "tyre pressure", "new tyres", "new tires", "tyre brands", "tire brands",
+  "exhaust fitting", "battery fitting", "windscreen repair", "windshield repair",
+  "auto parts store", "car parts", "aftermarket parts",
+];
+
+// S7 — named workshop OPERATIONS performed on a vehicle. This is the signal a
+// pure servicing chain actually carries, and before it existed such a chain
+// could not anchor a verdict at all: jiffylube.com (2,000+ locations) tripped
+// only S6 + B4 and fell through to "unknown", i.e. was refused an audit
+// outright. The vocabulary that identifies it best — "oil change", "wheel
+// alignment", "tire rotation" — lived only in SERVICE_KEYWORDS, which feeds B4,
+// and STEP 5 deliberately demotes B4 to padding because a DEALER's service
+// department trips it too.
+//
+// Safe to anchor on, for a structural reason rather than a vocabulary one:
+// STEP 5 is only reached once the dealer AND corporate tests have both failed,
+// so by construction there is no own-inventory evidence here. A dealer saying
+// "oil change" has already been classified as a dealer long before this point.
+//
+// Deliberately restricted to OPERATIONS (a job a technician performs), never
+// part NAMES ("brake pads", "timing belt", "spark plugs") — an auto-parts
+// e-commerce retailer sells the parts without servicing anything, and naming
+// parts here would reclassify it as a service business. Generic inspection
+// language ("vehicle inspection", "safety inspection") is left out for the same
+// reason: an insurer uses it verbatim.
+const SERVICE_WORK_KEYWORDS = [
+  // Routine maintenance
+  "oil change", "synthetic oil change", "quick lube", "lube service",
+  "tire rotation", "tyre rotation", "wheel alignment", "wheel balancing",
+  "tire installation", "tyre installation", "tire mounting", "flat tire repair",
+  "coolant flush", "transmission flush", "multi-point inspection",
+  // Diagnostics & repair
+  "auto repair", "car repair", "vehicle repair", "automotive repair",
+  "brake service", "brake repair", "brake inspection",
+  "transmission service", "transmission repair",
+  "engine repair", "engine diagnostics", "check engine light",
+  "radiator repair", "exhaust repair", "muffler repair", "suspension repair",
+  "air conditioning service", "ac recharge", "a/c recharge",
+  "vehicle diagnostics", "car diagnostics", "auto diagnostics",
+  // Body / collision
+  "collision repair", "dent repair", "paintless dent repair", "accident repair",
+  // Statutory testing (market-specific, same split as S4)
+  "smog check", "emissions test", "mot test", "mot testing",
+  // Fleet / plan servicing
+  "fleet maintenance", "scheduled servicing", "logbook servicing",
+];
+// The same operations as NAV PATHS. A chain that puts each job behind its own
+// landing page often never names it in homepage prose: bigotires.com links
+// /oil-change, /tire-service and /wheel-alignment while its visible copy says
+// none of those words, so a keyword-only S7 missed it entirely. Deliberately
+// excludes the generic "/service" and "/repair" (already B4's job) — every
+// entry here names a specific job done to a vehicle.
+const SERVICE_WORK_PATHS = [
+  "/oil-change", "/wheel-alignment", "/tire-rotation", "/tyre-rotation",
+  "/brake-service", "/brake-repair", "/brakes", "/transmission-repair",
+  "/engine-repair", "/engine-diagnostics", "/check-engine-light",
+  "/tire-service", "/tyre-service", "/tire-repair", "/tyre-repair",
+  "/exhaust-repair", "/muffler-repair", "/suspension-repair", "/radiator-repair",
+  "/ac-service", "/air-conditioning-service", "/collision-repair",
+  "/dent-repair", "/auto-repair", "/car-repair", "/vehicle-repair",
+  "/smog-check", "/emissions-test", "/mot-test", "/fleet-maintenance",
+];
+
+// S6 — multi-location operator. The matrix's own split between columns 3 and 4
+// is "service centre or CHAIN" versus "single-location garage", so this is the
+// discriminator between them. Deliberately generic (not the dealer-locator
+// vocabulary in C1, which is about finding OTHER companies' dealerships).
+const MULTI_LOCATION_KEYWORDS = [
+  "our locations", "all locations", "find a location", "find your nearest",
+  "nearest branch", "our branches", "our centres", "our centers", "our stores",
+  "store locator", "location finder", "branch finder", "centre finder",
+  "select a location", "choose your location", "locations near you",
+  // A chain's locator is as often phrased around a "store"/"shop" as a
+  // "location" — midas.com (~1,000 franchises) carried none of the phrases
+  // above and was therefore read as a SINGLE-location garage.
+  "find a store", "find a shop", "find your store", "nearest store",
+  "nearest location", "our shops", "shop locator", "book at your local",
+];
+const MULTI_LOCATION_PATHS = [
+  "/locations", "/our-locations", "/branches", "/centres", "/centers",
+  "/store-locator", "/find-a-location", "/find-us",
+  // "/store" (singular) is midas.com's locator path. Safe to add now that
+  // anyPath is segment-aware: it no longer also swallows "/stores-and-more",
+  // and an online-merch "/store" on a single-location shop is a far rarer
+  // shape than a chain's store finder.
+  "/store", "/stores", "/store-finder", "/find-a-store", "/shops",
+];
+
+// --- Franchise vs independent discriminators -------------------------------
+// Both are dealers; the matrix splits them on the manufacturer relationship,
+// because that is what changes the parameter set (OEM boilerplate on VDPs, lease
+// programmes and Reg-Z/Reg-M exposure, a real service department, brand halo).
+// A franchise store says so explicitly and repeatedly — it is contractually
+// required to — so explicit self-identification is the reliable signal here.
+const FRANCHISE_KEYWORDS = [
+  "authorized dealer", "authorised dealer", "factory authorized", "factory authorised",
+  "official dealer", "official retailer", "authorized retailer", "authorised retailer",
+  "franchise dealer", "franchised dealer", "new car dealer", "new vehicle dealer",
+  "manufacturer certified", "factory certified", "certified by the manufacturer",
+  "lease specials", "lease offers", "current lease", "lease deals", "apr financing",
+  "factory incentives", "manufacturer rebates", "oem parts", "genuine parts",
+  "factory trained technicians", "factory warranty", "recall service",
+];
+
+// The counterpart: language that only an independent lot uses. Buy-here-pay-here
+// and "all makes and models" are the two most reliable — a franchise store is
+// contractually a single-brand new-car retailer and never advertises either.
+const INDEPENDENT_DEALER_KEYWORDS = [
+  "buy here pay here", "buy-here-pay-here", "bhph", "in house financing",
+  "in-house financing", "we finance", "no credit check", "bad credit",
+  "subprime", "second chance financing", "credit rebuild",
+  "all makes and models", "all makes", "quality used cars", "quality pre-owned",
+  "used car lot", "used car dealer", "independent dealer", "family owned dealership",
+  "wholesale prices", "cars under", "budget cars",
+];
+
 const CPO_PATHS = [
   "/certified-pre-owned",
   "/certified-used",
@@ -1452,6 +1680,13 @@ const DEALER_LOCATOR_KEYWORDS = [
 const CONFIGURATOR_PATHS = [
   "/build-and-price", "/build-price", "/configurator",
   "/configure", "/build-and-price-your",
+  // Bare "/build" is the per-model configurator path on truck OEMs
+  // (macktrucks.com ships /trucks/anthem/build/, /trucks/granite/build/ …) and
+  // was the one Group C signal it had, leaving it a single signal short of a
+  // corporate verdict. This does NOT reopen the chipotle.com "build your own"
+  // hole the note above describes: anyPath is segment-aware now, so "/build"
+  // matches only a complete "/build" segment and never "/build-your-own".
+  "/build",
 ];
 const CONFIGURATOR_KEYWORDS = [
   "build and price", "build & price", "configure your",
@@ -1547,6 +1782,49 @@ const DEALER_NETWORK_KEYWORDS = [
 ];
 
 // VIN: 17 chars, excludes I/O/Q. Anchored to a VIN label to avoid false positives.
+// B9 — the site states, in its own <title>/<h1>, that it sells vehicles. This
+// is the single most direct statement a dealer makes about itself, and it was
+// going entirely unread: byrider.com is titled "Used Cars, Trucks, SUVs and
+// Vans for Sale – Buy and Finance | Byrider" and still failed the dealer test,
+// because its homepage carries no VIN, no listing fields and no dealer-platform
+// script — all of that lives behind /inventory — so the only signals left were
+// generic (finance, payment calculator, CPO) and none of them anchor.
+//
+// Precision comes from requiring a VEHICLE noun next to a SALES word in a
+// heading. Two guards keep it honest:
+//   • the noun list is vehicles only — lesschwab.com's "Tires and Wheels for
+//     Sale" and garmin.com's product titles do not match;
+//   • it is a Group B anchor, never a GENUINE_DEALER_ANCHOR, so it still needs
+//     the full 3 signals and still loses to a strong corporate signature the
+//     same way the other B-signals do (an OEM titled "…cars for sale" would
+//     resolve through the corporate override, not around it).
+// Marketplaces that would match (cars.com, autotrader) never reach this code —
+// STEP 1's domain disqualifiers retire them first.
+const VEHICLE_SALES_HEADLINE_RE = new RegExp(
+  "\\b(?:new|used|pre-?owned|certified)?\\s*" +
+  "(?:cars?|vehicles?|trucks?|suvs?|vans?|motorcycles?|rvs?)\\s+" +
+  "(?:for\\s+sale|dealer(?:ship)?s?)\\b" +
+  "|\\b(?:car|auto|automobile|truck|vehicle|motorcycle)\\s+dealer(?:ship)?s?\\b" +
+  "|\\bdealership\\b",
+  "i"
+);
+
+// D5 — the business names itself an INSURER in its own headings. Motor insurers
+// are the most persistent false positive in this whole file, and for a real
+// reason: they legitimately talk about vehicles, approved repairers, collision
+// repair, claims booking and parts, so they accumulate Group S evidence without
+// ever repairing or selling anything. geico.com reached a SERVICE verdict off
+// "Auto Repair Xpress" (S7) plus a claims scheduler (S2); progressive.com had
+// already done the same through a different route.
+//
+// Their own <title>/<h1> settles it — "An Insurance Company You Can Rely On",
+// "State Farm® | An Insurance Company Valued For Over 100 Years", "Get an
+// Insurance Quote" — while no dealer or garage in the corpus describes itself
+// that way (they say "Dealer", "Cars for Sale", "Auto Repair & Service"). The
+// check requires the insurance word to sit in a HEADING, not in body copy, so a
+// dealership's F&I page or a garage's "we bill your insurer" line is unaffected.
+const INSURANCE_HEADLINE_RE = /\b(?:insurance|insurer|assurance)\s+(?:company|companies|quote|quotes|agency|agent|agents|group|services)\b|\b(?:auto|car|vehicle|motor|home|life|health)\s+insurance\b|\binsurance\s+(?:for|from)\b/i;
+
 const VIN_LABELLED_RE = /\b(?:vin|vehicle\s+identification\s+number)\b\s*[:#]*\s*([A-HJ-NPR-Z0-9]{17})\b/i;
 // Strict standalone VIN (uppercase, must mix letters and digits).
 const VIN_STANDALONE_RE = /\b(?=[A-HJ-NPR-Z0-9]{17}\b)(?=[A-HJ-NPR-Z]*[0-9])(?=[0-9]*[A-HJ-NPR-Z])[A-HJ-NPR-Z0-9]{17}\b/;
@@ -1575,7 +1853,39 @@ const anyKeyword = (text, keywords) =>
     }
     return re.test(text);
   });
-const anyPath = (haystack, paths) => paths.some((p) => haystack.includes(p));
+// Path tokens need the same boundary discipline anyKeyword got, for the same
+// reason: a bare .includes() lets a short token match a DIFFERENT, longer path
+// segment that merely starts with it. Confirmed false positives, each of which
+// produced a wrong verdict on a real site:
+//   "/new"   matched "/media-center/blog/categories/news/"  (a repair-only
+//            franchise scored as a DEALER — A2 fired on a blog link)
+//   "/fleet" matched "/our-services/fleet-services/"        (same site)
+//   "/mot"   matched "https://www.progressive.com/motorcycle/" (a car INSURER
+//            scored as a repair shop — the token is the UK MOT test)
+// A token therefore has to end where a path segment really ends: a slash, a
+// query/fragment/extension delimiter, whitespace (hrefs are space-joined into
+// one haystack) or end of string. A following letter, digit, hyphen or
+// underscore means we are inside a longer, different word.
+//
+// A pure hard boundary is very slightly TOO strict, though: real sites hang
+// automotive nouns off these tokens in combinations no list can enumerate, and
+// hgreglux.com's genuine SRP at "/used-car" (singular) stopped matching "/used"
+// and lost its A2 anchor. So a token may also be followed by a short run of
+// hyphenated AUTOMOTIVE nouns before the boundary. That readmits "/used-car"
+// and "/new-vehicle-search" while still rejecting "/fleet-services" and
+// "/news" — the distinction being whether what follows names a vehicle or
+// names a different business entirely.
+const PATH_NOUN_TAIL = "(?:-(?:car|cars|vehicle|vehicles|truck|trucks|van|vans|suv|suvs|inventory|stock|listing|listings|search|results))*";
+const pathCache = new Map();
+const anyPath = (haystack, paths) =>
+  paths.some((p) => {
+    let re = pathCache.get(p);
+    if (!re) {
+      re = new RegExp(`${p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}${PATH_NOUN_TAIL}(?=[/?#.]|\\s|$)`, "i");
+      pathCache.set(p, re);
+    }
+    return re.test(haystack);
+  });
 
 // Scan ONE page's DOM for Group A/B/C signals. Pulled out of detectSiteType so
 // it can be called once for the homepage and again for any extra "probe" pages
@@ -1600,14 +1910,40 @@ function collectPageSignals(url, $) {
   }
 
   // Links / form actions (paths) and script sources (resource hosts).
+  //
+  // Reduced to PATHNAMES, not whole hrefs. These vocabularies are path lists,
+  // and leaving the scheme+host in let a token match inside a HOSTNAME:
+  // "https://shops.start2finish.app/" — a third-party booking widget — matched
+  // "/shops" and marked a single-location body shop as a multi-location chain.
+  // Same class of error as the substring bug above, one level up.
+  //
+  // ownPathHaystack additionally drops CROSS-ORIGIN links. Most signals should
+  // keep counting those (a dealer's inventory legitimately lives on a platform
+  // domain), but a claim about the SHAPE of this business must not be read off
+  // somebody else's site: echopark.com, which sells used cars only, links its
+  // parent group's "sonicautomotive.com/new-inventory/" and was classified a
+  // FRANCHISE off that one href.
   const hrefs = [];
+  const ownHrefs = [];
+  let ownOrigin = "";
+  try { ownOrigin = new URL(url).origin.toLowerCase(); } catch (_) { /* malformed url */ }
   try {
     $("a[href], link[href], form[action]").each((_, el) => {
-      const v = ($(el).attr("href") || $(el).attr("action") || "").toLowerCase();
-      if (v) hrefs.push(v);
+      const raw = ($(el).attr("href") || $(el).attr("action") || "").trim();
+      if (!raw) return;
+      let path = raw.toLowerCase();
+      let sameOrigin = !/^[a-z][a-z0-9+.-]*:|^\/\//i.test(raw);   // relative => same origin
+      try {
+        const abs = new URL(raw, url || undefined);
+        path = (abs.pathname + abs.search).toLowerCase();
+        sameOrigin = abs.origin.toLowerCase() === ownOrigin;
+      } catch (_) { /* unparseable (mailto:, tel:, javascript:) — keep raw */ }
+      hrefs.push(path);
+      if (sameOrigin) ownHrefs.push(path);
     });
   } catch (_) { /* ignore */ }
   const pathHaystack = (urlPath + " " + hrefs.join(" ")).toLowerCase();
+  const ownPathHaystack = (urlPath + " " + ownHrefs.join(" ")).toLowerCase();
 
   const scriptResources = [];
   try {
@@ -1690,9 +2026,12 @@ function collectPageSignals(url, $) {
   // B1 — test drive CTA
   if (anyKeyword(visibleText, TEST_DRIVE_KEYWORDS)) groupB.push("B1 - Test Drive CTA");
 
-  // B2 — new AND used inventory separation in navigation
-  const hasNew = /\/new-(inventory|vehicles|cars)/.test(pathHaystack) || /\bnew (inventory|vehicles)\b/.test(visibleText);
-  const hasUsed = /\/(used-(inventory|vehicles|cars)|pre-owned)/.test(pathHaystack) || /\b(used (inventory|vehicles)|pre-owned)\b/.test(visibleText);
+  // B2 — new AND used inventory separation in navigation. Own pages only: this
+  // is the heaviest input to the franchise-vs-independent split (selling NEW
+  // requires a franchise), so a link to somebody else's new-car inventory is
+  // exactly the wrong evidence — see ownPathHaystack above.
+  const hasNew = /\/new-(inventory|vehicles|cars)/.test(ownPathHaystack) || /\bnew (inventory|vehicles)\b/.test(visibleText);
+  const hasUsed = /\/(used-(inventory|vehicles|cars)|pre-owned)/.test(ownPathHaystack) || /\b(used (inventory|vehicles)|pre-owned)\b/.test(visibleText);
   if (hasNew && hasUsed) groupB.push("B2 - New/Used Separation");
 
   // B3 — payment calculator
@@ -1703,6 +2042,16 @@ function collectPageSignals(url, $) {
 
   // B5 — certified pre-owned
   if (anyKeyword(visibleText, CPO_KEYWORDS)) groupB.push("B5 - Certified Pre-Owned");
+
+  // B9 — the page's own headings say it sells vehicles. Title + h1 only: the
+  // same words buried in body copy ("we buy used cars") are far weaker, and
+  // restricting to headings is what keeps this from firing on every blog post.
+  let headline = "";
+  try {
+    headline = [$("title").first().text(), ...$("h1").map((_, el) => $(el).text()).get()].join(" ").replace(/\s+/g, " ");
+  } catch (_) { /* ignore */ }
+  if (VEHICLE_SALES_HEADLINE_RE.test(headline)) groupB.push("B9 - Vehicle Sales Declaration");
+  const declaresInsurance = INSURANCE_HEADLINE_RE.test(headline);
 
   // B6 — dealer specials pages
   if (anyPath(pathHaystack, SPECIALS_PATHS) || anyKeyword(visibleText, SPECIALS_KEYWORDS)) groupB.push("B6 - Dealer Specials");
@@ -1748,6 +2097,42 @@ function collectPageSignals(url, $) {
     groupC.push("C8 - Global/Regional Site Selector");
   }
 
+  // ---- GROUP S (service centre / repair shop signals) ----
+  // These describe a business whose product is LABOUR, not vehicles. A dealer's
+  // service department trips B4 but not these — S1 is self-description, S4 is
+  // third-party accreditation a franchise store has no need of, and S3 is
+  // published flat pricing a dealer service department almost never shows.
+  const groupS = [];
+  if (anyPath(pathHaystack, REPAIR_SHOP_PATHS) || anyKeyword(visibleText, REPAIR_SHOP_KEYWORDS)) {
+    groupS.push("S1 - Repair Shop Self-Description");
+  }
+  if (anyPath(pathHaystack, BOOKING_SCHEDULER_PATHS) || anyKeyword(visibleText, BOOKING_SCHEDULER_KEYWORDS)) {
+    groupS.push("S2 - Booking Scheduler");
+  }
+  if (anyKeyword(visibleText, SERVICE_MENU_KEYWORDS)) {
+    groupS.push("S3 - Published Service Menu/Pricing");
+  }
+  if (anyKeyword(visibleText, TRADE_ACCREDITATION_KEYWORDS)) {
+    groupS.push("S4 - Trade Accreditation");
+  }
+  if (anyKeyword(visibleText, TYRE_PARTS_RETAIL_KEYWORDS)) {
+    groupS.push("S5 - Tyre/Parts Retail");
+  }
+  // Own pages only, for the same reason as B2: S6 is the chain-vs-single-shop
+  // discriminator, and a third-party booking or review widget's URL says
+  // nothing about how many premises this business has.
+  if (anyPath(ownPathHaystack, MULTI_LOCATION_PATHS) || anyKeyword(visibleText, MULTI_LOCATION_KEYWORDS)) {
+    groupS.push("S6 - Multi-Location Operator");
+  }
+  if (anyPath(pathHaystack, SERVICE_WORK_PATHS) || anyKeyword(visibleText, SERVICE_WORK_KEYWORDS)) {
+    groupS.push("S7 - Automotive Service Work");
+  }
+
+  // --- Franchise vs independent discriminators (only consulted once the site
+  // has already been confirmed as a dealer — never used to confirm one). ---
+  const hasFranchiseLanguage = anyKeyword(visibleText, FRANCHISE_KEYWORDS);
+  const hasIndependentLanguage = anyKeyword(visibleText, INDEPENDENT_DEALER_KEYWORDS);
+
   // A SINGLE incidental mention of "automotive"/"vehicle" is not proof this
   // company's core business is vehicles. Two tiers, in decreasing order of
   // reliability:
@@ -1771,7 +2156,11 @@ function collectPageSignals(url, $) {
   const automotiveContextHits = AUTOMOTIVE_CONTEXT_KEYWORDS.filter((k) => anyKeyword(visibleText, [k]));
   const hasAutomotiveContext = hasStrongAutomotiveContext || automotiveContextHits.length >= 2;
 
-  return { groupA, groupB, groupC, hasInventoryPath, hasAutomotiveContext, hasStrongAutomotiveContext };
+  return {
+    groupA, groupB, groupC, groupS,
+    hasInventoryPath, hasAutomotiveContext, hasStrongAutomotiveContext,
+    hasFranchiseLanguage, hasIndependentLanguage, declaresInsurance,
+  };
 }
 
 /**
@@ -1789,31 +2178,23 @@ function collectPageSignals(url, $) {
  *   subpage rather than the homepage, so a homepage-only scan under-detects real
  *   dealer sites; these extra pages let the caller top up the evidence pool
  *   without this function needing to know how to fetch or discover them itself.
- * @returns {Promise<{siteType: 'dealer'|'corporate'|'unknown', inconclusive: boolean, confidence: number, detectedBy: string[], reason: string, report: string}>}
+ * @returns {Promise<{siteType: 'dealer'|'service'|'corporate'|'unknown', siteSubType: 'franchise'|'independent'|'service'|'repair'|'corporate'|null, inconclusive: boolean, confidence: number, detectedBy: string[], reason: string, report: string}>}
  */
 export async function detectSiteType({ url, $, page, response, statusCode, extraPages }) {
-  // Rule #7 — inaccessible / no usable data. This is INCONCLUSIVE (we couldn't
-  // evaluate), NOT a confident classification. Callers must fail OPEN on this.
-  let rawHtml = "";
-  try { rawHtml = ($ ? $.html() : "") || ""; } catch (_) { rawHtml = ""; }
-  if (!$ || rawHtml.replace(/\s/g, "").length < 60) {
-    return unknownType(url, "SITE INACCESSIBLE — INSUFFICIENT DATA TO EVALUATE", true);
-  }
-
-  // Bot-protection / challenge / block page (Cloudflare, Akamai, PerimeterX,
-  // captcha, 403/503/429). The page we received is NOT the real site, so we
-  // cannot classify it — return INCONCLUSIVE so the caller lets the full audit
-  // (which has proper bot-bypass handling) take over instead of wrongly blocking.
-  if (isChallengeOrBlockPage(rawHtml, statusCode, response)) {
-    return unknownType(url, "SITE INACCESSIBLE — bot protection / challenge page (cannot evaluate)", true);
-  }
-
   let hostname = "";
   try { hostname = new URL(url).hostname.replace(/^www\./, "").toLowerCase(); } catch (_) { /* malformed url */ }
 
   // =========================================================================
   // STEP 1 — DISQUALIFIERS (always processed first, homepage domain only)
   // =========================================================================
+  // These read the HOSTNAME only, so they are deliberately evaluated BEFORE the
+  // inaccessible/challenge-page checks below: a listed domain's verdict does not
+  // depend on the page body, and running the content checks first meant a
+  // WAF-fronted listed domain never reached its own disqualifier. Measured:
+  // cars.com is on MARKETPLACE_DOMAINS but was challenged first, so it burned a
+  // full stealth-browser escalation (~15s) to arrive at the same rejection its
+  // hostname settles in microseconds.
+  //
   // D1 — a known OEM brand domain is definitionally a corporate/manufacturer
   // site, not a dealer. High-confidence fast path — no signal scoring needed.
   if (domainMatches(hostname, OEM_DOMAINS)) {
@@ -1824,6 +2205,23 @@ export async function detectSiteType({ url, $, page, response, statusCode, extra
   }
   if (domainMatches(hostname, MEDIA_DOMAINS)) {
     return unknownType(url, `D3 — Automotive media / review publication (${hostname})`);
+  }
+
+  // Rule #7 — inaccessible / no usable data. This is INCONCLUSIVE (we couldn't
+  // evaluate), NOT a confident classification — the caller escalates to a
+  // stealth browser and, if that also fails, the audit is refused.
+  let rawHtml = "";
+  try { rawHtml = ($ ? $.html() : "") || ""; } catch (_) { rawHtml = ""; }
+  if (!$ || rawHtml.replace(/\s/g, "").length < 60) {
+    return unknownType(url, "SITE INACCESSIBLE — INSUFFICIENT DATA TO EVALUATE", true);
+  }
+
+  // Bot-protection / challenge / block page (Cloudflare, Akamai, PerimeterX,
+  // captcha, 403/503/429). The page we received is NOT the real site, so we
+  // cannot classify it — return INCONCLUSIVE so the caller can escalate to the
+  // stealth browser instead of recording a confident "not a dealership".
+  if (isChallengeOrBlockPage(rawHtml, statusCode, response)) {
+    return unknownType(url, "SITE INACCESSIBLE — bot protection / challenge page (cannot evaluate)", true);
   }
 
   // =========================================================================
@@ -1837,18 +2235,36 @@ export async function detectSiteType({ url, $, page, response, statusCode, extra
   const groupA = new Set();
   const groupB = new Set();
   const groupC = new Set();
+  const groupS = new Set();
   let hasInventoryPath = false;
   let hasAutomotiveContext = false;
   let hasStrongAutomotiveContext = false;
+  let hasFranchiseLanguage = false;
+  let hasIndependentLanguage = false;
+  let declaresInsurance = false;
   for (const p of pages) {
     if (!p || !p.$) continue;
     const signals = collectPageSignals(p.url, p.$);
     signals.groupA.forEach((s) => groupA.add(s));
     signals.groupB.forEach((s) => groupB.add(s));
     signals.groupC.forEach((s) => groupC.add(s));
+    signals.groupS.forEach((s) => groupS.add(s));
     hasInventoryPath = hasInventoryPath || signals.hasInventoryPath;
     hasAutomotiveContext = hasAutomotiveContext || signals.hasAutomotiveContext;
     hasStrongAutomotiveContext = hasStrongAutomotiveContext || signals.hasStrongAutomotiveContext;
+    hasFranchiseLanguage = hasFranchiseLanguage || signals.hasFranchiseLanguage;
+    hasIndependentLanguage = hasIndependentLanguage || signals.hasIndependentLanguage;
+    declaresInsurance = declaresInsurance || signals.declaresInsurance;
+  }
+
+  // D5 — an insurer (see INSURANCE_HEADLINE_RE). Checked here rather than in
+  // STEP 1 because it needs the collected signals: a site is only disqualified
+  // when it has NO genuine own-inventory anchor, so a dealer group that happens
+  // to head a page with its insurance product still classifies normally.
+  const hasOwnInventoryEvidence = [...groupA].some((s) =>
+    ["A1 - VIN Detected", "A2 - Inventory Listing", "A3 - Dealer Platform Script", "A4 - Vehicle Schema"].includes(s));
+  if (declaresInsurance && !hasOwnInventoryEvidence) {
+    return unknownType(url, "D5 — Insurance provider, not an automotive dealer, service or corporate site");
   }
 
   // =========================================================================
@@ -1866,6 +2282,7 @@ export async function detectSiteType({ url, $, page, response, statusCode, extra
   // vehicle-specific anchor must also be present.
   // =========================================================================
   const MIN_SIGNALS = 3;
+  const MIN_SIGNALS_WITH_GENUINE_ANCHOR = 2;   // see dealerThreshold below
   const matched = [...groupA, ...groupB];
 
   // NOTE: "B1 - Test Drive CTA" and "B5 - Certified Pre-Owned" were removed
@@ -1884,6 +2301,7 @@ export async function detectSiteType({ url, $, page, response, statusCode, extra
     "B2 - New/Used Separation",
     "B7 - Manufacturer Dealer Keyword",
     "B8 - Inventory API",
+    "B9 - Vehicle Sales Declaration",
   ]);
   const hasAutomotiveAnchor = matched.some((m) => AUTOMOTIVE_ANCHORS.has(m));
 
@@ -1956,13 +2374,33 @@ export async function detectSiteType({ url, $, page, response, statusCode, extra
   //                                  independently-rich vehicle-commerce
   //                                  signals (trade-in/test-drive/payment/
   //                                  service together) to compensate.
+  // The first two tiers are a genuine manufacturer SIGNATURE; the third is a
+  // much softer "looks like a big automotive-ish company" fallback. They are
+  // named apart because the two are trusted to different depths below — the
+  // signature outranks a dealer reading and a servicing reading, the fallback
+  // outranks neither.
+  const strongCorporateSignature =
+    strongCorporateAnchorCount >= 2 ||
+    (strongCorporateAnchorCount === 1 && hasStrongAutomotiveContext);
+  // Two Group C signals is the normal floor. A direct-to-consumer manufacturer
+  // can legitimately fall one short of it: rivian.com's homepage carries a
+  // configurator and nothing else from Group C — no dealer locator (no dealer
+  // network exists), no investor/press links above the fold — yet it is a car
+  // maker beyond argument, and once STEP 5 was allowed to decide before the
+  // soft corporate tier it was claimed as a SERVICE business off its own
+  // service-network pages. A single strong anchor may therefore substitute for
+  // the second signal, but only when BOTH corroborations are present: the
+  // <title> names the business automotive, and there is a real vehicle-purchase
+  // funnel behind it (trade-in, test drive, payment, financing together).
+  // Garmin/Philips/Rolex — the sites this floor was built to exclude — have one
+  // strong anchor and neither corroboration, so they are still excluded twice
+  // over.
+  const corporateSignalFloor =
+    matchedC.length >= MIN_CORPORATE_SIGNALS ||
+    (strongCorporateAnchorCount >= 1 && hasStrongAutomotiveContext && hasRichCommerceSignals);
   const corporateQualifies =
-    matchedC.length >= MIN_CORPORATE_SIGNALS &&
-    (
-      strongCorporateAnchorCount >= 2 ||
-      (strongCorporateAnchorCount === 1 && hasStrongAutomotiveContext) ||
-      (hasAutomotiveContext && hasRichCommerceSignals)
-    );
+    corporateSignalFloor &&
+    (strongCorporateSignature || (hasAutomotiveContext && hasRichCommerceSignals));
 
   // GENUINE Group A anchors (VIN / own inventory listing / dealer-platform
   // script / vehicle schema) are the only signals that actually prove a site
@@ -1995,31 +2433,169 @@ export async function detectSiteType({ url, $, page, response, statusCode, extra
   // widget, or a dealer GROUP can say "our dealer network" about its own
   // locations), but 2+ of them at once is a near-unique corporate signature.
   // So when the ONLY genuine anchor is A2 (not the harder-to-fake A1/A3/A4),
-  // require 2+ of the strong corporate anchors before letting dealer win.
-  // (strongCorporateAnchorCount is already computed above, alongside corporateQualifies.)
+  // require the full corporate SIGNATURE before letting dealer win.
+  //
+  // That signature is strongCorporateSignature, not a bare "2+ anchors" count.
+  // The count alone missed the entire direct-to-consumer OEM shape, which is
+  // now common: polestar.com and vinfastauto.us both sell their own cars from
+  // their own site, so they carry A2 (real listings with MSRP), trade-in,
+  // financing and test-drive booking — every hallmark of a dealer — while
+  // having NO dealer network to build a locator for, which is precisely why
+  // they cannot reach two of C1/C2/C4. What they do have is one strong anchor
+  // (a configurator) plus a <title> that names the business as automotive
+  // ("Polestar – Electric Cars", "Premier New Electric Car Company | VinFast")
+  // plus investor relations, a newsroom and a sustainability report. That is a
+  // manufacturer, and the tier-2 rule already encodes exactly this judgement
+  // for the corporate test; reusing it here keeps the two consistent.
+  //
+  // The three corpus dealers whose only genuine anchor is also A2
+  // (enterprisecarsales, hgreglux, drivetime) are untouched: none has a
+  // configurator, a dealer locator or dealer-network language, so none reaches
+  // even one strong anchor, let alone the signature.
   const onlyWeakDealerAnchor = hasGenuineDealerAnchor && !matched.some((m) => m !== "A2 - Inventory Listing" && GENUINE_DEALER_ANCHORS.has(m));
-  const corporateOutranksWeakAnchor = onlyWeakDealerAnchor && strongCorporateAnchorCount >= 2 && corporateQualifies;
+  const corporateOutranksWeakAnchor = onlyWeakDealerAnchor && strongCorporateSignature && corporateQualifies;
 
-  if (matched.length >= MIN_SIGNALS && hasAutomotiveAnchor) {
+  // The flat 3-signal count was written to stop generic e-commerce sites, but
+  // the hasAutomotiveAnchor requirement below already does that job — and the
+  // count on top of it rejects real dealers that are simply terse. hgreglux.com
+  // (page title: "Used Cars for Sale in Florida") ends at A2 + A6 = 2 after its
+  // /used-car SRP is probed and a genuine inventory listing is confirmed, and
+  // was refused with HTTP 400. When one of the four GENUINE Group A anchors
+  // (VIN / own inventory listing / dealer-platform script / vehicle schema) is
+  // present, that anchor IS the evidence; padding only has to corroborate it,
+  // so two signals suffice. Without a genuine anchor — i.e. leaning on the
+  // B-signals that an OEM's own site also trips — the original bar stands.
+  const dealerThreshold = hasGenuineDealerAnchor ? MIN_SIGNALS_WITH_GENUINE_ANCHOR : MIN_SIGNALS;
+
+  if (matched.length >= dealerThreshold && hasAutomotiveAnchor) {
     if ((!hasGenuineDealerAnchor && corporateQualifies) || corporateOutranksWeakAnchor) {
       return corporate(url, matchedC, `Corporate/OEM signals outrank generic dealer-side padding (no own-inventory evidence): ${matchedC.join(", ")}`, 0.85);
     }
-    return dealer(url, matched);
+    return dealer(url, matched, resolveDealerSubType({ groupB, hasFranchiseLanguage, hasIndependentLanguage }));
   }
 
   // =========================================================================
-  // STEP 4 — CORPORATE DECISION (GROUP C)
+  // STEP 4a — CORPORATE DECISION, manufacturer signature only.
   // Only reached once the site failed the dealer test above.
+  //
+  // Split from the softer tier (STEP 4b, below STEP 5) because corporate used
+  // to be decided in full BEFORE service was ever considered, and the soft tier
+  // is not strong enough to earn that priority. lesschwab.com — a tyre and
+  // servicing chain with ASE-style credentials, a booking funnel, published
+  // work (tire rotation, brake service) and hundreds of stores — was returned
+  // as CORPORATE purely because it publishes a newsroom and a company-vision
+  // page and sells enough things to clear hasRichCommerceSignals. A newsroom is
+  // not a manufacturer. The real signature (a configurator, a dealer locator,
+  // dealer-network language) still outranks a service reading and is decided
+  // here; "has corporate-shaped pages" now has to wait until after STEP 5.
+  // =========================================================================
+  if (corporateQualifies && strongCorporateSignature) {
+    return corporate(url, matchedC, `Corporate/OEM signals: ${matchedC.join(", ")}`, 0.75);
+  }
+
+  // =========================================================================
+  // STEP 5 — SERVICE / REPAIR DECISION (GROUP S)
+  // Only reached once the site failed BOTH the dealer and corporate tests, so
+  // by construction it has no own-inventory evidence — which is exactly what
+  // separates a servicing business from a selling one.
+  //
+  // This used to be disqualifier "D4" that resolved to unknown, i.e. the audit
+  // was refused outright at the controller gate. The parameter matrix
+  // (docs/reports/Automotive-Site-Type-Parameter-Matrix.html) treats service
+  // centres and repair garages as two of the four audited site types, so they
+  // are now first-class verdicts with 12 inventory-scoped parameters
+  // renormalised out rather than scored as failures.
+  //
+  // Gate mirrors the dealer/corporate ones: N signals AND a genuinely
+  // automotive anchor. S2 (booking) and S3 (service menu) are business-shape
+  // signals that any appointment-based local business trips — a dentist books
+  // online and publishes a price list, a plumber quotes "free estimate, upfront
+  // pricing" — so they can only ever be padding, never anchor a verdict.
+  //
+  // The anchors come in two tiers because they are not equally self-proving:
+  //   STRONG — S4 (ASE / I-CAR / NAPA / VACC accreditation), S5 (tyre fitting,
+  //     windscreen repair, car parts) and S7 (named workshop operations: oil
+  //     change, wheel alignment, collision repair). Nothing outside the trade
+  //     uses this vocabulary, so these stand on their own. This matters in
+  //     practice: a tyre/fast-fit chain often never says "vehicle" or
+  //     "automotive" at all — it says "tyres" — and would fail a
+  //     hasAutomotiveContext test calibrated on OEM corporate homepages.
+  //     S7 is what lets an oil-change chain qualify at all; see its vocabulary
+  //     above for why anchoring on it does not also catch parts retailers.
+  //   WEAK — S1, which carries the shop-shape vocabulary but includes two
+  //     genuinely ambiguous phrases: "body shop" (a well-known cosmetics
+  //     retailer) and "repair shop" (phone/appliance repair). S1 therefore
+  //     needs hasAutomotiveContext alongside it, the same backstop the
+  //     corporate path uses for its generic Group C signals.
+  // =========================================================================
+  const MIN_SERVICE_SIGNALS = 2;
+  const STRONG_SERVICE_ANCHORS = new Set([
+    "S4 - Trade Accreditation", "S5 - Tyre/Parts Retail", "S7 - Automotive Service Work",
+  ]);
+  const matchedS = [...groupS];
+  const serviceEvidence = groupB.has("B4 - Service Scheduling")
+    ? [...matchedS, "B4 - Service Scheduling"]
+    : matchedS;
+  const serviceAnchored =
+    matchedS.some((s) => STRONG_SERVICE_ANCHORS.has(s)) ||
+    (groupS.has("S1 - Repair Shop Self-Description") && hasAutomotiveContext);
+
+  // S7 is the broadest of the three strong anchors — it matches vocabulary a
+  // business only has to MENTION, not perform, and the businesses that mention
+  // repair work without doing any are exactly the ones already known to be
+  // dangerous here: motor insurers (approved-repairer networks, "collision
+  // repair", "auto repair"). Letting B4 be its sole corroboration would rebuild
+  // the loophole that scored progressive.com as a repair shop, because B4 fires
+  // on nothing more than "oem parts". So when S7 is the ONLY strong anchor,
+  // the corroboration must be a second GROUP S signal — a booking funnel, a
+  // published price list, an accreditation, a locator, a shop self-description.
+  // Every genuine servicing business in the corpus clears this; the insurers
+  // carry S7 and nothing else. S4/S5 are unaffected: nobody outside the trade
+  // claims ASE certification or sells tyre fitting.
+  const onlyS7Anchor =
+    groupS.has("S7 - Automotive Service Work") &&
+    !matchedS.some((s) => s !== "S7 - Automotive Service Work" && STRONG_SERVICE_ANCHORS.has(s)) &&
+    !(groupS.has("S1 - Repair Shop Self-Description") && hasAutomotiveContext);
+  const serviceCorroborated = onlyS7Anchor
+    ? matchedS.length >= MIN_SERVICE_SIGNALS
+    : serviceEvidence.length >= MIN_SERVICE_SIGNALS;
+
+  // A servicing business sells LABOUR. It does not run a vehicle-purchase
+  // funnel — it has no trade-in valuation to offer, no test drive to book, no
+  // monthly payment to calculate, no certified-pre-owned programme. A site
+  // carrying three or more of those at once is selling vehicles, whatever else
+  // it also does, so STEP 5 must not claim it: rivian.com has a service network
+  // with booking and locations (S2/S6/S7 all fire) and was read as a repair
+  // chain the moment service was allowed to decide before the soft corporate
+  // tier. Deliberately a count of three, not one — every servicing chain in the
+  // corpus trips at most one of these in passing (lesschwab.com quotes a
+  // trade-in on tyres), while a real seller trips several together.
+  const VEHICLE_PURCHASE_FUNNEL = new Set([
+    "A5 - Trade-In Tool", "B1 - Test Drive CTA", "B2 - New/Used Separation",
+    "B3 - Payment Calculator", "B5 - Certified Pre-Owned", "B9 - Vehicle Sales Declaration",
+  ]);
+  const sellsVehicles = matched.filter((m) => VEHICLE_PURCHASE_FUNNEL.has(m)).length >= 3;
+
+  if (serviceCorroborated && serviceAnchored && !sellsVehicles) {
+    return service(url, serviceEvidence, resolveServiceSubType(groupS));
+  }
+
+  // =========================================================================
+  // STEP 4b — CORPORATE DECISION, soft tier (see STEP 4a for why it sits here).
+  // Automotive vocabulary plus a rich commerce mix, with no manufacturer
+  // signature behind it. This is rivian.com's path — a DTC maker with no dealer
+  // network, so no locator and no dealer-network language to anchor on — and it
+  // only gets to decide once nothing above has claimed the site.
   // =========================================================================
   if (corporateQualifies) {
     return corporate(url, matchedC, `Corporate/OEM signals: ${matchedC.join(", ")}`, 0.75);
   }
 
-  // D4 — independent repair/service shop with no sales inventory: service signals
-  // present but zero sales signals. Surface the specific disqualifier when it fits.
+  // Service-ish but under the bar — keep the old D4 wording so the "why was
+  // this refused" log line still reads the way it always has.
   const hasServiceOnly = groupB.has("B4 - Service Scheduling") && !hasInventoryPath && groupA.size === 0;
   const reason = hasServiceOnly
-    ? "D4 — Service/repair shop with no vehicle sales inventory"
+    ? "D4 — Service/repair signals present but too thin to confirm a servicing business"
     : matched.length >= MIN_SIGNALS && !hasAutomotiveAnchor
       ? `Only generic commerce signals — no vehicle-specific evidence (matched: ${matched.join(", ")})`
       : matchedC.length >= MIN_CORPORATE_SIGNALS && !hasCorporateAutomotiveAnchor && !hasAutomotiveContext
@@ -2082,17 +2658,79 @@ function isChallengeOrBlockPage(rawHtml, statusCode, response) {
   return weakMarkers.some((m) => html.includes(m));
 }
 
+// --- sub-type resolvers ------------------------------------------------------
+// Both resolvers run only AFTER the coarse verdict is settled. They never
+// promote or demote a verdict — they only pick which of the two columns in the
+// parameter matrix this site is scored against, so an ambiguous read costs a
+// weight tilt, never an audit.
+
+// Franchise vs independent. A franchise store is contractually a single-brand
+// NEW-vehicle retailer and is required to display that affiliation, so explicit
+// franchise markers are reliable when present. B2 (new AND used inventory in the
+// nav) is weighted highest because selling new vehicles requires a franchise —
+// an independent lot cannot have it. Absence of every franchise marker is
+// genuine evidence of absence here, so the fallback is "independent" rather
+// than a coin flip.
+function resolveDealerSubType({ groupB, hasFranchiseLanguage, hasIndependentLanguage }) {
+  let franchisePoints = 0;
+  if (groupB.has("B2 - New/Used Separation")) franchisePoints += 2;
+  if (groupB.has("B7 - Manufacturer Dealer Keyword")) franchisePoints += 2;
+  if (hasFranchiseLanguage) franchisePoints += 1;
+  if (groupB.has("B5 - Certified Pre-Owned")) franchisePoints += 1;   // OEM CPO programme, but independents say "certified" loosely too
+
+  const independentPoints = hasIndependentLanguage ? 2 : 0;
+
+  return franchisePoints >= 2 && franchisePoints > independentPoints ? "franchise" : "independent";
+}
+
+// Service centre/chain vs single-location garage. The matrix splits columns 3
+// and 4 on exactly this: "service centre or chain" versus "independent
+// mechanic, collision repair, single location". S6 (multi-location) is the
+// positive signal for a chain; S1 (garage/body-shop/mechanic self-description)
+// for a single shop. When a site trips both — a two-branch body shop — the
+// chain reading wins, because the parameters that actually differ between the
+// columns (local landing pages, NAP, booking scheduler) are the ones a
+// multi-location operator needs.
+function resolveServiceSubType(groupS) {
+  if (groupS.has("S6 - Multi-Location Operator")) return "service";
+  if (groupS.has("S1 - Repair Shop Self-Description")) return "repair";
+  return "service";
+}
+
 // --- verdict builders -------------------------------------------------------
-function dealer(url, detectedBy) {
+function dealer(url, detectedBy, siteSubType = "independent") {
   const report =
     `=== SITE TYPE DETECTION RESULT ===\n\n` +
     `WEBSITE         : ${url}\n` +
-    `VERDICT         : ✅ DEALER SITE CONFIRMED\n` +
+    `VERDICT         : ✅ DEALER SITE CONFIRMED (${siteSubType})\n` +
     `DETECTED BY     : ${detectedBy.join(", ")}\n\n` +
     `→ PROCEEDING WITH DEALER AUDIT SCOPE...\n` +
     `====================================`;
-  logger.info(`[SiteTypeGate] ✅ DEALER ${url} — ${detectedBy.join(", ")}`);
-  return { siteType: "dealer", inconclusive: false, confidence: 0.9, detectedBy, reason: "", report };
+  logger.info(`[SiteTypeGate] ✅ DEALER/${siteSubType} ${url} — ${detectedBy.join(", ")}`);
+  return { siteType: "dealer", siteSubType, inconclusive: false, confidence: 0.9, detectedBy, reason: "", report };
+}
+
+// Confident positive — a servicing business (service centre/chain or repair
+// garage) with no vehicle sales inventory of its own.
+function service(url, detectedBy, siteSubType) {
+  const label = siteSubType === "repair" ? "MECHANICAL/REPAIR" : "AUTOMOTIVE SERVICE";
+  const report =
+    `=== SITE TYPE DETECTION RESULT ===\n\n` +
+    `WEBSITE         : ${url}\n` +
+    `VERDICT         : 🔧 ${label} SITE CONFIRMED\n` +
+    `DETECTED BY     : ${detectedBy.join(", ")}\n\n` +
+    `→ PROCEEDING WITH SERVICE AUDIT SCOPE (inventory parameters N/A)...\n` +
+    `====================================`;
+  logger.info(`[SiteTypeGate] 🔧 SERVICE/${siteSubType} ${url} — ${detectedBy.join(", ")}`);
+  return {
+    siteType: "service",
+    siteSubType,
+    inconclusive: false,
+    confidence: 0.85,
+    detectedBy,
+    reason: `Servicing business, no vehicle sales inventory: ${detectedBy.join(", ")}`,
+    report,
+  };
 }
 
 // Confident positive — a corporate/OEM/multi-dealer site (no inventory of its own).
@@ -2105,16 +2743,19 @@ function corporate(url, detectedBy, reason, confidence = 0.8) {
     `→ PROCEEDING WITH CORPORATE AUDIT SCOPE...\n` +
     `====================================`;
   logger.info(`[SiteTypeGate] 🏢 CORPORATE ${url} — ${reason}`);
-  return { siteType: "corporate", inconclusive: false, confidence, detectedBy, reason, report };
+  return { siteType: "corporate", siteSubType: "corporate", inconclusive: false, confidence, detectedBy, reason, report };
 }
 
 // Neither confirmed — a marketplace/media/non-automotive site, or too few
-// signals for either verdict. Callers FAIL OPEN: treat exactly like the
-// dealer pipeline always has, so nothing regresses.
+// signals for either verdict. Callers REFUSE the audit on this (HTTP 400 at
+// both controller gates); "unknown" has NOT failed open to the dealer taxonomy
+// since the four-site-type taxonomy landed. `inconclusive` distinguishes "we
+// evaluated it and it isn't automotive" from "we could not look at all" — only
+// the latter is worth a stealth-browser retry, and only the former is cached.
 function unknownType(url, reason, wasInconclusive = false, hasAutomotiveContext = false, hasRichCommerceSignals = false) {
   const level = wasInconclusive ? "⚠️ INCONCLUSIVE" : "❓ UNKNOWN";
   logger.info(`[SiteTypeGate] ${level} ${url} — ${reason}`);
-  return { siteType: "unknown", inconclusive: wasInconclusive, confidence: 0, detectedBy: [], reason, report: "", hasAutomotiveContext, hasRichCommerceSignals };
+  return { siteType: "unknown", siteSubType: null, inconclusive: wasInconclusive, confidence: 0, detectedBy: [], reason, report: "", hasAutomotiveContext, hasRichCommerceSignals };
 }
 
 export default detectSiteType;

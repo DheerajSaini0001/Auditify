@@ -492,10 +492,12 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
     // Failing axe rules surfaced as their own cards count toward the tally too.
     ...(Array.isArray(metric.Other_Issues) ? metric.Other_Issues : []),
   ];
-  // Graded scores → tally by status, not exact score values.
-  const passedCount = allMetrics.filter(m => m.status === "pass").length;
-  const warningCount = allMetrics.filter(m => m.status === "warning").length;
-  const failedCount = allMetrics.filter(m => m.status === "fail").length;
+  // Graded scores → tally by status, not exact score values. Signed-out visitors get
+  // this section stripped, so fall back to the server's tallies rather than counting
+  // metrics that were never sent.
+  const passedCount = metric?.locked ? (metric.passedCount ?? 0) : allMetrics.filter(m => m.status === "pass").length;
+  const warningCount = metric?.locked ? (metric.warningCount ?? 0) : allMetrics.filter(m => m.status === "warning").length;
+  const failedCount = metric?.locked ? (metric.failedCount ?? 0) : allMetrics.filter(m => m.status === "fail").length;
 
   return (
     <div className={`w-full min-h-screen ${darkMode ? "bg-gray-900" : "bg-surface"} transition-colors duration-300`}>

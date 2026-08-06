@@ -1,9 +1,10 @@
 import express from "express";
-import { startAudit, getReportById, getReportStatusById, mergeReports, findMergedReport } from "../controllers/singleAuditController.js";
+import { startAudit, getReportById, getReportStatusById, mergeReports, findMergedReport, claimReport } from "../controllers/singleAuditController.js";
 import { discover } from "../controllers/discoveryController.js";
-import { generatePDFReport } from "../controllers/pdfController.js";
+import { generatePDFReport, emailReportToLead } from "../controllers/pdfController.js";
 import rateLimit from "express-rate-limit";
 import { tryAuthenticate } from "../middleware/auth.js";
+import { reportEmailLimiter } from "../middleware/rateLimiter.js";
 import { chargeReportBudget, enforceReportBudget } from "../middleware/reportBudget.js";
 
 const router = express.Router();
@@ -51,6 +52,16 @@ router.post("/find-merged", mergeLimiter, tryAuthenticate, findMergedReport);
 // by report id when there's no authenticated user); logged-in users are scoped
 // to their own reports as before.
 router.get("/:id/export/pdf", tryAuthenticate, generatePDFReport);
+
+// Email the report instead of streaming it back — the signed-out path. A guest
+// gives a name and address, gets the PDF in their inbox, and we keep the lead
+// (models/ReportLead.js). Rate-limited: this endpoint mails a file to whatever
+// address the request names, so an uncapped version is a spam relay.
+router.post("/:id/email-report", reportEmailLimiter, tryAuthenticate, emailReportToLead);
+
+// Attach a guest report to the account that just signed in, so the report a
+// visitor made an account for actually lands in their past reports.
+router.post("/:singleAuditId/claim", tryAuthenticate, claimReport);
 
 // Get Single Audit Status
 router.get("/:singleAuditId/status", tryAuthenticate, getReportStatusById);

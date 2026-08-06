@@ -77,6 +77,13 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
+  // Merge fields into the cached user without a round trip to /me. Used for
+  // preferences the client just wrote (e.g. the GSC sync answer), so the prompt
+  // that depends on them does not reappear until the next reload.
+  const updateUser = useCallback((patch) => {
+    setUser(prev => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
   const logout = () => {
     localStorage.removeItem('dealerpulse_token');
     setToken(null);
@@ -86,11 +93,12 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{ 
-        user, 
-        token, 
-        login, 
-        logout, 
-        isLoading, 
+        user,
+        token,
+        login,
+        logout,
+        updateUser,
+        isLoading,
         apiFetch,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin' || user?.role === 'super_admin'

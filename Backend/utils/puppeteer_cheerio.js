@@ -1242,6 +1242,11 @@ export async function ensureDomainClearance(url, device = 'Desktop', opts = {}) 
  *   lifecycle itself and only closes the per-call context, so there is
  *   nothing left for the caller to close.
  */
+// Visible-text floor under which a rendered page is treated as an un-hydrated
+// SPA shell worth waiting on. Matches MIN_HOMEPAGE_TEXT in siteTypeDetector.js,
+// which is where the measured shell-vs-page distribution is documented.
+const SPA_SETTLE_MIN_TEXT = 1200;
+
 export async function fetchWithBotBypass(url, device = 'Desktop') {
   let context;
   try {
@@ -1299,6 +1304,36 @@ export async function fetchWithBotBypass(url, device = 'Desktop') {
     // [ADD] — If classification cleared the challenge, seed the domain cache so the
     // audit that follows this escalation reuses the solve.
     if (!isBotProtected) await saveClearanceCookies(context, url);
+
+    // A JS-only SPA needs RENDERING, not bypassing — and everything above only
+    // handles bypassing. goto() resolves at domcontentloaded, which on a
+    // client-rendered site is an empty <div id="root">, so this escalation was
+    // handing back the very same shell the plain HTTP fetch already had:
+    // discounttire.com returned in 1.2s with 256 characters of body text, twice
+    // in a row, and a national tyre chain was refused an audit as a result.
+    // Half the reason this function exists (see siteTypeDetector.js's header)
+    // was therefore inoperative.
+    //
+    // Only pay for the settle when the DOM actually looks unrendered, so the
+    // normal case — a fully server-rendered page, or a challenge already
+    // resolved above — costs nothing. Both waits are best-effort: whatever has
+    // rendered by the time they give up is still strictly better than the
+    // pre-hydration snapshot.
+    const renderedTextLength = async () => {
+      try {
+        return await page.evaluate(() => ((document.body && document.body.innerText) || "").replace(/\s+/g, " ").trim().length);
+      } catch (_) { return SPA_SETTLE_MIN_TEXT; }   // can't measure — don't wait
+    };
+    if (!isBotProtected && (await renderedTextLength()) < SPA_SETTLE_MIN_TEXT) {
+      try { await page.waitForLoadState("networkidle", { timeout: 8000 }); } catch (_) { /* keep what rendered */ }
+      try {
+        await page.waitForFunction(
+          (min) => ((document.body && document.body.innerText) || "").trim().length >= min,
+          SPA_SETTLE_MIN_TEXT,
+          { timeout: 6000 }
+        );
+      } catch (_) { /* never rendered more — return what we have */ }
+    }
 
     const html = await safePageContent(page);
     const statusCode = response ? response.status() : (html ? 200 : 0);

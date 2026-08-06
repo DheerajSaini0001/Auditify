@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>US vs AU Norms — Implementation Status | DealerSiteAudit</title>
+<style>
+/* ─────────────────────────────────────────────────────────────
+   DealerSiteAudit — US vs AU Audit Norms, implementation status
+   Self-contained. No external fonts, scripts or stylesheets.
+   Palette lifted from Frontend/src/index.css brand tokens.
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --paper:      #F7F5F0;
+  --paper-2:    #EFEDE7;
+  --paper-3:    #E0DFD9;
+  --ink:        #101C2C;
+  --ink-2:      #303945;
+  --ink-3:      #4E5762;
+  --ink-4:      #6C7581;
+  --rule:       #E0DFD9;
+  --rule-soft:  #EFEDE7;
+
+  --accent:     #F26419;
+  --accent-ink: #AC420C;
+  --accent-bg:  #FDEEE5;
+
+  --ok:         #308D5C;
+  --ok-bg:      #E7F2EC;
+  --ok-ink:     #1F5C3D;
+
+  --warn:       #D18E14;
+  --warn-bg:    #FDF7E9;
+  --warn-ink:   #8B5B0D;
+
+  --bad:        #DA3D51;
+  --bad-bg:     #FCEBED;
+  --bad-ink:    #972533;
+
+  --info:       #3F6A99;
+  --info-bg:    #ECF1F6;
+  --info-ink:   #2A4563;
+
+  --violet:     #835795;
+  --violet-bg:  #F3EDF5;
+  --violet-ink: #563761;
+
+  --shadow: 0 1px 2px rgba(16,28,44,.05), 0 8px 24px -12px rgba(16,28,44,.14);
+
+  --sans: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --maxw: 1180px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #101C2C;
+    --paper-2:    #1E2833;
+    --paper-3:    #303945;
+    --ink:        #EFEDE7;
+    --ink-2:      #E0DFD9;
+    --ink-3:      #C9CBCC;
+    --ink-4:      #A9AFB6;
+    --rule:       #303945;
+    --rule-soft:  #1E2833;
+
+    --accent:     #F58A50;
+    --accent-ink: #F9B389;
+    --accent-bg:  #2E1A0E;
+
+    --ok:         #4FB37F;  --ok-bg:     #12261C;  --ok-ink:     #7ACCA1;
+    --warn:       #E9A72C;  --warn-bg:   #2B1F07;  --warn-ink:   #EFBD55;
+    --bad:        #E86B7B;  --bad-bg:    #2B1116;  --bad-ink:    #F09AA5;
+    --info:       #6E96BF;  --info-bg:   #131F2C;  --info-ink:   #9CBBD8;
+    --violet:     #A57FB4;  --violet-bg: #241729;  --violet-ink: #C4A6CE;
+
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:#101C2C; --paper-2:#1E2833; --paper-3:#303945;
+  --ink:#EFEDE7; --ink-2:#E0DFD9; --ink-3:#C9CBCC; --ink-4:#A9AFB6;
+  --rule:#303945; --rule-soft:#1E2833;
+  --accent:#F58A50; --accent-ink:#F9B389; --accent-bg:#2E1A0E;
+  --ok:#4FB37F; --ok-bg:#12261C; --ok-ink:#7ACCA1;
+  --warn:#E9A72C; --warn-bg:#2B1F07; --warn-ink:#EFBD55;
+  --bad:#E86B7B; --bad-bg:#2B1116; --bad-ink:#F09AA5;
+  --info:#6E96BF; --info-bg:#131F2C; --info-ink:#9CBBD8;
+  --violet:#A57FB4; --violet-bg:#241729; --violet-ink:#C4A6CE;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"]  { color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 88px; -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15.5px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Top bar ─────────────────────────────────────────────── */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: saturate(1.6) blur(12px);
+  -webkit-backdrop-filter: saturate(1.6) blur(12px);
+  border-bottom: 1px solid var(--rule);
+}
+.topbar-in {
+  max-width: var(--maxw); margin: 0 auto; padding: 10px 22px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: baseline; gap: 9px; font-weight: 800; letter-spacing: -.02em; }
+.brand .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); align-self: center; flex: none; }
+.brand small { font-weight: 600; color: var(--ink-4); font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; }
+.topbar .spacer { flex: 1 1 auto; }
+
+.search {
+  position: relative; flex: 0 1 300px; min-width: 180px;
+}
+.search input {
+  width: 100%; padding: 7px 11px 7px 30px;
+  border: 1px solid var(--rule); border-radius: 8px;
+  background: var(--paper-2); color: var(--ink);
+  font: inherit; font-size: 13.5px;
+}
+.search input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.search svg { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); opacity: .5; }
+.hitcount { font-size: 12px; color: var(--ink-4); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.tbtn {
+  border: 1px solid var(--rule); background: var(--paper-2); color: var(--ink-3);
+  border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; line-height: 1;
+}
+.tbtn:hover { border-color: var(--accent); color: var(--accent-ink); }
+
+/* ── Layout ──────────────────────────────────────────────── */
+.shell { max-width: var(--maxw); margin: 0 auto; padding: 0 22px 120px; display: grid; grid-template-columns: 232px minmax(0,1fr); gap: 44px; }
+@media (max-width: 940px) { .shell { grid-template-columns: 1fr; gap: 0; } }
+
+nav.toc { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 96px); overflow-y: auto; padding: 26px 0 40px; font-size: 13.5px; }
+@media (max-width: 940px) {
+  nav.toc { position: static; max-height: none; border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+  nav.toc ol { columns: 2; column-gap: 20px; }
+  @media (max-width: 560px) { nav.toc ol { columns: 1; } }
+}
+nav.toc h2 { font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-4); margin: 0 0 10px; font-weight: 800; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; }
+nav.toc li { margin: 0; break-inside: avoid; }
+nav.toc a {
+  display: block; padding: 5px 10px; border-radius: 6px;
+  color: var(--ink-3); text-decoration: none; border-left: 2px solid transparent;
+}
+nav.toc a:hover { background: var(--paper-2); color: var(--ink); }
+nav.toc a.on { color: var(--accent-ink); border-left-color: var(--accent); background: var(--accent-bg); font-weight: 700; }
+nav.toc .sub a { padding-left: 22px; font-size: 12.8px; }
+
+main { padding-top: 26px; min-width: 0; }
+
+/* ── Hero ────────────────────────────────────────────────── */
+.hero { border-bottom: 1px solid var(--rule); padding-bottom: 26px; margin-bottom: 34px; }
+.eyebrow { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-ink); font-weight: 800; margin: 0 0 10px; }
+h1 { font-size: clamp(28px, 4.4vw, 42px); line-height: 1.1; letter-spacing: -.03em; margin: 0 0 14px; font-weight: 800; }
+.lede { font-size: 17px; color: var(--ink-3); margin: 0 0 20px; max-width: 62ch; }
+.meta { display: flex; gap: 10px 20px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-4); }
+.meta b { color: var(--ink-2); font-weight: 700; }
+
+/* ── Sections ────────────────────────────────────────────── */
+section { margin: 0 0 56px; scroll-margin-top: 84px; }
+h2.sec {
+  font-size: 12px; letter-spacing: .13em; text-transform: uppercase; font-weight: 800;
+  color: var(--ink-4); margin: 0 0 6px; display: flex; align-items: center; gap: 10px;
+}
+h2.sec::before { content: attr(data-n); font-variant-numeric: tabular-nums; color: var(--accent); }
+h3.title { font-size: clamp(21px, 2.6vw, 27px); letter-spacing: -.02em; margin: 0 0 12px; font-weight: 800; line-height: 1.2; }
+h4 { font-size: 16px; margin: 30px 0 10px; font-weight: 800; letter-spacing: -.01em; }
+p { margin: 0 0 14px; }
+.dim { color: var(--ink-3); }
+a { color: var(--accent-ink); text-decoration-color: color-mix(in srgb, var(--accent) 45%, transparent); text-underline-offset: 2px; }
+
+code, .k {
+  font-family: var(--mono); font-size: .87em;
+  background: var(--paper-2); border: 1px solid var(--rule-soft);
+  padding: 1px 5px; border-radius: 5px; white-space: nowrap;
+}
+.path { font-family: var(--mono); font-size: 12.4px; color: var(--ink-4); }
+
+/* ── Pills ───────────────────────────────────────────────── */
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase;
+  padding: 2.5px 8px; border-radius: 999px; white-space: nowrap; line-height: 1.5;
+  border: 1px solid transparent;
+}
+.p-live  { background: var(--ok-bg);     color: var(--ok-ink);     border-color: color-mix(in srgb, var(--ok) 32%, transparent); }
+.p-dead  { background: var(--warn-bg);   color: var(--warn-ink);   border-color: color-mix(in srgb, var(--warn) 34%, transparent); }
+.p-doc   { background: var(--info-bg);   color: var(--info-ink);   border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+.p-none  { background: var(--bad-bg);    color: var(--bad-ink);    border-color: color-mix(in srgb, var(--bad) 30%, transparent); }
+.p-same  { background: var(--paper-2);   color: var(--ink-4);      border-color: var(--rule); }
+.p-diff  { background: var(--violet-bg); color: var(--violet-ink); border-color: color-mix(in srgb, var(--violet) 30%, transparent); }
+.p-legal { background: var(--bad-bg);    color: var(--bad-ink);    border-color: color-mix(in srgb, var(--bad) 26%, transparent); }
+.p-conv  { background: var(--warn-bg);   color: var(--warn-ink);   border-color: color-mix(in srgb, var(--warn) 26%, transparent); }
+.p-data  { background: var(--info-bg);   color: var(--info-ink);   border-color: color-mix(in srgb, var(--info) 26%, transparent); }
+
+.flag { font-size: 11px; font-weight: 800; letter-spacing: .04em; }
+.us { color: var(--info); } .au { color: var(--violet); }
+
+/* ── Cards ───────────────────────────────────────────────── */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin: 20px 0 26px; }
+.card {
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 12px;
+  padding: 15px 16px; box-shadow: var(--shadow);
+}
+.card .n { font-size: 30px; font-weight: 800; letter-spacing: -.03em; line-height: 1.05; font-variant-numeric: tabular-nums; }
+.card .l { font-size: 12px; color: var(--ink-4); margin-top: 4px; line-height: 1.45; }
+.card.acc .n { color: var(--accent); }
+.card.good .n { color: var(--ok); }
+.card.bad .n { color: var(--bad); }
+
+.callout {
+  border-left: 3px solid var(--accent); background: var(--accent-bg);
+  padding: 14px 16px; border-radius: 0 10px 10px 0; margin: 20px 0;
+}
+.callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+.callout.bad  { border-left-color: var(--bad);  background: var(--bad-bg); }
+.callout.good { border-left-color: var(--ok);   background: var(--ok-bg); }
+.callout p:last-child { margin-bottom: 0; }
+.callout .h { font-weight: 800; font-size: 13px; letter-spacing: .02em; margin-bottom: 5px; display: block; }
+
+/* ── Tables ──────────────────────────────────────────────── */
+.tw { overflow-x: auto; border: 1px solid var(--rule); border-radius: 12px; margin: 18px 0 24px; background: var(--paper-2); box-shadow: var(--shadow); }
+table { border-collapse: collapse; width: 100%; font-size: 13.6px; min-width: 640px; }
+thead th {
+  text-align: left; font-size: 10.5px; letter-spacing: .09em; text-transform: uppercase;
+  color: var(--ink-4); font-weight: 800; padding: 11px 14px;
+  border-bottom: 1px solid var(--rule); background: var(--paper-3);
+  position: sticky; top: 0; z-index: 1;
+}
+tbody td { padding: 12px 14px; border-bottom: 1px solid var(--rule-soft); vertical-align: top; line-height: 1.55; }
+tbody tr:last-child td { border-bottom: 0; }
+tbody tr:hover { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+td.param { font-weight: 700; }
+td.param .k { font-weight: 600; }
+td.w { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 700; color: var(--ink-3); }
+td.num { font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.col-us { background: color-mix(in srgb, var(--info) 5%, transparent); }
+.col-au { background: color-mix(in srgb, var(--violet) 5%, transparent); }
+table.compact tbody td { padding: 9px 14px; }
+
+/* weight-at-risk bar */
+.bar { display: flex; align-items: center; gap: 8px; }
+.bar .track { flex: 1 1 54px; height: 6px; border-radius: 3px; background: var(--paper-3); overflow: hidden; min-width: 44px; }
+.bar .fill { height: 100%; border-radius: 3px; background: var(--accent); }
+.bar .v { font-variant-numeric: tabular-nums; font-weight: 700; font-size: 12.5px; min-width: 34px; text-align: right; }
+
+ul.tight { margin: 0 0 14px; padding-left: 20px; }
+ul.tight li { margin-bottom: 6px; }
+ol.steps { margin: 0 0 14px; padding-left: 20px; }
+ol.steps li { margin-bottom: 9px; }
+
+.empty { display: none; padding: 22px; text-align: center; color: var(--ink-4); font-size: 13.5px; }
+body.filtering .no-hits { display: none !important; }
+body.filtering .empty.show { display: block; }
+body.filtering nav.toc, body.filtering .hero .lede, body.filtering .cards { opacity: .35; }
+
+footer { border-top: 1px solid var(--rule); margin-top: 60px; padding-top: 22px; font-size: 12.5px; color: var(--ink-4); }
+
+@media print {
+  .topbar, nav.toc { display: none; }
+  .shell { grid-template-columns: 1fr; padding: 0; }
+  .tw { overflow: visible; box-shadow: none; page-break-inside: auto; }
+  section { page-break-inside: avoid; }
+  body { font-size: 10.5pt; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><span class="dot"></span>DealerSiteAudit <small>US · AU norms</small></div>
+    <div class="spacer"></div>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Filter parameters…  e.g. PPSR, ACL, phone" autocomplete="off" spellcheck="false">
+    </div>
+    <span class="hitcount" id="hits"></span>
+    <button class="tbtn" id="theme" type="button">Theme</button>
+  </div>
+</div>
+
+<div class="shell">
+
+<nav class="toc">
+  <h2>Contents</h2>
+  <ol>
+    <li><a href="#reality">1 · Reality check</a></li>
+    <li><a href="#map">2 · Difference map</a></li>
+    <li><a href="#primitives">3 · Cross-cutting primitives</a></li>
+    <li><a href="#pillars">4 · Pillar by pillar</a></li>
+    <li class="sub"><a href="#p1">P1 On-Page SEO</a></li>
+    <li class="sub"><a href="#p2">P2 Technical Perf.</a></li>
+    <li class="sub"><a href="#p3">P3 Accessibility</a></li>
+    <li class="sub"><a href="#p4">P4 Security</a></li>
+    <li class="sub"><a href="#p5">P5 AEO</a></li>
+    <li class="sub"><a href="#p6">P6 AIO Readiness</a></li>
+    <li class="sub"><a href="#p7">P7 UX &amp; Content</a></li>
+    <li class="sub"><a href="#p8">P8 Conversion</a></li>
+    <li><a href="#top12">5 · Top 12 by impact</a></li>
+    <li><a href="#newparams">6 · Market-only params</a></li>
+    <li><a href="#bugs">7 · Live bugs today</a></li>
+    <li><a href="#plan">8 · Build order</a></li>
+    <li><a href="#authorities">9 · Authorities</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<div class="hero">
+  <p class="eyebrow">Market norms · implementation status</p>
+  <h1>United States vs Australia<br>audit parameter norms</h1>
+  <p class="lede">All 8 pillars, all 165 scored parameters. For each one: what the norm actually is, whether the engine implements it today, and exactly what differs between the two markets.</p>
+  <div class="meta">
+    <span><b>165</b> scored parameters</span>
+    <span><b>8</b> pillars</span>
+    <span>Reference: <b>docs/reference/US-vs-AU-Audit-Norms.pdf</b> v2</span>
+    <span>Cross-verified against <b>Backend/metricServices</b></span>
+    <span>Aug 2026</span>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="reality" class="no-hits">
+  <h2 class="sec" data-n="01">Reality check</h2>
+  <h3 class="title">Kitne norms abhi actually chal rahe hain</h3>
+
+  <div class="callout good">
+    <span class="h">⚠️ Yeh section ab historical hai — market-aware scoring implement ho chuki hai</span>
+    <p>Neeche jo likha hai wo <b>implementation se pehle</b> ki state thi. Ab 23 parameters market-aware hain, locale packs (<span class="path">Backend/config/locale/</span>) ban chuke hain, aur <code>market</code> chaaron audit flows ke 32 pillar call-sites tak plumb ho chuka hai. Jo actually badla uske liye dekho: <b>docs/reports/US-vs-AU-Implementation-Changes.html</b>. Baaki document — norms, differences, authorities — abhi bhi sahi aur current hai.</p>
+  </div>
+
+  <p>Do alag cheezein hain — <b>jo reference doc mein documented hai</b>, aur <b>jo engine mein sach mein execute hota hai</b>. Implementation se pehle: 165 scored parameters mein se <b>sirf 1</b> mein US/AU norm end-to-end live tha.</p>
+
+  <div class="cards">
+    <div class="card good"><div class="n">1</div><div class="l">Parameter jisme market-awareness live hai aur score tak pahunchti hai</div></div>
+    <div class="card"><div class="n">1</div><div class="l">Built hai par worker se wire nahi hua (<code>market = null</code>)</div></div>
+    <div class="card"><div class="n">4</div><div class="l">Report copy mein AU norms hain, detection mein sirf US</div></div>
+    <div class="card bad"><div class="n">0</div><div class="l">Country dropdown ka scoring pe asar — store hota hai, read nahi</div></div>
+  </div>
+
+  <h4>✅ Actually working — scoring path tak pahunch raha hai</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:190px">Kya</th><th style="width:230px">Kahan</th><th>Kaise</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="param"><span class="pill p-live">live</span><br><span class="k">Citation_NAP_Consistency</span><br><span class="path">AEO · w 0.06</span></td>
+        <td class="path">Backend/metricServices/signals/<br>citationConsistency.js:48</td>
+        <td><code>detectCountryCode()</code> ek 5-step fallback chalata hai: schema <code>addressCountry</code> → AU city/state tokens (sydney, melbourne, brisbane, NSW, VIC, QLD…) → <code>.au</code> TLD → <code>html[lang]</code> → default US. Result <code>normPhone()</code> mein libphonenumber ko jaata hai (lines 208, 228, 295). <b>Yeh ekmatra sach mein market-aware scored parameter hai.</b></td>
+      </tr>
+      <tr>
+        <td class="param"><span class="pill p-live">live</span><br>Site sub-type detection<br><span class="path">indirect</span></td>
+        <td class="path">Backend/utils/<br>dealershipDetector.js:971</td>
+        <td><code>TRADE_ACCREDITATION_KEYWORDS</code> deliberately US / UK / AU mein split hai. AU block: <code>vacc member</code>, <code>mta member</code>, <code>mta approved</code>, <code>racv approved</code>, <code>raa approved</code>, <code>nrma approved</code>, <code>aaaa member</code>, <code>repco authorised</code>, <code>capricorn member</code>. Yeh site-type decide karta hai → <code>parameterImportance.js</code> → per-parameter weights. To AU accreditation words <b>indirectly weights shift karte hain</b>.</td>
+      </tr>
+      <tr>
+        <td class="param"><span class="pill p-live">partial</span><br>Spelling bilinguality</td>
+        <td class="path">keyword lists (multiple)</td>
+        <td><code>tyre/tire</code>, <code>labour/labor</code>, <code>centre/center</code> dono handle hote hain. Detection-level accommodation hai, scoring-level nahi.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4>⚠️ Built hai, par wire nahi hua</h4>
+  <p><span class="k">Legal_Frameworks</span> — <span class="path">accessibilityLegal.js</span> mein poora jurisdiction filter maujood hai: ADA + Section 508 → <code>markets: ["US"]</code>, DDA → <code>markets: ["AU"]</code>, EAA → <code>["EU"]</code>, AODA → <code>["CA"]</code>, WCAG → <code>["*"]</code>.</p>
+  <p>Par worker chaaron call sites pe <code>market</code> ki jagah <code>null</code> bhejta hai:</p>
+  <div class="tw"><table class="compact">
+    <thead><tr><th>Call site</th><th>Argument</th></tr></thead>
+    <tbody>
+      <tr><td class="path">singleAuditWorker.js:327</td><td><code>accessibilityMetrics(page, $, pt, <b>null</b>, siteSubType)</code></td></tr>
+      <tr><td class="path">singleAuditWorker.js:897</td><td><code>accessibilityMetrics(page, $, pageType, <b>null</b>, siteSubType)</code></td></tr>
+      <tr><td class="path">singleAuditWorker.js:1004</td><td><code>accessibilityMetrics(page, $, pageType, <b>null</b>, siteSubType)</code></td></tr>
+      <tr><td class="path">singleAuditWorker.js:1085</td><td><code>accessibilityMetrics(page, $, pageType, <b>null</b>, siteSubType)</code></td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout warn">
+    <span class="h">Nateeja</span>
+    <p><code>evaluateLegalFrameworks(axeResults, axeFailed, null)</code> → <b>saare 6 frameworks return hote hain</b>. Matlab ek Australian dealer ko report mein ADA, Section 508 aur Ontario ka AODA bhi dikhta hai. Weight 0 hai to score nahi hilta, lekin report copy galat hai. <b>Yeh 3-line fix hai.</b></p>
+  </div>
+
+  <h4>📝 Copy mein AU hai, detection mein sirf US</h4>
+  <p><span class="path">securityCopy.js</span> mein 4 jagah AU norms explicitly likhe hain — par corresponding detection purely US/EU hai.</p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th>Copy kya kehti hai <span class="path">(securityCopy.js)</span></th><th>Detection kya karti hai <span class="path">(securityCompliance.js)</span></th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="param"><span class="pill p-doc">copy only</span><br><span class="k">Cookie_Consent</span></td>
+        <td class="col-au">:321 — “rules differ significantly between markets”</td>
+        <td class="col-us">Banner selectors + tracking script detection. Koi market branch nahi.</td>
+      </tr>
+      <tr>
+        <td class="param"><span class="pill p-doc">copy only</span><br><span class="k">Privacy_Policy</span></td>
+        <td class="col-au">:332 — “legal requirement in both the US and Australia”</td>
+        <td class="col-us">Link-text patterns: <code>privacy</code>, <code>privacy policy</code>, <code>data protection</code>. Content checklist hai hi nahi.</td>
+      </tr>
+      <tr>
+        <td class="param"><span class="pill p-doc">copy only</span><br><span class="k">Privacy_Compliance</span></td>
+        <td class="col-au">:343 — “Australian sites must name the countries data is sent to, while US sites must offer an opt-out”</td>
+        <td class="col-us"><code>checkGDPRCCPA()</code> keywords (:1102): <code>gdpr</code>, <code>ccpa</code>, <code>do not sell my personal information</code>, <code>cookie preferences</code>, <code>imprint</code>. <b>Koi APP / Privacy Act 1988 / OAIC / overseas / NDB term nahi.</b></td>
+      </tr>
+      <tr>
+        <td class="param"><span class="pill p-doc">copy only</span><br><span class="k">Legal_Disclaimers</span></td>
+        <td class="col-au">:365 — “The US requires full credit terms…; Australia requires the total drive-away price and a comparison rate”</td>
+        <td class="col-us"><code>DISCLAIMER_GROUPS</code> (:2214) = Reg-Z / Reg-M / FTC terms only. <code>drive away</code>, <code>comparison rate</code>, <code>no more to pay</code>, <code>on-road costs</code>, <code>LMCT</code> — <b>ek bhi nahi</b>.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4>❌ Country dropdown — store hota hai, use nahi</h4>
+  <p>US/AU dropdown ka poora raasta: <span class="path">HeroSection.jsx:405</span> → <span class="path">DataContext.jsx:189</span> → <span class="path">singleAuditController.js:144</span> → <span class="path">auditStore.js:135</span> → Mongo mein save (<span class="path">singleAuditReport.js:70</span>).</p>
+  <div class="callout bad">
+    <span class="h">Worker <code>country</code> kabhi read hi nahi karta</span>
+    <p><code>grep country singleAuditWorker.js</code> = 0 hits. Aur <span class="path">countries.js:7</span> khud yeh admit karta hai: <em>“nothing scores differently because of it yet.”</em></p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="map" class="no-hits">
+  <h2 class="sec" data-n="02">Difference map</h2>
+  <h3 class="title">165 parameters, pillar by pillar</h3>
+
+  <div class="cards">
+    <div class="card"><div class="n">165</div><div class="l">Scored parameters across 8 pillars</div></div>
+    <div class="card good"><div class="n">119</div><div class="l">Identical in both markets — <b>72%</b> ko koi market logic chahiye hi nahi</div></div>
+    <div class="card acc"><div class="n">46</div><div class="l">Norm, reference list ya applicability badalti hai</div></div>
+    <div class="card"><div class="n">~26%</div><div class="l">Total weight jo market-sensitive parameters control karte hain</div></div>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th>Pillar</th><th class="num">Params</th><th class="num">Identical</th><th class="num">Changed</th><th style="width:150px">Weight at risk</th><th>Kya drive karta hai</th></tr></thead>
+    <tbody>
+      <tr><td class="param">1 · On-Page SEO</td><td class="num">22</td><td class="num">18</td><td class="num">4</td><td><div class="bar"><div class="track"><div class="fill" style="width:9%"></div></div><span class="v">~5%</span></div></td><td>Structural SEO fully global. Sirf Title_Location (2%) + Social_Links (1%) weight carry karte hain.</td></tr>
+      <tr><td class="param">2 · Technical Performance</td><td class="num">15</td><td class="num">13</td><td class="num">2</td><td><div class="bar"><div class="track"><div class="fill" style="width:0%"></div></div><span class="v">0%</span></div></td><td>Zero threshold changes. TTFB aur Redirect_Chains ko sirf market-aware <em>interpretation</em> chahiye.</td></tr>
+      <tr><td class="param">3 · Accessibility</td><td class="num">26</td><td class="num">25</td><td class="num">1</td><td><div class="bar"><div class="track"><div class="fill" style="width:16%"></div></div><span class="v">~9%</span></div></td><td>Sirf Html_Has_Lang (Critical ×3) agar regional subtag require karo. Legal citations har jagah badalti hain.</td></tr>
+      <tr><td class="param">4 · Security &amp; Compliance</td><td class="num">25</td><td class="num">18</td><td class="num">7</td><td><div class="bar"><div class="track"><div class="fill" style="width:47%"></div></div><span class="v">~26%</span></div></td><td>Transport + headers identical. Privacy, consent, finance-form aur disclaimer bilkul alag regime hain.</td></tr>
+      <tr><td class="param">5 · AEO</td><td class="num">16</td><td class="num">7</td><td class="num">9</td><td><div class="bar"><div class="track"><div class="fill" style="width:87%"></div></div><span class="v">~48%</span></div></td><td>Har entity, citation aur credential reference list American hai. Sabse zyada proportional exposure.</td></tr>
+      <tr><td class="param">6 · AIO Readiness</td><td class="num">11</td><td class="num">8</td><td class="num">3</td><td><div class="bar"><div class="track"><div class="fill" style="width:55%"></div></div><span class="v">~30%</span></div></td><td>Vehicle taxonomy + structured-data values. Parsing logic khud market-neutral hai.</td></tr>
+      <tr><td class="param">7 · UX &amp; Content</td><td class="num">17</td><td class="num">13</td><td class="num">4</td><td><div class="bar"><div class="track"><div class="fill" style="width:56%"></div></div><span class="v">~31%</span></div></td><td>Expected nav items, inventory facets, gallery shots. Readability ko sirf relabel chahiye.</td></tr>
+      <tr><td class="param">8 · Conversion &amp; Lead Flow</td><td class="num">33</td><td class="num">17</td><td class="num">16</td><td><div class="bar"><div class="track"><div class="fill" style="width:100%"></div></div><span class="v">~55%</span></div></td><td>Pricing law, finance disclosure, vehicle history, valuation providers, trust badges, consent model.</td></tr>
+      <tr style="font-weight:800"><td class="param">Total</td><td class="num">165</td><td class="num">119</td><td class="num">46</td><td><div class="bar"><div class="track"><div class="fill" style="width:47%"></div></div><span class="v">~26%</span></div></td><td>Ek engine + ek locale pack + kuch market-only checks. Engine fork ki zaroorat nahi.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="primitives">
+  <h2 class="sec" data-n="03">Foundations</h2>
+  <h3 class="title">10 cross-cutting primitives</h3>
+  <p class="dim no-hits">Ek-tihai parameters in dus cheezon pe tike hain. Inhe ek baar locale pack mein fix karo, aur zyadatar per-parameter differences apne aap resolve ho jaate hain.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th style="width:150px">Primitive</th><th style="width:210px">Engine abhi kya karta hai</th><th class="col-us" style="width:220px">🇺🇸 United States</th><th class="col-au" style="width:250px">🇦🇺 Australia</th><th>Affected parameters</th></tr></thead>
+    <tbody>
+      <tr data-s="language tag html lang en-US en-AU spelling colour centre licence tyre catalogue">
+        <td class="param">Language tag</td>
+        <td>Accessibility ko valid <code>lang</code> chahiye <code>&lt;html&gt;</code> pe. Bare <code>en</code> abhi pass ho jaata hai.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> <code>en-US</code>. Spelling: color, center, license, organization, tire, curb, catalog, analyze.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> <code>en-AU</code>. Spelling: colour, centre, licence (noun), organisation, tyre, kerb, catalogue, analyse.</td>
+        <td><span class="k">Html_Has_Lang</span> + saare keyword-matching content checks</td>
+      </tr>
+      <tr data-s="currency USD AUD GST ACL s48 price">
+        <td class="param">Currency</td>
+        <td>Schema <code>priceCurrency</code> validity; VDP/offer pe price presence.</td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>USD</b>. Displayed price conventionally sales tax exclude karta hai; tax state aur county wise.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>AUD</b>. ACL s48 — total minimum price <b>including 10% GST</b> kisi bhi component se kam se kam utna prominent hona chahiye.</td>
+        <td><span class="k">Pricing_Transparency</span> <span class="k">Incentives_Displayed</span> <span class="k">Finance_Calculator</span> <span class="k">Schema_Markup</span> <span class="k">Structured_Data</span></td>
+      </tr>
+      <tr data-s="address format postcode zip state suburb tuParseUsAddress NSW VIC QLD">
+        <td class="param">Address format</td>
+        <td><code>tuParseUsAddress</code> — regex <code>"City, ST 12345"</code> ke liye tuned.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> City + 2-letter state + 5-digit ZIP.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> Suburb + state code (NSW VIC QLD WA SA TAS ACT NT) + <b>4-digit</b> postcode. Comma aksar hota hi nahi.</td>
+        <td><span class="k">Citation_NAP_Consistency</span> <span class="k">Title_Location_Optimization</span> <span class="k">Topical_Authority</span></td>
+      </tr>
+      <tr data-s="phone format NANP +61 1300 1800 13 mobile 04xx normalise last 10 digits">
+        <td class="param">Phone format</td>
+        <td>Last 10 digits pe normalise karta hai; number “real” tab jab ≥10 digits.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> NANP 10 digits, <code>+1</code>, toll-free 800-series.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> <code>+61</code>, 9 national digits. Landline <code>(07) 3000 1234</code>, mobile <code>04xx</code>, business <code>1300</code>/<code>1800</code>, aur <b><code>13 xx xx</code> — sirf 6 digits</b>.</td>
+        <td><span class="k">Citation_NAP_Consistency</span> <span class="k">Click_To_Call</span></td>
+      </tr>
+      <tr data-s="distance fuel units miles km MPG L/100km ADR 81/02 Monroney EPA">
+        <td class="param">Distance &amp; fuel units</td>
+        <td>VDP spec-field extraction; schema unit codes.</td>
+        <td class="col-us"><span class="pill p-legal">legal</span> Miles (SMI), MPG, EPA/Monroney label.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> Kilometres (KMT), <b>L/100km + CO₂ g/km</b> under ADR 81/02, Green Vehicle Guide label.</td>
+        <td><span class="k">VDP_Content_Uniqueness</span> <span class="k">Structured_Data</span> <span class="k">Terminology_Consistency</span></td>
+      </tr>
+      <tr data-s="date format MM/DD DD/MM ISO 8601 freshness">
+        <td class="param">Date format</td>
+        <td>Freshness parser visible + schema dates padhta hai.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> MM/DD/YYYY visible; ISO 8601 machine.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> <b>DD/MM/YYYY</b> visible — US-shaped parser inhe misread ya reject karta hai.</td>
+        <td><span class="k">Content_Updated_Regularly</span> + form validation checks</td>
+      </tr>
+      <tr data-s="trading hours openingHours DST AEST AWST public holiday Sunday">
+        <td class="param">Trading hours</td>
+        <td><code>openingHours</code> presence aur validity.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> ET/CT/MT/PT, DST nationwide (2 states chhod ke), Sunday trading unrestricted.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> AEST/ACST/AWST; <b>QLD, WA, NT DST skip karte hain</b>. Sunday aur public-holiday trading state-wise; kai yards Sunday band rehte hain.</td>
+        <td><span class="k">Appointment_Booking</span> + local schema</td>
+      </tr>
+      <tr data-s="domain TLD com.au auDA ABN ACN trade mark">
+        <td class="param">Domain / TLD</td>
+        <td>Market aur trust signal ke roop mein use hota hai.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> <code>.com</code>, koi eligibility test nahi.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <code>.com.au</code> / <code>.au</code> <b>auDA-restricted</b> — ABN, ACN ya Australian trade mark chahiye. Isliye strong signal hai.</td>
+        <td>Market detection, <span class="k">Brand_Entity_Strength</span> <span class="k">Entity_Recognition</span></td>
+      </tr>
+      <tr data-s="business identifier ABN ACN EIN DUNS LMCT dealer licence number">
+        <td class="param">Business identifier</td>
+        <td><span class="pill p-none">not checked</span> Abhi check hi nahi hota.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> EIN/DUNS, rarely displayed. Dealer licence display state-wise varies.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>ABN publicly resolvable</b> via ABN Lookup, conventionally footer mein. Dealer licence number advertising mein required — VIC LMCT, NSW, QLD.</td>
+        <td>2 naye AU parameters proposed; feeds <span class="k">Entity_Recognition</span> <span class="k">Trust_Badges</span> <span class="k">EEAT_Composite</span></td>
+      </tr>
+      <tr data-s="automotive vocabulary ute petrol boot bonnet windscreen tyre rego drive-away on-road costs roadworthy RWC PPSR novated lease MSRP trunk gas CARFAX">
+        <td class="param">Automotive vocabulary</td>
+        <td>Relevance, topical, terminology aur CTA checks ke andar keyword lists.</td>
+        <td class="col-us"><span class="pill p-conv">convention</span> pickup, gas, trunk, hood, windshield, tire, license plate, MSRP, out-the-door, doc fee, lot, CARFAX.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> <b>ute, petrol, boot, bonnet, windscreen, tyre, rego, RRP, drive-away, on-road costs, car yard, roadworthy/RWC, PPSR, novated lease.</b></td>
+        <td><span class="k">Content_Relevance</span> <span class="k">Topical_Authority</span> <span class="k">Terminology_Consistency</span> <span class="k">Keywords_Entities_Annotated</span> <span class="k">CTA_Clarity</span> <span class="k">FAQ_QA_Blocks</span></td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout bad no-hits">
+    <span class="h">Address format ka concrete bug</span>
+    <p><span class="path">seoMetrics.js:2507</span> ka <code>tuParseUsAddress()</code> <code>TU_STATES</code> (51 US states) ke against match karta hai. AU address <em>“Fortitude Valley QLD 4006”</em> mein state se pehle comma hi nahi hota aur QLD 3 letters ka hai → <b>koi match nahi</b> → <span class="k">Title_Location_Optimization</span> aur <span class="k">Location_Targeting</span> fail ho jaate hain. Aur <em>“Perth, WA 6000”</em> mein <code>WA</code> = <b>Washington</b> match kar jaata hai — false positive, galat state name. Bachao sirf yeh hai ki schema <code>PostalAddress</code> pehle try hota hai, to jin AU sites pe LocalBusiness schema hai wo bach jaati hain.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="pillars" class="no-hits">
+  <h2 class="sec" data-n="04">Detail</h2>
+  <h3 class="title">Pillar by pillar — exactly kaunse parameters differ</h3>
+  <p class="dim">Har table mein sirf wo parameters hain jo <b>badalte hain</b>. Jo identical hain unhe har pillar ke neeche ek line mein list kar diya hai — un par koi kaam nahi chahiye.</p>
+</section>
+
+<!-- P1 -->
+<section id="p1">
+  <h2 class="sec" data-n="P1">On-Page SEO</h2>
+  <h3 class="title">22 params · 18 identical · 4 changed · ~5% weight at risk</h3>
+  <p class="dim no-hits">Content pillars mein sabse market-neutral. Google ka crawler dono countries mein same behave karta hai, to har structural norm shared number hai. Sirf 4 parameters national reference data ko touch karte hain, aur unme se 2 koi weight hi nahi carry karte.</p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:220px">Parameter</th><th class="col-us">🇺🇸 US</th><th class="col-au">🇦🇺 AU</th></tr></thead>
+    <tbody>
+      <tr data-s="Title_Location_Optimization suburb state gazetteer city metro">
+        <td class="param"><span class="k">Title_Location_Optimization</span><br><span class="path">w 0.02 · binary 100/0</span></td>
+        <td class="col-us">City + 2-letter state. Metro names accepted.</td>
+        <td class="col-au"><b>Suburb</b> dominant unit hai; capital city aur state codes secondary. State code akela weak signal hai. Needs AU suburb gazetteer.</td>
+      </tr>
+      <tr data-s="Social_Links carsales ProductReview Autotrader CarsGuide Drive Yelp">
+        <td class="param"><span class="k">Social_Links</span><br><span class="path">w 0.01</span></td>
+        <td class="col-us">Facebook, Instagram, YouTube, X, TikTok, LinkedIn, <b>Yelp</b>, GBP.</td>
+        <td class="col-au">Same global platforms — par <b>Yelp AU mein irrelevant hai</b>. Locally meaningful: carsales.com.au dealer page, ProductReview.com.au, Autotrader.com.au, CarsGuide, Drive.</td>
+      </tr>
+      <tr data-s="VDP_Content_Uniqueness compliance date build date rego RWC drive-away PPSR trim MPG VIN MSRP CARFAX">
+        <td class="param"><span class="k">VDP_Content_Uniqueness</span><br><span class="path">w 0.12 · VDP only</span></td>
+        <td class="col-us">Distinguishing fields: trim, MPG, miles, VIN, MSRP, packages, CARFAX summary.</td>
+        <td class="col-au">variant/badge, L/100km, kilometres, VIN, <b>build date vs compliance date</b> (US mein iska koi analogue nahi), rego expiry, RWC status, drive-away price, PPSR status.</td>
+      </tr>
+      <tr data-s="Content_Relevance vocabulary corpus weight zero hidden">
+        <td class="param"><span class="k">Content_Relevance</span><br><span class="path">info · weight 0</span></td>
+        <td class="col-us">US automotive corpus: MSRP, trade-in, APR, lease, CARFAX.</td>
+        <td class="col-au">AU corpus: drive-away, on-road costs, RWC, PPSR, rego, comparison rate, RedBook. <b>Par yeh score exactly zero move karta hai</b> — 2026-07-07 se hidden hai. Wahi word list AEO aur AIO mein pay karti hai, jahan weight hai.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="dim no-hits"><b>Identical (18):</b> <span class="k">Title</span> (curve 45–65 = 1.0) · <span class="k">Title_Uniqueness</span> · <span class="k">Meta_Description</span> (120–160 = 1.0) · <span class="k">Meta_Description_Uniqueness</span> · <span class="k">Canonical</span> (0.11, sabse bhaari) · <span class="k">H1</span> · <span class="k">Heading_Hierarchy</span> · <span class="k">Image</span> · <span class="k">Links</span> · <span class="k">URL_Structure</span> · <span class="k">URL_Slugs</span> · <span class="k">Robots_Txt</span> · <span class="k">Open_Graph</span> · <span class="k">Twitter_Card</span> · <span class="k">Semantic_Tags</span> · <span class="k">Viewport</span> · <span class="k">SRP_Index_Control</span> · <span class="k">SRP_To_VDP_Links</span></p>
+</section>
+
+<!-- P2 -->
+<section id="p2">
+  <h2 class="sec" data-n="P2">Technical Performance</h2>
+  <h3 class="title">15 params · 13 identical · 2 interpretation-only · <b>0 threshold changes</b></h3>
+  <p class="dim no-hits">Ek bhi number nahi badalta. Core Web Vitals Google ke constants hain aur log-normal curve Lighthouse ki hai. Jo differ karta hai wo <em>physics</em> aur <em>data availability</em> hai — AU audience jo US origin hit karti hai wo real latency penalty pay karti hai.</p>
+
+  <div class="callout warn">
+    <span class="h">⚠️ Golden rule</span>
+    <p><b>AU ke liye kabhi adjusted thresholds mat banao.</b> Agar LCP ya TTFB Australia ke liye relax kiya, to tumhare scores PageSpeed Insights aur Search Console se match karna band kar denge — wahi do tools jo har customer tumhein check karega. Market awareness <em>diagnosis</em> aur <em>recommendation</em> mein belong karti hai, kabhi bar mein nahi.</p>
+  </div>
+
+  <div class="tw"><table>
+    <thead><tr><th style="width:220px">Parameter</th><th class="col-us">🇺🇸 US</th><th class="col-au">🇦🇺 AU</th></tr></thead>
+    <tbody>
+      <tr data-s="TTFB RTT origin CDN geography offshore latency Sydney">
+        <td class="param"><span class="k">TTFB</span><br><span class="path">w 8 · good 800ms / poor 1800ms</span></td>
+        <td class="col-us">Domestic RTT ~20–60 ms, to 800 ms comfortable hai.</td>
+        <td class="col-au"><b>Same 800 ms bar</b> — par Sydney → US-West RTT ~150–200 ms, Sydney → US-East ~200–250 ms. DNS, TCP, TLS aur request — har ek yeh pay karta hai server ke kaam shuru karne se pehle. <b>Is pillar ka sabse valuable AU insight.</b> Origin/CDN geography detect karo aur alag finding raise karo. Threshold mat hilao.</td>
+      </tr>
+      <tr data-s="Redirect_Chains hops RTT constant">
+        <td class="param"><span class="k">Redirect_Chains</span><br><span class="path">hygiene w 3</span></td>
+        <td class="col-us">3-hop chain domestically ~150 ms costs.</td>
+        <td class="col-au">Same pass/fail, par wahi 3-hop chain US origin tak <b>~600 ms</b> costs. Market-aware RTT constant use karo jab cost quantify karo, taaki recommendation credible lage.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="dim no-hits"><b>Identical (13):</b> <span class="k">PageSpeed_Score</span> · <span class="k">LCP</span> (2500/4000) · <span class="k">INP</span> (200/500) · <span class="k">CLS</span> (0.1/0.25) · <span class="k">FCP</span> (1800/3000) · <span class="k">TBT</span> (200/600) · <span class="k">SI</span> (3400/5800) · <span class="k">Compression</span> · <span class="k">Caching</span> · <span class="k">Resource_Optimization</span> · <span class="k">Render_Blocking</span> · <span class="k">Sold_Vehicle</span> · <span class="k">Delivery_Hygiene</span></p>
+  <div class="callout no-hits">
+    <span class="h">Ek operational difference</span>
+    <p>Australia ke traffic volumes US ka ek fraction hain, to zyada AU dealer origins <b>CrUX reporting threshold ke neeche</b> girte hain aur unke paas field data hota hi nahi. Yeh path lab-only + honest confidence flag pe degrade hona chahiye — <b>failure ke roop mein kabhi score nahi hona chahiye</b>.</p>
+  </div>
+</section>
+
+<!-- P3 -->
+<section id="p3">
+  <h2 class="sec" data-n="P3">Accessibility</h2>
+  <h3 class="title">26 params · 25 identical · 1 changed · ~9% weight at risk</h3>
+  <p class="dim no-hits">WCAG ek W3C standard hai, to har success criterion dono countries mein same number hai. Exactly ek parameter legitimately differ kar sakta hai — aur wo Critical-tier ka nikla.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th style="width:220px">Parameter</th><th class="col-us">🇺🇸 US</th><th class="col-au">🇦🇺 AU</th></tr></thead>
+    <tbody>
+      <tr data-s="Html_Has_Lang en-US en-AU language subtag screen reader">
+        <td class="param"><span class="k">Html_Has_Lang</span><br><span class="path">Critical ×3 · WCAG 3.1.1</span></td>
+        <td class="col-us"><code>en-US</code> best practice; bare <code>en</code> accepted.</td>
+        <td class="col-au"><code>en-AU</code> correct hai — screen readers place names, currency aur dates alag pronounce karte hain. <b>Yeh iss pillar ka ekmatra genuinely market-sensitive parameter hai.</b> Abhi bare <code>en</code> pass ho jaata hai.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4>Jo badalta hai wo authority aur enforcement story hai</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:150px">Dimension</th><th class="col-us">🇺🇸 United States</th><th class="col-au">🇦🇺 Australia</th></tr></thead>
+    <tbody>
+      <tr data-s="ADA Title III Section 508 DDA AHRC AS EN 301 549 governing law">
+        <td class="param">Governing law</td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>ADA Title III</b> commercial sites ke liye; <b>Section 508</b> federal; DOJ ka 2024 Title II rule WCAG 2.1 AA adopt karta hai state/local government ke liye.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>Disability Discrimination Act 1992 s24</b>; AHRC World Wide Web Access advisory notes → WCAG 2.1 AA; <b>AS EN 301 549</b> procurement standard; Digital Service Standard government ke liye.</td>
+      </tr>
+      <tr data-s="enforcement litigation Unruh demand letter AHRC conciliation Maguire SOCOG">
+        <td class="param">Enforcement</td>
+        <td class="col-us"><span class="pill p-legal">legal</span> High-volume private litigation aur demand letters, NY/FL/CA mein concentrated. California Unruh Act <b>$4,000 minimum per violation</b> add karta hai. Immediate financial exposure.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> AHRC ke through complaint-driven conciliation, unresolved rahe to Federal Court. Precedent: <b>Maguire v SOCOG (2000)</b>. Volume US se bahut kam.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="callout good no-hits">
+    <span class="h">Score mat badalna — business case badalna</span>
+    <p>US = litigation trigger. AU = complaint + reputational risk. Wahi failing criteria, alag commercial urgency.</p>
+  </div>
+  <p class="dim no-hits"><b>Identical (25):</b> <span class="k">Color_Contrast</span> (4.5:1) · <span class="k">Label</span> · <span class="k">Keyboard_Navigation</span> · <span class="k">Image_Alt</span> · <span class="k">Link_Name</span> · <span class="k">Button_Name</span> · <span class="k">Aria_Roles</span> · <span class="k">Aria_Allowed_Attr</span> · <span class="k">Document_Title</span> · <span class="k">Meta_Viewport</span> · <span class="k">Target_Size</span> (24×24) · <span class="k">Reflow</span> (320px) · <span class="k">Heading_Order</span> · <span class="k">Landmarks</span> · <span class="k">List</span> · <span class="k">Skip_Links</span> · <span class="k">Interactive_Element_Affordance</span> · <span class="k">WCAG_AA_Compliance</span> · <span class="k">Focus_Order</span> · <span class="k">Focusable_Content</span> · <span class="k">Tab_Index</span> · <span class="k">Aria_Hidden_Focus</span> · <span class="k">Text_Spacing</span> · <span class="k">Focus_Not_Obscured</span> · <span class="k">Reduced_Motion</span></p>
+  <div class="callout no-hits">
+    <span class="h">Ek naya AU-relevant check worth adding</span>
+    <p><b>Locale-mismatched form validation</b> — AU site pe US state dropdown, 5-digit ZIP mask, ya MM/DD placeholder. Yeh accessibility defect bhi hai (WCAG 3.3.1 / 3.3.3 error identification) aur conversion defect bhi. Ported US dealer platforms pe bahut common.</p>
+  </div>
+</section>
+
+<!-- P4 -->
+<section id="p4">
+  <h2 class="sec" data-n="P4">Security &amp; Compliance</h2>
+  <h3 class="title">25 params · 18 identical · 7 changed · ~26% weight at risk</h3>
+  <p class="dim no-hits">Do halves, ulta behaviour. Transport aur headers global engineering practice hain — 18 parameters, zero differences. Privacy, consent, finance-form aur disclaimer checks do bilkul alag legal systems pe baithe hain, aur galat rule set ke saath chalane pe <b>dono</b> false positives aur false passes dete hain.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 United States</th><th class="col-au">🇦🇺 Australia</th></tr></thead>
+    <tbody>
+      <tr data-s="MFA_Enabled FTC Safeguards Rule 16 CFR 314 APP 11 Essential Eight">
+        <td class="param"><span class="k">MFA_Enabled</span><br><span class="path">w 1</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>Explicitly mandated.</b> FTC Safeguards Rule (16 CFR 314) customer information access karne wale har shakhs ke liye MFA require karta hai, aur auto dealers ko covered financial institutions naam se list karta hai.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> Dealers ke liye statute mein named nahi. <b>APP 11</b> “reasonable steps” maangta hai; ACSC Essential Eight MFA ko core mitigation list karta hai — de facto expected, reasonableness ke framing mein.</td>
+      </tr>
+      <tr data-s="Third_Party_Cookies CPRA sale share GPC APP 8 cross-border disclosure">
+        <td class="param"><span class="k">Third_Party_Cookies</span><br><span class="path">w 2</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> Ad-tech cookies <b>CPRA ke tehat “sale” ya “share”</b> ban sakte hain, jo opt-out link aur Global Privacy Control obligations trigger karta hai.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> Koi “sale” concept hi nahi. Exposure <b>APP 8 cross-border disclosure</b> hai — US vendors ko personal information bhejna, jiske liye dealer accountable rehta hai. Actual vendor domains surface karo taaki AU privacy policy unhe naam se list kar sake.</td>
+      </tr>
+      <tr data-s="Cookie_Consent banner CCPA CPRA GPC CIPA APP 3 APP 5 no cookie law">
+        <td class="param"><span class="k">Cookie_Consent</span><br><span class="path">w 3</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>Koi banner mandate nahi.</b> Requirement opt-out hai: “Do Not Sell or Share My Personal Information” link, sensitive-PI limit control, aur GPC honour (CA, CO, CT + baaki opt-out states). Alag se <b>CIPA claims</b> abhi session recording aur pixels target kar rahe hain.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>Australia mein cookie law hai hi nahi.</b> Obligations APPs se aati hain: notify at collection (APP 5), collect only what is reasonably necessary (APP 3), consent for sensitive information. <b>Banner good practice hai, legal requirement nahi.</b></td>
+      </tr>
+      <tr data-s="Privacy_Policy CalOPPA CCPA CPRA APP 1.3 overseas countries OAIC small business exemption">
+        <td class="param"><span class="k">Privacy_Policy</span><br><span class="path">w 3</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>CalOPPA</b> policy require karta hai jahan Californian personal information collect ho; CCPA/CPRA content prescribe karta hai — categories, purposes, retention, sources, disclosures, rights, notice at collection. ~20 state laws overlap karti hain.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>APP 1.3</b> — clearly expressed, up-to-date, free aur readily available policy, prescribed content ke saath: kinds of information, collection aur holding, purposes, access aur correction, complaint kaise kare, aur <b>information overseas jaati hai to kin countries mein</b>. Small-business exemption AU$3m turnover ke neeche — zyadatar dealer groups exceed karte hain.</td>
+      </tr>
+      <tr data-s="Privacy_Compliance GLBA FCRA DPPA Privacy Act 1988 13 APPs OAIC Notifiable Data Breaches">
+        <td class="param"><span class="k">Privacy_Compliance</span><br><span class="path">w 4</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> Dealers ke liye heavy sectoral overlay: <b>GLBA</b> (finance arrange karne wale dealers financial institutions hain), <b>FCRA</b> (permissible purpose, adverse action, risk-based pricing), <b>DPPA</b> (motor-vehicle record data). Breach notification state-by-state + qualifying Safeguards events ke liye FTC.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>Ek national regime</b>: Privacy Act 1988 + 13 APPs, regulator <b>OAIC</b>. Notifiable Data Breaches — 30 din mein assess, OAIC aur individuals ko notify. 2024 amendment ne statutory tort for serious invasions of privacy, automated-decision transparency, aur Children's Online Privacy Code add kiya.</td>
+      </tr>
+      <tr data-s="Finance_Form_Security GLBA Safeguards APP 11 NCCP ASIC licence ID collection notice">
+        <td class="param"><span class="k">Finance_Form_Security</span><br><span class="path">w 10 · page-specific · sabse bhaari</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>GLBA Safeguards Rule</b> — written information security program, encryption in transit aur at rest, MFA, access control, vendor oversight, incident response, named accountable individual, qualifying breaches ke liye FTC notification.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>APP 11</b> reasonable steps + <b>NCCP</b> obligations on credit assistance providers + <b>ASIC</b> conduct rules. Credit applications identity documents capture karte hain — driver licence data — jo APP 11 ka bar upar utha deta hai. NDB har breach pe apply hota hai.</td>
+      </tr>
+      <tr data-s="Legal_Disclaimers Reg Z TILA 1026.24 Reg M FTC Used Car Rule CARS Rule ACL s48 consumer guarantees comparison rate dealer licence cooling-off">
+        <td class="param"><span class="k">Legal_Disclaimers</span><br><span class="path">w 8 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>Reg Z (TILA) 1026.24</b> — koi bhi stated triggering term (down payment, payment amount, term, finance charge) full terms incl APR force kar deta hai. <b>Reg M</b> leases ke liye. <b>FTC Used Car Rule</b> Buyers Guide. Fee rules state-wise. ⚠️ FTC <b>CARS Rule Jan 2025 mein Fifth Circuit ne vacate</b> kar diya — cite karne se pehle status confirm karo.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>ACL s48</b> total price incl GST, kisi bhi component se kam se kam utna prominent. <b>ACL s18/s29</b> misleading conduct. <b>Consumer guarantees exclude nahi ho sakti</b> — “sold as is” ya “no refunds” wording khud ek breach hai. <b>National Credit Code</b> — comparison rate + prescribed warning jahan rate advertise ho, aur Australian Credit Licence number displayed. State acts advertising mein dealer licence number, statutory used-car warranty aur cooling-off disclosures maangte hain.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout bad no-hits">
+    <span class="h">Poore product ka sabse bada false-positive risk</span>
+    <p>Ek AU site ko <b>cookie banner na hone pe score down karna</b>. Australia mein cookie law hai hi nahi. Replace karo isse: AU → privacy policy tracking aur overseas disclosure disclose karti hai kya; US → opt-out link present hai aur GPC honour hota hai kya. <em>Caveat:</em> GDPR abhi bhi apply karta hai agar site EU/UK visitors serve karti hai.</p>
+  </div>
+  <div class="callout good no-hits">
+    <span class="h">Ulta insight — AU automate karna aasaan hai</span>
+    <p>AU ke required elements <b>concrete strings</b> hain: total/drive-away price, comparison rate, credit licence number, dealer licence number, consumer-guarantees statement, cooling-off notice. US ke Reg-Z triggering-term rules ke muqable yeh deterministic DOM checks hain.</p>
+  </div>
+
+  <p class="dim no-hits"><b>Identical (18):</b> <span class="k">HTTPS</span> (w 13, gate) · <span class="k">SSL</span> · <span class="k">SSL_Expiry</span> · <span class="k">TLS_Version</span> · <span class="k">HSTS</span> · <span class="k">CSP</span> (w 9) · <span class="k">X_Frame_Options</span> · <span class="k">X_Content_Type_Options</span> · <span class="k">Referrer_Policy</span> · <span class="k">Permissions_Policy</span> · <span class="k">Header_Security</span> · <span class="k">Cookie_Flags</span> · <span class="k">Reputation</span> (w 9, gate) · <span class="k">SQLi_Exposure</span> · <span class="k">XSS</span> · <span class="k">Forms_Use_HTTPS</span> · <span class="k">Weak_Default_Credentials</span> · <span class="k">Admin_Panel_Public</span><br>
+  Sirf cited standard badalta hai: TLS → US <b>NIST SP 800-52 Rev 2</b>, AU <b>ACSC Information Security Manual</b>. SQLi/XSS → AU mein <b>ACSC Essential Eight</b> bhi cite karo.</p>
+</section>
+
+<!-- P5 -->
+<section id="p5">
+  <h2 class="sec" data-n="P5">AEO</h2>
+  <h3 class="title">16 params · 7 identical · 9 changed · ~48% weight at risk</h3>
+  <p class="dim no-hits">Proportionally sabse exposed pillar. Har mechanical check identical hai — answer engines dono countries mein same user agents se crawl karte hain. Par 9 parameters ek reference list ke against compare karte hain, aur <b>har list American hai</b>.</p>
+
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 US reference list</th><th class="col-au">🇦🇺 AU reference list</th></tr></thead>
+    <tbody>
+      <tr data-s="Schema_Markup priceCurrency USD AUD SMI KMT ABN identifier areaServed">
+        <td class="param"><span class="k">Schema_Markup</span><br><span class="path">w 0.20 · sabse bhaari</span></td>
+        <td class="col-us"><code>priceCurrency: "USD"</code>, mileage <b>SMI</b>, price typically excludes tax.</td>
+        <td class="col-au">Same types aur syntax. <code>priceCurrency: "AUD"</code>, mileage <b>KMT</b>, price GST-inclusive total hona chahiye (ACL s48 match karne ke liye). Extras: <code>identifier</code> mein <b>ABN</b>, <code>areaServed</code> mein suburbs/states. <b>AU site pe USD ya SMI dikhna mis-localised template ka flag hai.</b></td>
+      </tr>
+      <tr data-s="EEAT_Composite ASE NADA BBB dealer licence ABN AADA VACC MTA RACV NRMA RACQ credentials">
+        <td class="param"><span class="k">EEAT_Composite</span><br><span class="path">w 0.10 · page-specific</span></td>
+        <td class="col-us">Author bios, <b>ASE-certified</b> technicians, <b>NADA</b> aur state association membership, <b>BBB rating</b>, manufacturer certified status, years in business.</td>
+        <td class="col-au"><b>Dealer licence number</b> (statutory credibility), <b>ABN</b>, <b>AADA</b>, state motor trades associations (VACC, MTA-NSW, MTA-QLD, MTA-SA, MTA-WA), manufacturer authorised dealer, <b>RACV / NRMA / RACQ</b> approval. <b>ASE, NADA, BBB — teeno Australia mein exist hi nahi karte.</b></td>
+      </tr>
+      <tr data-s="FAQ_QA_Blocks drive-away PPSR roadworthy statutory warranty stamp duty rego transfer novated leasing APR CARFAX doc fees">
+        <td class="param"><span class="k">FAQ_QA_Blocks</span><br><span class="path">w 0.07 · page-specific</span></td>
+        <td class="col-us">Expected topics: financing aur APR, trade-in, warranty, service, delivery, CARFAX history, doc fees.</td>
+        <td class="col-au"><b>drive-away price + on-road costs, comparison rate, PPSR check, roadworthy / safety certificate, statutory warranty + cooling-off, rego transfer, stamp duty, RedBook trade-in, novated leasing.</b> AU buyers materially alag sawaal poochte hain — ek strong AU FAQ abhi “incomplete” padhi jaati hai.</td>
+      </tr>
+      <tr data-s="Entity_Recognition ABN Lookup ACN dealer licence EIN DUNS Knowledge Graph Wikidata">
+        <td class="param"><span class="k">Entity_Recognition</span><br><span class="path">w 0.07</span></td>
+        <td class="col-us">Organization schema, Knowledge Graph, Wikidata. EIN aur DUNS exist karte hain par rarely public-facing hain.</td>
+        <td class="col-au">Same schema signals — par sabse strong anchor <b>ABN</b> hai: ek public, resolvable government identifier via ABN Lookup. Plus ACN aur state dealer licence number. <b>Verifiable government identifiers wahi grounding hain jo answer engines reward karte hain, aur US ke paas displayed equivalent hai hi nahi.</b></td>
+      </tr>
+      <tr data-s="Citation_NAP_Consistency carsales Autotrader CarsGuide Drive Yellow Pages True Local Hotfrog Localsearch ProductReview ABN Lookup Yelp BBB DealerRater">
+        <td class="param"><span class="k">Citation_NAP_Consistency</span><br><span class="path">w 0.06 · <span class="pill p-live">country detection live</span></span></td>
+        <td class="col-us">Consistency across GBP, <b>Yelp</b>, Cars.com, DealerRater, <b>BBB</b>, Apple Maps, Bing Places.</td>
+        <td class="col-au">Consistency across GBP, <b>carsales.com.au, Autotrader.com.au, CarsGuide, Drive, Yellow Pages AU, True Local, Hotfrog, Localsearch, ProductReview.com.au, ABN Lookup</b>. Yelp aur BBB AU mein meaningless hain. Country detection pehle se hai — ab directory list aur address normaliser extend karo.</td>
+      </tr>
+      <tr data-s="Citations_Attribution NHTSA EPA IIHS ANCAP Green Vehicle Guide ACCC VicRoads Service NSW TMR">
+        <td class="param"><span class="k">Citations_Attribution</span><br><span class="path">w 0.05</span></td>
+        <td class="col-us"><b>NHTSA</b> recalls, <b>EPA</b> fuel economy, <b>IIHS</b> safety ratings, KBB, Edmunds, manufacturer press sites.</td>
+        <td class="col-au"><b>ANCAP</b> safety ratings, <b>Green Vehicle Guide</b>, PPSR, RedBook, <b>ACCC</b>, Vehicle Recalls Australia, state road authorities (Service NSW, VicRoads, TMR Queensland). <b>Ek AU dealer jo ANCAP link kar raha hai wo bilkul sahi kar raha hai — aur abhi usko koi credit nahi milta.</b></td>
+      </tr>
+      <tr data-s="Topical_Authority suburbs Gold Coast Hunter Valley Northern Beaches metro county gazetteer">
+        <td class="param"><span class="k">Topical_Authority</span><br><span class="path">w 0.05 · local component up to 15 pts</span></td>
+        <td class="col-us">City, state, metro aur county terms.</td>
+        <td class="col-au"><b>Suburbs primary unit</b>, phir capital cities, state codes, aur regional names (Gold Coast, Hunter Valley, Northern Beaches). AU gazetteer inherit karta hai — alag kaam nahi.</td>
+      </tr>
+      <tr data-s="SameAs_Validation carsales Autotrader ProductReview ABN Lookup marketplace Yelp DealerRater">
+        <td class="param"><span class="k">SameAs_Validation</span><br><span class="path">w 0.04 · page-specific</span></td>
+        <td class="col-us">Facebook, Instagram, YouTube, X, LinkedIn, Yelp, GBP, Cars.com, DealerRater.</td>
+        <td class="col-au">Facebook, Instagram, YouTube, LinkedIn, GBP, <b>carsales.com.au, Autotrader.com.au, ProductReview.com.au, ABN Lookup</b>. <b>Marketplace presence AU mein zyada weigh karti hai</b> kyunki carsales vehicle search dominate karta hai.</td>
+      </tr>
+      <tr data-s="Brand_Entity_Strength Drive CarsGuide CarExpert WhichCar Knowledge Panel Wikipedia">
+        <td class="param"><span class="k">Brand_Entity_Strength</span><br><span class="path">info · weight 0</span></td>
+        <td class="col-us">Mentions across US media, Knowledge Panel, Wikipedia/Wikidata.</td>
+        <td class="col-au">Mentions across AU motoring press (<b>Drive, CarsGuide, CarExpert, WhichCar</b>), local news, ABN Lookup. Reference corpus badalta hai; informational hi rehta hai.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <div class="callout bad no-hits">
+    <span class="h">Yahi wo jagah hai</span>
+    <p>…jahan ek US-tuned engine ek <b>legitimate Australian dealer ko sabse visibly “unqualified” misread</b> karta hai. Dictionary swap karo aur yeh poora pillar theek ho jaata hai.</p>
+  </div>
+  <p class="dim no-hits"><b>Identical (7):</b> <span class="k">Answer_First_Structure</span> (0.15 — sirf AU question phrasings add karo: “What's the drive-away price?”, “Does it come with a roadworthy?”) · <span class="k">Bot_Access</span> (0.11 — same user agents, RFC 9309) · <span class="k">Structured_Content</span> (0.09) · <span class="k">Index_Coverage</span> (0.04) · <span class="k">Llms_Txt</span> (0.02) · <span class="k">Markdown_Structure</span> · <span class="k">Page_Speed</span><br>
+  Per-engine gauges (Gemini / ChatGPT / Perplexity) wahi 8 reference lists use karte hain — <b>lists fix karo, teeno gauges ek saath fix ho jaate hain.</b></p>
+</section>
+
+<!-- P6 -->
+<section id="p6">
+  <h2 class="sec" data-n="P6">AIO Readiness</h2>
+  <h3 class="title">11 params · 8 identical · 3 changed · ~30% weight at risk</h3>
+  <p class="dim no-hits">Measure karta hai ki ek machine page ko kitna acche se parse, ground aur re-use kar sakti hai. Parsing rules language-model behaviour hain, local practice nahi — to logic market-neutral hai. <b>Sirf dictionaries badalti hain.</b></p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 US</th><th class="col-au">🇦🇺 AU</th></tr></thead>
+    <tbody>
+      <tr data-s="Structured_Data USD AUD imperial metric GST ABN identifier ld+json">
+        <td class="param"><span class="k">Structured_Data</span><br><span class="path">w 0.20 · sabse bhaari</span></td>
+        <td class="col-us">USD, imperial units.</td>
+        <td class="col-au">Same validity rules; <b>AUD, metric units, GST-inclusive price, ABN identifier</b>. Fix AEO <span class="k">Schema_Markup</span> ke saath share hoti hai.</td>
+      </tr>
+      <tr data-s="Keywords_Entities_Annotated HiLux Ranger D-MAX Triton Holden LDV GWM Chery MG BYD variant badge trim taxonomy">
+        <td class="param"><span class="k">Keywords_Entities_Annotated</span><br><span class="path">w 0.10</span></td>
+        <td class="col-us">US make/model/trim taxonomy, incl nameplates jo sirf US mein bikte hain.</td>
+        <td class="col-au"><b>Materially alag line-up</b>: Toyota HiLux, Ford Ranger, Isuzu D-MAX, Mitsubishi Triton, Holden (legacy), aur naye LDV, GWM, Chery, MG, BYD. Aur “trim” nahi — <b>“variant” ya “badge”</b>. US dictionary Australian inventory ka bada hissa recognise hi nahi karti.</td>
+      </tr>
+      <tr data-s="Content_Updated_Regularly date parser DD/MM MM/DD freshness locale">
+        <td class="param"><span class="k">Content_Updated_Regularly</span><br><span class="path">w 0.10</span></td>
+        <td class="col-us">Visible dates MM/DD/YYYY.</td>
+        <td class="col-au">Visible dates <b>DD/MM/YYYY</b> — US-shaped parser inhe misread ya reject karta hai. Freshness rule khud unchanged hai; sirf parser locale-aware banao.</td>
+      </tr>
+      <tr data-s="Content_NLP_Friendly RWC PPSR LMCT CTP ANCAP rego acronym expansion">
+        <td class="param"><span class="k">Content_NLP_Friendly</span><br><span class="path">w 0.16</span></td>
+        <td class="col-us">Identical.</td>
+        <td class="col-au">Identical — par AU acronyms (<b>RWC, PPSR, LMCT, CTP, ANCAP, rego</b>) first use pe expand hone chahiye; models full term pe better ground karte hain. Optional AU sub-check, genuinely useful.</td>
+      </tr>
+      <tr data-s="Terminology_Consistency contamination MSRP MPG ZIP trunk gas license plate CARFAX miles km mixing markets">
+        <td class="param"><span class="k">Terminology_Consistency</span><br><span class="path">info · weight 0</span></td>
+        <td class="col-us">Consistent US terms: pre-owned, MSRP, miles, MPG, trunk.</td>
+        <td class="col-au">Consistent AU terms: used / second-hand, drive-away, kilometres, L/100km, boot, ute. <b>Common failure = markets mix karna</b> — ek ported platform ek page pe “miles” aur doosre pe “km” kehta hai. <b>Cross-market contamination detection add karo</b> — distinctive, cheap, aur customer ko turant credible lagta hai. Weight 0 se promote karne layak.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="dim no-hits"><b>Identical (8):</b> <span class="k">Answer_Oriented_Structure</span> · <span class="k">Internal_Linking_AI_Friendly</span> · <span class="k">Topical_Focus_Clarity</span> · <span class="k">AI_Agentic_Browsing</span> · <span class="k">Duplicate_Content_Detection_Ready</span> · <span class="k">Structured_Content</span> (info)</p>
+</section>
+
+<!-- P7 -->
+<section id="p7">
+  <h2 class="sec" data-n="P7">UX &amp; Content Structure</h2>
+  <h3 class="title">17 params · 13 identical · 4 changed · ~31% weight at risk</h3>
+  <p class="dim no-hits">Australian aur American car buyers same devices aur same mental models use karte hain, to layout aur interaction norms bina badle carry over hote hain. Differences sirf yahan hain: nav bar mein kya expect kiya jaata hai, filter kis cheez se filter kare, aur gallery kya dikhaye.</p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 US</th><th class="col-au">🇦🇺 AU</th></tr></thead>
+    <tbody>
+      <tr data-s="Navigation_Discoverability Demo Certified Pre-Owned CPO inventory class nav">
+        <td class="param"><span class="k">Navigation_Discoverability</span><br><span class="path">w 0.11 · joint-heaviest</span></td>
+        <td class="col-us">New / Used / <b>Certified Pre-Owned</b> / Service / Parts / Finance / Specials / About.</td>
+        <td class="col-au">New / <b>Demo</b> / Used / Service / Parts / Finance / Specials / About. <b>“Demo” ek distinct AU inventory class hai jiska US equivalent nahi hai</b>; CPO manufacturer-specific aur kaafi kam prominent hai. AU site ko “Certified Pre-Owned” missing pe penalise karna false finding hai; “Demo” missing real gap hai.</td>
+      </tr>
+      <tr data-s="Inventory_Filtering facets 4x4 AWD 2WD ANCAP ute wagon kilometres badge variant drive-away toggle postcode">
+        <td class="param"><span class="k">Inventory_Filtering</span><br><span class="path">w 0.10</span></td>
+        <td class="col-us">make, model, <b>trim</b>, year, price, <b>mileage (miles)</b>, body style, fuel, transmission, drivetrain, colour, MPG, features, <b>distance from ZIP</b>.</td>
+        <td class="col-au">make, model, <b>badge/variant</b>, year, price, <b>kilometres</b>, body type incl <b>ute aur wagon</b>, fuel, transmission, <b>4x4 / AWD / 2WD (bahut prominent AU filter)</b>, colour, L/100km, <b>ANCAP rating</b>, seats, <b>new/demo/used</b>, location by suburb ya state — plus ek <b>drive-away vs excluding-on-roads price toggle</b>. Price toggle aur drivetrain prominence AU marketplaces pe lagbhag table stakes hain.</td>
+      </tr>
+      <tr data-s="Vehicle_Image_Gallery compliance plate rego label service book fuel consumption label Monroney window sticker odometer VIN">
+        <td class="param"><span class="k">Vehicle_Image_Gallery</span><br><span class="path">w 0.10</span></td>
+        <td class="col-us">Multiple angles, interior, odometer, VIN plate, <b>Monroney window sticker</b> (new pe), CARFAX badge.</td>
+        <td class="col-au">Same photo expectations, plus AU artefacts jo buyers dhoondte hain: <b>compliance plate, rego label, service-book photos, fuel-consumption label</b> (new vehicles pe). <b>Monroney sticker Australia mein exist hi nahi karta</b> — AU VDP pe window sticker require karna false finding hai.</td>
+      </tr>
+      <tr data-s="Text_Readability Flesch grade 8 Year 7 Australian Government Style Manual Plain Writing Act relabel">
+        <td class="param"><span class="k">Text_Readability</span><br><span class="path">w 0.10 · Flesch Reading Ease</span></td>
+        <td class="col-us">Target ~grade 8; Plain Writing Act 2010 government tone set karta hai.</td>
+        <td class="col-au"><b>Same formula, same target.</b> Flesch English generally pe calibrated hai, US English pe nahi. Australian Government Style Manual ~<b>Year 7 reading level</b> recommend karta hai — effectively wahi target, alag naam. <b>Sirf relabel karna hai; score nahi hilta</b>, aur syllable heuristics dono spellings pe identical behave karte hain.</td>
+      </tr>
+    </tbody>
+  </table></div>
+  <p class="dim no-hits"><b>Identical (13):</b> <span class="k">Intrusive_Interstitials</span> (0.11) · <span class="k">Broken_Links</span> (0.11) · <span class="k">Above_the_Fold_Content</span> (0.09) · <span class="k">Mobile_Experience</span> (0.09) · <span class="k">Hierarchy_Flow_Clarity</span> · <span class="k">Interactive_Click_Feedback</span> · <span class="k">No_Results_UX</span> · <span class="k">Loading_Feedback</span> · <span class="k">Content_Density_Balance</span> · <span class="k">Layout_Consistency</span> · <span class="k">Sticky_Header_Usage</span> · <span class="k">Breadcrumbs</span> · <span class="k">In_Page_Navigation</span></p>
+</section>
+
+<!-- P8 -->
+<section id="p8">
+  <h2 class="sec" data-n="P8">Conversion &amp; Lead Flow</h2>
+  <h3 class="title">33 params · 17 identical · 16 changed · ~55% weight at risk</h3>
+  <p class="dim no-hits">Sabse bada pillar aur absolute terms mein sabse divergent. Form aur CTA mechanics universal hain. Jo bhi cheez price, finance, vehicle history, valuation ya outbound contact ko touch karti hai — wo alag legal foundations aur alag provider ecosystems pe baithi hai.</p>
+
+  <h4>Commerce &amp; finance — sabse bhaari</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 United States</th><th class="col-au">🇦🇺 Australia</th></tr></thead>
+    <tbody>
+      <tr data-s="TradeIn_Flow KBB Black Book J.D. Power Edmunds RedBook Glass's Guide PPSR payout stamp duty encumbered">
+        <td class="param"><span class="k">TradeIn_Flow</span><br><span class="path">w 0.15 · pillar ka sabse bhaari</span></td>
+        <td class="col-us"><span class="pill p-data">data</span> <b>KBB Instant Cash Offer, Black Book, J.D. Power</b> (formerly NADA Guides), Edmunds appraisal. Trade-in sales-tax credit state-wise varies aur selling point hai.</td>
+        <td class="col-au"><span class="pill p-data">data</span> <b>RedBook dominant, Glass's Guide secondary</b>. Ek encumbered trade-in ko <b>PPSR payout settle</b> karna padta hai. <b>Koi trade-in tax credit nahi</b> — stamp duty purchase price pe calculate hoti hai. AU opportunity: check karo ki flow existing finance ke payout ko address karta hai ya nahi — real friction point jo AU sites routinely omit karti hain.</td>
+      </tr>
+      <tr data-s="Appointment_Booking APP 3 APP 5 collection notice licence ID DPPA public holidays Sunday trading">
+        <td class="param"><span class="k">Appointment_Booking</span><br><span class="path">w 0.12 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-conv">convention</span> Test-drive aur service booking. Licence handling <b>DPPA</b> aur state licence-scanning laws se constrained.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> Same flows. Par driver-licence details personal information hain: <b>APP 3</b> collection ko reasonably necessary tak limit karta hai aur <b>APP 5</b> point of capture pe collection notice require karta hai. Availability state public holidays aur Sunday trading respect kare.</td>
+      </tr>
+      <tr data-s="Financing_Flow GLBA FCRA ECOA Reg B NCCP Act 2009 Australian Credit Licence ACL number ASIC RG 234 responsible lending">
+        <td class="param"><span class="k">Financing_Flow</span><br><span class="path">w 0.10 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> Credit application <b>GLBA</b> (data security), <b>FCRA</b> (permissible purpose, adverse action, risk-based pricing) aur <b>ECOA/Reg B</b> se governed. Soft-pull pre-qualification standard hai; FICO openly referenced.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> Finance arrange karna <b>credit assistance under NCCP Act 2009</b> hai — <b>Australian Credit Licence</b> ya authorised-representative status chahiye, aur <b>licence number disclose karna mandatory hai</b>. Responsible-lending obligations apply hote hain; ASIC regulate karta hai, <b>RG 234</b> advertising govern karta hai. <b>Naya AU check: kya kisi bhi finance page pe ACL number displayed hai?</b> Concrete, high-confidence DOM check, US analogue zero.</td>
+      </tr>
+      <tr data-s="Finance_Calculator Reg Z 1026.24 APR triggering term comparison rate warning statement lending criteria fees and charges">
+        <td class="param"><span class="k">Finance_Calculator</span><br><span class="path">w 0.10 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>Reg Z 1026.24</b> — koi bhi triggering term state karna (down payment, payment amount, number of payments, finance charge) full terms incl <b>APR</b> force kar deta hai. Reg M leases ke liye mirror karta hai.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> Fixed-term consumer credit ke liye interest rate advertise karne pe <b>comparison rate + prescribed warning statement</b> mandatory hai. Aur expected: “approval subject to lending criteria”, fees aur charges, credit licence number, aur yeh imply na ho ki quoted repayment ek approved offer hai. <b>AU highly checkable hai</b> — calculator ke paas “comparison rate”, warning statement, “fees and charges apply” aur ACL number dhoondo.</td>
+      </tr>
+      <tr data-s="Pricing_Transparency MSRP doc fee out-the-door ACL s48 drive away no more to pay on-road costs ACCC single price">
+        <td class="param"><span class="k">Pricing_Transparency</span><br><span class="path">w 0.06 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>MSRP + dealer fees</b>; sales tax baad mein add hota hai aur jurisdiction-wise varies. “Out-the-door price” customer-driven norm hai. Fee rules state-level; advertised-price honesty <b>FTC Act s5</b> se flow karti hai.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>ACL s48 single-price rule</b> — total minimum price, GST included, kisi bhi component se kam se kam utna prominently stated hona chahiye. Practice mein <b>“drive away, no more to pay”</b> clean compliant form hai. <b>“+ on-road costs” akela dikhana problem hai.</b> ACCC automotive mein isse actively enforce karta hai. <b>Fundamentally alag check</b> — AU rule ko US pages pe chalane se mass false positives aayenge.</td>
+      </tr>
+      <tr data-s="Vehicle_History CARFAX AutoCheck NMVTIS PPSR certificate REVS check CarHistory written-off stolen encumbrance">
+        <td class="param"><span class="k">Vehicle_History</span><br><span class="path">w 0.04 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-data">data</span> <b>CARFAX aur AutoCheck</b>, NMVTIS title-brand data backed. Ek free CARFAX link used VDP pe lagbhag table stakes hai.</td>
+        <td class="col-au"><span class="pill p-data">data</span> <b>PPSR certificate</b> — finance encumbrance, written-off aur stolen status; state “REVS check” ka successor. Plus CarHistory.com.au. <b>CARFAX Australia mein operate hi nahi karta.</b> “PPSR checked” detect karna CARFAX badge ka AU equivalent hai — aur Australian used-car buyers ka sabse zyada requested trust artefact.</td>
+      </tr>
+      <tr data-s="Incentives_Displayed drive-away run-out plate clearance factory bonus was now genuine prior price offer expiry rebate">
+        <td class="param"><span class="k">Incentives_Displayed</span><br><span class="path">w 0.06 · page-specific</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> OEM rebates, subsidised APR, lease specials, conquest aur loyalty cash. Reg Z/Reg M disclosures wahan attach hote hain jahan triggering terms aate hain; expiry aur eligibility state karna zaroori.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>Drive-away deals, run-out aur plate-clearance offers</b>, factory bonuses. ACL govern karta hai: <b>genuine prior price ke bina “was/now” nahi</b>, conditions aur end dates stated hone chahiye, aur total-price rule advertised offer pe bhi lagta hai.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4>Trust &amp; social proof — alag ecosystems</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 United States</th><th class="col-au">🇦🇺 Australia</th></tr></thead>
+    <tbody>
+      <tr data-s="Trust_Badges BBB CARFAX Advantage ASE NADA Google Guaranteed LMCT dealer licence ABN AADA VACC MTA RACV NRMA RACQ PPSR ANCAP">
+        <td class="param"><span class="k">Trust_Badges</span><br><span class="path">w 0.05</span></td>
+        <td class="col-us"><span class="pill p-data">data</span> BBB Accredited, CARFAX Advantage, AutoCheck, ASE Certified, NADA, manufacturer CPO, Google Guaranteed, security seals.</td>
+        <td class="col-au"><span class="pill p-data">data</span> <b>Dealer licence number, ABN, AADA member, VACC / MTA-NSW / MTA-QLD / MTA-SA / MTA-WA, RACV / NRMA / RACQ approved, PPSR-checked</b>, manufacturer authorised dealer, ANCAP. <b>No BBB, no CARFAX, no ASE in Australia.</b> Sabse saaf case jahan ek US list galat jawaab deti hai — ek AU dealer jo apna LMCT number aur VACC membership dikha raha hai, wo strong trust signals display kar raha hai jo checker dekh hi nahi pata.</td>
+      </tr>
+      <tr data-s="Reviews Google DealerRater Cars.com Edmunds Yelp ProductReview carsales dealer ratings Facebook">
+        <td class="param"><span class="k">Reviews</span><br><span class="path">w 0.03</span></td>
+        <td class="col-us"><span class="pill p-data">data</span> Google, DealerRater, Cars.com, Edmunds, Yelp.</td>
+        <td class="col-au"><span class="pill p-data">data</span> Google dominant, phir <b>ProductReview.com.au, carsales dealer ratings, Facebook</b>.</td>
+      </tr>
+      <tr data-s="Certifications_Awards ASE master technician NADA DealerRater awards Certificate III Light Vehicle Mechanical Technology VACC MTA AADA ProductReview">
+        <td class="param"><span class="k">Certifications_Awards</span><br><span class="path">w 0.01</span></td>
+        <td class="col-us"><span class="pill p-data">data</span> ASE-certified technicians, manufacturer master technician, NADA aur state association awards, DealerRater awards.</td>
+        <td class="col-au"><span class="pill p-data">data</span> <b>Certificate III in Light Vehicle Mechanical Technology</b>, manufacturer technician accreditation, VACC/MTA accreditation, AADA aur state dealer awards, ProductReview awards. Credential dictionary AEO <span class="k">EEAT_Composite</span> ke saath shared asset hai.</td>
+      </tr>
+      <tr data-s="Testimonials FTC 16 CFR 465 fake reviews suppression ACL s18 s29 ACCC incentivised">
+        <td class="param"><span class="k">Testimonials</span><br><span class="path">w 0.04</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>FTC Rule on Consumer Reviews and Testimonials (16 CFR 465)</b> — fake reviews, undisclosed insider reviews aur review suppression ban, civil penalties ke saath.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>ACL s18/s29</b> aur ACCC guidance ke through enforced — fake, incentivised aur selectively-filtered reviews. Same check, alag authority cite hoti hai.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <h4>Contact, consent &amp; tracking</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:210px">Parameter</th><th class="col-us">🇺🇸 United States</th><th class="col-au">🇦🇺 Australia</th></tr></thead>
+    <tbody>
+      <tr data-s="CTA_Clarity Enquire Now Book a Test Drive drive-away price trade-in valuation action verb list ePrice">
+        <td class="param"><span class="k">CTA_Clarity</span><br><span class="path">w 0.05</span></td>
+        <td class="col-us"><span class="pill p-conv">convention</span> “Get ePrice”, “Value Your Trade”, “Check Availability”, “Get Pre-Qualified”, “Schedule Service”.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> <b>“Enquire Now” AU ka dominant lead verb hai</b>, plus “Book a Test Drive”, “Get a Drive-Away Price”, “Trade-In Valuation”, “Book a Service”. <b>Current verb list mein “enquire” hai hi nahi</b> — to lagbhag har Australian dealer ka primary CTA “unclear” score hota hai. Visible false negative.</td>
+      </tr>
+      <tr data-s="Click_To_Call tel link +61 1300 1800 13 number six digits NANP 800">
+        <td class="param"><span class="k">Click_To_Call</span><br><span class="path">w 0.04</span></td>
+        <td class="col-us"><span class="pill p-conv">convention</span> <code>tel:+1XXXXXXXXXX</code>, 10 digits, toll-free 800-series.</td>
+        <td class="col-au"><span class="pill p-conv">convention</span> <code>tel:+61…</code>. Landline, mobile <code>04xx</code>, aur <code>1300</code> / <code>1800</code> / <code>13</code> business numbers — ek <b><code>13 xx xx</code> number sirf 6 digits ka hota hai</b>. Phone normaliser market-aware hote hi fix ho jaata hai.</td>
+      </tr>
+      <tr data-s="Chat_Experience TCPA prior express written consent CIPA Spam Act 2003 Do Not Call Register unsubscribe 5 business days">
+        <td class="param"><span class="k">Chat_Experience</span><br><span class="path">w 0.03</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> Chat-to-SMS follow-up <b>TCPA</b> se governed — automated marketing texts ke liye prior express written consent, strict revocation handling. CIPA claims abhi chat-transcript vendors target kar rahe hain.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>Spam Act 2003</b> — consent required, sender identified hona chahiye, functional unsubscribe <b>5 business days</b> mein honour. <b>Do Not Call Register Act 2006</b> telemarketing follow-up govern karta hai.</td>
+      </tr>
+      <tr data-s="Lead_Magnets CAN-SPAM opt-out pre-checked Spam Act opt-in pre-ticked consent box unsubscribe">
+        <td class="param"><span class="k">Lead_Magnets</span><br><span class="path">w 0.02</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> <b>CAN-SPAM opt-out hai</b> — pre-checked consent permissible hai; unsubscribe 10 business days mein honour karna hai.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> <b>Spam Act 2003 opt-in hai</b> — express ya inferred consent zaroori hai bhejne se pehle. <b>Pre-ticked consent boxes valid consent nahi hain.</b> Unsubscribe 5 business days. <b>AU-only check add karo</b> pre-ticked marketing consent box ke liye — legitimate AU compliance finding jo same check US mein raise hi nahi karega.</td>
+      </tr>
+      <tr data-s="Inline_Validation postcode 4-digit ZIP 5-digit state dropdown DD/MM locale mismatch">
+        <td class="param"><span class="k">Inline_Validation</span><br><span class="path">w 0.05</span></td>
+        <td class="col-us">5-digit ZIP, US state list, MM/DD dates validate karta hai.</td>
+        <td class="col-au"><b>4-digit postcode, AU states, DD/MM dates, +61 aur 1300/13 numbers</b> validate hone chahiye. Same scoring — par <b>locale-mismatch check add karo</b>: AU site pe US state dropdown ya ZIP mask ek real defect hai.</td>
+      </tr>
+      <tr data-s="Form_Length APP 3 data minimisation postcode state fields">
+        <td class="param"><span class="k">Form_Length</span><br><span class="path">w 0.04 · &lt;7 fields optimal</span></td>
+        <td class="col-us">Threshold unchanged. Expected fields mein ZIP aur 2-letter state.</td>
+        <td class="col-au">Threshold unchanged. Expected: 4-digit postcode, 8-option state, +61 phone. <b>Data-minimisation pressure zyada hai — APP 3</b> collection ko reasonably necessary tak limit karta hai, to shorter-form recommendation ko legally justify kar sakte ho, jo customers ko accha lagta hai.</td>
+      </tr>
+      <tr data-s="GA4_Installed CPRA GPC IAB MSPA CIPA APP 8 cross-border Consent Mode v2 EEA">
+        <td class="param"><span class="k">GA4_Installed</span><br><span class="path">w 0.05</span></td>
+        <td class="col-us"><span class="pill p-legal">legal</span> Same install. Overlay: CPRA opt-out aur GPC handling, IAB Global Privacy Platform / MSPA signals, session recording aur pixels par active CIPA litigation.</td>
+        <td class="col-au"><span class="pill p-legal">legal</span> Same install. Overlay: <b>APP 8 cross-border disclosure</b> — analytics US-hosted hai, to privacy policy ko yeh disclose karna hoga aur dealer accountable rehta hai. <b>Google Consent Mode v2 ek EEA/UK requirement hai, AU nahi</b> — legal grounds pe kisi bhi market mein require mat karo.</td>
+      </tr>
+      <tr data-s="CRM_Integration VinSolutions DealerSocket Elead Pentana Titan DMS EasyCars AutoPlay APP 8 overseas disclosure">
+        <td class="param"><span class="k">CRM_Integration</span><br><span class="path">w 0.02</span></td>
+        <td class="col-us"><span class="pill p-data">data</span> VinSolutions, DealerSocket, Elead, HubSpot, Salesforce. Data typically onshore rehta hai.</td>
+        <td class="col-au"><span class="pill p-data">data</span> Same global CRMs plus local dealer systems — <b>Pentana, Titan DMS, EasyCars, AutoPlay</b>. Zyadatar US-hosted hain, jisse lead capture <b>APP 8 overseas disclosure</b> ban jaata hai. AU audit mein detected US-hosted CRM ko Pillar 4 ke overseas-disclosure check ke saath pair karo — <b>ek cross-pillar finding jo koi aur tool report nahi karta</b>.</td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <p class="dim no-hits"><b>Identical (17):</b> <span class="k">CTA_Presence</span> · <span class="k">CTA_Flow_Alignment</span> · <span class="k">CTA_Crowding</span> · <span class="k">Form_Presence</span> · <span class="k">Required_vs_Optional_Fields</span> · <span class="k">Submit_Button_Clarity</span> (CTA verb fix inherit karta hai) · <span class="k">MultiStep_Form_Progress</span> · <span class="k">Friendly_Error_Handling</span> · <span class="k">Microcopy_Clarity</span> · <span class="k">Thank_You_Pages</span> · <span class="k">Client_Logos</span> · <span class="k">Case_Studies_Accessibility</span> · <span class="k">GTM_Configuration</span> · <span class="k">Conversion_Tracking</span></p>
+  <div class="callout no-hits">
+    <span class="h">Summary</span>
+    <p>Sixteen changed parameters teen groups mein cluster hote hain — <b>provider dictionaries</b> (history, valuation, trust badges, credentials, CRM), <b>pricing aur finance disclosure rules</b> (total price, comparison rate, credit licence, APR), aur <b>consent rules</b> (email aur SMS ke liye opt-in vs opt-out). <b>Sirf doosre group ko nayi detection logic chahiye.</b></p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="top12">
+  <h2 class="sec" data-n="05">Priority</h2>
+  <h3 class="title">Top 12 — score impact ke hisaab se ranked</h3>
+  <div class="tw"><table>
+    <thead><tr><th class="num" style="width:38px">#</th><th style="width:210px">Parameter</th><th class="num" style="width:64px">Weight</th><th>AU pe abhi kyun galat hai</th><th style="width:180px">Fix</th></tr></thead>
+    <tbody>
+      <tr data-s="TradeIn_Flow KBB Black Book J.D. Power RedBook Glass's Guide valuation provider dictionary"><td class="num">1</td><td class="param"><span class="k">TradeIn_Flow</span><br><span class="path">Pillar 8</span></td><td class="num">0.15</td><td>KBB / Black Book / J.D. Power detect karta hai. Australia RedBook aur Glass's Guide use karta hai; dono list mein nahi — to ek <b>complete AU trade-in tool ~zero score</b> karta hai.</td><td>Valuation-provider dictionary swap</td></tr>
+      <tr data-s="Appointment_Booking APP 3 APP 5 collection notice licence trading hours"><td class="num">2</td><td class="param"><span class="k">Appointment_Booking</span><br><span class="path">Pillar 8</span></td><td class="num">0.12</td><td>Booking UX global hai, par AU ko licence/ID capture pe collection notice chahiye (APP 3 / APP 5), aur state trading-hours rules alag hain.</td><td>AU collection-notice sub-check add</td></tr>
+      <tr data-s="Financing_Flow ACL number NCCP credit licence"><td class="num">3</td><td class="param"><span class="k">Financing_Flow</span><br><span class="path">Pillar 8</span></td><td class="num">0.10</td><td>US credit-application patterns dhoondta hai. AU mein credit-assistance provider ko <b>Australian Credit Licence number</b> disclose karna mandatory hai.</td><td>AU ke liye ACL-number check</td></tr>
+      <tr data-s="Finance_Calculator APR Reg Z comparison rate warning"><td class="num">4</td><td class="param"><span class="k">Finance_Calculator</span><br><span class="path">Pillar 8</span></td><td class="num">0.10</td><td>APR disclosure (Reg Z) check karta hai. AU ko iske bajaye <b>comparison rate + prescribed warning</b> chahiye jab bhi rate advertise ho.</td><td>Per-market disclosure checklist</td></tr>
+      <tr data-s="Finance_Form_Security GLBA Safeguards APP 11 NCCP"><td class="num">5</td><td class="param"><span class="k">Finance_Form_Security</span><br><span class="path">Pillar 4</span></td><td class="num">0.10</td><td>GLBA Safeguards Rule pe framed hai, jiska AU equivalent hai hi nahi. AU basis <b>APP 11 + NCCP</b> conduct obligations hai.</td><td>Same DOM checks, market-specific authority aur severity text</td></tr>
+      <tr data-s="EEAT_Composite ASE NADA BBB dealer licence ABN AADA VACC MTA RACV"><td class="num">6</td><td class="param"><span class="k">EEAT_Composite</span><br><span class="path">Pillar 5</span></td><td class="num">0.10</td><td>Credential dictionary ASE / NADA / BBB hai. <b>Teeno Australia mein exist nahi karte</b>; AU credibility dealer licence number, ABN, AADA, VACC/MTA, RACV/NRMA/RACQ hai.</td><td>Credential dictionary swap</td></tr>
+      <tr data-s="Legal_Disclaimers Reg Z Reg M FTC ACL s48 consumer guarantees comparison rate dealer licence"><td class="num">7</td><td class="param"><span class="k">Legal_Disclaimers</span><br><span class="path">Pillar 4</span></td><td class="num">0.08</td><td>Reg Z / Reg M / FTC rules pe built hai. AU <b>ACL s48 total pricing</b>, consumer guarantees, comparison rate aur dealer licence display pe chalta hai.</td><td>Separate rule set — translation nahi</td></tr>
+      <tr data-s="Citation_NAP_Consistency phone normaliser address parser false no NAP detected"><td class="num">8</td><td class="param"><span class="k">Citation_NAP_Consistency</span><br><span class="path">Pillar 5</span></td><td class="num">0.06</td><td>Phone normaliser last 10 digits rakhta hai aur address parser US-shaped hai. Dono AU data pe fail hote hain, jisse <b>false “no NAP detected”</b> nikalta hai.</td><td>Market-aware phone + address normalisers</td></tr>
+      <tr data-s="Pricing_Transparency MSRP ACL s48 drive away total price prominence GST"><td class="num">9</td><td class="param"><span class="k">Pricing_Transparency</span><br><span class="path">Pillar 8</span></td><td class="num">0.06</td><td>US model MSRP + disclosed fees hai. AU mein <b>hard legal rule</b> hai: total GST-inclusive price kisi bhi component se kam se kam utna prominent (ACL s48).</td><td>AU drive-away / total-price prominence check</td></tr>
+      <tr data-s="Entity_Recognition ABN Lookup government identifier grounding"><td class="num">10</td><td class="param"><span class="k">Entity_Recognition</span><br><span class="path">Pillar 5</span></td><td class="num">0.07</td><td>Koi AU entity anchor nahi hai. <b>ABN ek public, resolvable government identifier hai</b> — kisi bhi Australian business ka sabse strong grounding signal.</td><td>ABN presence/consistency sub-signal</td></tr>
+      <tr data-s="FAQ_QA_Blocks drive-away PPSR roadworthy statutory warranty stamp duty expected topics"><td class="num">11</td><td class="param"><span class="k">FAQ_QA_Blocks</span><br><span class="path">Pillar 5</span></td><td class="num">0.07</td><td>Expected-topic list US hai: APR, CARFAX, doc fees. AU buyers drive-away price, PPSR, roadworthy, statutory warranty aur stamp duty poochte hain.</td><td>Expected-topic list swap</td></tr>
+      <tr data-s="Vehicle_History CARFAX AutoCheck PPSR certificate"><td class="num">12</td><td class="param"><span class="k">Vehicle_History</span><br><span class="path">Pillar 8</span></td><td class="num">0.04</td><td>CARFAX / AutoCheck detect karta hai, jo Australia mein operate hi nahi karte. AU equivalent <b>PPSR certificate</b> hai.</td><td>History-provider dictionary swap</td></tr>
+    </tbody>
+  </table></div>
+  <div class="callout good no-hits">
+    <span class="h">Is ranking ko aise padho</span>
+    <p>12 mein se <b>9 sirf dictionary swaps</b> hain — provider names, credentials ya topics ki ek list. Sirf 3 (<span class="k">Pricing_Transparency</span>, <span class="k">Finance_Calculator</span>, <span class="k">Legal_Disclaimers</span>) ko genuinely nayi detection logic chahiye. <b>Isliye yeh ek locale-pack problem hai, engine-fork problem nahi.</b></p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="newparams">
+  <h2 class="sec" data-n="06">Market-only</h2>
+  <h3 class="title">Naye parameters jo sirf ek market mein apply honge</h3>
+  <p class="dim no-hits">Inhe shared denominator se bahar rakho — wahi not-applicable renormalisation use karo jo page-type-specific parameters ke liye already hai.</p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:250px">Naya parameter</th><th class="col-us num" style="width:110px">🇺🇸 US</th><th class="col-au num" style="width:110px">🇦🇺 AU</th><th style="width:180px">Basis</th><th>Kyun banaana chahiye</th></tr></thead>
+    <tbody>
+      <tr data-s="total drive-away price prominence ACL s48"><td class="param">Total / drive-away price prominence</td><td class="col-us num">—</td><td class="col-au num">✅</td><td>ACL s48</td><td>Hard legal requirement, simple DOM check, ACCC automotive mein actively enforce karta hai.</td></tr>
+      <tr data-s="comparison rate warning National Credit Code"><td class="param">Comparison rate &amp; warning</td><td class="col-us num">—</td><td class="col-au num">✅</td><td>National Credit Code</td><td>Deterministic string check jahan bhi rate advertise ho.</td></tr>
+      <tr data-s="Australian Credit Licence number NCCP"><td class="param">Australian Credit Licence number</td><td class="col-us num">—</td><td class="col-au num">✅</td><td>NCCP Act 2009</td><td>Present ya absent — koi judgement nahi chahiye.</td></tr>
+      <tr data-s="dealer licence number advertising LMCT state motor dealer acts"><td class="param">Dealer licence number in advertising</td><td class="col-us num">state-wise</td><td class="col-au num">✅</td><td>State motor dealer acts</td><td>Trust signal aur compliance item dono; trivially detectable (LMCT, licence no.).</td></tr>
+      <tr data-s="ABN present consistent ABN Lookup"><td class="param">ABN present &amp; consistent</td><td class="col-us num">—</td><td class="col-au num">✅</td><td>Convention + ABN Lookup</td><td>Verifiable government identifier — AEO ke liye real entity-grounding value.</td></tr>
+      <tr data-s="overseas disclosure privacy policy APP 1.3(f) countries"><td class="param">Overseas disclosure in privacy policy</td><td class="col-us num">—</td><td class="col-au num">✅</td><td>APP 1.3(f)</td><td>Lagbhag universally missing; jin vendors ko tum already detect karte ho unke saath pair hota hai.</td></tr>
+      <tr data-s="pre-ticked marketing consent Spam Act 2003 opt-in"><td class="param">Pre-ticked marketing consent</td><td class="col-us num">permitted</td><td class="col-au num"><b>fails</b></td><td>Spam Act 2003</td><td>Clean opt-in vs opt-out divergence, DOM mein detect karna aasaan.</td></tr>
+      <tr data-s="PPSR history check offered PPS Act 2009 CARFAX analogue"><td class="param">PPSR / history check offered</td><td class="col-us num">CARFAX analogue</td><td class="col-au num">✅</td><td>PPS Act 2009</td><td>AU used-buyer ki top expectation; CARFAX badge check ka direct analogue.</td></tr>
+      <tr data-s="Do Not Sell or Share link GPC CCPA CPRA"><td class="param">“Do Not Sell or Share” link + GPC</td><td class="col-us num">✅</td><td class="col-au num">—</td><td>CCPA / CPRA</td><td>US mirror-image requirement. <b>AU sites pe kabhi nahi chalna chahiye.</b></td></tr>
+      <tr data-s="APR triggering terms Reg Z 1026.24"><td class="param">APR on triggering terms</td><td class="col-us num">✅</td><td class="col-au num">—</td><td>Reg Z 1026.24</td><td>Comparison-rate check ka US analogue.</td></tr>
+      <tr data-s="locale contamination US terms units currency AU site derived"><td class="param">Locale contamination</td><td class="col-us num">both</td><td class="col-au num">both</td><td>Derived</td><td>AU site pe US-only terms, units ya currency (ya ulta). Cheap, distinctive, immediately credible.</td></tr>
+      <tr data-s="origin CDN geography TTFB LCP offshore hosting derived"><td class="param">Origin / CDN geography</td><td class="col-us num">informational</td><td class="col-au num">high value</td><td>Derived</td><td>AU ke TTFB aur LCP results explain karta hai jo warna inexplicable lagte hain.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="bugs">
+  <h2 class="sec" data-n="07">Code-verified</h2>
+  <h3 class="title">AU sites pe aaj actually kya galat ho raha hai</h3>
+  <p class="dim no-hits">Yeh saare points source code mein confirm kiye gaye hain — reference doc se copy nahi kiye.</p>
+  <div class="tw"><table>
+    <thead><tr><th class="num" style="width:38px">#</th><th style="width:230px">Kahan</th><th>Kya hota hai</th></tr></thead>
+    <tbody>
+      <tr data-s="Legal_Frameworks market null ADA Section 508 AODA EAA worker"><td class="num">1</td><td class="path">singleAuditWorker.js<br>:327, :897, :1004, :1085</td><td><b><span class="k">Legal_Frameworks</span> har AU dealer ko ADA + Section 508 + AODA + EAA dikhata hai.</b> Chaaron call sites pe <code>market</code> ki jagah <code>null</code> pass hota hai. Filter bana hua hai, bas call nahi hota.</td></tr>
+      <tr data-s="tuParseUsAddress TU_STATES Washington WA QLD Fortitude Valley false positive"><td class="num">2</td><td class="path">seoMetrics.js:2507</td><td><b><code>tuParseUsAddress</code> AU addresses pe fail karta hai.</b> “Fortitude Valley QLD 4006” mein comma nahi aur QLD 3 letters ka hai → match nahi. Aur “Perth, WA 6000” mein <code>WA</code> = <b>Washington</b> false-match karta hai. Sirf LocalBusiness schema wali AU sites bachi hui hain.</td></tr>
+      <tr data-s="checkGDPRCCPA keywords APP OAIC overseas Privacy Act 1988 no AU keyword"><td class="num">3</td><td class="path">securityCompliance.js:1102</td><td><b><code>checkGDPRCCPA</code> mein ek bhi AU keyword nahi.</b> Ek perfectly APP-compliant Australian privacy policy jismein overseas recipients named hain, <b>fail</b> hoti hai — kyunki usmein “GDPR” / “CCPA” / “Do Not Sell” shabd nahi hain.</td></tr>
+      <tr data-s="DISCLAIMER_GROUPS Reg-Z Reg-M FTC drive away comparison rate ACL no AU term"><td class="num">4</td><td class="path">securityCompliance.js:2214</td><td><b><code>DISCLAIMER_GROUPS</code> mein ek bhi AU term nahi.</b> Ek AU finance page jo “drive away, no more to pay” + comparison rate + ACL number dikhata hai, wo Reg-Z / Reg-M / FTC term-groups pe <b>fail</b> karta hai — jabki wo apne market mein zyada compliant hai.</td></tr>
+      <tr data-s="checkVehicleHistory carfax autocheck regex PPSR zero score"><td class="num">5</td><td class="path">conversionLeadFlow.js:2104</td><td><b><code>checkVehicleHistory</code> sirf <code>/carfax/</code> aur <code>/autocheck/</code> regex chalata hai.</b> “PPSR certificate” dikhane wali ek AU used-car VDP <b>0/100</b> score karti hai.</td></tr>
+      <tr data-s="checkPricingTransparency fee disclosure doc fee out-the-door drive away no more to pay 30 points"><td class="num">6</td><td class="path">conversionLeadFlow.js:2045</td><td><b>Fee-disclosure regex purely US hai</b> — <code>doc fee | dealer fee | destination charge | out-the-door | tax, title</code>. AU ka “drive away, no more to pay” (jo ACL s48 ka clean compliant form hai) <b>detect hi nahi hota</b> → 30 points lost.</td></tr>
+      <tr data-s="Certifications_Awards bbb dealerrater edmunds kbb ase VACC MTA RACV wrong file"><td class="num">7</td><td class="path">conversionLeadFlow.js:2156</td><td><b><span class="k">Certifications_Awards</span> signals purely US hain</b> — <code>bbb</code>, <code>dealerrater</code>, <code>edmunds</code>, <code>kbb</code>, <code>ase certified</code>. Ironically <span class="path">dealershipDetector.js:980</span> mein VACC/MTA/RACV list <b>pehle se maujood hai</b> — bas galat file mein.</td></tr>
+      <tr data-s="Click_To_Call tel link fallback 10 digit 13 number overstated"><td class="num">8</td><td class="path">conversionLeadFlow.js:1722</td><td><b><span class="k">Click_To_Call</span> ka primary path safe hai</b> — <code>tel:</code> link presence market-neutral hai. 10–11 digit rule sirf fallback branch (“phone dikha par tappable nahi”) pe lagti hai. To ek AU <code>13 xx xx</code> number bina tel: link ke <b>0 score karega, 50 ke bajaye</b>. Chhota impact — reference doc ne isse thoda overstate kiya hai.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="plan" class="no-hits">
+  <h2 class="sec" data-n="08">Plan</h2>
+  <h3 class="title">Build order</h3>
+
+  <h4>Step 0 — Market ek baar resolve karo, run ke top pe</h4>
+  <p>Yeh doc mein hai par code mein abhi missing hai. Dropdown pe akela bharosa mat karo. Strongest signal pehle resolve karo aur <b>record karo kaunsa jeeta</b>, taaki report khud ko explain kar sake:</p>
+  <ol class="steps">
+    <li><b><code>.au</code> ccTLD</b> — near-conclusive. <span class="path">citationConsistency.js</span> yeh already karta hai.</li>
+    <li><b>Schema <code>addressCountry</code></b> — <code>tuCollectLocationTerms</code> already walk karta hai, <code>AU-QLD</code> style codes samet.</li>
+    <li><b>State tokens + phone country code</b> — AU detection <span class="path">citationConsistency.js</span> mein already hai. Ise shared utility banao.</li>
+    <li><b>Page pe currency aur units</b> — AUD, “drive away”, L/100km, km.</li>
+    <li><b>User ka dropdown selection</b> — authoritative jab signals silent hon, override jab clearly conflict karein.</li>
+    <li><b>hreflang / <code>html[lang]</code></b> — sabse weak; ported templates pe aksar galat.</li>
+  </ol>
+  <div class="callout">
+    <span class="h">💡 Signals ke beech ka conflict khud ek sellable finding hai</span>
+    <p>Ek AU-market site jo USD prices, MPG aur ek US state dropdown publish kar rahi hai — wo ek <b>unlocalised American template</b> chala rahi hai. <b>Yeh akela insight poore audit ko justify kar deta hai.</b></p>
+  </div>
+
+  <h4>Step 1–4 — phases</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:130px">Phase</th><th>Kya</th><th style="width:260px">Kyun pehle</th></tr></thead>
+    <tbody>
+      <tr><td class="param">Phase 1<br><span class="pill p-live">start here</span></td><td><b>Formats.</b> Phone aur address normalisers, postcode/state formats, date parsing.</td><td><span class="k">Citation_NAP_Consistency</span> aur <span class="k">Click_To_Call</span> ka <b>outright broken behaviour</b> fix karta hai. Highest impact, lowest effort.</td></tr>
+      <tr><td class="param">Phase 2</td><td><b>Dictionaries.</b> Gazetteer, vocabulary, vehicle taxonomy, directories, credentials, providers.</td><td><b>Top 12 mein se 9</b> ek saath fix ho jaate hain.</td></tr>
+      <tr><td class="param">Phase 3</td><td><b>AU compliance parameters.</b> Total price, comparison rate, credit licence, dealer licence, overseas disclosure, pre-ticked consent.</td><td>Commercially differentiating kaam — jo koi generic SEO tool nahi deta.</td></tr>
+      <tr><td class="param">Phase 4</td><td><b>Derived findings.</b> Locale contamination aur origin/CDN geography.</td><td>Distinctive insights, direct sales value.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h4>Locale pack — ek asset, bikhre hue conditionals nahi</h4>
+  <div class="tw"><table>
+    <thead><tr><th style="width:120px">Asset</th><th class="col-us">🇺🇸 US contents</th><th class="col-au">🇦🇺 AU contents</th><th style="width:230px">Consumed by</th></tr></thead>
+    <tbody>
+      <tr><td class="param">Formats</td><td class="col-us">NANP phone, 5-digit ZIP, 2-letter states, MM/DD/YYYY, USD, miles, MPG</td><td class="col-au">+61 incl 1300/1800/13, 4-digit postcode, 8 state codes, DD/MM/YYYY, AUD, km, L/100km</td><td><span class="k">Citation_NAP_Consistency</span> <span class="k">Click_To_Call</span> <span class="k">Content_Updated_Regularly</span> <span class="k">Inline_Validation</span> schema checks</td></tr>
+      <tr><td class="param">Gazetteer</td><td class="col-us">Cities, states, metros, counties</td><td class="col-au">Suburbs, capital cities, states, regions</td><td><span class="k">Title_Location_Optimization</span> <span class="k">Topical_Authority</span> local landing pages</td></tr>
+      <tr><td class="param">Vocabulary</td><td class="col-us">MSRP, trunk, gas, tire, pre-owned, out-the-door</td><td class="col-au">Drive-away, on-roads, boot, petrol, tyre, ute, rego, RWC, second-hand</td><td><span class="k">Content_Relevance</span> <span class="k">Terminology_Consistency</span> <span class="k">CTA_Clarity</span> <span class="k">FAQ_QA_Blocks</span></td></tr>
+      <tr><td class="param">Vehicle taxonomy</td><td class="col-us">US makes / models / trims</td><td class="col-au">HiLux, Ranger, D-MAX, Triton, LDV, GWM, MG, BYD; “variant”/“badge” not “trim”</td><td><span class="k">Keywords_Entities_Annotated</span> <span class="k">VDP_Content_Uniqueness</span> <span class="k">Inventory_Filtering</span></td></tr>
+      <tr><td class="param">Directories</td><td class="col-us">Yelp, Cars.com, DealerRater, Edmunds, BBB</td><td class="col-au">carsales, Autotrader.com.au, CarsGuide, Drive, ProductReview, Yellow Pages AU, True Local, ABN Lookup</td><td><span class="k">Social_Links</span> <span class="k">SameAs_Validation</span> <span class="k">Citation_NAP_Consistency</span> <span class="k">Reviews</span></td></tr>
+      <tr><td class="param">Credentials</td><td class="col-us">ASE, NADA, BBB, CARFAX, manufacturer CPO</td><td class="col-au">Dealer licence no., ABN, AADA, VACC/MTA, RACV/NRMA/RACQ, PPSR</td><td><span class="k">EEAT_Composite</span> <span class="k">Trust_Badges</span> <span class="k">Certifications_Awards</span></td></tr>
+      <tr><td class="param">Data providers</td><td class="col-us">CARFAX, AutoCheck, NMVTIS, KBB, Black Book</td><td class="col-au">PPSR, CarHistory, RedBook, Glass's Guide</td><td><span class="k">Vehicle_History</span> <span class="k">TradeIn_Flow</span></td></tr>
+      <tr><td class="param">Authorities</td><td class="col-us">NHTSA, EPA, IIHS, FTC, CFPB, ADA/Section 508, NIST</td><td class="col-au">ANCAP, Green Vehicle Guide, ACCC, ASIC, OAIC, AHRC/DDA, ACSC</td><td><span class="k">Citations_Attribution</span> + har compliance finding ki report copy</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn">
+    <span class="h">Step 4 — scores comparable rakho</span>
+    <p><b>Kisi market ko accha dikhane ke liye global threshold kabhi mat badalna.</b> Core Web Vitals numbers, WCAG success criteria aur OWASP header baselines fixed rehne chahiye. Market awareness sirf <b>teen jagah</b> belong karti hai: (1) kaunse parameters apply hote hain, (2) kis reference list se compare hota hai, (3) finding kya kehti hai. Threshold hilaya to ek US score aur ek AU score ka matlab alag ho jaayega — jo product ka main claim hi tod deta hai.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════ -->
+<section id="authorities">
+  <h2 class="sec" data-n="09">Reference</h2>
+  <h3 class="title">Authorities &amp; sources</h3>
+  <p class="dim no-hits">Wo bodies of law aur standards jo poore document mein referenced hain, taaki har finding apne market ki sahi authority cite kare.</p>
+  <div class="tw"><table>
+    <thead><tr><th style="width:170px">Domain</th><th class="col-us">🇺🇸 United States</th><th class="col-au">🇦🇺 Australia</th><th>Global / shared</th></tr></thead>
+    <tbody>
+      <tr data-s="privacy CCPA CPRA CalOPPA GLBA FCRA DPPA COPPA FTC CPPA Privacy Act 1988 APP OAIC NDB GDPR">
+        <td class="param">Privacy</td>
+        <td class="col-us">CCPA / CPRA, CalOPPA, ~20 state comprehensive laws, GLBA, FCRA, DPPA, COPPA. Regulators: FTC, state AGs, CPPA.</td>
+        <td class="col-au">Privacy Act 1988 (Cth) + 13 APPs; Notifiable Data Breaches scheme; Privacy and Other Legislation Amendment Act 2024. Regulator: OAIC.</td>
+        <td>GDPR / UK GDPR dono markets mein apply karte hain agar site EU ya UK visitors target karti hai.</td>
+      </tr>
+      <tr data-s="consumer protection FTC Act s5 Used Car Rule 16 CFR 455 465 CARS Rule vacated ACL s18 s29 s48 ACCC fair trading">
+        <td class="param">Consumer protection</td>
+        <td class="col-us">FTC Act s5; FTC Used Car Rule (16 CFR 455); Rule on Consumer Reviews and Testimonials (16 CFR 465). <b>CARS Rule (16 CFR 463) Jan 2025 mein vacated — verify karo.</b></td>
+        <td class="col-au">Australian Consumer Law (Sch 2, CCA 2010): s18, s29, <b>s48 single price</b>, consumer guarantees. Regulators: ACCC aur state fair-trading offices.</td>
+        <td>Dono misleading pricing aur fake reviews prohibit karte hain; mechanics alag hain.</td>
+      </tr>
+      <tr data-s="consumer credit TILA Reg Z 12 CFR 1026 Reg M ECOA Reg B CFPB NCCP National Credit Code comparison rate ASIC RG 234">
+        <td class="param">Consumer credit</td>
+        <td class="col-us">TILA / Reg Z (12 CFR 1026), Consumer Leasing Act / Reg M, ECOA / Reg B. Regulators: CFPB, FTC.</td>
+        <td class="col-au">NCCP Act 2009 + National Credit Code; comparison-rate aur warning requirements; ASIC RG 234. Regulator: ASIC.</td>
+        <td>Dono honest, complete cost-of-credit disclosure demand karte hain — expressed as <b>APR vs comparison rate</b>.</td>
+      </tr>
+      <tr data-s="motor dealer regulation NMVTIS lemon laws Monroney NSW Motor Dealers Repairers VIC Motor Car Traders LMCT QLD PPSR PPS Act cooling-off statutory warranty">
+        <td class="param">Motor dealer regulation</td>
+        <td class="col-us">State dealer licensing aur advertising rules; NMVTIS; state lemon laws; Monroney label (15 U.S.C. 1232).</td>
+        <td class="col-au">NSW Motor Dealers and Repairers Act 2013; VIC Motor Car Traders Act 1986 (LMCT); QLD Motor Dealers and Chattel Auctioneers Act 2014 aur equivalents. Statutory used-car warranty aur cooling-off state-wise. PPSR under PPS Act 2009.</td>
+        <td><b>Dono sub-national hain</b> — kisi ko bhi ek national rule set ki tarah kabhi present mat karo.</td>
+      </tr>
+      <tr data-s="accessibility ADA Title III Section 508 DOJ Title II DDA AHRC AS EN 301 549 Digital Service Standard WCAG">
+        <td class="param">Accessibility</td>
+        <td class="col-us">ADA Title III; Section 508 / Revised 508 Standards; DOJ Title II rule (2024) WCAG 2.1 AA adopt karta hai.</td>
+        <td class="col-au">Disability Discrimination Act 1992; AHRC World Wide Web Access advisory notes; AS EN 301 549; Digital Service Standard.</td>
+        <td>W3C WCAG 2.1 / 2.2 Level AA shared technical standard hai.</td>
+      </tr>
+      <tr data-s="security FTC Safeguards Rule 16 CFR 314 NIST SP 800-52 CSF ACSC Information Security Manual Essential Eight APP 11 OWASP">
+        <td class="param">Security</td>
+        <td class="col-us">FTC Safeguards Rule (16 CFR 314); NIST SP 800-52 Rev 2; NIST CSF 2.0.</td>
+        <td class="col-au">ACSC Information Security Manual; ACSC Essential Eight; APP 11 reasonable steps.</td>
+        <td>OWASP Top 10, OWASP Secure Headers, TLS 1.2+/1.3, HSTS — identical engineering baseline.</td>
+      </tr>
+      <tr data-s="marketing contact CAN-SPAM TCPA Spam Act 2003 Do Not Call Register opt-in opt-out unsubscribe">
+        <td class="param">Marketing contact</td>
+        <td class="col-us">CAN-SPAM (<b>opt-out</b>); TCPA (prior express written consent for automated marketing calls and texts).</td>
+        <td class="col-au">Spam Act 2003 (<b>opt-in</b>, sender identification, unsubscribe within 5 business days); Do Not Call Register Act 2006.</td>
+        <td><b>Opt-in vs opt-out split single most consequential marketing-law difference hai.</b></td>
+      </tr>
+      <tr data-s="vehicle safety environment NHTSA IIHS EPA ANCAP Australian Design Rules Green Vehicle Guide ADR 81/02 New Vehicle Efficiency Standard recalls">
+        <td class="param">Vehicle safety &amp; environment</td>
+        <td class="col-us">NHTSA recalls, IIHS crash ratings, EPA fuel economy aur MPG label.</td>
+        <td class="col-au">ANCAP crash ratings, Australian Design Rules, Green Vehicle Guide label (ADR 81/02), New Vehicle Efficiency Standard, Vehicle Recalls Australia.</td>
+        <td><b>Bilkul koi overlap nahi</b> — koi bhi authority whitelist market-specific honi hi chahiye.</td>
+      </tr>
+      <tr data-s="web search standards W3C HTML ARIA WCAG schema.org Google Search Central Core Web Vitals robots.txt RFC 9309 IETF TLS">
+        <td class="param">Web &amp; search standards</td>
+        <td class="col-us" colspan="2" style="text-align:center">Shared aur global: W3C HTML / ARIA / WCAG, schema.org, Google Search Central, Core Web Vitals thresholds, robots.txt (RFC 9309), IETF TLS.</td>
+        <td><b>Isi wajah se 72% parameters ko koi market logic chahiye hi nahi.</b></td>
+      </tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout warn no-hits">
+    <span class="h">⚠️ Not legal advice</span>
+    <p>Regulatory positions mid-2026 ki samajh reflect karti hain aur yahan isliye hain taaki pata chale <b>page pe kya dhoondhna hai</b>. Privacy, credit aur motor-dealer law tezi se badalte hain aur US state aur AU state/territory wise vary karte hain. Customer-facing compliance wording local counsel se review karwao, aur har finding ko <b>page ke baare mein ek observation</b> ki tarah phrase karo (“advertised rate ke saath koi comparison rate nahi dikh raha”) — kabhi legal conclusion ki tarah nahi.</p>
+  </div>
+</section>
+
+<div class="empty" id="empty">Koi parameter match nahi hua. Doosra term try karo — jaise <b>PPSR</b>, <b>ACL</b>, <b>phone</b>, <b>APP 8</b>, <b>CARFAX</b>.</div>
+
+<footer>
+  <p><b>DealerSiteAudit — United States vs Australia audit parameter norms, implementation status.</b><br>
+  8 pillars · 165 scored parameters · norms sourced from <span class="path">docs/reference/US-vs-AU-Audit-Norms.pdf</span> (v2, Aug 2026) and cross-verified line-by-line against <span class="path">Backend/metricServices</span>, <span class="path">Backend/utils</span> and <span class="path">Backend/workers</span>. Engineering reference; not legal advice.</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+(function () {
+  /* ── Theme toggle: auto → light → dark ─────────────────── */
+  var root = document.documentElement;
+  var btn = document.getElementById('theme');
+  var order = ['auto', 'light', 'dark'];
+  var saved = null;
+  try { saved = localStorage.getItem('dsa-norms-theme'); } catch (e) {}
+  if (saved) { root.setAttribute('data-theme', saved); }
+  function label() {
+    var t = root.getAttribute('data-theme') || 'auto';
+    btn.textContent = t === 'auto' ? 'Theme: Auto' : t === 'light' ? 'Theme: Light' : 'Theme: Dark';
+  }
+  btn.addEventListener('click', function () {
+    var cur = root.getAttribute('data-theme') || 'auto';
+    var next = order[(order.indexOf(cur) + 1) % order.length];
+    root.setAttribute('data-theme', next);
+    try { localStorage.setItem('dsa-norms-theme', next); } catch (e) {}
+    label();
+  });
+  label();
+
+  /* ── Live filter across every parameter row ────────────── */
+  var q = document.getElementById('q');
+  var hits = document.getElementById('hits');
+  var empty = document.getElementById('empty');
+  var rows = [].slice.call(document.querySelectorAll('tbody tr'));
+
+  // Pre-index each row: its own data-s hints plus all its text.
+  rows.forEach(function (r) {
+    r._hay = ((r.getAttribute('data-s') || '') + ' ' + r.textContent).toLowerCase().replace(/\s+/g, ' ');
+  });
+
+  function run() {
+    var term = q.value.trim().toLowerCase();
+    if (!term) {
+      document.body.classList.remove('filtering');
+      rows.forEach(function (r) { r.style.display = ''; });
+      document.querySelectorAll('.tw, section').forEach(function (el) { el.style.display = ''; });
+      empty.classList.remove('show');
+      hits.textContent = '';
+      return;
+    }
+    document.body.classList.add('filtering');
+    var n = 0;
+    rows.forEach(function (r) {
+      var on = r._hay.indexOf(term) !== -1;
+      r.style.display = on ? '' : 'none';
+      if (on) n++;
+    });
+    // Hide table wrappers with no visible rows, then sections with no visible tables.
+    document.querySelectorAll('.tw').forEach(function (tw) {
+      var any = [].slice.call(tw.querySelectorAll('tbody tr')).some(function (r) { return r.style.display !== 'none'; });
+      tw.style.display = any ? '' : 'none';
+    });
+    document.querySelectorAll('section').forEach(function (s) {
+      var any = [].slice.call(s.querySelectorAll('.tw')).some(function (t) { return t.style.display !== 'none'; });
+      s.style.display = any ? '' : 'none';
+    });
+    empty.classList.toggle('show', n === 0);
+    hits.textContent = n + (n === 1 ? ' row' : ' rows');
+  }
+  q.addEventListener('input', run);
+  q.addEventListener('keydown', function (e) { if (e.key === 'Escape') { q.value = ''; run(); q.blur(); } });
+
+  // "/" focuses the filter from anywhere.
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement !== q) { e.preventDefault(); q.focus(); q.select(); }
+  });
+
+  /* ── Scrollspy for the sidebar ─────────────────────────── */
+  var links = [].slice.call(document.querySelectorAll('nav.toc a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+  if ('IntersectionObserver' in window && targets.length) {
+    var seen = new Map();
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) { seen.set(en.target.id, en.isIntersecting ? en.intersectionRatio : 0); });
+      var best = null, bestV = 0;
+      seen.forEach(function (v, k) { if (v > bestV) { bestV = v; best = k; } });
+      links.forEach(function (a) { a.classList.toggle('on', best !== null && a.getAttribute('href') === '#' + best); });
+    }, { rootMargin: '-84px 0px -55% 0px', threshold: [0, .15, .4, .8] });
+    targets.forEach(function (t) { io.observe(t); });
+  }
+})();
+</script>
+
+</body>
+</html>

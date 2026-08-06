@@ -130,7 +130,7 @@ Two kinds exist. **(A) Actively double-counted** — weighted in *both* sections
 | **Technical** | `PageSpeed_Score` (Lighthouse perf, `informational:true`). Plus deprecated/diagnostic functions never called: FID (lab & field), Mobile Load Speed, Mobile Usability, Inventory/Service Load Time, Rendering Performance, Lazy Loading, Third-Party Script Optimization, JS Execution Efficiency. |
 | **On-Page SEO** | `Sitemap` (returned, weight 0). Computed-but-hidden: `Structured_Data`, `Content_Freshness`, `Video`. Not computed here: `Service_Content_Quality`, `Content_Depth_Quality`, `EEAT`, `Local_SEO`. |
 | **Accessibility** | `WCAG_AA_Compliance`, `Text_Spacing`, `Focus_Not_Obscured`, `Reduced_Motion` (all `infoOnly:true`). Keyboard sub-checks (`Focus_Order`, `Focusable_Content`, `Tab_Index`, `Aria_Hidden_Focus`) — display-only, weighted **once** via the `Keyboard_Navigation` composite. |
-| **Security** | When N/A: `SSL_Expiry` (HTTP page), `MFA_Enabled` (no auth surface), `Cookie_Consent` (no tracking), `Finance_Form_Security`, `Legal_Disclaimers`, `Reputation` (no API keys). CRM relocated out of this section. |
+| **Security** | When N/A: `SSL_Expiry` (HTTP page), `Cookie_Consent` (no tracking), `Finance_Form_Security`, `Legal_Disclaimers`, `Reputation` (no API keys). CRM relocated out of this section. `MFA_Enabled` removed as a parameter — enforcement is not provable black-box. |
 | **UX** | `Pricing_Transparency`, `Vehicle_History`, `Staff_Profiles`, `Certifications_Awards` — dead code, **not** computed/returned (moved to Conversion). Page-specific params become `infoOnly` off their page type (see §7). |
 | **Conversion** | `Link_Relevance` (folded into CTA), `Progress_Indicators` (dup of MultiStep). `Pricing_Transparency` & `Vehicle_History` self-flag `infoOnly`/`notApplicable` when irrelevant. |
 | **AIO** | `Duplicate_Content_Detection_Ready` (`infoOnly` — Bucket-3 de-dup), `Structured_Content` (`infoOnly`), `Terminology_Consistency` (`infoOnly`). Computed but not in weights map: `Author_Source_Attribution`, `Fact_vs_Opinion_Separation`, `Content_Completeness`. |
@@ -201,7 +201,6 @@ Two kinds exist. **(A) Actively double-counted** — weighted in *both* sections
 | SSL_Expiry | 4 | Third_Party_Cookies | 2 |
 | X_Frame_Options | 4 | Weak_Default_Credentials | 2 |
 | | | Admin_Panel_Public | 1 |
-| | | MFA_Enabled | 1 |
 
 ### UX & Content Structure (decimal, common Σ = 1.13)
 | Parameter | Weight | Parameter | Weight |

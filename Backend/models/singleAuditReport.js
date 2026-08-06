@@ -19,6 +19,12 @@ const SiteReportSchema = new mongoose.Schema(
     status: { type: String, default: 'inprogress' },
     pageType: { type: String, default: null },
     siteType: { type: String, default: null },
+    // "franchise" | "independent" | "service" | "repair" | "corporate".
+    // Keys parameter applicability and the section-weight tilt — see
+    // config/siteTypeProfiles.js. Null on reports created before site sub-type
+    // detection existed, which the scoring path reads as "no profile" and
+    // scores exactly as it did then.
+    siteSubType: { type: String, default: null },
     siteSchema: { type: Array, default: null },
     timeTaken: { type: String, default: null },
     score: { type: Number, default: null },
@@ -54,17 +60,72 @@ const SiteReportSchema = new mongoose.Schema(
     screenshot: { type: String, default: null },
     screenshotUrl: { type: String, default: null },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    // Where to send the "your audit is ready" mail. A multi-page run takes long
+    // enough that the visitor is told to leave the page, so the result has to be
+    // able to reach them. Null for single-page runs, which finish while they wait.
+    notifyEmail: { type: String, default: null },
+    notifiedAt: { type: Date, default: null },
+    // Market the visitor selected on the audit form (ISO alpha-2, or "OTHER").
+    // This is the INPUT to market resolution, not the outcome — see `market`.
+    country: { type: String, default: null },
+    // The market whose norms this run was actually scored against, and the
+    // evidence behind that choice. `market` drives which locale pack every
+    // check compares against (config/locale/), so it must be stored with the
+    // report: a re-render months later has to explain the same jurisdiction it
+    // originally scored, and a US and an AU report of the same URL are two
+    // legitimately different documents.
+    market: { type: String, default: null },
+    marketResolution: { type: mongoose.Schema.Types.Mixed, default: null },
+    // Opening ETA, fixed at creation from how many key pages this run will crawl.
+    // The status endpoint switches to extrapolating from real elapsed time as soon
+    // as there is progress to extrapolate from.
+    plannedPages: { type: Number, default: 1 },
+    estimatedSeconds: { type: Number, default: null },
     createdAt: { type: Date, default: Date.now },
   }
 );
 
+// Every non-terminal-failure status a report can hold. Mongo does NOT support $ne
+// (or $not) inside a partialFilterExpression — it rejects the whole index spec with
+// "Expression not supported in partial index" — so "anything but failed" has to be
+// spelled out as an $in list.
+//
+// ⚠️ Keep this in sync with everything that writes `status` on a report:
+//   utils/puppeteer_cheerio.js  → launching, navigating, waiting_for_render,
+//                                 screenshot_ready, extracting_data
+//   utils/auditStore.js         → inprogress (also the schema default), completed
+//   controllers/singleAuditController.js → queued
+//   workers/singleAuditWorker.js        → completed, failed
+// A status missing from this list silently drops those reports OUT of the unique
+// index — the dedupe backstop stops covering exactly the state it exists to protect.
+export const ACTIVE_REPORT_STATUSES = [
+  "inprogress",
+  "queued",
+  "launching",
+  "navigating",
+  "waiting_for_render",
+  "screenshot_ready",
+  "extracting_data",
+  "completed",
+];
+
 // Partial Unique Index to prevent multiple SUCCESSFUL or IN-PROGRESS audits for the same target
 // This allows re-auditing if current record is 'failed'
+//
+// `market` is part of the key because it is part of what makes a run distinct:
+// the same URL scored against US norms and against Australian norms compares
+// against different reference lists and produces a different score, so both must
+// be able to exist at once. Without it the second market's insert fails with a
+// duplicate-key error — and the dedupe in singleAuditController would have
+// served the first market's report anyway.
+//
+// Reports written before this field existed have no `market` and index as null,
+// which is a distinct key from "US"/"AU" — so they never collide with new runs.
 SiteReportSchema.index(
-  { url: 1, device: 1, report: 1 },
+  { url: 1, device: 1, report: 1, market: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: { $ne: 'failed' } }
+    partialFilterExpression: { status: { $in: ACTIVE_REPORT_STATUSES } }
   }
 );
 

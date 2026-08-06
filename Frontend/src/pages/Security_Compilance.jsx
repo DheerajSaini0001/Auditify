@@ -8,7 +8,7 @@ import { ThemeContext } from "../context/ThemeContext";
 import LivePreview from "../components/LivePreview";
 import {
   Shield, Lock, AlertTriangle, CheckCircle, XCircle,
-  Info, Server, Eye, FileText, Smartphone,
+  Info, Server, Eye, FileText,
   Layout, Code, Bug, Share2, CalendarClock,
   Database, Key, Globe2, Layers, ShieldCheck, Loader2, CreditCard
 } from "lucide-react";
@@ -37,7 +37,6 @@ const iconMap = {
   Legal_Disclaimers: FileText,
   Forms_Use_HTTPS: Lock,
   Weak_Default_Credentials: Key,
-  MFA_Enabled: Smartphone,
   Admin_Panel_Public: Eye,
   Third_Party_Cookies: Share2,
   Finance_Form_Security: CreditCard,
@@ -503,29 +502,6 @@ const MetricCard = ({ metricKey, data, darkMode, onInfo }) => {
             );
           })()}
 
-          {metricKey === "MFA_Enabled" && meta && (
-            <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"} space-y-1.5`}>
-              <div className="flex justify-between items-center">
-                <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Login Surface:</span>
-                <span className={`font-semibold ${meta.hasAuthSurface ? (darkMode ? "text-gray-200" : "text-gray-700") : "text-gray-400"}`}>
-                  {meta.hasAuthSurface ? "Detected" : "None (N/A)"}
-                </span>
-              </div>
-              {meta.method && (
-                <div className="flex justify-between items-center">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Method:</span>
-                  <code className={`px-1.5 py-0.5 rounded font-mono font-semibold ${darkMode ? "bg-blue-500/10 text-blue-400" : "bg-accentsoft text-accent"}`}>{meta.method}</code>
-                </div>
-              )}
-              {(meta.mfaKeyword || meta.ssoKeyword) && (
-                <div className="flex justify-between items-center gap-2">
-                  <span className={`font-medium ${darkMode ? "text-gray-400" : "text-muted"}`}>Evidence:</span>
-                  <span className={`font-semibold italic truncate ${darkMode ? "text-emerald-300" : "text-emerald-700"}`}>{meta.mfaKeyword || meta.ssoKeyword}</span>
-                </div>
-              )}
-            </div>
-          )}
-
           {metricKey === "Cookie_Consent" && meta?.selector && (
             <div className={`mt-3 p-2 rounded border border-dashed text-xs ${darkMode ? "border-gray-700 bg-gray-800/50" : "border-line bg-cardsoft"}`}>
               <div className="flex flex-col gap-1">
@@ -880,7 +856,7 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
     { icon: <Bug className="w-8 h-8 text-rose-500" />, title: "Vulnerability Scan", text: "Simulating SQL Injection and XSS attacks, while cross-referencing with global threat intelligence databases..." },
     { icon: <ShieldCheck className="w-8 h-8 text-teal-500" />, title: "Security Headers", text: "Auditing Content Security Policy (CSP), anti-clickjacking headers, and secure HttpOnly cookie flags..." },
     { icon: <Globe2 className="w-8 h-8 text-indigo-500" />, title: "Compliance", text: "Evaluating GDPR/CCPA readiness, privacy policy visibility, and auditing third-party cookie tracking..." },
-    { icon: <Key className="w-8 h-8 text-amber-500" />, title: "Access Control", text: "Testing for exposed admin panels, weak default credentials, secure form submission, and MFA availability..." },
+    { icon: <Key className="w-8 h-8 text-amber-500" />, title: "Access Control", text: "Testing for exposed admin panels, weak default credentials, and secure form submission..." },
   ], []);
 
   const metric = data?.securityOrCompliance || {};
@@ -999,12 +975,19 @@ const Security_Compilance_Inner = React.memo(function Security_Compilance_Inner(
               // already dropped from the score denominator server-side, so an N/A card
               // is pure noise. `infoOnly` params still render (they carry a real
               // reading, just uncounted) — only a true not_applicable is dropped.
+              // Defensive: every non-applicable branch in securityCompliance.js
+              // currently returns status "not_applicable", but a metric that was
+              // never measured can also surface as a null status or an explicit
+              // notCalculated flag. Drop all three rather than only the first, so
+              // a future backend change can't start leaking empty cards.
+              const didNotApply = (m) =>
+                m.status === "not_applicable" || m.notCalculated === true || m.status == null;
               const visible = (keys) => keys.filter(
-                (k) => metric[k] && metric[k].status !== "not_applicable" && isVisibleForAudience(k, audienceMode)
+                (k) => metric[k] && !didNotApply(metric[k]) && isVisibleForAudience(k, audienceMode)
               );
               const networkKeys = visible(["HTTPS", "SSL", "SSL_Expiry", "TLS_Version", "HSTS"]);
               const vulnKeys = visible(["Reputation", "SQLi_Exposure", "XSS"]);
-              const accessKeys = visible(["Weak_Default_Credentials", "MFA_Enabled", "Admin_Panel_Public", "Forms_Use_HTTPS"]);
+              const accessKeys = visible(["Weak_Default_Credentials", "Admin_Panel_Public", "Forms_Use_HTTPS"]);
               const headerKeys = visible(["Header_Security", "CSP", "X_Frame_Options", "X_Content_Type_Options", "Referrer_Policy", "Permissions_Policy", "Cookie_Flags", "Third_Party_Cookies"]);
               const complianceKeys = visible(["Cookie_Consent", "Privacy_Compliance", "Privacy_Policy"]);
               const financeKeys = visible(["Finance_Form_Security", "Legal_Disclaimers"]);

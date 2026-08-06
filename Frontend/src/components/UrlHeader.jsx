@@ -8,6 +8,7 @@ import { AI_SUMMARY_ENABLED } from "../config/features";
 import { savePostAuthIntent } from "../utils/intentStore";
 import { useData } from "../context/DataContext";
 import { Sparkles } from "lucide-react";
+import { pdfFileNameFrom } from "../utils/reportDownload";
 
 export default function UrlHeader({ data, darkMode, sectionName, sectionData, auditScore, hideBorder }) {
   const currentDevice = data?.device || "Desktop";
@@ -36,6 +37,11 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
       (async () => {
         const token = localStorage.getItem('dealerpulse_token');
         const response = await fetch(`${API_URL}/single-audit/${data._id}/export/pdf`, {
+          // Send the sessionId cookie so the server-side download log attaches to
+          // the visitor's real session. Without it a guest download arrives with no
+          // cookie, the tracking middleware mints a brand new sessionId, and the
+          // download is orphaned from the journey that produced it.
+          credentials: 'include',
           headers: {
             ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           }
@@ -46,7 +52,7 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `Site Audit-Report-${data.url?.replace(/[^a-z0-9]/gi, '-')}.pdf`;
+        link.download = pdfFileNameFrom(response, data.url, data.createdAt);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

@@ -8,6 +8,16 @@
  * header showed no tallies at all.
  */
 export const techStatusCounts = (tech) => {
+    // Signed-out visitors get this section stripped, so the nested metrics below are
+    // all absent and would tally to 0/0/0. Fall back to the server's own counts.
+    if (tech?.locked) {
+        return {
+            passed: tech.passedCount ?? 0,
+            warning: tech.warningCount ?? 0,
+            failed: tech.failedCount ?? 0,
+        };
+    }
+
     let passedCount = 0;
     let failedCount = 0;
     let warningCount = 0;

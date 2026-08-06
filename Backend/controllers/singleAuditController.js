@@ -3,19 +3,22 @@ import { join } from "path";
 import mongoose from "mongoose";
 import SingleAuditReport from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
-import ActivityLog from "../models/ActivityLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { validateUrlSafety } from "../utils/ssrfGuard.js";
 import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
 import { gateReportForViewer } from "../utils/reportGating.js";
-import { classifyPageType, classifyCorporatePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { sendAuditCompleteEmail, sendAuditFailedEmail } from "../utils/auditNotifier.js";
+import { classifyPageType, classifyCorporatePageType, classifyServicePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
 import { detectSiteType } from "../utils/siteTypeDetector.js";
+import { getLocale } from "../config/locale/index.js";
+import { ACCEPTED_SITE_TYPES, normalizeSubType, keyPageCountFor } from "../config/siteTypeProfiles.js";
 import { registerWorkerWithManager } from "../utils/browserManager.js";
 import { acquireAuditSlot } from "../utils/auditQueue.js";
 import { collectWorkerConfig } from "../utils/workerConfig.js";
- 
+import { logActivity, touchSession, sanitizeUrl } from "../utils/activityTracker.js";
+
 const reportFieldMap = {
   "Technical Performance": "technicalPerformance",
   "On Page SEO": "onPageSEO",
@@ -83,10 +86,76 @@ const mergeScores = (base, siblings) => {
   return out;
 };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Keep the "we'll email you when it's done" promise.
+ *
+ * Only runs that actually asked for a mail have `notifyEmail` set, and `notifiedAt`
+ * makes it once-only — a retried terminal path must not send a second copy. Never
+ * awaited by the audit pipeline and never allowed to throw: the report is already
+ * saved by the time this runs, so a broken SMTP config must not take the run down.
+ */
+const notifyAuditFinished = (doc, { failed = false } = {}) => {
+  if (!doc?.notifyEmail || doc.notifiedAt) return;
+  doc.notifiedAt = new Date(); // set before sending, so a double-fire can't double-send
+
+  const payload = { to: doc.notifyEmail, url: doc.url, reportId: doc._id };
+  const send = failed
+    ? sendAuditFailedEmail(payload)
+    : sendAuditCompleteEmail({ ...payload, score: doc.score });
+
+  send.catch((err) =>
+    logger.error(`[Audit] completion mail threw for ${doc._id}`, err)
+  );
+};
+
+/* ===========================
+   ⏱️ How long will this take?
+   ===========================
+   The visitor is asked to walk away from a multi-page run, so "some time" is not
+   good enough — they need a number. These are wall-clock costs measured on the
+   production box (App Service B2, MAX_CONCURRENT_AUDITS=1): one page is dominated
+   by its two PageSpeed calls, and each extra key page adds a full Stage-2 pass.
+
+   This is only the opening estimate. Once a run reports real progress the status
+   endpoint extrapolates from elapsed time instead, so a slow site corrects itself
+   rather than sitting on a promise it cannot keep. */
+const AUDIT_BASE_SECONDS = 90;      // single page, all 8 pillars
+const AUDIT_PER_PAGE_SECONDS = 45;  // each additional key page in Stage 2
+
+const estimateAuditSeconds = (pageCount) =>
+  AUDIT_BASE_SECONDS + AUDIT_PER_PAGE_SECONDS * Math.max(0, (pageCount || 1) - 1);
+
 export const startAudit = async (req, res) => {
 
   try {
-    let { url, device, report, force, pageType, siteType, pageScopes } = req.body;
+    let { url, device, report, force, pageType, siteType, siteSubType, pageScopes, notifyEmail, country } = req.body;
+
+    // Where to mail the finished report. A multi-page run takes minutes, so the
+    // client collects an address up front and tells the visitor to walk away —
+    // that promise is only kept if the address survives to the report doc.
+    const cleanNotifyEmail = typeof notifyEmail === 'string' && EMAIL_RE.test(notifyEmail.trim())
+      ? notifyEmail.trim().toLowerCase()
+      : null;
+
+    // Market the visitor selected. ISO 3166-1 alpha-2 (or the literal "OTHER"),
+    // so anything else is a client that has drifted from the catalog — drop it
+    // rather than storing free text on every report.
+    const cleanCountry = typeof country === 'string' && /^[A-Z]{2}$|^OTHER$/.test(country.trim().toUpperCase())
+      ? country.trim().toUpperCase()
+      : null;
+
+    // The market whose norms this run will actually be scored against. Resolved
+    // HERE rather than in the worker because it is part of the audit's identity:
+    // the same URL graded for the US and for Australia compares against different
+    // reference lists and produces a different score, so the dedupe below has to
+    // be able to tell the two runs apart before either of them starts. Without
+    // this, asking for AU after US silently returns the US report.
+    //
+    // getLocale() folds every unsupported value ("OTHER", "GB", null) onto the US
+    // reference pack, so runs that would produce identical output still share.
+    const resolvedMarket = getLocale(cleanCountry).code;
 
     // Page types the user kept ticked in the home-page picker. Stage 2 only audits
     // these; ["home"] alone means "just the URL I entered". Unknown keys are dropped
@@ -94,6 +163,8 @@ export const startAudit = async (req, res) => {
     const VALID_PAGE_SCOPES = new Set([
       "home", "srp", "vdp", "trade", "lease", "finance", "service", "specials",
       "about", "content", "models", "locator", "press",
+      // Service/repair taxonomy (pageClassifier.classifyServicePageType)
+      "booking", "pricing", "locations",
     ]);
     const normalizedScopes = Array.isArray(pageScopes)
       ? [...new Set(pageScopes.filter((k) => VALID_PAGE_SCOPES.has(k)))]
@@ -121,6 +192,16 @@ export const startAudit = async (req, res) => {
     const existence = await checkWebsiteExists(url);
     if (!existence.exists) {
       logger.info(`🌐 Rejected audit — website does not exist: ${url} (${existence.errorCode})`);
+      // A rejection is a failed attempt from the visitor's point of view. Logging
+      // it is what lets the dashboard explain the gap between "clicked Site Audit"
+      // and "audit started" instead of just showing a drop.
+      logActivity(req, {
+        action: 'AUDIT_FAILED',
+        status: 'FAILURE',
+        url,
+        errorMessage: `Website not found — ${existence.reason}`,
+        metadata: { stage: 'existence_check', errorCode: existence.errorCode },
+      });
       return res.status(400).json({ error: `Website not found — ${existence.reason}` });
     }
 
@@ -130,17 +211,20 @@ export const startAudit = async (req, res) => {
         url,
         device,
         report,
-        userId: req.user?.userId || null
+        userId: req.user?.userId || null,
+        // Scoped to this market so a force re-run of the AU report does not also
+        // delete the visitor's US report for the same URL.
+        market: resolvedMarket,
       });
       // Also drop any in-memory copy that hasn't been flushed yet.
-      auditStore.removeMatching({ url, device, report, userId: req.user?.userId || null });
+      auditStore.removeMatching({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
     }
 
     // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one.
     // Check the in-memory store FIRST (reports may not be flushed to Mongo yet), then Mongo.
     let existing = null;
     if (!force) {
-      existing = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null });
+      existing = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
       if (!existing) {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         existing = await SingleAuditReport.findOne({
@@ -148,6 +232,12 @@ export const startAudit = async (req, res) => {
           device,
           report,
           userId: req.user?.userId || null,
+          // Same reasoning as the in-memory lookup: a report scored for another
+          // market is not a duplicate of this one. Reports written before market
+          // existed have no field at all and so never match a real market code —
+          // they are re-audited rather than served under a jurisdiction they were
+          // never graded against.
+          market: resolvedMarket,
           $or: [
             { status: "completed" },
             { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
@@ -158,11 +248,28 @@ export const startAudit = async (req, res) => {
 
     if (existing) {
       logger.info(`♻️ Safeguard: Reusing existing Audit (${existing.status}) for: ${url}`);
-      
+
+      // Riding on someone else's in-flight run still earns the mail we promised.
+      // Without this, asking for a long audit that happens to dedupe onto a run
+      // started without an address means waiting for an email that never comes.
+      // Only fills a blank — never redirects a mail already promised elsewhere.
+      if (cleanNotifyEmail && existing.status !== "completed" && !existing.notifyEmail) {
+        if (auditStore.get(existing._id)) {
+          // Live run: the completion handler reads the address off this object.
+          auditStore.applyPatch(existing._id, { notifyEmail: cleanNotifyEmail });
+        } else {
+          await SingleAuditReport.updateOne(
+            { _id: existing._id, notifyEmail: null },
+            { $set: { notifyEmail: cleanNotifyEmail } }
+          );
+        }
+        existing.notifyEmail = cleanNotifyEmail;
+      }
+
       // Save an AuditLog so it appears in User's history even though it was cached
       const auditLog = new AuditLog({
         userId: req.user?.userId || null,
-        guestEmail: req.guestEmail || null,
+        guestEmail: req.user ? null : (cleanNotifyEmail || req.guestEmail || null),
         sessionId: req.tracking?.sessionId || 'N/A',
         ip: req.tracking?.ip || '0.0.0.0',
         country: req.tracking?.country,
@@ -170,37 +277,44 @@ export const startAudit = async (req, res) => {
         device: existing.device || device || 'Desktop',
         browser: req.tracking?.browser,
         os: req.tracking?.os,
+        userAgent: req.headers['user-agent'] || null,
         screenResolution: req.body.screenResolution || req.tracking?.screenResolution,
         url: url,
+        siteType: existing.siteType || null,
+        siteSubType: existing.siteSubType || null,
+        pageType: pageType || existing.pageType || null,
         reportId: existing._id,
         reportType: report,
-        referrer: req.tracking?.referrer || 'direct',
-        entryPage: req.tracking?.entryPage || '/',
+        referrer: sanitizeUrl(req.tracking?.referrer) || 'direct',
+        entryPage: sanitizeUrl(req.tracking?.entryPage) || '/',
         actions: ["visited", "audit_run_cached"],
         captchaPassed: true,
         status: existing.status === "completed" ? "success" : existing.status === "failed" ? "failed" : "pending",
         score: existing.score,
         grade: existing.grade,
+        // A cache hit takes no measurable time — recording it as instantly
+        // complete keeps it out of the "average completion time" average, which
+        // is meant to describe how long a real audit takes.
+        startedAt: new Date(),
+        completedAt: existing.status === "completed" ? new Date() : null,
+        auditDuration: existing.status === "completed" ? 0 : null,
       });
 
-      if (req.user) {
-        ActivityLog.create({
-          userId: req.user.userId,
-          sessionId: req.tracking?.sessionId || 'N/A',
-          ip: req.tracking?.ip || '0.0.0.0',
-          device: device,
-          browser: req.tracking?.browser || 'Unknown',
-          os: req.tracking?.os || 'Unknown',
-          action: 'AUDIT_RUN_CACHED',
-          metadata: { url, device, reportId: existing._id }
-        }).catch(err => logger.error("Error saving cached ActivityLog", err));
-      }
+      // Tracked for guests too — most audits on this platform are run signed
+      // out, and a log that only sees logged-in runs misses most of the traffic.
+      logActivity(req, {
+        action: 'AUDIT_RUN_CACHED',
+        url,
+        guestEmail: req.user ? null : (cleanNotifyEmail || req.guestEmail || null),
+        metadata: { device, report, reportId: String(existing._id), cached: true },
+      });
+      touchSession(req, { auditsStarted: 1 });
 
       auditLog.save().catch(err => logger.error("Error saving cached AuditLog", err));
 
       return res.status(200).json(gateReportForViewer(existing, !!req.user));
     }
- 
+
     // ⭐ ENHANCEMENT: Extract one OR MORE sections from an existing "Full Audit".
     // `report` is a single section name or a comma-joined subset chosen via the
     // report-scope checklist; if a completed full audit already holds every
@@ -236,6 +350,7 @@ export const startAudit = async (req, res) => {
             timeTaken: "0s (cached)",
             isBotProtected: fullAudit.isBotProtected,
             siteType: fullAudit.siteType || null,
+            siteSubType: fullAudit.siteSubType || null,
             userId: req.user?.userId || null
           });
 
@@ -254,9 +369,14 @@ export const startAudit = async (req, res) => {
 
           // Weighted by the page-type tilt over the extracted sections (spec §5.4),
           // matching what a fresh subset audit of this URL would produce. Reuse
-          // whichever siteType the original full audit was classified as.
-          const classify = fullAudit.siteType === "corporate" ? classifyCorporatePageType : classifyPageType;
-          const sectionScore = computePageScoreFromMap(pctBySection, classify(url));
+          // whichever siteType/siteSubType the original full audit was classified
+          // as — a reused section must be weighted the same way the fresh run
+          // that produced it was, or the same numbers yield a different score.
+          const classify =
+            fullAudit.siteType === "corporate" ? classifyCorporatePageType
+              : fullAudit.siteType === "service" ? classifyServicePageType
+                : classifyPageType;
+          const sectionScore = computePageScoreFromMap(pctBySection, classify(url), fullAudit.siteSubType || null);
           const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
           newSectionReport.score = sectionScore;
           newSectionReport.grade = sectionGrade;
@@ -269,15 +389,35 @@ export const startAudit = async (req, res) => {
             guestEmail: req.guestEmail || null,
             sessionId: req.tracking?.sessionId || 'N/A',
             ip: req.tracking?.ip || '0.0.0.0',
+            country: req.tracking?.country || 'unknown',
+            region: req.tracking?.region || 'unknown',
+            city: req.tracking?.city || 'unknown',
+            device: device || 'Desktop',
+            browser: req.tracking?.browser || 'unknown',
+            os: req.tracking?.os || 'unknown',
+            userAgent: req.headers['user-agent'] || null,
             url: url,
+            siteType: fullAudit.siteType || null,
+            siteSubType: fullAudit.siteSubType || null,
+            pageType: pageType || null,
             reportId: newSectionReport._id,
             reportType: report,
             status: "success",
             score: sectionScore,
             grade: sectionGrade,
             actions: ["visited", "audit_section_extracted"],
+            startedAt: new Date(),
+            completedAt: new Date(),
+            auditDuration: 0, // reused from an existing full audit, nothing was run
           });
           auditLog.save().catch(err => logger.error("Error saving extracted AuditLog", err));
+
+          logActivity(req, {
+            action: 'AUDIT_RUN_CACHED',
+            url,
+            metadata: { device, report, reportId: String(newSectionReport._id), sectionReuse: true },
+          });
+          touchSession(req, { auditsStarted: 1 });
 
           return res.status(200).json(gateReportForViewer(newSectionReport, !!req.user));
         }
@@ -297,22 +437,38 @@ export const startAudit = async (req, res) => {
     // never re-fetch. Only direct API callers (or the merge/reuse paths) land
     // here without one; fall back to detecting it ourselves.
     //
-    // Product decision: Auditify only audits dealership and automotive
-    // corporate/OEM sites — "unknown" (including inconclusive) is REJECTED,
-    // not failed open. /single-audit/discover already enforces this same gate
-    // before a user ever reaches this endpoint through the normal UI flow;
-    // this is the defense-in-depth check for direct API callers and a stale
-    // or tampered client-supplied siteType.
-    let normalizedSiteType = siteType === "corporate" || siteType === "dealer" ? siteType : null;
+    // Product decision: DealerSiteAudit  audits dealership, automotive service/repair
+    // and automotive corporate/OEM sites — "unknown" (including inconclusive)
+    // is REJECTED, not failed open. /single-audit/discover already enforces
+    // this same gate before a user ever reaches this endpoint through the
+    // normal UI flow; this is the defense-in-depth check for direct API callers
+    // and a stale or tampered client-supplied siteType.
+    //
+    // siteSubType is what the scoring pipeline actually keys off (parameter
+    // applicability + the section tilt, see config/siteTypeProfiles.js), so it
+    // must survive the client round-trip alongside siteType — but only as a
+    // value CONSISTENT with the siteType the client also sent. A tampered
+    // "dealer"+"repair" pair would otherwise renormalise the 12 inventory
+    // parameters out of a real dealer's score.
+    let normalizedSiteType = ACCEPTED_SITE_TYPES.has(siteType) ? siteType : null;
+    let normalizedSubType = normalizedSiteType ? normalizeSubType(normalizedSiteType, siteSubType) : null;
     if (!normalizedSiteType) {
       const detection = await detectSiteType(url);
-      if (detection.siteType !== "dealer" && detection.siteType !== "corporate") {
-        logger.info(`🚫 Rejected audit — not a dealer or automotive corporate site: ${url} (${detection.reason})`);
+      if (!ACCEPTED_SITE_TYPES.has(detection.siteType)) {
+        logger.info(`🚫 Rejected audit — not an automotive dealer, service or corporate site: ${url} (${detection.reason})`);
+        logActivity(req, {
+          action: 'AUDIT_FAILED',
+          status: 'FAILURE',
+          url,
+          errorMessage: `Not an automotive site — ${detection.reason}`,
+          metadata: { stage: 'site_type_gate', detectedType: detection.siteType || 'unknown' },
+        });
         return res.status(400).json({
-          error: "This doesn't look like a dealership or automotive corporate/OEM website. Auditify only audits dealer and automotive-corporate sites.",
+          error: "This doesn't look like a dealership, automotive service/repair or automotive corporate/OEM website. DealerSiteAudit only audits automotive sites.",
         });
       }
       normalizedSiteType = detection.siteType;
+      normalizedSubType = normalizeSubType(detection.siteType, detection.siteSubType);
       // detection.resolvedUrl may differ from what was submitted — e.g. a bare
       // apex domain that fails outright (TLS/DNS-level) while "www." works.
       // Classification already succeeded against the working hostname; the
@@ -324,11 +480,18 @@ export const startAudit = async (req, res) => {
       }
     }
 
-    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report} | ${normalizedSiteType}`);
+    logger.info(`➡️ Starting NEW Audit Request → ${url} | ${device} | ${report} | ${normalizedSiteType}/${normalizedSubType}`);
 
     // No DB write here. The report lives in memory until the worker finishes; the
     // main thread then batches it to Mongo. We generate the id up front so the
     // client can poll immediately and AuditLog can reference it.
+    // `normalizedScopes` null means "no restriction" — every key page the crawler
+    // finds, which is the widest (slowest) run there is. Its size is the key-page
+    // count for THIS site type, not the size of VALID_PAGE_SCOPES: that set is the
+    // union of all three taxonomies (dealer + corporate + service), so using it
+    // promised a garage a 16-page crawl of a 7-category site.
+    const plannedPages = normalizedScopes ? normalizedScopes.length : keyPageCountFor(normalizedSubType);
+
     const newReport = auditStore.createInProgress({
       _id: new mongoose.Types.ObjectId(),
       url,
@@ -337,12 +500,20 @@ export const startAudit = async (req, res) => {
       userId: req.user?.userId || null,
       pageType: pageType || null,
       siteType: normalizedSiteType,
+      siteSubType: normalizedSubType,
+      notifyEmail: cleanNotifyEmail,
+      country: cleanCountry,
+      market: resolvedMarket,
+      plannedPages,
+      estimatedSeconds: estimateAuditSeconds(plannedPages),
     });
 
     // Create a pending AuditLog entry asynchronously
     const auditLog = new AuditLog({
       userId: req.user?.userId || null,
-      guestEmail: req.guestEmail || null,
+      // For a signed-out run the notify address is the only identity we have, so
+      // it is what attributes this row in the admin log.
+      guestEmail: req.user ? null : (cleanNotifyEmail || req.guestEmail || null),
       sessionId: req.tracking?.sessionId || 'N/A',
       ip: req.tracking?.ip || '0.0.0.0',
       country: req.tracking?.country || 'unknown',
@@ -350,34 +521,54 @@ export const startAudit = async (req, res) => {
       device: device || 'Desktop',
       browser: req.tracking?.browser || 'unknown',
       os: req.tracking?.os || 'unknown',
+      userAgent: req.headers['user-agent'] || null,
       screenResolution: req.body.screenResolution || req.tracking?.screenResolution || 'unknown',
       url: url,
+      // The detected website category — resolved above, before the worker spawns,
+      // so the journey row can name it even for a run that fails immediately.
+      siteType: normalizedSiteType,
+      siteSubType: normalizedSubType,
+      pageType: pageType || null,
       reportId: newReport._id,
       reportType: report,
-      referrer: req.tracking?.referrer || 'direct',
-      entryPage: req.tracking?.entryPage || '/',
+      // Sanitized: these are stored on the journey row and leave the system in
+      // the admin CSV export, and an OAuth callback entry page carries a live code.
+      referrer: sanitizeUrl(req.tracking?.referrer) || 'direct',
+      entryPage: sanitizeUrl(req.tracking?.entryPage) || '/',
       actions: ["visited", "audit_run"],
       captchaPassed: true,
       status: "pending",
+      startedAt: new Date(),
     });
 
-    // Create detailed activity log for RBAC (Section 3.3)
-    if (req.user) {
-      ActivityLog.create({
-        userId: req.user.userId,
-        sessionId: req.tracking?.sessionId || 'N/A',
-        ip: req.tracking?.ip || '0.0.0.0',
-        device: device,
-        browser: req.tracking?.browser || 'Unknown',
-        os: req.tracking?.os || 'Unknown',
-        action: 'AUDIT_RUN',
-        metadata: { url, device, reportId: newReport._id }
-      }).catch(err => logger.error("Error saving ActivityLog", err));
-    }
+    // Tracked for guests as well as signed-in users — this is the "audit started"
+    // number the dashboard funnel counts, and most runs here are signed out.
+    logActivity(req, {
+      action: 'AUDIT_RUN',
+      url,
+      guestEmail: req.user ? null : (cleanNotifyEmail || req.guestEmail || null),
+      metadata: {
+        device, report, reportId: String(newReport._id),
+        siteType: normalizedSiteType, siteSubType: normalizedSubType,
+      },
+    });
+    touchSession(req, { auditsStarted: 1 });
 
-    auditLog.save().catch(err => logger.error("Error saving AuditLog", err));
+    // Kept as a promise rather than fired and forgotten: every lifecycle update
+    // below targets this row by reportId, and they run within milliseconds of
+    // here. Without something to await, the queued/running updates raced the
+    // INSERT, matched nothing, and the row sat at "pending" for the whole run —
+    // losing the running state and queueWaitMs entirely. Still not awaited before
+    // the response, so the client is not made to wait on a log write.
+    const auditLogSaved = auditLog
+      .save()
+      .catch(err => logger.error("Error saving AuditLog", err));
 
     const startTime = Date.now();
+    // The tracking context is captured now because the worker callbacks below fire
+    // long after this request's lifecycle — `req` is still in scope, but reading it
+    // there would be reading a request object that Express has already responded to.
+    const journeyReq = { tracking: req.tracking, user: req.user, headers: req.headers };
 
     res.status(201).json({
       message: "Audit started successfully",
@@ -394,10 +585,27 @@ export const startAudit = async (req, res) => {
     // browser pool, and over-admitting them doesn't just slow the run, it makes
     // pillars time out and score on partial data (see utils/auditQueue.js). While
     // queued the report says so, instead of showing fake browser-launch progress.
+    const queuedAt = Date.now();
+    // Flips on the first position callback. The queue re-fires onPosition every
+    // time the line moves, and writing on each shuffle would be one update per
+    // position per waiting audit — but gating on `position === 1` instead would
+    // never fire at all: acquireAuditSlot shifts the granted audit OFF the queue
+    // before renumbering, so an audit that waits goes straight from position N to
+    // running and is never told it reached the front.
+    let markedQueued = false;
     const releaseAuditSlot = await acquireAuditSlot({
       label: url,
       onPosition: (position) => {
         auditStore.applyPatch(newReport._id, { status: "queued", queuePosition: position });
+        if (markedQueued) return;
+        markedQueued = true;
+        // Chained off the insert so the update cannot outrun the row it targets.
+        auditLogSaved
+          .then(() => AuditLog.updateMany(
+            { reportId: newReport._id, status: "pending" },
+            { $set: { status: "queued" } }
+          ))
+          .catch((err) => logger.error("Error marking AuditLog queued", err));
       },
     });
 
@@ -413,7 +621,15 @@ export const startAudit = async (req, res) => {
           auditId: newReport._id.toString(),
           pageType: newReport.pageType || null,
           siteType: newReport.siteType || null,
+          siteSubType: newReport.siteSubType || null,
           pageScopes: normalizedScopes,
+          // The market whose norms this run is scored against. Stored on the
+          // report as `country` (that is the visitor-facing field name), but the
+          // engine calls it `market` throughout because it selects a locale pack
+          // rather than describing where the visitor sat. "OTHER" and anything
+          // the locale registry does not know resolve to the US reference pack
+          // inside utils/marketResolver.js, so no validation is needed here.
+          market: newReport.market || resolvedMarket,
           // Platform config resolved on THIS thread. The worker's own
           // configService cache is always empty (see utils/workerConfig.js), and
           // in the container there is no .env to fall back to — without this,
@@ -427,13 +643,52 @@ export const startAudit = async (req, res) => {
       // failed spawn and eventually admit nothing at all.
       releaseAuditSlot();
       logger.error(`❌ Failed to spawn audit worker for ${url}`, spawnErr);
-      auditStore.complete(newReport._id, { status: "failed", error: spawnErr.message });
+      notifyAuditFinished(
+        auditStore.complete(newReport._id, { status: "failed", error: spawnErr.message }),
+        { failed: true }
+      );
+      // A run that never got a worker is still a failed run to the visitor who
+      // asked for it — leaving the row `pending` forever would hide it from both
+      // the failure count and its reason breakdown.
+      AuditLog.updateMany(
+        { reportId: newReport._id, status: { $in: ["pending", "queued", "running"] } },
+        {
+          $set: {
+            status: "failed",
+            failureReason: `Worker could not start: ${spawnErr.message}`,
+            completedAt: new Date(),
+            auditDuration: Date.now() - startTime,
+          },
+          $push: { actions: "failed" },
+        }
+      ).catch((err) => logger.error("Error marking AuditLog spawn failure", err));
+      logActivity(journeyReq, {
+        action: 'AUDIT_FAILED',
+        status: 'FAILURE',
+        url,
+        errorMessage: `Worker could not start: ${spawnErr.message}`,
+        metadata: { reportId: String(newReport._id) },
+      });
       return;
     }
 
     // The audit is leaving the queue — clear the waiting marker so the status
     // endpoint stops reporting a queue position for a run that has started.
     auditStore.applyPatch(newReport._id, { status: "inprogress", queuePosition: 0 });
+
+    // Queue wait is recorded SEPARATELY from the audit duration below. Rolling the
+    // two together is what makes an "average audit takes 4 minutes" number that is
+    // really "the server was busy" — the admin dashboard needs to tell those apart.
+    const queueWaitMs = Date.now() - queuedAt;
+    // Awaited on the insert (see auditLogSaved) — a slot that was free resolves
+    // acquireAuditSlot synchronously, so this fires microseconds after the row is
+    // created and would otherwise lose the race with its own INSERT.
+    auditLogSaved
+      .then(() => AuditLog.updateMany(
+        { reportId: newReport._id, status: { $in: ["pending", "queued"] } },
+        { $set: { status: "running", queueWaitMs, startedAt: new Date() } }
+      ))
+      .catch((err) => logger.error("Error marking AuditLog running", err));
 
     // Release when the audit's WORK is done (the terminal done/error message),
     // not when the thread exits: measured, a finished worker can sit for minutes
@@ -448,10 +703,15 @@ export const startAudit = async (req, res) => {
 
     // The worker is DB-free: it streams progress and the final result here. The
     // main thread owns the in-memory store and batches the final write to Mongo.
+    // Close out the journey row. The filter matches every NON-terminal status, not
+    // just "pending": the row now moves pending → queued → running on its way here,
+    // and a filter pinned to "pending" would silently stop closing rows the moment
+    // the queue promoted them — leaving finished audits stuck as in-flight forever.
     const markAuditLog = async (fields) => {
       try {
+        await auditLogSaved;
         await AuditLog.updateMany(
-          { reportId: newReport._id, status: "pending" },
+          { reportId: newReport._id, status: { $in: ["pending", "queued", "running"] } },
           fields
         );
       } catch (err) {
@@ -498,6 +758,7 @@ export const startAudit = async (req, res) => {
           userId: newReport.userId || null,
           pageType: c.pageType || null,
           siteType: newReport.siteType || null,
+          siteSubType: newReport.siteSubType || null,
         });
         upsertCrawledPage(newReport._id, {
           url: c.url, pageType: c.pageType || "generic", label: c.label || "Key Page",
@@ -538,11 +799,23 @@ export const startAudit = async (req, res) => {
       if (msg.type === "error") {
         logger.error(`❌ Audit Failed: ${msg.error}`);
         releaseAuditSlot(); // terminal — let the next queued audit start now
-        auditStore.complete(newReport._id, { status: "failed", error: msg.error });
+        const failedDoc = auditStore.complete(newReport._id, { status: "failed", error: msg.error });
+        notifyAuditFinished(failedDoc, { failed: true });
         await markAuditLog({
-          status: "failed",
-          auditDuration: Date.now() - startTime,
+          $set: {
+            status: "failed",
+            failureReason: String(msg.error || 'Unknown error').slice(0, 500),
+            completedAt: new Date(),
+            auditDuration: Date.now() - startTime,
+          },
           $push: { actions: "failed" },
+        });
+        logActivity(journeyReq, {
+          action: 'AUDIT_FAILED',
+          status: 'FAILURE',
+          url,
+          errorMessage: String(msg.error || 'Unknown error').slice(0, 500),
+          metadata: { reportId: String(newReport._id), device, report },
         });
         return;
       }
@@ -554,22 +827,52 @@ export const startAudit = async (req, res) => {
         const finalDoc = auditStore.complete(newReport._id, msg.patch || {});
 
         if (finalDoc?.status === "failed") {
+          notifyAuditFinished(finalDoc, { failed: true });
           await markAuditLog({
-            status: "failed",
-            auditDuration: duration,
+            $set: {
+              status: "failed",
+              failureReason: String(finalDoc?.error || 'Audit finished in a failed state').slice(0, 500),
+              completedAt: new Date(),
+              auditDuration: duration,
+            },
             $push: { actions: "failed" },
+          });
+          logActivity(journeyReq, {
+            action: 'AUDIT_FAILED',
+            status: 'FAILURE',
+            url,
+            errorMessage: String(finalDoc?.error || 'Audit finished in a failed state').slice(0, 500),
+            metadata: { reportId: String(newReport._id), device, report },
           });
           return;
         }
 
         logger.info("✅ Audit Completed Successfully");
+        notifyAuditFinished(finalDoc);
         await markAuditLog({
-          status: "success",
-          score: finalDoc?.score,
-          grade: finalDoc?.grade,
-          auditDuration: duration,
-          exitPage: "/report",
+          $set: {
+            status: "success",
+            score: finalDoc?.score,
+            grade: finalDoc?.grade,
+            // The classifier can refine the site type mid-run (a redirect, a
+            // clearer signal on the real page), so take the finished report's
+            // verdict over the pre-flight guess written when the row was created.
+            siteType: finalDoc?.siteType || normalizedSiteType,
+            siteSubType: finalDoc?.siteSubType || normalizedSubType,
+            completedAt: new Date(),
+            auditDuration: duration,
+            exitPage: "/report",
+          },
           $push: { actions: "completed" },
+        });
+        logActivity(journeyReq, {
+          action: 'AUDIT_COMPLETED',
+          url,
+          metadata: {
+            reportId: String(newReport._id), device, report,
+            score: finalDoc?.score ?? null, grade: finalDoc?.grade ?? null,
+            durationMs: duration,
+          },
         });
       }
     });
@@ -577,11 +880,25 @@ export const startAudit = async (req, res) => {
     worker.on("error", async (err) => {
       logger.error(`❌ Audit Failed with worker error`, err);
       releaseAuditSlot();
-      auditStore.complete(newReport._id, { status: "failed", error: err.message });
+      notifyAuditFinished(
+        auditStore.complete(newReport._id, { status: "failed", error: err.message }),
+        { failed: true }
+      );
       await markAuditLog({
-        status: "failed",
-        auditDuration: Date.now() - startTime,
+        $set: {
+          status: "failed",
+          failureReason: String(err.message || 'Worker crashed').slice(0, 500),
+          completedAt: new Date(),
+          auditDuration: Date.now() - startTime,
+        },
         $push: { actions: "failed" },
+      });
+      logActivity(journeyReq, {
+        action: 'AUDIT_FAILED',
+        status: 'FAILURE',
+        url,
+        errorMessage: String(err.message || 'Worker crashed').slice(0, 500),
+        metadata: { reportId: String(newReport._id), device, report },
       });
     });
 
@@ -666,6 +983,63 @@ const resolveReport = async (req, id, projection = null) => {
   return { doc: null, ok: false };
 };
 
+/**
+ * Attach a guest report to the account that just signed in.
+ *
+ * A visitor's audit is written with `userId: null` on both the report and its
+ * AuditLog row. Signing in to read it left both untouched, and getHistory filters
+ * on `userId` — so the report a visitor created an account *for* was the one
+ * report missing from their past reports.
+ *
+ * Deliberately explicit rather than claiming on read: a guest report is readable
+ * by anyone holding the id, so adopting on read would let the first signed-in
+ * viewer of a shared link take it and lock everyone else out. The client only
+ * calls this for the report its saved post-auth intent points at.
+ *
+ * Idempotent — the `userId: null` filters mean a second call changes nothing, and
+ * an already-owned report is never reassigned.
+ */
+export const claimReport = async (req, res) => {
+  try {
+    const id = req.params.singleAuditId;
+
+    if (!req.user?.userId) {
+      return res.status(401).json({ success: false, message: "Sign in required" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ success: false, message: "Invalid report id" });
+    }
+
+    // In-memory first: a just-finished audit may not have been flushed yet, and
+    // getHistory unions live ids for the user.
+    const claimedInMemory = auditStore.claimForUser(id, req.user.userId);
+
+    // `{ userId: null }` also matches docs where the field is absent, which is how
+    // older guest reports were written.
+    const report = await SingleAuditReport.updateOne(
+      { _id: id, userId: null },
+      { $set: { userId: req.user.userId } }
+    );
+
+    // The history list joins AuditLog → report, so the log row has to move too.
+    const log = await AuditLog.updateMany(
+      { reportId: id, userId: null },
+      { $set: { userId: req.user.userId } }
+    );
+
+    const claimed = claimedInMemory || report.modifiedCount > 0 || log.modifiedCount > 0;
+    if (claimed) {
+      logger.info(`[Claim Report] ${id} → user ${req.user.userId}`);
+    }
+
+    res.json({ success: true, claimed });
+
+  } catch (error) {
+    logger.error("[Claim Report]", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+};
+
 export const getReportById = async (req, res) => {
   try {
     const id = req.params.singleAuditId;
@@ -677,6 +1051,15 @@ export const getReportById = async (req, res) => {
     if (!doc || !ok) {
       return res.status(404).json({ message: "Report not found or access denied" });
     }
+
+    // NOT where a report view is counted. The report page polls this endpoint
+    // every 3 seconds for live updates and keeps polling after the audit finishes,
+    // so logging a view here would write an activity row every 3s per open tab and
+    // drive reportViewCount into the thousands for a single reader.
+    //
+    // The view is recorded by the client instead (POST /api/track/event, fired
+    // once when a completed report is first rendered) — the browser is the only
+    // party that can tell "opened the report" apart from "polled it again".
     res.status(200).json(gateReportForViewer(doc, !!req.user));
   } catch (error) {
     logger.error("Error fetching report", error);
@@ -699,7 +1082,14 @@ export const getReportStatusById = async (req, res) => {
     const { doc: report, ok } = await resolveReport(
       req,
       id,
-      "_id status screenshotUrl error stage1Completed stage2Completed stage2Progress crawledPagesCount crawledPagesSummary technicalPerformance.Percentage onPageSEO.Percentage " +
+      // psiPending/score/grade ride along because they are what CHANGES on the
+      // PageSpeed patch — the report is already open and readable at 7/8 pillars, and
+      // that patch rewrites the Technical card and the headline score without moving
+      // `status`. The report page watches these to know when a refetch of the (195 KB)
+      // full report is actually worth making; without them the only hint is
+      // completedSections, which is indirect. Three scalars, still a ~500-byte reply.
+      "_id status screenshotUrl error psiPending score grade stage1Completed stage2Completed stage2Progress crawledPagesCount crawledPagesSummary " +
+      "createdAt estimatedSeconds plannedPages notifyEmail technicalPerformance.Percentage onPageSEO.Percentage " +
       "accessibility.Percentage securityOrCompliance.Percentage UXOrContentStructure.Percentage " +
       "conversionAndLeadFlow.Percentage aioReadiness.Percentage aeo.Percentage"
     );
@@ -754,10 +1144,39 @@ export const getReportStatusById = async (req, res) => {
       message = "Starting audit";
     }
 
+    // ── How much longer? ──
+    // Below ~15% there is not enough signal to extrapolate from, so the opening
+    // estimate (set at creation from the page count) stands. After that, elapsed
+    // time is the honest source: a site that is running slow stretches its own
+    // estimate instead of us repeating a number we can no longer meet. A queued
+    // run has not started, so it waits out the runs ahead of it first.
+    const elapsedSeconds = Math.max(0, (Date.now() - new Date(report.createdAt).getTime()) / 1000);
+    const openingEstimate = report.estimatedSeconds || AUDIT_BASE_SECONDS;
+
+    let estimatedSecondsRemaining;
+    if (report.status === "completed" || report.status === "failed") {
+      estimatedSecondsRemaining = 0;
+    } else if (report.status === "queued") {
+      const ahead = Math.max(0, (report.queuePosition || 1) - 1);
+      estimatedSecondsRemaining = Math.round(openingEstimate * (ahead + 1));
+    } else if (progress >= 15) {
+      const projectedTotal = elapsedSeconds * (100 / progress);
+      estimatedSecondsRemaining = Math.round(Math.max(5, projectedTotal - elapsedSeconds));
+    } else {
+      estimatedSecondsRemaining = Math.round(Math.max(5, openingEstimate - elapsedSeconds));
+    }
+
     res.status(200).json({
       _id: report._id,
       status: report.status,
       screenshotUrl: report.screenshotUrl,
+      estimatedSecondsRemaining,
+      estimatedSeconds: openingEstimate,
+      elapsedSeconds: Math.round(elapsedSeconds),
+      plannedPages: report.plannedPages || 1,
+      // Lets the client say "we'll email <address>" instead of a vague promise.
+      notifyEmail: report.notifyEmail || null,
+      queuePosition: report.queuePosition || 0,
       stage1Completed: report.stage1Completed,
       stage2Completed: report.stage2Completed,
       stage2Progress: report.stage2Progress,
@@ -767,6 +1186,10 @@ export const getReportStatusById = async (req, res) => {
       message,
       completedSections,
       totalSections: total,
+      // Refetch triggers for the report page — see the projection note above.
+      psiPending: report.psiPending ?? false,
+      score: report.score ?? null,
+      grade: report.grade ?? null,
     });
   } catch (error) {
     logger.error("Error fetching report status", error);
@@ -814,9 +1237,9 @@ export const mergeReports = async (req, res) => {
     const base = (overall == null || !scoredSamples.length)
       ? source[0]
       : scoredSamples.reduce(
-          (best, d) => (Math.abs(d.score - overall) < Math.abs(best.score - overall) ? d : best),
-          scoredSamples[0]
-        );
+        (best, d) => (Math.abs(d.score - overall) < Math.abs(best.score - overall) ? d : best),
+        scoredSamples[0]
+      );
 
     const mergedId = new mongoose.Types.ObjectId();
     const sectionScore = [];
@@ -995,7 +1418,7 @@ export const captureScreenshot = async (req, res) => {
     const { screenshot, isBotProtected, browser } = result;
 
     if (browser) {
-      try { await browser.close(); } catch (_) {}
+      try { await browser.close(); } catch (_) { }
     }
 
     if (!screenshot) {

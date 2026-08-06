@@ -7,7 +7,8 @@ import {
   unblockUser,
   deleteUser,
   updateUserRole,
-  getAuditLogs, 
+  getAuditLogs,
+  exportAuditLogs,
   getStats,
   getOverviewStats,
   getConfigs,
@@ -15,6 +16,20 @@ import {
   testConfig,
   revealConfig
 } from '../controllers/adminController.js';
+import {
+  getRegistrationAnalytics,
+  getAuditActivity,
+  getDashboardAnalytics,
+  getJourneys,
+  getJourneyDetail,
+  exportJourneys,
+  getActivityLogs,
+  exportActivityLogs,
+  getReportLeads,
+  exportReportLeads,
+  getSessions,
+  getUserJourney
+} from '../controllers/analyticsController.js';
 import { verifyToken, checkRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -68,15 +83,102 @@ router.patch('/users/:id/role', [
   validate
 ], updateUserRole);
 
+// CSV export of the same list, with the same filters — see exportAuditLogs.
+router.get('/audit-logs/export', [
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate
+], exportAuditLogs);
+
 router.get('/audit-logs', [
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1 }),
   query('ip').optional().isString(),
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
   validate
 ], getAuditLogs);
 
 router.get('/stats', getStats);
 router.get('/overview-stats', getOverviewStats);
+
+// ── Analytics & tracking ──────────────────────────────────────────────────────
+// Every one of these takes the same range shape: ?range=7d|30d|90d|365d|all, or an
+// explicit ?from=&to= which wins over the preset (see analyticsController.resolveRange).
+
+const rangeValidators = [
+  query('range').optional().isIn(['7d', '30d', '90d', '365d', 'all']),
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate,
+];
+
+router.get('/analytics/registrations', rangeValidators, getRegistrationAnalytics);
+router.get('/analytics/audit-activity', rangeValidators, getAuditActivity);
+router.get('/analytics/dashboard', rangeValidators, getDashboardAnalytics);
+
+// The export routes are declared BEFORE their `/:id` siblings — Express matches in
+// order, so `/journeys/export` would otherwise be swallowed by `/journeys/:id` and
+// arrive at getJourneyDetail with id="export".
+router.get('/journeys/export', [
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate
+], exportJourneys);
+
+router.get('/journeys', [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 200 }),
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate
+], getJourneys);
+
+router.get('/journeys/:id', [
+  param('id').isMongoId().withMessage('Invalid journey ID format'),
+  validate
+], getJourneyDetail);
+
+router.get('/activity-logs/export', [
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate
+], exportActivityLogs);
+
+router.get('/activity-logs', [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 200 }),
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate
+], getActivityLogs);
+
+// Report leads — the name/email pairs captured by the emailed-report flow.
+router.get('/report-leads/export', [
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  validate
+], exportReportLeads);
+
+router.get('/report-leads', [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 200 }),
+  query('from').optional().isISO8601().withMessage('from must be a date'),
+  query('to').optional().isISO8601().withMessage('to must be a date'),
+  query('delivered').optional().isIn(['true', 'false']),
+  validate
+], getReportLeads);
+
+router.get('/sessions', [
+  query('page').optional().isInt({ min: 1 }),
+  query('limit').optional().isInt({ min: 1, max: 200 }),
+  validate
+], getSessions);
+
+router.get('/users/:id/journey', [
+  param('id').isMongoId().withMessage('Invalid user ID format'),
+  validate
+], getUserJourney);
 
 // ── Platform Configuration Routes ──
 router.get('/config', getConfigs);

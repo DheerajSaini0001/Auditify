@@ -1,6 +1,8 @@
 import { discoverDealerPages } from "../utils/pageDiscovery.js";
 import { detectSiteType } from "../utils/siteTypeDetector.js";
+import { ACCEPTED_SITE_TYPES, normalizeSubType } from "../config/siteTypeProfiles.js";
 import logger from "../utils/logger.js";
+import { logActivity, touchSession } from "../utils/activityTracker.js";
 
 /**
  * POST /single-audit/discover
@@ -12,7 +14,7 @@ import logger from "../utils/logger.js";
  * discovery against the matching taxonomy and returns the site's main pages
  * bucketed into the checklist categories.
  *
- * Product decision: Auditify only audits dealership and automotive
+ * Product decision: DealerSiteAudit only audits dealership and automotive
  * corporate/OEM sites. A confident "unknown" (or inconclusive — couldn't be
  * evaluated even after the bot-bypass/probing escalation) is REJECTED here,
  * before any page discovery runs, rather than failing open. This is the main
@@ -38,12 +40,25 @@ export const discover = async (req, res) => {
       ? scopes.filter((s) => typeof s === "string")
       : null;
 
+    // Discovery is the first server-side step of a real audit attempt — it is what
+    // a Site Audit click turns into. Logging it here is what makes the dashboard's
+    // click → discover → start funnel measurable rather than inferred.
+    logActivity(req, { action: 'AUDIT_DISCOVER', url, metadata: { scopes: scopeList?.length || 0 } });
+    touchSession(req);
+
     const detection = await detectSiteType(url);
 
-    if (detection.siteType !== "dealer" && detection.siteType !== "corporate") {
-      logger.info(`🚫 Rejected discovery — not a dealer or automotive corporate site: ${url} (${detection.reason})`);
+    if (!ACCEPTED_SITE_TYPES.has(detection.siteType)) {
+      logger.info(`🚫 Rejected discovery — not an automotive dealer, service or corporate site: ${url} (${detection.reason})`);
+      logActivity(req, {
+        action: 'AUDIT_FAILED',
+        status: 'FAILURE',
+        url,
+        errorMessage: `Not an automotive site — ${detection.reason}`,
+        metadata: { stage: 'discovery_site_type_gate', detectedType: detection.siteType || 'unknown' },
+      });
       return res.status(400).json({
-        error: "This doesn't look like a dealership or automotive corporate/OEM website. Auditify only audits dealer and automotive-corporate sites.",
+        error: "This doesn't look like a dealership, automotive service/repair or automotive corporate/OEM website. DealerSiteAudit only audits automotive sites.",
         siteType: "unknown",
         reason: detection.reason,
       });
@@ -57,8 +72,10 @@ export const discover = async (req, res) => {
     if (detection.resolvedUrl && detection.resolvedUrl !== url) {
       logger.info(`[discovery] ${url} didn't resolve directly — discovering against ${detection.resolvedUrl} instead`);
     }
-    const result = await discoverDealerPages(detection.resolvedUrl || url, scopeList, detection.siteType);
+    const subType = normalizeSubType(detection.siteType, detection.siteSubType);
+    const result = await discoverDealerPages(detection.resolvedUrl || url, scopeList, detection.siteType, subType);
     result.siteType = detection.siteType;
+    result.siteSubType = subType;
     result.siteTypeConfidence = detection.confidence;
     return res.status(200).json(result);
   } catch (err) {

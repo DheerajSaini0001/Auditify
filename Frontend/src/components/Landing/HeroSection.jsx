@@ -10,7 +10,11 @@ import {
 import { ThemeContext } from '../../context/ThemeContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useData } from '../../context/DataContext.jsx';
-import { PAGE_TYPES, CORPORATE_PAGE_TYPES, DEFAULT_PAGE_SCOPES } from '../../config/pageTypes';
+import { pageTypesFor, DEFAULT_PAGE_SCOPES } from '../../config/pageTypes';
+import { COUNTRIES, DEFAULT_COUNTRY } from '../../config/countries';
+import { trackEvent } from '../../utils/tracking.js';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
@@ -176,13 +180,16 @@ const MultiSelectDropdown = ({ selected, options, onToggle, onSetAll, icon, dark
                 type="button"
                 disabled={disabled}
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`flex items-center gap-2 px-4 h-11 rounded-xl cursor-pointer transition-all duration-200 border
-                    bg-accent border-accent hover:bg-accenthover hover:border-accenthover shadow-sm shadow-accent/20
-                    ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.97]"}`}
+                /* Sized and coloured to sit level with the country field beside it —
+                   this used to be an accent-filled pill from the old three-dropdown
+                   row, which now reads as a call to action next to a plain input. */
+                className={`flex items-center gap-3 px-3 h-12 w-full sm:w-64 shrink-0 rounded-xl cursor-pointer transition-all duration-200 border
+                    ${darkMode ? "bg-white/5 border-white/10" : "bg-surface-2 border-line"}
+                    ${disabled ? "opacity-60 cursor-not-allowed" : "active:scale-[0.99]"}`}
             >
-                <span className="flex-shrink-0 text-white">{React.cloneElement(icon, { size: 16 })}</span>
-                <span className="text-[13px] font-semibold uppercase tracking-wide truncate max-w-[190px] text-white">{label}</span>
-                <ChevronDown className={`w-3 h-3 transition-transform duration-300 text-white ${isOpen ? "rotate-180" : ""}`} />
+                <span className={`flex-shrink-0 ${darkMode ? "text-slate-400" : "text-muted"}`}>{React.cloneElement(icon, { size: 16 })}</span>
+                <span className={`flex-1 text-left text-[15px] font-medium truncate ${darkMode ? "text-white" : "text-ink"}`}>{label}</span>
+                <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform duration-300 ${darkMode ? "text-slate-400" : "text-muted"} ${isOpen ? "rotate-180" : ""}`} />
             </button>
 
             <AnimatePresence>
@@ -373,19 +380,44 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const report = useMemo(() => sectionsToReport(reportSections), [reportSections]);
     const [localError, setLocalError] = useState(null);
 
-    // Which page types to include in the audit. Defaults to the home page alone —
-    // the fastest, cheapest run, and the URL the user actually typed. Users widen
-    // it from the dropdown when they want the whole site.
+    // Page types to audit. The home page now offers one thing — a full website
+    // audit — so this is no longer a user choice: send no restriction and let the
+    // crawler take every key page it finds. DEFAULT_PAGE_SCOPES (home only) still
+    // backs the deep-link path, which can ask for a single page.
+    // Audit scope is a straight binary: the page you typed, or the whole site.
     //
-    // 'home' is deliberately the default rather than the full catalog: it is the
-    // one key present in BOTH the dealer and corporate catalogs, so it survives
-    // detect()'s intersection whichever site type comes back, with no need for the
-    // cross-catalog union that a broader default required.
-    const [scopes, setScopes] = useState(() => DEFAULT_PAGE_SCOPES);
+    // It used to be a per-page-type multi-select, which stopped working once the
+    // app grew past one taxonomy. The picker has to render BEFORE the site type
+    // is known (detection happens server-side, on submit), so it always showed
+    // the DEALER catalog — a repair garage was offered "Trade-In Tool", "Lease
+    // Deals" and "Inventory / SRP". Ticking one of those sent a scope key that
+    // the service taxonomy can never produce, so the worker's Stage-2 filter
+    // matched nothing and silently audited zero extra pages while the user
+    // believed they had asked for two. The service taxonomy's own key pages
+    // (booking, pricing, locations) were meanwhile unreachable.
+    //
+    // "Full site" now sends NO restriction, which lets the worker discover
+    // against whichever taxonomy the detected site type actually calls for.
+    const [auditScope, setAuditScope] = useState('page');   // 'page' | 'site'
 
-    // Detected site type ("dealer" | "corporate" | null before the first scan).
-    // Drives which page-type catalog (PAGE_TYPES vs CORPORATE_PAGE_TYPES) is shown.
+    // Market the visitor says they operate in. Captured with the run; see
+    // config/countries.js for what it does and does not affect today.
+    const [country, setCountry] = useState(DEFAULT_COUNTRY);
+
+    // Scope is the page-type picker (`scopes`, defaulting to the home page alone).
+    // Anything past that single page is a site crawl: minutes of work, so it takes an
+    // email address first. Derived rather than a separate toggle, so the picker and
+    // the run behaviour cannot disagree about what was asked for.
+
+    // Detected site type ("dealer" | "service" | "corporate" | null before the
+    // first scan). Drives which page-type catalog pageTypesFor() returns.
     const [siteType, setSiteType] = useState(null);
+
+    // Where to mail a multi-page report. Prefilled for signed-in users — we already
+    // know the address, so asking is a confirmation, not a form to fill in.
+    const [emailPromptOpen, setEmailPromptOpen] = useState(false);
+    const [notifyEmail, setNotifyEmail] = useState('');
+    const [emailError, setEmailError] = useState(null);
 
     // Discovery state
     const [phase, setPhase] = useState('idle');       // idle | detecting | done
@@ -422,7 +454,13 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const navigate = useNavigate();
     const isAutoStarting = useRef(false);
     const urlInputRef = useRef(null);                 // the audit URL field (for "Check My Website")
-    const visibleTypes = siteType === 'corporate' ? CORPORATE_PAGE_TYPES : PAGE_TYPES;
+    const visibleTypes = pageTypesFor(siteType);
+    const fullSiteRun = auditScope === 'site';
+    // The dormant per-category discovery UI further down still reasons in
+    // page-type keys, so keep a derived list rather than scattering the binary
+    // through it: "this page only" is the home page, "full site" is every key
+    // page in whichever catalog the detected site type calls for.
+    const scopes = fullSiteRun ? visibleTypes.map((p) => p.key) : DEFAULT_PAGE_SCOPES;
 
     // "Check My Website" (footer) navigates to "/" with state.focusAudit — scroll to the
     // top and focus the URL field so the keyboard opens. Keyed on location.key so it fires
@@ -445,24 +483,25 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     }, [location.key]);
 
     // Step 1 — "Run Audit": validate, then run. No verification gate for anyone.
-    const beginFlow = async (rawUrl) => {
+    const beginFlow = async (rawUrl, notifyEmail = null, { fullSite = false } = {}) => {
         const urlToScan = normalizeUrl(rawUrl ?? url);
         setPhase('detecting');
         setLocalError(null);
 
-        // Only send the page types that exist in the catalog on screen — `scopes`
-        // defaults to the dealer+corporate union, and the backend treats the list as
-        // the allow-list for its key-page crawl.
-        // Nothing unticked → send no restriction at all, so the crawl behaves exactly
-        // as it did before this picker was wired up.
-        const activeScopes = scopes.filter((k) => visibleTypes.some((p) => p.key === k));
-        const scopesToSend = activeScopes.length === visibleTypes.length ? null : activeScopes;
+        // null = no restriction, i.e. every key page the crawler finds against the
+        // site type the backend detects. ["home"] = only the URL that was typed.
+        // Deliberately NOT a list of page-type keys: sending keys the detected
+        // taxonomy can't produce is what used to silently audit nothing.
+        const scopesToSend = (fullSite || fullSiteRun) ? null : DEFAULT_PAGE_SCOPES;
 
-        const result = await fetchData(urlToScan, device, report, false, scopesToSend);
+        const result = await fetchData(urlToScan, device, report, false, scopesToSend, notifyEmail, country);
         setPhase('idle');
 
         if (result?.success && result?.id) {
-            navigate(`/report/${result.id}`);
+            // A run we promised to email about is one the visitor is meant to walk
+            // away from. Tell the report page so it can say so instead of holding
+            // them on a progress bar for minutes.
+            navigate(`/report/${result.id}`, notifyEmail ? { state: { notifyEmail } } : undefined);
         } else {
             setLocalError(result?.error || "Could not start audit.");
         }
@@ -471,9 +510,44 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     const handleRun = (e) => {
         e?.preventDefault?.();
         setLocalError(null);
+
+        // Logged BEFORE the empty-URL guard, so the funnel counts the clicks that
+        // went nowhere too. A click that only produces a validation message is
+        // invisible to every server-side metric, and it is the most interesting
+        // part of the click → start drop-off.
+        trackEvent('AUDIT_BUTTON_CLICK', {
+            url: url.trim() || null,
+            metadata: {
+                source: 'hero',
+                device,
+                report,
+                fullSite: !!fullSiteRun,
+                country: country || null,
+                valid: !!url.trim(),
+            },
+        });
+
         if (!url.trim()) { setLocalError("Please enter a URL to get started."); return; }
-        if (reportSections.length === 0) { setLocalError("Select at least one audit section to run."); return; }
+
+        // One page finishes while they watch, so it just runs. A crawl outlives their
+        // patience, so it has to be able to reach them after they close the tab.
+        if (fullSiteRun) {
+            setEmailPromptOpen(true);
+            return;
+        }
         beginFlow();
+    };
+
+    const submitNotifyEmail = (e) => {
+        e?.preventDefault?.();
+        const address = notifyEmail.trim();
+        if (!EMAIL_RE.test(address)) {
+            setEmailError('Enter an email address we can send the report to.');
+            return;
+        }
+        setEmailError(null);
+        setEmailPromptOpen(false);
+        beginFlow(undefined, address, { fullSite: true });
     };
 
     // Collapse the backend's many in-flight stages to the 3 states a card cares about.
@@ -707,6 +781,12 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [phase, discovery, rejected, budgetBlocked]);
 
+    // Signed-in visitors should not have to type an address we already hold.
+    useEffect(() => {
+        if (user?.email && !notifyEmail) setNotifyEmail(user.email);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.email]);
+
     // Changing the URL invalidates a previous scan.
     const onUrlChange = (v) => {
         setUrl(v);
@@ -753,14 +833,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
         setBudgetBlocked(false);
         setAuditState({});
     };
-    const toggleScope = (key) => {
-        setScopes((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
-        invalidateDetection();
-    };
-    const setAllScopes = (all) => {
-        setScopes(all ? visibleTypes.map((p) => p.key) : []);
-        invalidateDetection();
-    };
+    // Switching between "this page only" and "full website audit" changes which
+    // pages a scan would cover, so any finished scan is stale.
+    useEffect(() => { invalidateDetection(); }, [auditScope]);   // eslint-disable-line react-hooks/exhaustive-deps
 
     // Report-section checklist. Section choice only affects what the audit scores
     // (not which pages are discovered), so it never invalidates an existing scan.
@@ -823,12 +898,9 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
     // catalog — `scopes` defaults to the dealer+corporate union, so its raw length
     // can exceed what's actually shown. "No page selected" ⇒ nothing to audit.
     const selectedPageCount = scopes.filter((k) => visibleTypes.some((p) => p.key === k)).length;
-    const noSectionSelected = reportSections.length === 0;
-    const noPageSelected = selectedPageCount === 0;
-
-    // Block the run button unless the user has picked at least one section AND one page.
-    const runBtnDisabled =
-        isLoading || phase === 'detecting' || !url.trim() || noSectionSelected || noPageSelected;
+    // Sections and pages are no longer selectable — the button always means "all of
+    // it" — so a URL is the only thing that can be missing.
+    const runBtnDisabled = isLoading || phase === 'detecting' || !url.trim();
 
     return (
         <section
@@ -875,58 +947,64 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                             />
                         </div>
 
-                        <div className={`flex flex-wrap lg:flex-nowrap items-center gap-3 mt-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
-                            <CustomDropdown
-                                value={device} onChange={setDevice}
-                                options={[{ value: "Desktop", label: "Desktop" }, { value: "Mobile", label: "Mobile" }]}
-                                icon={device === "Desktop" ? <Monitor /> : <Smartphone />}
-                                darkMode={darkMode} disabled={isLoading}
-                            />
-                            <MultiSelectDropdown
-                                selected={reportSections}
-                                options={SECTIONS}
-                                onToggle={toggleSection}
-                                onSetAll={setAllSections}
-                                getLabel={(sel) =>
-                                    sel.length === SECTIONS.length ? `Full audit (all ${SECTIONS.length})`
-                                        : sel.length === 0 ? "No sections"
-                                            : `${sel.length} section${sel.length > 1 ? "s" : ""}`}
-                                icon={<Settings />} darkMode={darkMode} disabled={isLoading || batchRunning}
-                            />
-                            <MultiSelectDropdown
-                                selected={scopes}
-                                options={visibleTypes.map((p) => ({ value: p.key, label: p.label }))}
-                                onToggle={toggleScope}
-                                onSetAll={setAllScopes}
-                                icon={<ListChecks />}
-                                darkMode={darkMode}
-                                disabled={isLoading || batchRunning}
-                            />
+                        {/* Two inputs and one button. The device / section / page-scope
+                            pickers that used to sit here are gone: every run from the home
+                            page is now the full-website audit, so they only ever offered
+                            ways to ask for less. Their values are still sent — fixed at
+                            Desktop, all eight sections, every key page. */}
+                        <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mt-3 ${darkMode ? 'text-white' : 'text-ink'}`}>
+                            <div className={`flex items-center px-3 h-12 gap-3 rounded-xl border sm:w-64 shrink-0 ${darkMode ? 'bg-white/5 border-white/10' : 'bg-surface-2 border-line'}`}>
+                                <MapPin className={`flex-shrink-0 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-muted'}`} />
+                                <select
+                                    aria-label="Country"
+                                    value={country}
+                                    onChange={(e) => setCountry(e.target.value)}
+                                    disabled={isLoading}
+                                    className={`flex-1 bg-transparent outline-none text-[15px] font-medium cursor-pointer ${darkMode ? 'text-white' : 'text-ink'}`}
+                                >
+                                    {COUNTRIES.map((c) => (
+                                        <option key={c.code} value={c.code} className={darkMode ? 'bg-slate-900' : 'bg-card'}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
 
-                            {/* Primary button: Run Audit (detect) → Run Full Audit (audit).
-                                Stays on "Run Audit" when rejected — there's nothing to run,
-                                the user needs to try a different URL. */}
-                            {phase !== 'done' || rejected ? (
-                                <button
-                                    type="submit"
-                                    disabled={runBtnDisabled}
-                                    className={`ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95
-                                        ${runBtnDisabled
-                                            ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed" : "bg-cardsoft border-line text-faint cursor-not-allowed")
-                                            : "bg-accent border-accent text-white hover:bg-accenthover hover:border-accenthover shadow-lg shadow-accent/25 hover:-translate-y-0.5"}`}
+                            {/* Scope — one decision, made up front: the page you typed
+                                (finishes while you wait) or the whole site (a crawl that
+                                needs an email). Deliberately NOT a per-page-type picker:
+                                the site type isn't known until the backend detects it on
+                                submit, so any page-type list rendered here would be a
+                                guess — see the auditScope comment above. */}
+                            <div className={`flex items-center px-3 h-12 gap-3 rounded-xl border sm:w-64 shrink-0 ${darkMode ? 'bg-white/5 border-white/10' : 'bg-surface-2 border-line'}`}>
+                                <ListChecks className={`flex-shrink-0 w-4 h-4 ${darkMode ? 'text-slate-400' : 'text-muted'}`} />
+                                <select
+                                    aria-label="Audit scope"
+                                    value={auditScope}
+                                    onChange={(e) => setAuditScope(e.target.value)}
+                                    disabled={isLoading}
+                                    className={`flex-1 bg-transparent outline-none text-[15px] font-medium cursor-pointer ${darkMode ? 'text-white' : 'text-ink'}`}
                                 >
-                                    {phase === 'detecting' ? <><Loader2 className="animate-spin w-5 h-5" /> Scanning…</> : <>Run Audit <ArrowRight size={16} /></>}
-                                </button>
-                            ) : (
-                                <button
-                                    type="button"
-                                    onClick={handleFullAudit}
-                                    disabled={batchRunning || noSectionSelected || noPageSelected}
-                                    className="ml-auto flex items-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95 bg-ink border-ink text-white hover:bg-inksoft hover:border-inksoft shadow-lg shadow-ink/25 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
-                                >
-                                    {batchRunning ? <><Loader2 className="animate-spin w-5 h-5" /> Auditing…</> : <>Run Full Audit <ArrowRight size={16} /></>}
-                                </button>
-                            )}
+                                    <option value="page" className={darkMode ? 'bg-slate-900' : 'bg-card'}>This page only</option>
+                                    <option value="site" className={darkMode ? 'bg-slate-900' : 'bg-card'}>Full website audit</option>
+                                </select>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={runBtnDisabled}
+                                className={`sm:ml-auto flex items-center justify-center gap-2 px-6 h-12 rounded-xl font-semibold text-[14px] tracking-tight shrink-0 border transition-all duration-300 active:scale-95
+                                    ${runBtnDisabled
+                                        ? (darkMode ? "bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed" : "bg-cardsoft border-line text-faint cursor-not-allowed")
+                                        : "bg-accent border-accent text-white hover:bg-accenthover hover:border-accenthover shadow-lg shadow-accent/25 hover:-translate-y-0.5"}`}
+                            >
+                                {phase === 'detecting'
+                                    ? <><Loader2 className="animate-spin w-5 h-5" /> Starting…</>
+                                    /* Label follows the scope — a button that says
+                                       "Full Website Audit" while the picker says
+                                       "This page only" is a promise it will not keep. */
+                                    : <>{fullSiteRun ? 'Full Website Audit' : 'Run Audit'} <ArrowRight size={16} /></>}
+                            </button>
                         </div>
                     </div>
 
@@ -957,6 +1035,75 @@ const HeroSection = ({ onSubmit, isLoading, error: externalError }) => {
                     </div>
                 </form>
             </div>
+
+            {/* ── Where should we send it? ──
+                A multi-page run outlives the visitor's patience, so we take an
+                address before starting rather than stranding them on a progress bar. */}
+            <AnimatePresence>
+                {emailPromptOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[80] flex items-center justify-center p-4 bg-black/50"
+                        onClick={() => setEmailPromptOpen(false)}
+                    >
+                        <motion.form
+                            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+                            onClick={(e) => e.stopPropagation()}
+                            onSubmit={submitNotifyEmail}
+                            className={`w-full max-w-md rounded-2xl border shadow-2xl p-6 text-left
+                                ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-card border-line'}`}
+                        >
+                            <div className="flex items-start gap-4">
+                                <div className={`p-3 rounded-2xl shrink-0 ${darkMode ? 'bg-accent/10' : 'bg-accent/10'}`}>
+                                    <ListChecks size={22} className="text-accent" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h2 className={`font-black text-lg tracking-tight ${darkMode ? 'text-white' : 'text-ink'}`}>
+                                        Where should we send the report?
+                                    </h2>
+                                    <p className={`text-sm mt-2 leading-relaxed ${darkMode ? 'text-slate-400' : 'text-muted'}`}>
+                                        A full website audit crawls every key page we can find, so it takes a few
+                                        minutes. Leave your email and you can close the tab — we will send the
+                                        report the moment it is ready.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <input
+                                type="email"
+                                autoFocus
+                                value={notifyEmail}
+                                onChange={(e) => { setNotifyEmail(e.target.value); setEmailError(null); }}
+                                placeholder="you@dealership.com"
+                                className={`w-full mt-5 h-12 px-4 rounded-xl text-sm font-medium border transition-colors focus:outline-none focus:border-accent
+                                    ${darkMode ? 'bg-slate-850 border-slate-700 text-slate-100 placeholder-slate-500' : 'bg-surface-2 border-line text-ink placeholder:text-faint'}`}
+                            />
+                            {emailError && (
+                                <p className="text-xs font-semibold text-rose-500 mt-2">{emailError}</p>
+                            )}
+
+                            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 mt-5">
+                                <button
+                                    type="button"
+                                    onClick={() => setEmailPromptOpen(false)}
+                                    className={`px-4 py-2.5 rounded-xl border text-xs font-semibold transition-all active:scale-[0.98]
+                                        ${darkMode ? 'border-slate-800 text-slate-300 hover:bg-slate-800' : 'border-line text-muted hover:bg-surface-2'}`}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-2.5 rounded-xl bg-accent hover:bg-accenthover text-white text-xs font-semibold shadow-md shadow-accent/20 transition-all active:scale-[0.98]"
+                                >
+                                    Start audit
+                                </button>
+                            </div>
+                        </motion.form>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </section>
     );
 };

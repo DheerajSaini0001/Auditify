@@ -38,15 +38,22 @@ function getTransporter() {
 
 /**
  * Sends an email using Nodemailer.
- * @param {Object} options - { to, subject, html }
+ * @param {Object} options
+ * @param {string} options.to
+ * @param {string} options.subject
+ * @param {string} options.html
+ * @param {Array}  [options.attachments] Nodemailer attachment descriptors, e.g.
+ *   `[{ filename, content: <Buffer>, contentType }]` — used to deliver the audit
+ *   PDF itself rather than a link to it.
  */
-const sendEmail = async ({ to, subject, html }) => {
+const sendEmail = async ({ to, subject, html, attachments }) => {
   const transporter = getTransporter();
   await transporter.sendMail({
-    from: configService.getConfig('EMAIL_FROM', 'Site Audit <noreply@Site Audit.app>'),
+    from: configService.getConfig('EMAIL_FROM', 'DealerSiteAudit <noreply@dealersiteaudit.com>'),
     to,
     subject,
-    html
+    html,
+    ...(attachments?.length ? { attachments } : {})
   });
 };
 

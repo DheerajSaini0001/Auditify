@@ -18,6 +18,7 @@ import { Loader2 } from "lucide-react";
 
 import ReportRestrictionWrapper from "../components/ReportRestrictionWrapper.jsx";
 import AuditProgressPanel from "../components/AuditProgressPanel.jsx";
+import { useLiveReport } from "../hooks/useLiveReport.js";
 import { trackEvent } from "../utils/tracking.js";
 
 const ReportLayout = () => {
@@ -31,40 +32,29 @@ const ReportLayout = () => {
   const [isFetching, setIsFetching] = React.useState(false);
   const [isReloading, setIsReloading] = React.useState(false);
 
+  // `/report/:id` is fetched AND kept live by this hook — the same one the standalone
+  // section pages use, so the two can't drift apart. Everything below deals only with
+  // what the hook has no notion of: bulk pages, and where to send someone whose id
+  // turned out to be dead.
+  const { isInitialFetch, loadFailed } = useLiveReport(id);
+
   useEffect(() => {
+    if (id) return; // the hook owns the single-report path
     const bulkId = searchParams.get("bulkId");
     const pageUrl = searchParams.get("url");
 
-    if (id || (bulkId && pageUrl)) {
+    if (bulkId && pageUrl) {
       // If data is missing OR data exists but ID mismatch -> Fetch
-      const currentId = id || `${bulkId}_${window.btoa(pageUrl)}`;
-      
+      const currentId = `${bulkId}_${window.btoa(pageUrl)}`;
+
       if (!data || data._id !== currentId) {
         clearData();
         setIsFetching(true);
 
-        const fetchAction = id 
-          ? fetchSingleReport(id) 
-          : fetchBulkPageReport(bulkId, pageUrl);
-
-        fetchAction.then((result) => {
+        fetchBulkPageReport(bulkId, pageUrl).then((result) => {
           setIsFetching(false);
-          if (!result.success) {
-            const fallbackUrl = searchParams.get("url");
-            if (fallbackUrl && !bulkId) { // Only auto-run if NOT a bulk item
-              navigate("/", { 
-                replace: true, 
-                state: { 
-                  autoFill: true, 
-                  url: fallbackUrl, 
-                  device: searchParams.get("device") || "Desktop",
-                  report: searchParams.get("report") || "All"
-                } 
-              });
-            } else {
-              navigate("/", { replace: true });
-            }
-          }
+          // Never auto-run a bulk item — it belongs to a batch, not to the URL bar.
+          if (!result.success) navigate("/", { replace: true });
         });
       }
     } else {
@@ -72,7 +62,31 @@ const ReportLayout = () => {
         navigate("/", { replace: true });
       }
     }
-  }, [id, searchParams, navigate, fetchSingleReport]);
+  }, [id, searchParams, navigate, fetchBulkPageReport]);
+
+  // The id is dead (expired, deleted, or someone else's). If the link carried the URL
+  // it was for, offer to run it again rather than dumping the visitor on a blank home
+  // page. `clearData` because the report we still hold is a different one.
+  useEffect(() => {
+    if (!id || !loadFailed) return;
+    clearData();
+    const fallbackUrl = searchParams.get("url");
+    if (fallbackUrl) {
+      navigate("/", {
+        replace: true,
+        state: {
+          autoFill: true,
+          url: fallbackUrl,
+          device: searchParams.get("device") || "Desktop",
+          report: searchParams.get("report") || "All",
+        },
+      });
+    } else {
+      navigate("/", { replace: true });
+    }
+    // searchParams is a fresh object on every render — read it, never depend on it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, loadFailed, navigate]);
 
   /**
    * Count this report as READ, exactly once.
@@ -121,41 +135,26 @@ const ReportLayout = () => {
   useEffect(() => { statusRef.current = data?.status ?? null; }, [data?.status]);
 
   /**
-   * Live polling — driven by the cheap status endpoint, so the full report is only
-   * refetched when the run actually produced something new.
+   * Live polling for BULK pages only. A single report is watched by useLiveReport,
+   * which polls the cheap ~500-byte status endpoint and only pulls the full report
+   * when something in the body actually moved — see the hook for why.
    *
-   * This used to refetch the ENTIRE report every 3s for as long as the page stayed
-   * open, terminal or not. Measured against a live run: 22 fetches, of which only 9
-   * returned new data — and once the audit completed every further fetch was
-   * byte-identical, forever, at 195 KB a time (~234 MB/hour per open tab, plus a
-   * Mongo read and a full gating pass each). The report page is the one users leave
-   * open the longest, so it was the worst possible place for it.
-   *
-   * /single-audit/:id/status is ~500 bytes and is served from the in-memory audit
-   * store (usually no DB read at all), and it already carries every signal that marks
-   * new data: completedSections climbs 0→8 as pillars land, psiPending/score/grade
-   * flip when PageSpeed patches the Technical card, stage2Progress moves as extra
-   * pages land. So nothing is invisible to it — the progressive reveal is unchanged.
-   *
-   * One subtlety, measured rather than assumed: the payload changes ONCE MORE a beat
-   * after `status` turns terminal, because the finished report is buffered in memory
-   * and flushed to Mongo in batches ("buffered 1/10 for next flush") and the two
-   * serialize differently. Stopping the instant status is terminal would drop that,
-   * so we stop the interval and take one final pass after the flush has landed.
+   * Bulk pages have no status endpoint of their own, so they keep polling the full
+   * payload — but they no longer do it forever once the run is terminal. The payload
+   * changes ONCE MORE a beat after status turns terminal (the finished report is
+   * buffered in memory and flushed to Mongo in batches, and the two serialize
+   * differently), so we stop the interval and take one final pass after the flush.
    */
   const FINAL_REFETCH_MS = 4000; // > the observed memory→Mongo flush lag
-  const pollSigRef = React.useRef(null);
 
   // Depend on the PRIMITIVES, never on the searchParams object: useSearchParams hands
   // back a fresh instance on every render, so listing it here tore the interval down
-  // and rebuilt it on each tick — which reset pollSigRef and made the very next tick
-  // look like "new data", refetching the full report anyway. Measured: 28 full fetches
-  // across a 105s run instead of the ~10 the run actually produced.
+  // and rebuilt it on each tick — refetching the full payload anyway.
   const bulkId = searchParams.get("bulkId");
   const pageUrl = searchParams.get("url");
 
   useEffect(() => {
-    if (!id && !(bulkId && pageUrl)) return;
+    if (id || !(bulkId && pageUrl)) return;
 
     let cancelled = false;
     let intervalId = null;
@@ -164,69 +163,21 @@ const ReportLayout = () => {
     const stop = () => {
       if (intervalId) { clearInterval(intervalId); intervalId = null; }
     };
-    const scheduleFinalPass = (refetch) => {
-      stop();
-      finalTimeoutId = setTimeout(() => { if (!cancelled) refetch(); }, FINAL_REFETCH_MS);
-    };
 
-    // Bulk pages have no status endpoint of their own, so they keep polling the full
-    // payload — but they no longer do it forever once the run is terminal.
-    if (!id) {
-      intervalId = setInterval(() => {
-        // NOTE: this is the NORMALIZED status off `data` (DataContext collapses every
-        // backend stage into pending | success | failed), so terminal is "success" —
-        // NOT the raw "completed" that the /status endpoint reports.
-        const s = statusRef.current;
-        if (s === "success" || s === "failed") {
-          scheduleFinalPass(() => fetchBulkPageReport(bulkId, pageUrl));
-          return;
-        }
-        fetchBulkPageReport(bulkId, pageUrl);
-      }, 3000);
-      return () => { cancelled = true; stop(); if (finalTimeoutId) clearTimeout(finalTimeoutId); };
-    }
-
-    pollSigRef.current = null;
-    const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
-
-    const tick = async () => {
-      let status;
-      try {
-        const token = localStorage.getItem("dealerpulse_token");
-        const res = await fetch(`${API_URL}/single-audit/${id}/status`, {
-          credentials: "include",
-          headers: { ...(token && { Authorization: `Bearer ${token}` }) },
-        });
-        if (!res.ok) return; // transient — try again on the next tick
-        status = await res.json();
-      } catch {
+    intervalId = setInterval(() => {
+      // NOTE: this is the NORMALIZED status off `data` (DataContext collapses every
+      // backend stage into pending | success | failed), so terminal is "success" —
+      // NOT the raw "completed" that the /status endpoint reports.
+      const s = statusRef.current;
+      if (s === "success" || s === "failed") {
+        stop();
+        finalTimeoutId = setTimeout(() => {
+          if (!cancelled) fetchBulkPageReport(bulkId, pageUrl);
+        }, FINAL_REFETCH_MS);
         return;
       }
-      if (cancelled) return;
-
-      // Everything whose movement means the report BODY changed.
-      const sig = [
-        status.status,
-        status.completedSections,
-        status.psiPending,
-        status.score,
-        status.grade,
-        status.stage2Progress,
-        status.crawledPagesCount,
-        status.screenshotUrl,
-      ].join("|");
-
-      if (sig !== pollSigRef.current) {
-        pollSigRef.current = sig;
-        fetchSingleReport(id);
-      }
-
-      if (status.status === "completed" || status.status === "failed") {
-        scheduleFinalPass(() => fetchSingleReport(id));
-      }
-    };
-
-    intervalId = setInterval(tick, 3000);
+      fetchBulkPageReport(bulkId, pageUrl);
+    }, 3000);
 
     return () => {
       cancelled = true;
@@ -256,7 +207,9 @@ const ReportLayout = () => {
     [data?.report]
   );
 
-  if (isFetching) {
+  // `isInitialFetch` is the hook's first pull for a report we hold nothing for; every
+  // refresh after it lands quietly, so the page never flashes back to a spinner.
+  if (isFetching || isInitialFetch) {
     return (
       <div className={`flex h-screen w-full items-center justify-center ${darkMode ? "bg-gray-900" : "bg-surface"}`}>
         <Loader2 className="h-10 w-10 animate-spin text-emerald-500" />

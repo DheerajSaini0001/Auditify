@@ -46,6 +46,7 @@ import AIChatOverlay from "./components/AIChatOverlay";
 import ReportRestrictionWrapper from "./components/ReportRestrictionWrapper.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { useData } from "./context/DataContext.jsx";
+import { useLiveReport } from "./hooks/useLiveReport.js";
 import CanonicalTag from "./components/CanonicalTag.jsx";
 import GuestRoute from "./components/GuestRoute";
 import SeoDashboard from "./pages/SeoDashboard.jsx";
@@ -60,28 +61,36 @@ const GuestRouteWrapper = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
   const { data, fetchSingleReport } = useData();
   const { id } = useParams();
-  const [isFetching, setIsFetching] = React.useState(false);
 
+  // Restores the report on a fresh load AND keeps it live while the run is still
+  // going. Both matter here: these pages are opened from the summary heatmap MID-RUN,
+  // where this tab's copy is the empty shell the audit started with — same id, so a
+  // fetch-once-if-the-id-differs check saw nothing to do and every section sat on
+  // "Processing…" while the summary next door was already showing its scores.
+  const { isInitialFetch } = useLiveReport(id);
+
+  // A guest's copy of a report has the gated sections stripped by the server and
+  // flagged `locked`. After signing in, that copy is not merely stale — it is
+  // missing the very content they signed in to read, so the blur would lift to
+  // reveal an empty panel. The data says which copy it is, so ask it rather than
+  // trying to track auth transitions across mounts.
+  const regatedFor = React.useRef(null);
   React.useEffect(() => {
-    if (!id) return;
+    if (!id || !isAuthenticated || data?._id !== id) return;
+    if (regatedFor.current === `${id}|${isAuthenticated}`) return;
 
-    // A guest's copy of a report has the gated sections stripped by the server and
-    // flagged `locked`. After signing in, that copy is not merely stale — it is
-    // missing the very content they signed in to read, so the blur would lift to
-    // reveal an empty panel. The data says which copy it is, so ask it rather than
-    // trying to track auth transitions across mounts.
     const holdsGatedCopy =
-      !!data &&
       Object.values(data).some((v) => v && typeof v === "object" && v.locked === true);
+    if (!holdsGatedCopy) return;
 
-    const needsFetch = !data || data._id !== id || (isAuthenticated && holdsGatedCopy);
-    if (!needsFetch) return;
-
-    setIsFetching(true);
-    fetchSingleReport(id).finally(() => setIsFetching(false));
+    // Once per report per sign-in: the server's answer is final, so a copy that comes
+    // back still locked must not send us round again — this effect re-runs on every
+    // refetch, and `data` is a new object each time.
+    regatedFor.current = `${id}|${isAuthenticated}`;
+    fetchSingleReport(id);
   }, [id, data, isAuthenticated, fetchSingleReport]);
 
-  if (isLoading || isFetching) return null; // Wait silently for auth resolution
+  if (isLoading || isInitialFetch) return null; // Wait silently for auth resolution
 
   // Reports are open to everyone — guests included. No auth lock. The report pages
   // render their own loading shimmer until the data fetched above arrives.

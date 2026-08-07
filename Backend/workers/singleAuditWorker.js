@@ -15,7 +15,7 @@ import discoverPages from "../utils/sitemapCrawler.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
 import { performance } from "perf_hooks";
 import logger from "../utils/logger.js";
-import { classifyPageType, classifyCorporatePageType, classifyServicePageType } from "../utils/pageClassifier.js";
+import { classifyPageType, classifyServicePageType } from "../utils/pageClassifier.js";
 import { applyWorkerConfig } from "../utils/workerConfig.js";
 import { siteWeightMultipliers, keyPagesFor, MAX_CRAWL_PAGES } from "../config/siteTypeProfiles.js";
 import { weightsForPageType } from "../utils/sectionWeights.js";
@@ -72,16 +72,18 @@ if (seededConfigKeys.length) {
 // selection of just ["home"] skips Stage 2 entirely — exactly one page is audited.
 const scopeSet = Array.isArray(pageScopes) && pageScopes.length ? new Set(pageScopes) : null;
 const scopedExtraTypes = scopeSet ? [...scopeSet].filter((k) => k !== "home") : null;
-// Corporate/OEM sites have no VDP/SRP/trade/lease/finance/service of their own —
-// classify against the corporate taxonomy instead. Service/repair sites have no
-// inventory either, but a completely different page set (booking, service menu,
-// pricing, locations), so they get their own taxonomy too. "unknown"/unset
-// siteType falls back to the dealer classifier, matching the app's original
-// behavior.
+// Service/repair sites sell labour, not vehicles, and run a completely different
+// page set (booking, service menu, pricing, locations), so they get their own
+// taxonomy. Everything else — dealer, corporate/OEM, and "unknown"/unset —
+// classifies against the dealer taxonomy.
+//
+// Corporate used to classify with classifyCorporatePageType (models/locator/press).
+// It no longer does: its crawl plan in config/siteTypeProfiles.js is now the
+// franchise retail funnel, and the corporate classifier cannot emit any of those
+// keys, so keeping it would have matched nothing and audited the home page alone.
 const classify =
-  siteType === "corporate" ? classifyCorporatePageType
-    : siteType === "service" ? classifyServicePageType
-      : classifyPageType;
+  siteType === "service" ? classifyServicePageType
+    : classifyPageType;
 const pageType = initialPageType || classify(url);
 
 // `report` is one of: "All" (full audit), a single section name, or a comma-joined
@@ -235,7 +237,8 @@ function withTimeout(promise, timeoutMs = 30000, pillarName = "Metric") {
   ]);
 }
 
-// Per-pillar timeouts (all env-tunable). Every pillar now gets the SAME 150s cap.
+// Per-pillar timeouts (all env-tunable). Baseline is 150s; the two heavy pillars —
+// Technical and Accessibility — get 300s.
 //
 // They used to be tiered — 150s Technical / 90s Security / 75s SEO / 60s for the
 // rest — on the theory that only those three were slow. That theory kept clipping
@@ -245,19 +248,32 @@ function withTimeout(promise, timeoutMs = 30000, pillarName = "Metric") {
 // axe-core over the entire DOM across the wcag2a…wcag22aa + best-practice +
 // experimental + ACT rulesets, easily the heaviest in-page work in the audit, yet it
 // sat on the smallest budget. On the 2-vCPU App Service that hosts production, with
-// all 8 pillars competing, 60s is not enough headroom.
+// all 8 pillars competing, 60s is not enough headroom — and on a heavy DOM neither
+// is 150s, so axe and Technical (whose PageSpeed ladder dominates the audit) sit on
+// the heavy cap while the six pillars that comfortably land inside 150s keep the
+// baseline.
 //
-// Levelling up costs no extra audit wall-clock: the pillars run concurrently and the
-// browser is held until the SLOWEST one finishes, which is Technical's 150s either
-// way. The only change is that a genuinely stuck pillar now waits the full 150s
-// before returning null instead of 60s — and that path was already bounded by
-// Technical. Keep PILLAR_TECH_TIMEOUT_MS ≥ googleAPI's PAGESPEED_TOTAL_BUDGET_MS
-// (145s) so the PageSpeed ladder still fits inside its own pillar.
-const PILLAR_MAX_TIMEOUT_MS = "150000";
-const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
-const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
-const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
-const PILLAR_TIMEOUT_MS = parseInt(process.env.PILLAR_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
+// Raising a cap costs no extra audit wall-clock on a healthy site: the pillars run
+// concurrently and the browser is held until the SLOWEST one finishes, so the hold
+// is one pillar's worth, not the sum. What changes is the worst case — a genuinely
+// stuck Technical/Accessibility waits the full cap before returning null. That is
+// why browserManager's BROWSER_SLOT_MAX_HOLD_MS is lifted alongside it: left low,
+// the pool watchdog reclaims a permit that a legitimate slow audit is still using,
+// letting a second Chromium launch beside a live one.
+//
+// Keep PILLAR_TECH_TIMEOUT_MS ≥ googleAPI's PAGESPEED_TOTAL_BUDGET_MS (180s as of
+// 2026-08-07, one attempt, no retries) so the PageSpeed call still fits inside its
+// own pillar. Note the converse: extra Technical headroom only buys PageSpeed more
+// time if PAGESPEED_TOTAL_BUDGET_MS is raised too — otherwise the call gives up at
+// its own deadline and the surplus goes to Technical's own on-page work (the asset
+// and delivery checks that run against the live page after PageSpeed returns).
+const PILLAR_BASE_TIMEOUT_MS = "150000";
+const PILLAR_HEAVY_TIMEOUT_MS = "300000";
+const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || PILLAR_HEAVY_TIMEOUT_MS, 10);
+const A11Y_TIMEOUT_MS = parseInt(process.env.PILLAR_A11Y_TIMEOUT_MS || PILLAR_HEAVY_TIMEOUT_MS, 10);
+const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || PILLAR_BASE_TIMEOUT_MS, 10);
+const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || PILLAR_BASE_TIMEOUT_MS, 10);
+const PILLAR_TIMEOUT_MS = parseInt(process.env.PILLAR_TIMEOUT_MS || PILLAR_BASE_TIMEOUT_MS, 10);
 
 // Page tilt comes from utils/sectionWeights.js — the single copy. This file used
 // to carry a byte-identical duplicate under a slightly different vocabulary
@@ -364,7 +380,7 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
     const techPromise = (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch, siteSubType, market), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })();
     const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt, siteSubType, market), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
-      (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt, market, siteSubType), PILLAR_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
+      (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt, market, siteSubType), A11Y_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
       (async () => { const r = await safeMetric("Security/Compliance", () => withTimeout(securityCompliance(pageUrl, page, response, pageBrowser, pt, siteSubType, market), SEC_TIMEOUT_MS, "Security/Compliance")); send({ securityOrCompliance: r }); return r; })(),
       (async () => { const r = await safeMetric("UX & Content Structure", () => withTimeout(uxContentStructure(dev, page, pt, siteSubType, market), PILLAR_TIMEOUT_MS, "UX & Content Structure")); send({ UXOrContentStructure: r }); return r; })(),
       (async () => { const r = await safeMetric("Conversion & Lead Flow", () => withTimeout(conversionLeadFlow(page, $, pt, siteSubType, market), PILLAR_TIMEOUT_MS, "Conversion & Lead Flow")); send({ conversionAndLeadFlow: r }); return r; })(),
@@ -1144,7 +1160,7 @@ async function auditKeyPages(currentAuditId, device) {
         return r;
       })(),
       (async () => {
-        const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pageType, market, siteSubType), PILLAR_TIMEOUT_MS, "Accessibility"));
+        const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pageType, market, siteSubType), A11Y_TIMEOUT_MS, "Accessibility"));
         postProgress({ accessibility: r });
         return r;
       })(),

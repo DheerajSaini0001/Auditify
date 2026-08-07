@@ -2440,7 +2440,7 @@ export default async function technicalMetrics(url, device, page, response, brow
     config: "Set API_KEY in the platform configuration (or the backend environment) and re-run the audit.",
     quota: "The PageSpeed daily/per-minute quota is exhausted. Wait for the quota window to reset or request a higher limit, then re-run the audit.",
     crawl: "This is a problem with the target page, not the audit: open it in Google PageSpeed Insights to confirm. Typical causes are bot protection blocking Google's crawler, a redirect chain, a non-HTML response, or a page that never paints.",
-    timeout: "The page is slow enough that Lighthouse exceeded this audit's PageSpeed budget. Raise PAGESPEED_TOTAL_BUDGET_MS (and PILLAR_TECH_TIMEOUT_MS with it) or re-run when the site is under less load.",
+    timeout: "The page is slow enough that Lighthouse ran past this audit's whole PageSpeed budget in one uninterrupted attempt — that is a genuinely heavy page, not a hiccup. Treat the page's own load time as the finding; re-run when the site is under less load, or raise PAGESPEED_TOTAL_BUDGET_MS (and PILLAR_TECH_TIMEOUT_MS with it) if you need the numbers regardless.",
     request: "This is an internal bug in how the audit builds the PageSpeed request — report it rather than changing any site or key setting.",
     upstream: "Google PageSpeed itself returned a server error. Re-run the audit shortly; no configuration change is needed.",
     network: "The backend could not reach googleapis.com. Check outbound network/DNS/proxy from the audit host.",

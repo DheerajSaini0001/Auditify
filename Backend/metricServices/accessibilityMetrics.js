@@ -1242,14 +1242,33 @@ export default async function accessibilityMetrics(page, $ = null, pageType = nu
     logDeduction("Document_Title (duplicate titles)", "serious", 0, d);
   }
 
-  // Softened diminishing returns: past 55 points of deductions each extra point
-  // counts 0.7, so a catastrophically broken page still spreads across the low
-  // band (≈0–35) instead of every bad page clamping to 0 — external checkers
-  // (incl. AccessibilityChecker.org) rarely report a literal 0 either. Gentler
-  // and later-starting than the old 40/0.5 curve so the mid-band tracks the
-  // per-instance deductions faithfully.
+  // Diminishing returns past SOFT_KNEE, on a curve that CANNOT reach the ceiling.
+  //
+  // This used to be linear past the knee (each extra point counting 0.7), and the
+  // intent was the same one stated here: a catastrophically broken page should
+  // still spread across the low band instead of clamping to 0, because external
+  // checkers (incl. AccessibilityChecker.org) rarely report a literal 0 either.
+  // Linear didn't deliver it. It only bought 15 points of headroom — 0 was reached
+  // at 105 raw deduction — while the per-rule caps sum far above that: one
+  // critical (30) plus three serious (25 each) rules, at just 5 failing elements
+  // apiece, is exactly 105. Real broken pages cleared it routinely and every one
+  // of them scored 0, so the headline stopped discriminating: a rule failing on 5
+  // elements and the same rule failing on 69 both saturate their cap and land on
+  // the same 0.
+  //
+  // The tail is now asymptotic — it approaches SCORE_FLOOR but never crosses it,
+  // so the low band stays ordered no matter how bad the page is. Everything at or
+  // below the knee is untouched, which keeps the existing calibration (a clean
+  // page ≈ 90, a single 1-node serious issue ≈ 88, an issue-heavy page ≈ 55–60)
+  // exactly where it was — only pages that were already pinned at 0 move.
   const SOFT_KNEE = 55;
-  const effectiveDeduction = deducted <= SOFT_KNEE ? deducted : SOFT_KNEE + (deducted - SOFT_KNEE) * 0.7;
+  const SCORE_FLOOR = 8;                                          // asymptote, never quite reached
+  const TAIL_RANGE = AUTOMATED_CEILING - SOFT_KNEE - SCORE_FLOOR; // 27 points of tail to spend
+  const TAIL_SCALE = 50;                                          // raw points per e-fold of the tail
+  const effectiveDeduction =
+    deducted <= SOFT_KNEE
+      ? deducted
+      : SOFT_KNEE + TAIL_RANGE * (1 - Math.exp(-(deducted - SOFT_KNEE) / TAIL_SCALE));
   let pct = Math.max(0, Math.round(AUTOMATED_CEILING - effectiveDeduction));
   // A crashed axe scan produces zero violations, which the deduction model
   // would read as a near-perfect 90. With only the DOM probes evaluated
@@ -1320,8 +1339,10 @@ export default async function accessibilityMetrics(page, $ = null, pageType = nu
       effectiveDeduction: parseFloat(effectiveDeduction.toFixed(1)),
       perElementDeduction: ELEM_DEDUCTION,
       perRuleCap: PER_RULE_CAP,
-      softKnee: { threshold: SOFT_KNEE, factor: 0.7 },
-      items: deductionLog,
+      softKnee: { threshold: SOFT_KNEE, curve: "asymptotic", tailRange: TAIL_RANGE, tailScale: TAIL_SCALE, floor: SCORE_FLOOR },
+      // Biggest deduction first — this is rendered as the "what cost you the
+      // points" table, and the top few rules are almost always the whole story.
+      items: deductionLog.slice().sort((a, b) => b.deduction - a.deduction),
       ...(axeFailed ? { axeFailed: true, cappedAt: 50, note: AXE_FAILURE_NOTE } : {}),
     },
     // §0.5 — automated DOM/accessibility-tree inference (consistent with On-Page SEO).

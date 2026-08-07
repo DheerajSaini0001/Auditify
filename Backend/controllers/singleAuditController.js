@@ -10,7 +10,7 @@ import auditStore from "../utils/auditStore.js";
 import logger from "../utils/logger.js";
 import { gateReportForViewer } from "../utils/reportGating.js";
 import { sendAuditCompleteEmail, sendAuditFailedEmail } from "../utils/auditNotifier.js";
-import { classifyPageType, classifyCorporatePageType, classifyServicePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
+import { classifyPageType, classifyServicePageType, computePageScoreFromMap } from "../utils/sectionWeights.js";
 import { detectSiteType } from "../utils/siteTypeDetector.js";
 import { getLocale } from "../config/locale/index.js";
 import { ACCEPTED_SITE_TYPES, normalizeSubType, keyPageCountFor } from "../config/siteTypeProfiles.js";
@@ -478,9 +478,8 @@ export const startAudit = async (req, res) => {
           // as — a reused section must be weighted the same way the fresh run
           // that produced it was, or the same numbers yield a different score.
           const classify =
-            fullAudit.siteType === "corporate" ? classifyCorporatePageType
-              : fullAudit.siteType === "service" ? classifyServicePageType
-                : classifyPageType;
+            fullAudit.siteType === "service" ? classifyServicePageType
+              : classifyPageType;
           const sectionScore = computePageScoreFromMap(pctBySection, classify(url), fullAudit.siteSubType || null);
           const sectionGrade = sectionScore >= 90 ? "A+" : sectionScore >= 80 ? "A" : sectionScore >= 70 ? "B" : sectionScore >= 60 ? "C" : sectionScore >= 50 ? "D" : "F";
           newSectionReport.score = sectionScore;

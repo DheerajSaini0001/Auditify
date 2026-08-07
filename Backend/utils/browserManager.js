@@ -73,11 +73,16 @@ const MAX_CONCURRENT_BROWSERS = Math.max(
 // A permit held longer than this is presumed leaked (crashed holder, lost
 // release) and reclaimed by the watchdog. Set well above a normal hold: a full
 // render holds its browser for navigation/challenge (~35-60s) PLUS the longest
-// pillar. Every pillar is now capped at 150s (see singleAuditWorker's timeout
-// block) but they run CONCURRENTLY, so the hold is still one pillar's worth, not
-// the sum — a legitimate audit holds ~185-210s. 300s leaves margin above that and
-// still trips only on genuine zombies.
-const SLOT_MAX_HOLD_MS = parseInt(process.env.BROWSER_SLOT_MAX_HOLD_MS || "300000", 10);
+// pillar. Pillars are capped at 150s, except Technical and Accessibility at 300s
+// (see singleAuditWorker's timeout block), and they run CONCURRENTLY — so the hold
+// is one pillar's worth, not the sum: a legitimate audit holds ~185-210s normally
+// and up to ~360s when a heavy pillar runs its budget out. This MUST stay above
+// that worst case. It sat at 300s when every pillar was capped at 150s; left
+// there, the watchdog would reclaim the permit of a slow-but-alive audit and let a
+// second Chromium launch beside the live one, which is exactly the 2-vCPU overload
+// MAX_CONCURRENT_BROWSERS exists to prevent. 450s clears the worst case and still
+// trips only on genuine zombies. Raise it alongside any pillar-timeout increase.
+const SLOT_MAX_HOLD_MS = parseInt(process.env.BROWSER_SLOT_MAX_HOLD_MS || "450000", 10);
 // How often the watchdog reclaims leaked slots and emits a monitoring heartbeat.
 const WATCHDOG_INTERVAL_MS = parseInt(process.env.BROWSER_POOL_WATCHDOG_MS || "15000", 10);
 

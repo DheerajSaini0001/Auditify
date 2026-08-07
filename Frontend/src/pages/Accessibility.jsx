@@ -427,6 +427,97 @@ const Section = ({ title, icon: Icon, children, darkMode }) => (
   </div>
 );
 
+// Where the headline score actually went.
+//
+// The backend has always computed this log (Score_Breakdown.items — one row per
+// failing rule, with the element count and the points it cost) but nothing
+// rendered it, so the header could claim "score deducts per failing element"
+// while a reader had no way to see WHICH elements. That gap is exactly what makes
+// a low score look arbitrary: the Passed/Warning/Failed tally counts RULES, the
+// score counts ELEMENTS, and without this table the two look contradictory.
+const IMPACT_STYLE = {
+  critical: { light: "bg-rose-50 text-rose-700 border-rose-100", dark: "bg-rose-900/20 text-rose-300 border-rose-800/50" },
+  serious: { light: "bg-orange-50 text-orange-700 border-orange-100", dark: "bg-orange-900/20 text-orange-300 border-orange-800/50" },
+  moderate: { light: "bg-amber-50 text-amber-700 border-amber-100", dark: "bg-amber-900/20 text-amber-300 border-amber-800/50" },
+  minor: { light: "bg-slate-100 text-slate-600 border-slate-200", dark: "bg-slate-800/60 text-slate-400 border-slate-700/50" },
+};
+
+const ScoreBreakdown = ({ breakdown, score, darkMode }) => {
+  const items = Array.isArray(breakdown?.items) ? breakdown.items : [];
+  if (!items.length) return null;
+
+  const { base, totalDeduction, effectiveDeduction, perRuleCap, softKnee } = breakdown;
+  // The tail only engages past the knee; below it raw and effective are equal, so
+  // showing "compressed" there would be noise.
+  const compressed = typeof totalDeduction === "number" && typeof effectiveDeduction === "number"
+    && totalDeduction - effectiveDeduction >= 0.5;
+  const cell = darkMode ? "text-slate-300" : "text-ink";
+  const muted = darkMode ? "text-slate-500" : "text-muted";
+
+  return (
+    <div className={`md:col-span-2 rounded-2xl border overflow-hidden ${darkMode ? "bg-slate-900/40 border-slate-800" : "bg-white border-line"}`}>
+      <div className={`px-5 py-4 border-b ${darkMode ? "border-slate-800" : "border-line"}`}>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className={`text-sm font-semibold ${cell}`}>{base}</span>
+          <span className={`text-sm ${muted}`}>automated ceiling</span>
+          <span className={`text-sm ${muted}`}>−</span>
+          <span className="text-sm font-semibold text-rose-500">{effectiveDeduction}</span>
+          <span className={`text-sm ${muted}`}>deducted</span>
+          <span className={`text-sm ${muted}`}>=</span>
+          <span className={`text-sm font-semibold ${cell}`}>{score}%</span>
+        </div>
+        {compressed && (
+          <p className={`text-[11px] mt-1.5 ${muted}`}>
+            {totalDeduction} raw points of failures, compressed to {effectiveDeduction} — past {softKnee?.threshold} the curve
+            flattens so the worst pages stay ordered instead of all landing on the same score.
+          </p>
+        )}
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className={`text-left text-[11px] uppercase tracking-wide ${muted} ${darkMode ? "bg-slate-900/60" : "bg-cardsoft"}`}>
+              <th className="px-5 py-2 font-semibold">Rule</th>
+              <th className="px-3 py-2 font-semibold">Impact</th>
+              <th className="px-3 py-2 font-semibold text-right whitespace-nowrap">Elements</th>
+              <th className="px-5 py-2 font-semibold text-right whitespace-nowrap">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((it, i) => {
+              const style = IMPACT_STYLE[it.impact] || IMPACT_STYLE.minor;
+              const capped = perRuleCap?.[it.impact] !== undefined && it.deduction >= perRuleCap[it.impact];
+              return (
+                <tr key={`${it.rule}-${i}`} className={`border-t ${darkMode ? "border-slate-800" : "border-line"}`}>
+                  <td className={`px-5 py-2.5 font-medium ${cell}`}>{it.rule}</td>
+                  <td className="px-3 py-2.5">
+                    <span className={`inline-block px-2 py-0.5 rounded-md text-[11px] font-medium border ${darkMode ? style.dark : style.light}`}>
+                      {it.impact}
+                    </span>
+                  </td>
+                  <td className={`px-3 py-2.5 text-right tabular-nums ${cell}`}>{it.nodes || "—"}</td>
+                  <td className="px-5 py-2.5 text-right tabular-nums whitespace-nowrap">
+                    <span className="font-semibold text-rose-500">−{it.deduction}</span>
+                    {capped && <span className={`ml-1.5 text-[10px] ${muted}`}>capped</span>}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <div className={`px-5 py-3 border-t text-[11px] ${muted} ${darkMode ? "border-slate-800 bg-slate-900/60" : "border-line bg-cardsoft"}`}>
+        Each rule costs points per FAILING ELEMENT, scaled by impact and capped per rule
+        (critical {perRuleCap?.critical} · serious {perRuleCap?.serious} · moderate {perRuleCap?.moderate} · minor {perRuleCap?.minor}).
+        This is why the tally above counts rules while the score reflects how many elements each rule breaks —
+        one rule failing on 60 elements costs far more than one failing on 1.
+      </div>
+    </div>
+  );
+};
+
 // Accessibility Dashboard
 const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, loading, darkMode }) {
   const [selectedMetricInfo, setSelectedMetricInfo] = React.useState(null);
@@ -592,6 +683,19 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                   {metric.WCAG_AA_Compliance && isVisibleForAudience("WCAG_AA_Compliance", audienceMode) && (
                     <Section title="WCAG 2.2 AA Compliance" icon={ShieldCheck} darkMode={darkMode}>
                       <MetricCard metricKey="WCAG_AA_Compliance" data={metric.WCAG_AA_Compliance} darkMode={darkMode} onInfo={(info) => setSelectedParameterInfo(info)} />
+                    </Section>
+                  )}
+
+                  {/* What the headline score was actually spent on — rendered right
+                      under the compliance card because it is the first question a
+                      low score raises, and the rule-vs-element distinction it shows
+                      is what reconciles the score with the Passed/Warning/Failed tally. */}
+                  {/* Gated on items, not on Score_Breakdown itself: a crashed axe scan
+                      still emits the object with an empty log, and ScoreBreakdown would
+                      return null under a heading that had nothing beneath it. */}
+                  {metric.Score_Breakdown?.items?.length > 0 && (
+                    <Section title="Score Breakdown" icon={Layers} darkMode={darkMode}>
+                      <ScoreBreakdown breakdown={metric.Score_Breakdown} score={metric?.Percentage ?? 0} darkMode={darkMode} />
                     </Section>
                   )}
 

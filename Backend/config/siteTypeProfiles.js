@@ -76,9 +76,18 @@ export const KEY_PAGES_BY_SUBTYPE = {
   service: ["booking", "service", "pricing", "locations", "content"],
   repair: ["booking", "service", "pricing", "about", "content"],
 
-  // Corporate/OEM: no inventory of its own, so the lineup and the dealer
-  // locator carry what a VDP and an SRP carry for a dealer.
-  corporate: ["models", "locator", "press", "about", "content"],
+  // Corporate/OEM: audited on the SAME retail funnel as a franchise dealer.
+  // The earlier plan here was ["models", "locator", "press", "about", "content"]
+  // — the lineup/locator standing in for what a VDP and an SRP carry for a
+  // dealer. That was dropped by product decision: an OEM site does run a real
+  // retail funnel (inventory search, offers, captive finance, trade valuation,
+  // lease terms), and those are the pages the report is expected to speak to.
+  //
+  // This is why siteType "corporate" now classifies with the DEALER taxonomy
+  // everywhere (worker, discovery, section re-scoring) — classifyCorporatePageType
+  // can only ever emit models/locator/press/about/content, so leaving it wired up
+  // would have made every key below unmatchable and crawled zero pages.
+  corporate: ["vdp", "srp", "finance", "trade", "lease"],
 };
 
 /**

@@ -49,10 +49,17 @@ const PAGE_IMPORTANCE = {
     content: 0.75,
 };
 
-// Fixed heatmap row order (dealer catalog first, then the corporate-only keys).
-// Rows always render in this sequence regardless of discovery/completion order;
-// any unknown key falls to the end in its arrival order.
-const ROW_ORDER = ["home", "srp", "vdp", "trade", "lease", "service", "about", "content", "models", "locator", "press"];
+// Fixed heatmap row order: the dealer catalog first (corporate/OEM audits use it
+// too), then the service/repair keys, then the corporate-only keys that older
+// reports still carry. Rows always render in this sequence regardless of
+// discovery/completion order; any unknown key falls to the end in its arrival
+// order — which is where "finance" and "specials" used to land despite being in
+// every dealer crawl plan.
+const ROW_ORDER = [
+    "home", "srp", "vdp", "trade", "finance", "lease", "specials", "service", "about", "content",
+    "booking", "pricing", "locations",
+    "models", "locator", "press",
+];
 const rowRank = (key) => {
     const i = ROW_ORDER.indexOf(key);
     return i === -1 ? ROW_ORDER.length : i;

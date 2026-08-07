@@ -1,6 +1,6 @@
 import {
   Home, LayoutGrid, Car, Tag, Repeat, Key, CreditCard, Wrench, Info, Newspaper,
-  MapPin, Megaphone, Building2, CalendarCheck, Receipt,
+  MapPin, CalendarCheck, Receipt,
 } from "lucide-react";
 
 /**
@@ -27,15 +27,17 @@ export const PAGE_TYPES = [
   { key: 'content', label: 'Content / Blog', desc: 'Blog, news, FAQ, how-to', Icon: Newspaper },
 ];
 
-/** Corporate / OEM sites — shown once discovery reports siteType "corporate". */
-export const CORPORATE_PAGE_TYPES = [
-  { key: 'home', label: 'Home Page', desc: 'Hero, brand, primary CTAs', Icon: Home },
-  { key: 'models', label: 'Models & Lineup', desc: 'Vehicle lineup, research, build & price', Icon: LayoutGrid },
-  { key: 'locator', label: 'Dealer Locator', desc: 'Find a dealer near you', Icon: MapPin },
-  { key: 'press', label: 'Press & News', desc: 'Newsroom, media, investor relations', Icon: Megaphone },
-  { key: 'about', label: 'About / Corporate', desc: 'Company info, leadership, careers', Icon: Building2 },
-  { key: 'content', label: 'Content / Blog', desc: 'Blog, guides, FAQ', Icon: Newspaper },
-];
+/**
+ * Corporate / OEM sites now use the dealer catalog above.
+ *
+ * They used to have their own (models / locator / press / about / content), but
+ * the crawl plan for siteType "corporate" is the franchise retail funnel —
+ * vdp, srp, finance, trade, lease (Backend/config/siteTypeProfiles.js) — and the
+ * picker has to offer the keys the backend will actually crawl. Offering
+ * models/locator/press here would let a user tick scopes that the plan filters
+ * out, producing an audit of the home page alone.
+ */
+export const CORPORATE_PAGE_TYPES = PAGE_TYPES;
 
 /**
  * Service centres and repair garages — shown once discovery reports siteType

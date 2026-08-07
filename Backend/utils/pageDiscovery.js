@@ -4,7 +4,7 @@ import { parseStringPromise } from "xml2js";
 import { validateUrlSafety } from "./ssrfGuard.js";
 import discoverPages, { fetchRenderedPageLinks } from "./sitemapCrawler.js"; // Playwright fallback (bot-protected / JS-only sites)
 import logger from "./logger.js";
-import { classifyPageType, classifyCorporatePageType, classifyServicePageType } from "./pageClassifier.js";
+import { classifyPageType, classifyServicePageType } from "./pageClassifier.js";
 import { keyPagesFor } from "../config/siteTypeProfiles.js";
 
 /**
@@ -169,27 +169,25 @@ const MATCH_ORDER = [
   { key: "content", test: (p) => /(blog|news|articles?|resources?|research|reviews?|tips|guides?|community|car-care|learn|faqs?|frequently-asked|how-?tos?|how-do-i)/.test(p) },
 ];
 
-// The fixed checklist the UI renders, in the order the dealer expects to see it.
+// The checklist the UI renders for dealer AND corporate/OEM sites, in the order
+// the dealer expects to see it. It is filtered down to the site type's actual
+// crawl plan below, so a row here only ever surfaces when the plan asks for it.
+//
+// `finance` and `specials` were missing from this table while both dealer plans
+// already named them — the filter then silently dropped them, so the checklist
+// promised five pages and the run delivered six. They belong here for the same
+// reason every other planned key does.
 const DISPLAY = [
   { key: "home", label: "Home", hint: "Homepage" },
   { key: "srp", label: "Inventory (SRP)", hint: "Search Results Page — vehicle listings" },
   { key: "vdp", label: "Vehicle Detail (VDP)", hint: "Single vehicle page" },
   { key: "trade", label: "Trade-In Tool", hint: "Value-your-trade" },
+  { key: "finance", label: "Financing", hint: "Credit application & payment tools" },
   { key: "lease", label: "Lease Specials", hint: "Lease deals" },
+  { key: "specials", label: "Offers & Specials", hint: "Deals, incentives & rebates" },
   { key: "service", label: "Service & Parts", hint: "Service, repair, parts & accessories" },
   { key: "about", label: "About", hint: "About the dealership" },
   { key: "content", label: "Content", hint: "Blog, news, FAQ & how-to" },
-];
-
-// The checklist the UI renders for a corporate/OEM site (siteType "corporate").
-// No SRP/VDP/trade/lease/service — a corporate site has no inventory of its own.
-const CORPORATE_DISPLAY = [
-  { key: "home", label: "Home", hint: "Homepage" },
-  { key: "models", label: "Models & Lineup", hint: "Vehicle lineup, research, build & price" },
-  { key: "locator", label: "Dealer Locator", hint: "Find a dealer near you" },
-  { key: "press", label: "Press & News", hint: "Newsroom, media, investor relations" },
-  { key: "about", label: "About & Corporate", hint: "Company info, leadership, careers, sustainability" },
-  { key: "content", label: "Content", hint: "Blog, guides & FAQ" },
 ];
 
 // The checklist for a service centre or repair garage (siteType "service").
@@ -241,16 +239,17 @@ const conditionOf = (rawUrl) => {
 // Resolve a URL to its checklist category (first match in MATCH_ORDER wins), or
 // null if it matches none. Shared by rankCandidates (bucketing) and the sitemap
 // early-exit check so both agree on exactly what counts as an SRP / VDP.
-// `siteType` picks which taxonomy to classify against; the sitemap early-exit
-// heuristic (poolHasEnoughInventory) always calls this with the dealer default —
-// that's an "is there enough dealer inventory to stop reading" optimization and
-// is meaningless for a corporate site (which never has srp/vdp), so it simply
-// never early-exits there and falls back to the bounded read limits instead.
+// `siteType` picks which taxonomy to classify against. Only "service" has its
+// own taxonomy now — dealer, corporate/OEM and unresolved sites all classify
+// against the dealer set, because corporate's crawl plan is the franchise retail
+// funnel (see config/siteTypeProfiles.js) and the corporate taxonomy cannot
+// express any of it. The sitemap early-exit heuristic (poolHasEnoughInventory)
+// always calls this with the dealer default, which is now also what a corporate
+// site uses, so its inventory early-exit applies there too.
 function categoryOf(raw, siteType = "dealer") {
   const classify =
-    siteType === "corporate" ? classifyCorporatePageType
-      : siteType === "service" ? classifyServicePageType
-        : classifyPageType;
+    siteType === "service" ? classifyServicePageType
+      : classifyPageType;
   const key = classify(raw);
   if (key === "generic") return null;
   let path, lower;
@@ -718,16 +717,15 @@ export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dea
   // ── Categorize, then resolve each category's page(s) ──
   // A sitemap can list URLs that now 404. For the single-URL categories we walk
   // their ranked candidates and keep the first that isn't a dead 404/410 link.
-  // SRP and VDP can fan out (see planSrp / sampleVdps) so they're resolved apart —
-  // but that fan-out is a DEALER-only concept (inventory/vehicle sampling); a
-  // corporate site has no SRP/VDP category at all, so every one of its
-  // categories resolves like the dealer path's single-URL categories.
-  // A service/repair site has no inventory either, so it takes the same
-  // single-URL resolution path as a corporate site — the SRP fan-out and VDP
-  // sampling below are inventory concepts that simply don't exist for it.
-  const isCorporate = siteType === "corporate";
+  // SRP and VDP can fan out (see planSrp / sampleVdps) so they're resolved apart.
+  // That fan-out is an INVENTORY concept, so it is skipped only for service/repair
+  // sites, which sell labour and have no vehicle listings at all — every one of
+  // their categories resolves like the dealer path's single-URL categories.
+  // Corporate/OEM sites DO take the inventory path now: their crawl plan is the
+  // franchise retail funnel (vdp/srp/finance/trade/lease), so the SRP pair and the
+  // VDP sample have to be planned for them exactly as they are for a dealer.
   const isService = siteType === "service";
-  const noInventory = isCorporate || isService;
+  const noInventory = isService;
   const ranked = rankCandidates(pool, siteType);
 
   // Report exactly the pages an audit of this site type will actually crawl —
@@ -735,7 +733,7 @@ export async function discoverDealerPages(rawUrl, scopes = null, siteType = "dea
   // taxonomy here while the worker crawls six of it would promise a checklist
   // the run never delivers.
   const planned = new Set(["home", ...keyPagesFor(siteSubType)]);
-  const fullTable = isCorporate ? CORPORATE_DISPLAY : isService ? SERVICE_DISPLAY : DISPLAY;
+  const fullTable = isService ? SERVICE_DISPLAY : DISPLAY;
   const DISPLAY_TABLE = fullTable.filter((d) => planned.has(d.key));
 
   // Only resolve the categories the user kept in scope — out-of-scope ones skip the

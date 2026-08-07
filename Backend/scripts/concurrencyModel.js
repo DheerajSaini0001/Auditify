@@ -110,9 +110,11 @@ function measurePageCost() {
       if (rel && held[rel[1]] != null) {
         const sec = (at - held[rel[1]]) / 1000;
         delete held[rel[1]];
-        // Drop the watchdog-reclaim tail (SLOT_MAX_HOLD_MS = 300s): those are
-        // zombie permits, not page audits, and they'd skew the median.
-        if (sec > 0 && sec < 300) samples.push(sec);
+        // Drop the watchdog-reclaim tail (SLOT_MAX_HOLD_MS = 450s): those are
+        // zombie permits, not page audits, and they'd skew the median. Keep this
+        // in step with browserManager — cutting at the old 300s would now discard
+        // legitimate holds where a heavy pillar ran near its 300s budget.
+        if (sec > 0 && sec < 450) samples.push(sec);
       }
     }
   }

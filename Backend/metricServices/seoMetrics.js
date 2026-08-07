@@ -1910,13 +1910,13 @@ const checkSitemap = async (url, robotsContent = null, page) => {
     if (!exists) {
       score = 0; // absent scores 0 (SCORING_FORMAT §7 rule 3)
       details = "sitemap.xml missing";
-      explanation = "No sitemap was found via robots.txt or the common default locations.";
-      recommendation = "Create a sitemap.xml, list your important URLs with <lastmod>, and reference it in robots.txt.";
+      explanation = "A sitemap is the list of pages you hand to Google so it knows what to look at. We checked robots.txt and the usual locations and found none, so search engines have to discover your pages by following links — slower, and any page with few links pointing to it can be missed altogether.";
+      recommendation = "Publish a sitemap at yoursite.com/sitemap.xml listing the pages you want found (inventory, service, finance, contact), then add a \"Sitemap:\" line pointing to it in robots.txt. Most website platforms build and update this automatically once it is switched on — worth asking your provider before anyone builds one by hand.";
     } else if (!(content.includes("<urlset") || content.includes("<sitemapindex"))) {
       score = 0;
       details = "Sitemap broken / invalid";
-      explanation = "A file was returned but it is not a valid XML sitemap (<urlset>/<sitemapindex>).";
-      recommendation = "Fix the sitemap so it is well-formed XML with a <urlset> or <sitemapindex> root.";
+      explanation = "Something is published at the sitemap address, but not in the format search engines can read — so it counts as having no sitemap at all. Usually this means an error page, a redirect, or an ordinary web page is being served where the sitemap should be.";
+      recommendation = "Open your sitemap address in a browser: you should see a list of page addresses, not an error or a normal-looking page. If your platform generates it, regenerate it; if it was hand-built, have whoever maintains the site confirm the file is valid.";
     } else {
       isIndex = content.includes("<sitemapindex");
       const locMatches = content.match(/<loc>\s*([\s\S]*?)\s*<\/loc>/gi) || [];
@@ -1967,23 +1967,23 @@ const checkSitemap = async (url, robotsContent = null, page) => {
       if (urlCount === 0) {
         score = 0;
         details = "Sitemap is empty";
-        explanation = "The sitemap is valid XML but contains no <loc> URLs.";
-        recommendation = "Populate the sitemap with your indexable URLs.";
+        explanation = "The sitemap file exists and is formatted correctly, but it lists zero pages — so it tells search engines nothing. An empty sitemap is no more use than a missing one.";
+        recommendation = "Regenerate the sitemap so it actually lists your pages. If it keeps coming out empty, the generator is filtering everything out — check your pages are published and not set to 'hidden' or 'noindex' in your CMS.";
       } else if (brokenUrls.length > 0) {
         score = 0.5;
         details = `${brokenUrls.length} of ${sample.length} sampled sitemap URLs are broken`;
-        explanation = "Some URLs listed in the sitemap return 404/410/5xx, wasting crawl budget and signalling poor maintenance.";
-        recommendation = "Remove or fix dead URLs in the sitemap and regenerate it automatically from live content.";
+        explanation = "Your sitemap points search engines at pages that no longer load — we tested a sample and some came back as errors. Google gives your site a limited amount of attention, and every dead address in the list uses part of it up. On a dealership site this is usually sold vehicles left in the sitemap after their pages were removed.";
+        recommendation = "Regenerate the sitemap from your live pages so sold vehicles and deleted pages drop out of it on their own. If it rebuilds on a schedule, shorten that interval so it keeps pace with how fast your inventory turns over.";
       } else if (lastmodCount === 0) {
         score = 0.5;
         details = `Sitemap found (${urlCount} ${isIndex ? "child sitemaps" : "URLs"}) but no <lastmod>`;
-        explanation = "The sitemap lists URLs but none carry a <lastmod>, so crawlers can't tell what changed.";
-        recommendation = "Add accurate <lastmod> timestamps so search engines prioritise recently updated pages.";
+        explanation = "The sitemap lists your pages but never says when each one last changed. Search engines use that date to decide what to re-check first, so without it your new and updated pages queue behind everything else instead of being looked at sooner.";
+        recommendation = "Switch on last-modified dates in whatever generates your sitemap, and make sure they track real edits — a date that changes on every page every day gets treated as noise and ignored.";
       } else if (newestDays != null && newestDays > 180) {
         score = 0.5;
         details = `Sitemap stale — newest <lastmod> ${newestDays}d ago`;
-        explanation = "Even the most recently changed entry is over six months old, suggesting the sitemap (or site) isn't being maintained.";
-        recommendation = "Regenerate the sitemap so <lastmod> reflects recent content changes.";
+        explanation = `Every page in the sitemap claims it last changed over six months ago — the freshest is ${newestDays} days old. Either the sitemap has stopped rebuilding, or search engines are being told the site is dormant. Both mean you get re-checked less often.`;
+        recommendation = "Confirm the sitemap is still being generated automatically. If the site genuinely does get updated, then the dates are stuck and need fixing where they are produced — otherwise new inventory can wait weeks to be picked up.";
       } else {
         score = 1;
         details = isIndex
@@ -2032,8 +2032,8 @@ const checkStructuredData = async (page, siteSubType = null) => {
       // absent scores 0 (SCORING_FORMAT §7 rule 3); 0.5 is reserved for present-but-flawed markup
       return evaluateParameter(0, "Structured Data missing", {
         content: [], types: "", exists: false, detectedTypes: [], otherTypes: [], validated: [], errorCount: 0,
-        why_this_occurred: "No JSON-LD structured data found on the page.",
-        how_to_fix: "Add Schema.org JSON-LD (Organization/LocalBusiness, Product/Vehicle, Offer, FAQPage, BreadcrumbList) so the page is eligible for rich results.",
+        why_this_occurred: "Schema markup is hidden code that spells out what a page is about — that this is a dealership, that this is a vehicle, that this is its price. Google reads it to build the richer search results: star ratings, prices, opening hours, the map listing. This page has none, so search engines have to guess from the visible text, and the page is not eligible for any of those richer listings.",
+        how_to_fix: "Add schema markup for what this page actually is: your dealership details (name, address, phone, opening hours) on the main pages, and vehicle details plus price on each listing. Most dealership website platforms can switch this on — ask your provider before paying anyone to hand-code it. Google's free Rich Results Test will confirm it is working.",
       });
     }
 
@@ -2184,8 +2184,8 @@ const checkStructuredData = async (page, siteSubType = null) => {
     } else if (validated.length === 0) {
       score = 0.7;
       details = `Structured Data present but no rich-result types (${[...otherTypes].join(", ") || "generic"})`;
-      explanation = "JSON-LD is present but none of the high-value rich-result types (Organization/LocalBusiness, Product/Vehicle, Offer, FAQPage, BreadcrumbList) were found.";
-      recommendation = "Add LocalBusiness/AutoDealer, Product/Vehicle + Offer, FAQPage and BreadcrumbList markup to unlock rich results.";
+      explanation = "This page does have schema markup, but none of the kinds Google uses to build richer search results. So the effort is there without the payoff — no star ratings, prices, opening hours or breadcrumb trail can appear against your listing.";
+      recommendation = "Add the types that actually earn richer listings: your dealership (name, address, phone, hours), each vehicle with its price, your FAQ answers, and the breadcrumb trail showing where the page sits. Check the result in Google's free Rich Results Test.";
     } else {
       score = 1;
       details = `Valid structured data (${detectedTypes.join(", ")})`;
@@ -4689,13 +4689,18 @@ export default async function seoMetrics(url, $, page, _pageType = null, siteSub
   //   Canonical 11 · Robots meta+intent 8 · Image 8 · Content relevance 6 · Semantic 5
   //
   // HIDDEN (rule-4 standing decision — double-counted in the already-existing
-  // AIO/AEO sections, so NOT weighted and NOT returned): Structured_Data
-  // (AIO structured-data validity), Content_Freshness (AIO freshness markers),
-  // EEAT (AEO E-E-A-T). checkStructuredData stays COMPUTED because Title_Location
-  // and Local_SEO depend on its parsed schema, but it is dropped from the return.
-  // INFORMATIONAL (weight 0, still returned/shown — mis-sectioned, relocation
-  // deferred): Sitemap (→ Technical), Video (not in spec). Output-only already:
+  // AIO/AEO sections, so NOT weighted): Content_Freshness (AIO freshness markers),
+  // EEAT (AEO E-E-A-T).
+  // INFORMATIONAL (weight 0, returned and shown): Sitemap (a site-wide signal, so
+  // it does not belong in an on-page score), Structured_Data (scored in AIO and
+  // AEO — returned here so the card can render, never weighted here or the same
+  // markup counts three times), Video (not in spec). Output-only already:
   // URL_Structure is dual — weighted here AND shown; Service/Content_Depth/Local_SEO.
+  //
+  // [2026-08-07] Sitemap and Structured_Data used to be computed and then dropped
+  // at the return, even though the SEO page has had a full SitemapCard and
+  // StructuredDataCard the whole time. Weight 0 is the deliberate part; the missing
+  // return was not.
   const weights = {
     Title: 0.10,
     Title_Uniqueness: 0.03,
@@ -4794,6 +4799,23 @@ export default async function seoMetrics(url, $, page, _pageType = null, siteSub
     Twitter_Card: twitterMetric,
     Social_Links: socialLinksMetric,
     Viewport: viewportMetric,
+    // ── Informational (computed and shown, deliberately NOT weighted) ──
+    // Both of these ran on every audit already and were thrown away at this
+    // boundary, so On_Page_SEO.jsx's SitemapCard and StructuredDataCard rendered
+    // nothing on every report ever produced. They are returned now.
+    //
+    // They stay OUT of `weights` on purpose, so adding them changes no existing
+    // score: Sitemap is a site-wide/technical signal rather than an on-page one,
+    // and Structured_Data is already scored inside AIO and AEO — weighting it here
+    // too would count the same markup three times.
+    Sitemap: sitemapMetric,
+    Structured_Data: structuredDataMetric,
+    // Revives the `siteSchema` pipe. The worker has always written
+    // `siteSchema: r?.Schema` (singleAuditWorker.js:382 and three more), the model
+    // has always had the field, and this key never existed — so every report in the
+    // database carries siteSchema: null. This is the parsed JSON-LD the structured
+    // data check already extracted.
+    Schema: structuredDataMetric?.meta?.content ?? null,
     // Page-type-specific (present only on the relevant page type).
     ...(vdpUniquenessMetric ? { VDP_Content_Uniqueness: vdpUniquenessMetric } : {}),
     ...(srpIndexMetric ? { SRP_Index_Control: srpIndexMetric } : {}),

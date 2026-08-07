@@ -195,25 +195,61 @@ async function fetchProbePages(candidateUrls) {
  * homepage fetch for the whole audit-start flow) and, as a fallback, by the
  * audit-start controller when the frontend didn't already supply a siteType.
  *
- * `resolvedUrl` on the result is the hostname that actually worked — equal to
- * `url` unless the www. fallback below kicked in, in which case it's the
- * www.-prefixed hostname. Callers that go on to crawl/audit the site (e.g.
- * discoveryController) MUST use `resolvedUrl`, not the original `url` — the
- * original may be a bare apex domain that fails outright (TLS/DNS-level),
+ * `resolvedUrl` on the result is THIS url with only its HOSTNAME corrected —
+ * equal to `url` unless the www. fallback below kicked in, in which case it is
+ * the same page on the www. hostname. Callers that go on to crawl/audit the site
+ * (e.g. discoveryController) MUST use `resolvedUrl`, not the original `url` —
+ * the original may be a bare apex domain that fails outright (TLS/DNS-level),
  * even though classification itself succeeded against the working hostname.
+ * It NEVER points at a different page: the path/query submitted is the page the
+ * caller asked about, and site-type detection has no business changing it.
  *
  * @param {string} url
  * @returns {Promise<{siteType: 'dealer'|'service'|'corporate'|'unknown', siteSubType: 'franchise'|'independent'|'service'|'repair'|'corporate'|null, inconclusive: boolean, confidence: number, detectedBy: string[], reason: string, report: string, resolvedUrl: string}>}
  */
 export async function detectSiteType(url, { bypassCache = false } = {}) {
-  return cachedSiteType(url, () => detectSiteTypeUncached(url), { bypass: bypassCache });
+  const result = await cachedSiteType(url, () => detectSiteTypeUncached(url), { bypass: bypassCache });
+  return { ...result, resolvedUrl: resolvedUrlFor(url, result?.resolvedHost) };
+}
+
+/**
+ * Build `resolvedUrl` for the URL actually being asked about.
+ *
+ * The verdict is cached per HOSTNAME — deliberately, since "is this a dealer" is
+ * a property of the site, not of the page submitted. A full `resolvedUrl` is a
+ * property of the PAGE, so caching one handed every later caller the URL of
+ * whoever filled the cache. Not theoretical: auditing one inventory page pinned
+ * carweek.com's entry to it, and for the next 7 days every "audit carweek.com"
+ * was rewritten by the controller into an audit of that one page.
+ *
+ * What IS a site property, and the only thing this was ever for, is the working
+ * hostname (`resolvedHost`, set only when the apex → www fallback actually
+ * fired). Apply it to the submitted URL, keeping that URL's own path — and only
+ * when it really is the www. form of the host asked about.
+ */
+function resolvedUrlFor(submittedUrl, resolvedHost) {
+  if (!resolvedHost) return submittedUrl;
+  try {
+    const submitted = new URL(submittedUrl);
+    const host = submitted.hostname.toLowerCase();
+    if (host === resolvedHost) return submittedUrl;
+    if (resolvedHost !== `www.${host}`) return submittedUrl;
+    submitted.hostname = resolvedHost;
+    return submitted.toString();
+  } catch (_) {
+    return submittedUrl;
+  }
 }
 
 // The real work. Wrapped by detectSiteType above so repeat audits of the same
 // host skip the homepage fetch (+ probes, + any browser escalation) entirely.
+// Returns `resolvedHost` — the hostname that actually worked, and null when the
+// submitted one did. NOT a full URL: this result is memoized per host and shared
+// by every page on it, so anything page-specific in here becomes another page's
+// answer. resolvedUrlFor() turns it back into a URL for each caller.
 async function detectSiteTypeUncached(url) {
   const result = await detectSiteTypeForUrl(url);
-  if (!result.inconclusive) return { ...result, resolvedUrl: url }; // got a real, confident read either way — done
+  if (!result.inconclusive) return { ...result, resolvedHost: null }; // got a real, confident read either way — done
 
   // Bare-apex-domain fallback: a common real-world misconfiguration is a site
   // whose CDN/DNS only routes "www.example.com" to the real origin — the bare
@@ -225,21 +261,22 @@ async function detectSiteTypeUncached(url) {
   // (a real, evaluated non-automotive site) never reaches here, so this adds
   // zero extra cost for the common case.
   let hasWww = false;
-  try { hasWww = /^www\./i.test(new URL(url).hostname); } catch (_) { return { ...result, resolvedUrl: url }; }
-  if (hasWww) return { ...result, resolvedUrl: url };
+  try { hasWww = /^www\./i.test(new URL(url).hostname); } catch (_) { return { ...result, resolvedHost: null }; }
+  if (hasWww) return { ...result, resolvedHost: null };
 
-  let wwwUrl;
+  let wwwUrl, wwwHost;
   try {
     const u = new URL(url);
     u.hostname = "www." + u.hostname;
+    wwwHost = u.hostname;
     wwwUrl = u.toString();
   } catch (_) {
-    return { ...result, resolvedUrl: url };
+    return { ...result, resolvedHost: null };
   }
 
   logger.info(`[siteTypeDetector] ${url} was inconclusive — retrying with www. prefix: ${wwwUrl}`);
   const wwwResult = await detectSiteTypeForUrl(wwwUrl);
-  return wwwResult.inconclusive ? { ...result, resolvedUrl: url } : { ...wwwResult, resolvedUrl: wwwUrl };
+  return wwwResult.inconclusive ? { ...result, resolvedHost: null } : { ...wwwResult, resolvedHost: wwwHost };
 }
 
 async function detectSiteTypeForUrl(url) {

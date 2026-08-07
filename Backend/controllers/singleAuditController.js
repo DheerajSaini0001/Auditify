@@ -624,9 +624,26 @@ export const startAudit = async (req, res) => {
       // Classification already succeeded against the working hostname; the
       // worker that's about to launch a real browser against `url` needs that
       // same hostname or it repeats the identical failure.
+      //
+      // A HOSTNAME fix is all this may ever be. The visitor asked for one page —
+      // "this page only" means exactly the URL they typed — so a resolvedUrl that
+      // moves to a different PATH is rejected outright rather than silently
+      // audited. (It used to be trusted whole, and since the site-type verdict is
+      // cached per host, one audit of a deep VDP redirected every later audit of
+      // that domain onto that VDP for a week.)
       if (detection.resolvedUrl && detection.resolvedUrl !== url) {
-        logger.info(`${url} didn't resolve directly — auditing ${detection.resolvedUrl} instead`);
-        url = detection.resolvedUrl;
+        const samePage = (a, b) => {
+          try {
+            const x = new URL(a), y = new URL(b);
+            return x.pathname.replace(/\/$/, "") === y.pathname.replace(/\/$/, "") && x.search === y.search;
+          } catch (_) { return false; }
+        };
+        if (samePage(detection.resolvedUrl, url)) {
+          logger.info(`${url} didn't resolve directly — auditing ${detection.resolvedUrl} instead`);
+          url = detection.resolvedUrl;
+        } else {
+          logger.warn(`⚠️ Ignoring site-type resolvedUrl for a different page (${detection.resolvedUrl}) — auditing the submitted URL: ${url}`);
+        }
       }
     }
 

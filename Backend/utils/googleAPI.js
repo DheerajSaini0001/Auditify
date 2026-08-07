@@ -127,16 +127,22 @@ export default async function googleAPI(url, device) {
   // which still taxed every slow page 46.5s (probe + backoff) before the real
   // attempt began: that is how a 145s budget reported "did not respond within 98s".
   //
-  // [2026-08-07] Retries removed outright; the deadline is one flat 180s. Nothing the
-  // ladder bought was worth its complexity. A page slow enough to blow 180s does not
-  // become fast 1.5s later, and the failures that genuinely DO clear on a second try
-  // (429, a momentary 5xx, a transport blip) come back in under a second — for those
-  // the answer is to re-run the audit, which is exactly what the report's
-  // recommendation copy already tells the operator. Two deliberate trades: a single
+  // [2026-08-07] Retries removed outright; the deadline is one flat 150s. Nothing the
+  // ladder bought was worth its complexity. A page slow enough to blow the deadline
+  // does not become fast 1.5s later, and the failures that genuinely DO clear on a
+  // second try (429, a momentary 5xx, a transport blip) come back in under a second —
+  // for those the answer is to re-run the audit, which is exactly what the report's
+  // recommendation copy already tells the operator. Trade accepted: a single
   // rate-limit blip now costs this audit its Technical section instead of being
-  // papered over in-process, and 180s is a real ceiling — the measured tail
-  // (bomninchevrolet 94.4s, rvcountry ~115s) fits, but a page needing more is
-  // reported as the slow page it is rather than waited out.
+  // papered over in-process.
+  //
+  // 150s is a deliberate PRODUCT ceiling, not an estimate of what PageSpeed needs.
+  // Measured on the real API: bomninchevrolet 94.4s, and rvcountry.com 97.2s / 107.0s
+  // from a dev machine but past 180s from the production App Service on 2026-08-07.
+  // Some pages simply cannot be measured inside any wait a visitor will tolerate, so
+  // the audit stops waiting and reports them as unmeasured — the UI renders "—" for
+  // that state rather than a fake 0. Raise PAGESPEED_TOTAL_BUDGET_MS if you would
+  // rather wait than show a dash.
   //
   // Keep the deadline UNDER PILLAR_TECH_TIMEOUT_MS (default 300s): if it outlives
   // the pillar, withTimeout kills Technical wholesale instead of letting us return
@@ -149,7 +155,7 @@ export default async function googleAPI(url, device) {
   // PAGESPEED_ATTEMPT_TIMEOUT_MS is the legacy name for the same number, still
   // honoured so a deployment that already sets it keeps working.
   const DEADLINE_MS = parseInt(
-    process.env.PAGESPEED_TOTAL_BUDGET_MS || process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '180000',
+    process.env.PAGESPEED_TOTAL_BUDGET_MS || process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '150000',
     10,
   );
 

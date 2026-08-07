@@ -658,7 +658,7 @@ const Accessibility_Inner = React.memo(function Accessibility_Inner({ data, load
                 titleAccent="Health"
                 description="Comprehensive analysis of your website's accessibility, ensuring an inclusive experience for all users."
                 stats={{ passed: passedCount, warning: warningCount, failed: failedCount }}
-                score={metric?.Percentage || 0}
+                score={metric?.Percentage ?? null}
                 onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
               />
             </div>

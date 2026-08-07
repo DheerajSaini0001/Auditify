@@ -207,7 +207,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                     <div className={`inline-flex items-start gap-2 mt-1 px-3 py-1.5 rounded-lg text-[11px] font-medium ${darkMode ? "bg-amber-900/20 text-amber-300 border border-amber-800/50" : "bg-amber-50 text-amber-700 border border-amber-100"}`}>
                       <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-70" />
                       <span>
-                        Google PageSpeed returned no data for this URL (after retries), so Core Web Vitals could not be measured. This section is excluded from the overall score rather than counted as 0. The delivery checks below still ran on the live page.
+                        Google PageSpeed did not return data for this URL within the audit's time limit, so Core Web Vitals could not be measured. This section is excluded from the overall score rather than counted as 0 — that is why the score reads "—". The delivery checks below still ran on the live page.
                       </span>
                     </div>
                   )}
@@ -216,7 +216,7 @@ const Technical_Performance_Inner = React.memo(({ data, loading, darkMode }) => 
                 titleAccent="Performance"
                 description="Core vitals and speed configurations analysis for a faster user experience."
                 stats={techStatusCounts(tech)}
-                score={notRun ? 0 : overallScore}
+                score={notRun ? null : overallScore}
                 onMethodology={() => setSelectedMetricInfo(scoreCalculationInfo)}
               />
             </div>

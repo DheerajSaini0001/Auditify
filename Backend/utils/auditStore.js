@@ -78,6 +78,10 @@ const SCHEMA_FIELDS = [
   // the engine actually resolved and used, which is not always the same thing —
   // see utils/marketResolver.js.
   "market", "marketResolution",
+  // Which PAGES the run covered ("full" vs the ticked page-type list). Part of the
+  // unique index, so a report flushed without it indexes under a scope it was never
+  // run at — and the dedupe, which does scope by it, would never find it again.
+  "scopeKey",
 ];
 
 const TERMINAL = new Set(["completed", "failed"]);
@@ -93,7 +97,7 @@ const sameUser = (a, b) => idStr(a) === idStr(b);
 /** Create a fresh in-progress report held only in memory (no DB write). */
 function createInProgress({
   _id, url, device, report, userId, pageType, siteType, siteSubType,
-  notifyEmail, country, market, plannedPages, estimatedSeconds, parentReportId,
+  notifyEmail, country, market, scopeKey, plannedPages, estimatedSeconds, parentReportId,
 }) {
   const now = new Date();
   const doc = {
@@ -149,6 +153,11 @@ function createInProgress({
     // legitimately different reports, so dedupe has to be able to tell them
     // apart before any worker starts. See findActiveDuplicate.
     market: market || null,
+    // Also part of this audit's identity, and also resolved by the caller before
+    // any worker starts: a full-site crawl and a single-page run of the same URL
+    // produce genuinely different reports, so the dedupe has to be able to tell
+    // them apart up front. See findActiveDuplicate.
+    scopeKey: scopeKey || null,
     plannedPages: plannedPages || 1,
     estimatedSeconds: estimatedSeconds || null,
     createdAt: now,
@@ -213,9 +222,9 @@ function complete(id, patch = {}) {
 /**
  * Find a still-active in-memory duplicate for de-duplication, mirroring the Mongo
  * query in the controller: a completed report, or an in-progress one started within
- * the last 5 minutes, for the same url/device/report/user.
+ * the last 5 minutes, for the same url/device/report/market/scope/user.
  */
-function findActiveDuplicate({ url, device, report, userId, market = null }) {
+function findActiveDuplicate({ url, device, report, userId, market = null, scopeKey = null }) {
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
   for (const doc of live.values()) {
     if (doc.url !== url || doc.device !== device || doc.report !== report) continue;
@@ -226,6 +235,11 @@ function findActiveDuplicate({ url, device, report, userId, market = null }) {
     // report. Reports created before market existed carry null and therefore
     // only ever dedupe against another null.
     if ((doc.market || null) !== (market || null)) continue;
+    // Scope is part of the identity for the same reason: a full-site run and a
+    // "this page only" run of the same URL are different reports (one carries a
+    // crawledPagesSummary row per key page, the other carries none), so serving
+    // one for the other hands the visitor a report they did not ask for.
+    if ((doc.scopeKey || null) !== (scopeKey || null)) continue;
     if (doc.status === "completed") return doc;
     // Any non-terminal status (inprogress, launching, navigating, waiting_for_render,
     // screenshot_ready, extracting_data) is an in-flight audit — dedupe against it so a
@@ -242,6 +256,15 @@ function findActiveDuplicate({ url, device, report, userId, market = null }) {
  * cloned verbatim, so cloning them out of a run scored against another market's
  * reference lists would hand back a score for a jurisdiction the visitor did not
  * ask about — and the clone would then carry a market its numbers never came from.
+ *
+ * Deliberately NOT scope-scoped, unlike every other lookup here. What gets cloned
+ * is the section objects, and those are Stage 1 output — they describe the page
+ * that was entered, and the worker's crawl scope only ever decides which EXTRA key
+ * pages Stage 2 visits (see workers/singleAuditWorker.js `scopeSet`). So a full-site
+ * run and a single-page run of the same URL hold identical section data, and
+ * refusing to clone across the two would re-run a ~90s audit to reproduce numbers
+ * we already have. The clone still gets the REQUESTING run's scopeKey — it is a
+ * report of that scope, built from data that is common to both.
  */
 function findCompletedFullAudit({ url, device, userId, market = null }) {
   for (const doc of live.values()) {
@@ -260,11 +283,12 @@ function findCompletedFullAudit({ url, device, userId, market = null }) {
  * it right now. Callers that are about to delete a report use this to tell a stale
  * leftover apart from a run in flight.
  */
-function findInFlight({ url, device, report, userId, market = null }) {
+function findInFlight({ url, device, report, userId, market = null, scopeKey = null }) {
   for (const doc of live.values()) {
     if (doc.url !== url || doc.device !== device || doc.report !== report) continue;
     if (!sameUser(doc.userId, userId)) continue;
     if ((doc.market || null) !== (market || null)) continue;
+    if ((doc.scopeKey || null) !== (scopeKey || null)) continue;
     if (!TERMINAL.has(doc.status)) return doc;
   }
   return null;
@@ -288,10 +312,11 @@ function findInFlight({ url, device, report, userId, market = null }) {
  * Returns the ids that were skipped for being in flight, so the caller can reuse the
  * running audit instead of silently doing nothing.
  */
-function removeMatching({ url, device, report, userId, market = null }) {
+function removeMatching({ url, device, report, userId, market = null, scopeKey = null }) {
   const skipped = [];
   for (const [key, doc] of live.entries()) {
     if ((doc.market || null) !== (market || null)) continue;
+    if ((doc.scopeKey || null) !== (scopeKey || null)) continue;
     if (doc.url === url && doc.device === device && doc.report === report && sameUser(doc.userId, userId)) {
       if (!TERMINAL.has(doc.status)) {
         logger.warn(`[auditStore] refusing to remove ${key} — its audit is still running (status ${doc.status})`);
@@ -416,7 +441,7 @@ function rejectedPositions(err, batchLength) {
  *
  * This used to read a duplicate-key error as "already persisted — safe to
  * forget", which is only true for a clash on _id. The unique index is on
- * {url, device, report, market, userId}, so it ALSO fires when a different
+ * {url, device, report, market, userId, scopeKey}, so it ALSO fires when a different
  * report is sitting on this one's target — and forgetting the report then left
  * it in neither Mongo nor memory. The page that was already open kept rendering
  * it from client state while every server call for it 404'd, so the failure
@@ -445,6 +470,10 @@ async function resolveRejected(doc) {
         report: doc.report,
         market: doc.market ?? null,
         userId: doc.userId ?? null,
+        // Every field of the unique index, or this search is narrower than the
+        // constraint it exists to clear: it would miss the actual occupant and
+        // the retried insert would fail on exactly the same duplicate key.
+        scopeKey: doc.scopeKey ?? null,
         status: { $in: ACTIVE_REPORT_STATUSES },
         // Never evict a run NEWER than this one — that one is the current report
         // for this target and somebody may be reading it right now.

@@ -26,7 +26,7 @@ import { scoreToStatus, statusSolidBg } from "../../utils/statusColors";
  *   titleAccent   trailing word rendered in Performance Orange
  *   description   one line under the title
  *   stats         { passed, warning, failed }
- *   score         0–100, drives the ring
+ *   score         0–100, drives the ring; null renders "—" (not measured)
  *   onMethodology optional; omit and the methodology link is not rendered
  *   extra         optional node rendered under the stats row (e.g. AIO compatibility)
  *   fullReport    true when this sits inside the combined "All" report, which
@@ -47,6 +47,10 @@ const PillarHeader = ({
   extra = null,
 }) => {
   const BadgeIcon = badge?.icon;
+  // Explicit null/undefined = "could not be measured" (renders "—"). The `score = 0`
+  // default above only fires for undefined, so callers that pass nothing keep the old
+  // 0% behaviour; only an explicit null opts into the dash.
+  const hasScore = Number.isFinite(Number(score)) && score !== null && score !== "";
 
   return (
     <div className={`flex-1 ${fullReport ? "px-6 pb-4 pt-2 lg:px-10 lg:pt-2" : "px-6 pb-4 pt-4 lg:px-12 lg:pt-6"} flex flex-col justify-center`}>
@@ -123,11 +127,28 @@ const PillarHeader = ({
                 "Good" lime (#84CC16) washed the whole header card green. The status
                 equivalents (#308D5C / #D18E14 / #DA3D51) are what this always used
                 and what reads as a glow rather than a tint. */}
-            <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${statusSolidBg(scoreToStatus(score))}`}></div>
-            <CircularProgress value={score} size={fullReport ? 180 : 150} stroke={14} />
+            {/* A null/undefined score means the section could not be measured at all
+                (e.g. PageSpeed never answered), which is NOT the same as scoring 0.
+                Passing 0 here drew a full red ring reading "0%" directly beside this
+                header's own copy saying the section is "excluded from the overall
+                score rather than counted as 0" — the two contradicted each other on
+                screen. Render an empty neutral ring and a dash instead. Note the glow
+                must be guarded separately: statusSolidBg(null) falls through to "fail"
+                and would paint the red halo back on. */}
+            {hasScore && (
+              <div className={`absolute -inset-8 rounded-full blur-3xl opacity-25 transition-opacity duration-700 group-hover:opacity-40 ${statusSolidBg(scoreToStatus(score))}`}></div>
+            )}
+            <CircularProgress value={hasScore ? score : 0} size={fullReport ? 180 : 150} stroke={14} />
             <div className="absolute inset-0 flex items-center justify-center flex-col gap-0.5">
-              <span className={`${fullReport ? "text-5xl" : "text-3xl"} font-black tracking-tight ${darkMode ? "text-white" : "text-ink"}`}>{score}%</span>
-              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">SCORE</span>
+              <span
+                className={`${fullReport ? "text-5xl" : "text-3xl"} font-black tracking-tight ${hasScore ? (darkMode ? "text-white" : "text-ink") : "text-faint"}`}
+                title={hasScore ? undefined : "Not measured — this section is excluded from the overall score"}
+              >
+                {hasScore ? `${score}%` : "—"}
+              </span>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.2em] opacity-50">
+                {hasScore ? "SCORE" : "NOT MEASURED"}
+              </span>
             </div>
           </div>
         </div>

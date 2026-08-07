@@ -11,6 +11,29 @@ const envTtl = parseInt(process.env.AUDIT_REPORT_TTL_SECONDS ?? "", 10);
 export const REPORT_TTL_SECONDS =
   Number.isFinite(envTtl) && envTtl >= 600 ? envTtl : 86400;
 
+// Canonical `scopeKey` values (see the field's comment on the schema below).
+// "full" is the unrestricted crawl; "home" is the single page the visitor typed,
+// which is what the client's DEFAULT_PAGE_SCOPES (["home"]) resolves to.
+export const FULL_SITE_SCOPE_KEY = "full";
+export const SINGLE_PAGE_SCOPE_KEY = "home";
+
+/**
+ * The scope key for a run, from its normalized pageScopes list.
+ *
+ * Sorted before joining so ["srp","home"] and ["home","srp"] are the SAME run —
+ * two orderings of one selection must not become two reports (and two audits).
+ * A null/empty list is "no restriction", which is the widest run there is.
+ *
+ * This is the single definition of the value: the dedupe filter, the in-memory
+ * store and the unique index all have to agree on it, and the last time two of
+ * them disagreed about what "the same target" means, reports were lost to E11000
+ * on flush (see the index comment below).
+ */
+export const scopeKeyFor = (pageScopes) =>
+  Array.isArray(pageScopes) && pageScopes.length
+    ? [...pageScopes].sort().join("+")
+    : FULL_SITE_SCOPE_KEY;
+
 const SiteReportSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
@@ -91,6 +114,23 @@ const SiteReportSchema = new mongoose.Schema(
     // legitimately different documents.
     market: { type: String, default: null },
     marketResolution: { type: mongoose.Schema.Types.Mixed, default: null },
+    // WHICH PAGES this run covers — the other half of a report's identity, next to
+    // `report` (which names which SECTIONS run). "full" is an unrestricted crawl of
+    // every key page discovery finds; anything else is the sorted list of page types
+    // the visitor kept ticked, so a "this page only" run is "home".
+    //
+    // It is stored, and it is in the unique index, because it changes what the report
+    // IS: a full-site run carries a crawledPagesSummary row per key page, a
+    // single-page run carries none. Without it both runs shared one identity, and a
+    // "this page only" request for a URL that already had a completed full-site
+    // report was handed that full-site report straight out of the dedupe — for the
+    // whole 24h TTL, and in the other direction too (a full-site request served a
+    // single-page report, i.e. asking for more and silently getting less).
+    //
+    // Reports written before this existed have no field at all and index as null,
+    // which is a distinct key from "full"/"home" — they are re-audited rather than
+    // served under a scope they were never actually run at.
+    scopeKey: { type: String, default: null },
     // Opening ETA, fixed at creation from how many key pages this run will crawl.
     // The status endpoint switches to extrapolating from real elapsed time as soon
     // as there is progress to extrapolate from.
@@ -148,11 +188,17 @@ export const ACTIVE_REPORT_STATUSES = [
 // server call for it 404'd — "Report not found or access denied" on the download
 // and email buttons, seconds after a successful audit.
 //
-// Reports written before these fields existed have no `market` / `userId` and
-// index as null, which is a distinct key from "US"/"AU" or a real account id —
-// so they never collide with new runs.
+// `scopeKey` is here because `report` only says which SECTIONS ran, never how
+// many PAGES. "Full site" and "this page only" therefore reached this key
+// identical, so the second one was served the first one's report — a visitor who
+// asked for a single page got a whole site's crawl back (and vice versa, which is
+// worse: asking for the whole site and silently getting one page).
+//
+// Reports written before these fields existed have no `market` / `userId` /
+// `scopeKey` and index as null, which is a distinct key from "US"/"AU", a real
+// account id, or "full"/"home" — so they never collide with new runs.
 SiteReportSchema.index(
-  { url: 1, device: 1, report: 1, market: 1, userId: 1 },
+  { url: 1, device: 1, report: 1, market: 1, userId: 1, scopeKey: 1 },
   {
     unique: true,
     partialFilterExpression: { status: { $in: ACTIVE_REPORT_STATUSES } }

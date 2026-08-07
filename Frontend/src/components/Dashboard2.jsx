@@ -101,6 +101,24 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
   );
   const isLoadingView = loading || !isAuditComplete;
 
+  // Distinct from isAuditComplete: that one is true for the PROVISIONAL Stage-1
+  // rollup, where seven pillars are scored and PageSpeed is still running. A section
+  // with no Percentage means two different things depending on which state we are in
+  // — "hasn't arrived yet" (spinner) vs "the audit finished and it could not be
+  // measured" (a dash). Only the terminal states below can mean the latter, and
+  // psiPending explicitly rules out the provisional window, so Technical keeps its
+  // spinner right up until PageSpeed actually settles.
+  const auditSettled = Boolean(
+    data && !data.psiPending && (
+      data.status === "completed" ||
+      data.status === "success" ||
+      data.status === "failed" ||
+      data.rawStatus === "completed" ||
+      data.rawStatus === "success" ||
+      data.rawStatus === "failed"
+    )
+  );
+
   // Current audit PHASE (no timer). Driven by the backend's raw status (data.rawStatus);
   // the overall status is normalized elsewhere to pending/success/failed. Each phase
   // maps to a checkpoint % and a plain-language title + description shown while loading.
@@ -441,9 +459,13 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {barData.map((item, index) => {
                   /* Determine Color & Status — a section without a Percentage keeps its
-                     "Analyzing..." spinner even while the (provisional) report is open,
-                     e.g. Technical Performance while PageSpeed is still running. */
+                     "Analyzing..." spinner while the (provisional) report is open, e.g.
+                     Technical Performance while PageSpeed is still running. Once the
+                     audit SETTLES without one, that spinner is a lie: it span forever
+                     on a report that was already finished, which is what hid a failed
+                     PageSpeed run from view. Settled + no Percentage renders "—". */
                   const isDone = item.hasPercentage;
+                  const notMeasured = !isDone && auditSettled;
                   const score = isDone ? (item.value || 0) : 0;
 
                   // Label and ring both derive from the same scoreBand() call, so
@@ -454,8 +476,8 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                   // alone the two looked consistent; on screen an 87% pillar drew a
                   // green ring under an amber "NEEDS WORK".
                   const band = isDone ? scoreBand(score) : null;
-                  const statusColor = band ? band.text : "text-score-warn-ink";
-                  const statusText = band ? band.label : "Analyzing...";
+                  const statusColor = band ? band.text : notMeasured ? "text-faint" : "text-score-warn-ink";
+                  const statusText = band ? band.label : notMeasured ? "Not Measured" : "Analyzing...";
 
                   const isOpen = openSectionKey === item.key;
 
@@ -487,6 +509,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                             {isDone ? (
                               <span className={`text-2xl font-black ${darkMode ? "text-white" : "text-ink"}`}>
                                 {score}%
+                              </span>
+                            ) : notMeasured ? (
+                              <span className="text-2xl font-black text-faint" title="Not measured — excluded from the overall score">
+                                —
                               </span>
                             ) : (
                               <Loader2 className="w-6 h-6 animate-spin text-amber-500" />

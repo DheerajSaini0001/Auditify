@@ -1,7 +1,7 @@
 import { Worker } from "worker_threads";
 import { join } from "path";
 import mongoose from "mongoose";
-import SingleAuditReport from "../models/singleAuditReport.js";
+import SingleAuditReport, { scopeKeyFor, SINGLE_PAGE_SCOPE_KEY } from "../models/singleAuditReport.js";
 import AuditLog from "../models/AuditLog.js";
 import Puppeteer_Cheerio from "../utils/puppeteer_cheerio.js";
 import { checkWebsiteExists } from "../utils/fastFetch.js";
@@ -242,6 +242,15 @@ export const startAudit = async (req, res) => {
       ? [...new Set(pageScopes.filter((k) => VALID_PAGE_SCOPES.has(k)))]
       : null;
 
+    // How wide this run is, in the one canonical form the report, the dedupe and
+    // the unique index all key on. Resolved here, before anything looks for a
+    // reusable report, because it is part of the audit's identity exactly like
+    // `market` is: `report` says which SECTIONS run, this says which PAGES, and a
+    // dedupe that knows only the first cannot tell a full-site crawl apart from a
+    // single-page run of the same URL. It did not, which is how asking for "this
+    // page only" after a full-site audit was answered with the full-site report.
+    const resolvedScopeKey = scopeKeyFor(normalizedScopes);
+
     if (!url || !device || !report) {
       return res.status(400).json({ error: "Missing required fields" });
     }
@@ -293,7 +302,8 @@ export const startAudit = async (req, res) => {
       // Reusing the running audit is also what the caller actually wants: a run that
       // started seconds ago IS the fresh report a force re-run was asking for.
       const inFlight = auditStore.findInFlight({
-        url, device, report, userId: req.user?.userId || null, market: resolvedMarket,
+        url, device, report, userId: req.user?.userId || null,
+        market: resolvedMarket, scopeKey: resolvedScopeKey,
       });
 
       if (inFlight) {
@@ -309,17 +319,26 @@ export const startAudit = async (req, res) => {
           // Scoped to this market so a force re-run of the AU report does not also
           // delete the visitor's US report for the same URL.
           market: resolvedMarket,
+          // And to this scope, for the same reason: re-running "this page only"
+          // must not take the visitor's full-site report of that URL down with it.
+          scopeKey: resolvedScopeKey,
         });
         // Also drop any in-memory copy that hasn't been flushed yet. Terminal
         // entries only — removeMatching now refuses to touch a running one.
-        auditStore.removeMatching({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
+        auditStore.removeMatching({
+          url, device, report, userId: req.user?.userId || null,
+          market: resolvedMarket, scopeKey: resolvedScopeKey,
+        });
       }
     }
 
     // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one.
     // Check the in-memory store FIRST (reports may not be flushed to Mongo yet), then Mongo.
     if (!force) {
-      existing = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
+      existing = auditStore.findActiveDuplicate({
+        url, device, report, userId: req.user?.userId || null,
+        market: resolvedMarket, scopeKey: resolvedScopeKey,
+      });
       if (!existing) {
         const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
         existing = await SingleAuditReport.findOne({
@@ -333,6 +352,10 @@ export const startAudit = async (req, res) => {
           // they are re-audited rather than served under a jurisdiction they were
           // never graded against.
           market: resolvedMarket,
+          // Same again for how wide the run was. A completed full-site crawl is
+          // not a duplicate of a "this page only" request — it answers a question
+          // the visitor did not ask, and used to be served for the whole TTL.
+          scopeKey: resolvedScopeKey,
           $or: [
             { status: "completed" },
             { status: "inprogress", createdAt: { $gt: fiveMinutesAgo } }
@@ -421,6 +444,13 @@ export const startAudit = async (req, res) => {
       // this market like every other reuse lookup — the sections are cloned as-is,
       // so a full audit scored against another market's reference lists is not a
       // source this request can honestly copy from.
+      //
+      // NOT scoped by scopeKey, and that is deliberate: what gets cloned below is
+      // section data, which is Stage 1 output for the page that was entered. The
+      // crawl scope only decides which EXTRA key pages Stage 2 visits, so a
+      // full-site source and a single-page source hold identical sections here.
+      // Matching on scope would re-run a ~90s audit to reproduce numbers we
+      // already hold. The derived report still carries the REQUESTING scope.
       let fullAudit = auditStore.findCompletedFullAudit({ url, device, userId: req.user?.userId || null, market: resolvedMarket });
       if (!fullAudit) {
         fullAudit = await SingleAuditReport.findOne({
@@ -457,6 +487,12 @@ export const startAudit = async (req, res) => {
             country: cleanCountry,
             market: resolvedMarket,
             marketResolution: fullAudit.marketResolution ?? null,
+            // The scope THIS request asked for, not the source's. The clone is a
+            // report of the sections at this scope; stamping it with the source's
+            // would file it under a run the visitor never asked for — and, being
+            // part of the same index key, would make the next identical request
+            // miss it and re-derive a colliding copy.
+            scopeKey: resolvedScopeKey,
           });
 
           const pctBySection = {};
@@ -530,10 +566,20 @@ export const startAudit = async (req, res) => {
 
     // Double-check race condition (buffer for parallel requests). Check the
     // in-memory store first (the in-progress report isn't in Mongo yet), then Mongo.
+    // Both lookups carry the FULL identity — url/device/report plus market and
+    // scope. They used to carry neither, so this backstop could hand a request
+    // the in-flight run of a different market or a different crawl width, undoing
+    // the separation the dedupe above had just made.
     await new Promise(resolve => setTimeout(resolve, 200));
-    const raceDup = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null });
+    const raceDup = auditStore.findActiveDuplicate({
+      url, device, report, userId: req.user?.userId || null,
+      market: resolvedMarket, scopeKey: resolvedScopeKey,
+    });
     if (raceDup) return res.status(200).json(gateReportForViewer(raceDup, !!req.user));
-    const raceCheck = await SingleAuditReport.findOne({ url, device, report, status: "inprogress", userId: req.user?.userId || null });
+    const raceCheck = await SingleAuditReport.findOne({
+      url, device, report, status: "inprogress", userId: req.user?.userId || null,
+      market: resolvedMarket, scopeKey: resolvedScopeKey,
+    });
     if (raceCheck) return res.status(200).json(gateReportForViewer(raceCheck, !!req.user));
 
     // The frontend already ran /single-audit/discover for this URL and knows the
@@ -608,6 +654,7 @@ export const startAudit = async (req, res) => {
       notifyEmail: cleanNotifyEmail,
       country: cleanCountry,
       market: resolvedMarket,
+      scopeKey: resolvedScopeKey,
       plannedPages,
       estimatedSeconds: estimateAuditSeconds(plannedPages),
     });
@@ -894,7 +941,17 @@ export const startAudit = async (req, res) => {
         // keyed on it — a child left at null indexes under a market it was never
         // scored for, and the two cleanups below stop matching it.
         const childMarket = newReport.market || null;
-        auditStore.removeMatching({ url: c.url, device: childDevice, report: "All", userId: newReport.userId || null, market: childMarket });
+        // A key page is audited as ONE page — its own URL, no crawl of its own —
+        // so its scope is the single-page key, not the parent's. It has to be the
+        // parent's neighbour in the index, not its twin: leaving a child at the
+        // parent's "full" would put a single-page report under a full-site
+        // identity, and a later full-site audit of that key page's URL would then
+        // be served this one page instead of being run.
+        const childScopeKey = SINGLE_PAGE_SCOPE_KEY;
+        auditStore.removeMatching({
+          url: c.url, device: childDevice, report: "All", userId: newReport.userId || null,
+          market: childMarket, scopeKey: childScopeKey,
+        });
         auditStore.createInProgress({
           _id: new mongoose.Types.ObjectId(c.childId),
           url: c.url,
@@ -905,6 +962,7 @@ export const startAudit = async (req, res) => {
           siteType: newReport.siteType || null,
           siteSubType: newReport.siteSubType || null,
           market: childMarket,
+          scopeKey: childScopeKey,
           // Back-pointer to the run this key page belongs to. The parent lists its
           // children in crawledPagesSummary; this is the edge in the other direction,
           // and it is how a child report opened on its own (an admin from Journeys, a
@@ -916,12 +974,13 @@ export const startAudit = async (req, res) => {
           reportId: c.childId, isProcessing: true, success: false, status: 200, title: c.label || "Auditing…",
         });
         // Mirrors the unique index key exactly ({url, device, report, market,
-        // userId}) — a cleanup narrower than the index leaves an occupant the
-        // child's insert will then collide with, and one wider deletes a report
+        // userId, scopeKey}) — a cleanup narrower than the index leaves an occupant
+        // the child's insert will then collide with, and one wider deletes a report
         // that was never in this child's way.
         SingleAuditReport.deleteMany({
           _id: { $ne: new mongoose.Types.ObjectId(c.childId) },
           url: c.url, device: childDevice, report: "All", market: childMarket,
+          scopeKey: childScopeKey,
           userId: newReport.userId || null, status: { $ne: "failed" },
         }).catch(() => { /* best-effort; the batch flush now resolves any leftover collision */ });
         return;

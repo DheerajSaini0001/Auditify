@@ -155,7 +155,7 @@ export default async function googleAPI(url, device) {
   // PAGESPEED_ATTEMPT_TIMEOUT_MS is the legacy name for the same number, still
   // honoured so a deployment that already sets it keeps working.
   const DEADLINE_MS = parseInt(
-    process.env.PAGESPEED_TOTAL_BUDGET_MS || process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '150000',
+    process.env.PAGESPEED_TOTAL_BUDGET_MS || process.env.PAGESPEED_ATTEMPT_TIMEOUT_MS || '280000',
     10,
   );
 

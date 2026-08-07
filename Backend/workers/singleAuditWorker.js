@@ -266,10 +266,20 @@ function withTimeout(promise, timeoutMs = 30000, pillarName = "Metric") {
 // own pillar. Note the converse: extra Technical headroom only buys PageSpeed more
 // time if PAGESPEED_TOTAL_BUDGET_MS is raised too — otherwise the call gives up at
 // its own deadline and the surplus goes to Technical's own on-page work (the asset
-// and delivery checks that run against the live page after PageSpeed returns).
+// and delivery checks, which now run BEFORE PageSpeed is awaited).
 const PILLAR_BASE_TIMEOUT_MS = "150000";
 const PILLAR_HEAVY_TIMEOUT_MS = "300000";
-const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || PILLAR_HEAVY_TIMEOUT_MS, 10);
+// [2026-08-07] Technical gets its own, larger cap — and unlike every other pillar
+// timeout, raising this one no longer costs browser-pool time. technicalMetrics now
+// releases the page before it awaits PageSpeed (its phase 1 / phase 2 split), so the
+// only thing this cap holds open is a pending fetch. It has to clear
+// PAGESPEED_TOTAL_BUDGET_MS (280s) PLUS phase 1's on-page work, or Technical is killed
+// moments before PageSpeed lands — the exact failure this change exists to remove.
+//
+// Accessibility deliberately stays on the smaller heavy cap: axe DOES hold the browser
+// for its whole run, so its ceiling is still a pool cost.
+const PILLAR_TECH_DEFAULT_MS = "380000";
+const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || PILLAR_TECH_DEFAULT_MS, 10);
 const A11Y_TIMEOUT_MS = parseInt(process.env.PILLAR_A11Y_TIMEOUT_MS || PILLAR_HEAVY_TIMEOUT_MS, 10);
 const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || PILLAR_BASE_TIMEOUT_MS, 10);
 const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || PILLAR_BASE_TIMEOUT_MS, 10);
@@ -377,7 +387,12 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
     // [PERF] Technical runs apart from the other seven (same split as Stage 1): it waits
     // on PageSpeed (~50–75s), so the seven-pillar provisional below makes this page's
     // report viewable early; the final rollup replaces it when PageSpeed lands.
-    const techPromise = (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch, siteSubType, market), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })();
+    // Same page/PageSpeed split as Stage 1 — a key page holds a browser slot too, and
+    // Stage 2 runs several of them at once, so releasing early matters more here.
+    let signalTechPageReleased;
+    const techPageReleased = new Promise((resolve) => { signalTechPageReleased = resolve; });
+    const techPromise = (async () => { const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(pageUrl, dev, page, response, pageBrowser, pt, psiPrefetch, siteSubType, market, signalTechPageReleased), TECH_TIMEOUT_MS, "Technical Performance")); send({ technicalPerformance: r }); return r; })();
+    techPromise.finally(() => signalTechPageReleased());
     const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => { const r = await safeMetric("On Page SEO", () => withTimeout(seoMetrics(pageUrl, $, page, pt, siteSubType, market), SEO_TIMEOUT_MS, "On Page SEO")); send({ onPageSEO: r, siteSchema: r?.Schema }); return r; })(),
       (async () => { const r = await safeMetric("Accessibility", () => withTimeout(accessibilityMetrics(page, $, pt, market, siteSubType), A11Y_TIMEOUT_MS, "Accessibility")); send({ accessibility: r }); return r; })(),
@@ -403,6 +418,15 @@ async function auditOnePage({ url: pageUrl, device: dev, pageType: forcedType, a
       grade: provisional.grade,
       sectionScore: provisional.sectionScores,
     });
+
+    // Release this key page's browser the moment Technical is done with the page, so a
+    // slow PageSpeed call no longer occupies a pool permit. The `finally` below still
+    // closes it — closing twice is a guarded no-op.
+    await techPageReleased;
+    if (pageBrowser) {
+      try { await pageBrowser.close(); } catch { /* already closed */ }
+      pageBrowser = null;
+    }
 
     const A_Res = await techPromise;
 
@@ -1147,11 +1171,21 @@ async function auditKeyPages(currentAuditId, device) {
     // in a fraction of that, so the report goes visible on their provisional rollup
     // (Technical renormalized out, psiPending: true) and the final score patches in below
     // once PageSpeed answers. Not awaited yet — only after the seven-pillar rollup posts.
+    // Technical signals when it is done with the PAGE, which happens well before it is
+    // done with PAGESPEED (see technicalMetrics' phase 1/phase 2 split). That signal is
+    // what lets Chromium be released while the PSI call is still in flight.
+    let signalTechPageReleased;
+    const techPageReleased = new Promise((resolve) => { signalTechPageReleased = resolve; });
     const techPromise = (async () => {
-      const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi, siteSubType, market), TECH_TIMEOUT_MS, "Technical Performance"));
+      const r = await safeMetric("Technical Performance", () => withTimeout(technicalMetrics(url, device, page, response, browser, pageType, stage1Psi, siteSubType, market, signalTechPageReleased), TECH_TIMEOUT_MS, "Technical Performance"));
       postProgress({ technicalPerformance: r });
       return r;
     })();
+    // Belt and braces: if Technical throws, times out, or returns before it ever reaches
+    // the hook, the promise above would never settle and the browser would be held to
+    // the pillar timeout for nothing. Settling it alongside techPromise makes the wait
+    // below "page free OR Technical over", never "page free" alone.
+    techPromise.finally(() => signalTechPageReleased());
 
     const [B_Res, C_Res, D_Res, E_Res, F_Res, G_Res, aeoRes] = await Promise.all([
       (async () => {
@@ -1217,6 +1251,18 @@ async function auditKeyPages(currentAuditId, device) {
     });
     logger.info(`⚡ [Stage 1] 7/8 pillars complete for ${url} — provisional score ${provisional.totalScore} published, awaiting PageSpeed...`);
 
+    // Release Chromium as soon as Technical is finished with the page — NOT when it is
+    // finished with PageSpeed. Those are the same moment only on a fast PSI call; on a
+    // slow one they are minutes apart, and holding a browser slot through that wait is
+    // what throttled the whole pool. The seven other pillars are already done, so
+    // nothing else needs the page here.
+    await techPageReleased;
+    if (browser) {
+      try { await browser.close(); } catch { }
+      browser = null;
+    }
+
+    // Now wait for PageSpeed with nothing expensive held open.
     const A_Res = await techPromise;
     const A = A_Res?.Percentage ?? null;
 
@@ -1240,11 +1286,8 @@ async function auditKeyPages(currentAuditId, device) {
       message: "Stage 1 initial page complete — Stage 2 parallel crawl of remaining pages is underway...",
     });
 
-    // Close Stage 1 single page browser before spawning Stage 2 parallel workers
-    if (browser) {
-      try { await browser.close(); } catch { }
-      browser = null;
-    }
+    // (The Stage 1 browser was already closed above, the moment Technical released the
+    // page — it used to be closed here, after the PageSpeed wait.)
 
     logger.info(`🧠 [Stage 1] Completed for URL: ${url}. Stage 2 key pages have been auditing alongside it...`);
 

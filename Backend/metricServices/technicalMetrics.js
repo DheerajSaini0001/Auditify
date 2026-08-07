@@ -1202,8 +1202,15 @@ const evaluateResourceOptimization = async (page) => {
 // PSI audit is unavailable we fall back to the DOM count on an exponential decay
 // (100 × 0.9^count), which also never dead-zones at 0 the way the old
 // `100 − 10 × count` floor did.
-const evaluateRenderBlocking = async (page, audits) => {
-  const domBlocking = await page.evaluate(() => {
+// Split in two halves on purpose. The DOM half needs the live page; the scoring half
+// needs Lighthouse's numbers, which can take anywhere from 30s to over 150s to arrive
+// (measured on www.toyota.com, 2026-08-07 — five runs of the same URL spanned 29.6s to
+// >150s). Keeping them in one function meant Chromium had to stay open for the whole
+// PageSpeed wait just to score this one parameter, so a slow PSI call cost the audit
+// its browser slot. Now the page half runs early, the browser is released, and the
+// score is computed whenever PageSpeed lands. Scoring is byte-identical either way.
+const collectRenderBlockingDom = async (page) =>
+  page.evaluate(() => {
     const links = Array.from(document.querySelectorAll('head link[rel="stylesheet"]'));
     const scripts = Array.from(document.querySelectorAll('head script[src]'));
 
@@ -1227,6 +1234,10 @@ const evaluateRenderBlocking = async (page, audits) => {
     return [...blockingLinks, ...blockingScripts];
   });
 
+// Pure: takes the DOM scan collected earlier plus whatever PageSpeed returned (which
+// may be nothing — `audits` is {} when PSI failed, and the DOM fallback below is the
+// same one that has always covered that case).
+const scoreRenderBlocking = (domBlocking, audits) => {
   const lhAudit = audits?.["render-blocking-resources"];
   const lhItems = lhAudit?.details?.items || [];
   const blockingMs = typeof lhAudit?.numericValue === "number"
@@ -2400,11 +2411,36 @@ async function evaluateSoldVehicleHandling(url, pageType) {
 //     Mobile Usability, Inventory/Service page-load, Rendering/Lazy/Third-party/JS)
 //     are no longer computed or returned — they double-counted CWV or were retired.
 //   • §0.5 confidence flag surfaced per-CWV and as a section-level summary.
-export default async function technicalMetrics(url, device, page, response, browser, pageType = null, psiPrefetch = null, siteSubType = null, market = null) {
+export default async function technicalMetrics(url, device, page, response, browser, pageType = null, psiPrefetch = null, siteSubType = null, market = null, onPageReleased = null) {
 
   // Only call PageSpeed for the user-selected device strategy (1 API call, not 2).
   const wantDevice = String(device || "mobile").toLowerCase() === "desktop" ? "desktop" : "mobile";
 
+  // ── Phase 1: everything that needs the LIVE PAGE, before PageSpeed is awaited ──
+  //
+  // Ordering here is load-bearing, not cosmetic. These five checks used to run AFTER
+  // the PageSpeed await, which meant Chromium had to stay open for the entire PSI
+  // wait even though none of this needs PageSpeed. Measured on www.toyota.com
+  // (2026-08-07), five runs of the identical URL took 29.6s, 63.9s, 112.5s, and twice
+  // over 150s — so that hold is unpredictable as well as long, and it is the reason a
+  // slow PageSpeed call used to cost the audit a browser slot rather than just a
+  // metric. Running them first lets the worker release the browser (see
+  // `onPageReleased` below) and wait for PageSpeed with nothing expensive held.
+  const compression = await evaluateCompression(page);
+  const caching = await evaluateCaching(page);
+  const resourceOptimization = await evaluateResourceOptimization(page);
+  const redirect = evaluateRedirectChains(response);
+  // Only the DOM scan needs the page; its scoring happens in phase 2 once Lighthouse's
+  // measured milliseconds are (or are not) available.
+  const renderBlockingDom = await collectRenderBlockingDom(page);
+
+  // The page is no longer needed. Telling the worker now is what actually frees the
+  // browser slot — without this the release would still be gated on PageSpeed.
+  // Guarded because a throwing callback here must never fail the pillar.
+  try { onPageReleased?.(); } catch { /* never let the caller's hook break Technical */ }
+
+  // ── Phase 2: PageSpeed, and everything derived from it ──
+  //
   // [PERF] PageSpeed needs nothing but the URL, yet this pillar only starts after the
   // browser has launched, rendered and cleared bot protection. The worker can therefore
   // fire the call up-front and hand us the in-flight promise (see auditOnePage), which
@@ -2468,11 +2504,11 @@ export default async function technicalMetrics(url, device, page, response, brow
   const inpCrux = evaluateINPCrux(audits, cruxMetrics);
   const tbt = labOrNA(() => evaluateTBT(audits));
   const si = labOrNA(() => evaluateSI(audits));
-  const compression = await evaluateCompression(page);
-  const caching = await evaluateCaching(page);
-  const resourceOptimization = await evaluateResourceOptimization(page);
-  const renderBlocking = await evaluateRenderBlocking(page, audits);
-  const redirect = evaluateRedirectChains(response);
+  // compression / caching / resourceOptimization / redirect were all computed in
+  // phase 1, before the PageSpeed await — see the ordering note at the top of this
+  // function. Only the render-blocking SCORE waits for Lighthouse, and it degrades to
+  // the DOM count exactly as before when PageSpeed returned nothing.
+  const renderBlocking = scoreRenderBlocking(renderBlockingDom, audits);
 
   const getScore = (metric) => metric?.score || 0;
 

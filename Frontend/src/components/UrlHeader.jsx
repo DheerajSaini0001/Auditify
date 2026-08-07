@@ -91,8 +91,9 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
   // suffix on their URL — strip it for both display and the outbound link.
   const realUrl = (data?.url || '').replace(/#merged-[a-f0-9]+$/i, '');
   const displayUrl = realUrl ? realUrl.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '') : "Analyzing...";
-  // The COMPLETE url is always shown (no "…" truncation) — the font just steps
-  // down as the url gets longer, and break-all wraps whatever still overflows.
+  // The url always renders on ONE line. The font steps down as it gets longer so
+  // more of it fits before anything has to be cut; whatever still overflows ends
+  // in an ellipsis, with the complete url kept in the title tooltip and the href.
   const urlFontClass =
     displayUrl.length <= 45 ? 'text-2xl md:text-3xl'
       : displayUrl.length <= 80 ? 'text-xl md:text-2xl'
@@ -123,17 +124,17 @@ export default function UrlHeader({ data, darkMode, sectionName, sectionData, au
             <Globe className={`w-3.5 h-3.5 ${darkMode ? "text-slate-200" : "text-muted"}`} />
             <span className={`text-xs font-semibold uppercase tracking-widest ${darkMode ? "text-slate-200" : "text-muted"}`}>Audit Report For</span>
           </div>
-          <div className="flex items-start gap-3 group min-w-0 w-full">
+          <div className="flex items-center gap-3 group min-w-0 w-full">
             <a
               href={realUrl || "#"}
               target="_blank"
               rel="noopener noreferrer"
-              className={`${urlFontClass} font-semibold whitespace-normal break-all leading-snug hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
+              className={`${urlFontClass} font-semibold truncate min-w-0 leading-snug hover:underline underline-offset-4 decoration-2 decoration-transparent hover:decoration-current transition-all ${darkMode ? "text-white" : "text-ink"}`}
               title={realUrl || ""}
             >
               {displayUrl}
             </a>
-            <ExternalLink className="w-5 h-5 mt-1.5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+            <ExternalLink className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity flex-shrink-0" />
           </div>
           {pageTypeLabel && (
             <div className={`text-sm font-medium ${darkMode ? "text-slate-400" : "text-muted"}`}>

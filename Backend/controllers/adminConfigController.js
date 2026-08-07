@@ -3,6 +3,7 @@ import ConfigAuditLog from '../models/ConfigAuditLog.js';
 import ConfigVersion from '../models/ConfigVersion.js';
 import { encrypt, decrypt } from '../utils/encrypt.js';
 import configService from '../services/configService.js';
+import sendEmail, { verifyEmailTransport, missingEmailSettings, describeSmtpError } from '../utils/sendEmail.js';
 
 // ── Helpers ────────────────────────────────────────────────────────────
 
@@ -93,7 +94,17 @@ export const updateConfig = async (req, res) => {
     let config = await PlatformConfig.findOne({ key: key.toUpperCase() });
     const isCreate = !config;
     const oldValue = config ? decrypt(config.value) : null;
-    const encryptedValue = encrypt(value);
+
+    // Encrypt ONLY what is marked sensitive, because that is the exact condition
+    // the read path uses to decide whether to decrypt (ConfigService.refreshCache /
+    // .get). This used to encrypt unconditionally: a value saved with the
+    // sensitivity toggle OFF was written as ciphertext and then read back WITHOUT
+    // being decrypted, so `getConfig("SMTP_HOST")` returned "1a2b…:9f8e…:cc11…"
+    // instead of a hostname. It stayed invisible because the write also warms the
+    // cache with the plaintext below — the corruption only surfaced on the next
+    // restart or cache refresh, long after anyone connected it to this screen.
+    const willBeSecret = isSensitive !== undefined ? !!isSensitive : (config ? config.isSecret : true);
+    const storedValue = willBeSecret ? encrypt(value) : value;
     const newVersion = config ? (config.version || 0) + 1 : 1;
 
     if (config) {
@@ -106,7 +117,7 @@ export const updateConfig = async (req, res) => {
         changedBy: req.user._id
       });
 
-      config.value = encryptedValue;
+      config.value = storedValue;
       config.version = newVersion;
       if (description !== undefined) config.label = description; // Map description to label
       if (isSensitive !== undefined) config.isSecret = isSensitive; // Map isSensitive to isSecret
@@ -115,9 +126,9 @@ export const updateConfig = async (req, res) => {
     } else {
       config = new PlatformConfig({
         key: key.toUpperCase(),
-        value: encryptedValue,
+        value: storedValue,
         label: description || key,
-        isSecret: isSensitive !== undefined ? isSensitive : true,
+        isSecret: willBeSecret,
         group: category || 'general',
         version: 1,
         updatedBy: req.user._id
@@ -360,7 +371,9 @@ export const bulkImport = async (req, res) => {
 
         const upperKey = item.key.toUpperCase();
         let config = await PlatformConfig.findOne({ key: upperKey });
-        const encryptedValue = encrypt(item.value);
+        // Same rule as updateConfig: encrypt only what the read path will decrypt.
+        const willBeSecret = item.isSensitive !== undefined ? !!item.isSensitive : (config ? config.isSecret : true);
+        const storedValue = willBeSecret ? encrypt(item.value) : item.value;
         const newVersion = config ? (config.version || 0) + 1 : 1;
 
         if (config) {
@@ -374,7 +387,7 @@ export const bulkImport = async (req, res) => {
             changeReason: 'Bulk import'
           });
 
-          config.value = encryptedValue;
+          config.value = storedValue;
           config.version = newVersion;
           if (item.description !== undefined) config.label = item.description;
           if (item.isSensitive !== undefined) config.isSecret = item.isSensitive;
@@ -384,9 +397,9 @@ export const bulkImport = async (req, res) => {
         } else {
           config = await PlatformConfig.create({
             key: upperKey,
-            value: encryptedValue,
+            value: storedValue,
             label: item.description || upperKey,
-            isSecret: item.isSensitive !== undefined ? item.isSensitive : true,
+            isSecret: willBeSecret,
             group: item.category || 'general',
             version: 1,
             updatedBy: req.user._id
@@ -412,5 +425,105 @@ export const bulkImport = async (req, res) => {
     res.json({ success: true, results });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ── POST /test-email  —  Prove mail actually leaves THIS environment ────────
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Send one real email through the live SMTP settings and report exactly what happened.
+ *
+ * The audit-completion mail, the signup OTP and the password reset all share one
+ * transport, and all three swallow their own failures on purpose — a dead relay must
+ * not take an audit or a signup down with it. The cost of that is a misconfigured
+ * SMTP staying invisible until a user reports a mail that never arrived, days later,
+ * with nothing left to diagnose it from. This is the on-demand answer to "does mail
+ * work right now, from this environment?", and it deliberately returns the REAL SMTP
+ * error instead of a generic failure, because the error IS the diagnosis: a missing
+ * key, a rejected App Password and a blocked outbound port all look identical from
+ * the outside and need three completely different fixes.
+ *
+ * Super-admin only (enforced by the router) — it names the relay and the sender
+ * account, and it can put mail in someone's inbox.
+ */
+export const testEmail = async (req, res) => {
+  const to = String(req.body?.to || req.user?.email || '').trim().toLowerCase();
+
+  if (!EMAIL_RE.test(to)) {
+    return res.status(400).json({ success: false, message: 'A valid "to" address is required' });
+  }
+
+  // Checked before the transport is touched: "nobody ever set SMTP_USER here" is a
+  // different problem from "the relay refused us", and only one of them is fixed in
+  // the config UI. In the container there is no .env, so these come from the App
+  // Service application settings or from this very screen.
+  const missing = missingEmailSettings();
+  if (missing.length) {
+    return res.status(400).json({
+      success: false,
+      stage: 'config',
+      message: `SMTP is not configured — missing ${missing.join(', ')}. Set them as App Service application settings, or here in Admin → Config.`,
+      missing
+    });
+  }
+
+  try {
+    // Two separate stages, reported separately. verify() proves the relay is
+    // reachable and the credentials are accepted; the send proves the envelope
+    // (EMAIL_FROM in particular) is one the relay will actually carry. A provider
+    // that authenticates fine but rejects a From: it doesn't own fails only the
+    // second — and that is precisely the failure that looks like "nothing happened".
+    const verification = await verifyEmailTransport();
+    if (!verification.ok) {
+      return res.status(502).json({
+        success: false,
+        stage: 'verify',
+        message: verification.error,
+        smtp: {
+          host: verification.host,
+          port: verification.port,
+          user: verification.user,
+          // The address mail actually goes out under, plus the configured value when
+          // the two differ — an admin who sets EMAIL_FROM to an unowned domain needs
+          // to see that it was overridden, not a green tick against the value they typed.
+          from: verification.from,
+          configuredFrom: verification.configuredFrom,
+          fromRewritten: verification.fromRewritten
+        }
+      });
+    }
+
+    await sendEmail({
+      to,
+      subject: 'DealerSiteAudit — SMTP test',
+      html: `
+        <div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px 24px;color:#16213E;">
+          <h1 style="font-size:20px;font-weight:800;margin:0 0 16px;">Mail is working</h1>
+          <p style="font-size:15px;line-height:1.6;margin:0;">
+            This test was sent from <strong>${verification.host}:${verification.port}</strong>
+            as <strong>${verification.user}</strong>.
+            Audit-completion mail, signup OTPs and password resets all use this same route.
+          </p>
+        </div>
+      `
+    });
+
+    await ConfigAuditLog.create({
+      key: 'SYSTEM',
+      action: 'TEST_EMAIL',
+      updatedBy: req.user._id,
+      ...getClientInfo(req),
+      metadata: { to, host: verification.host, port: verification.port }
+    });
+
+    res.json({
+      success: true,
+      message: `Test email sent to ${to}`,
+      smtp: { host: verification.host, port: verification.port, user: verification.user, from: verification.from }
+    });
+  } catch (err) {
+    res.status(502).json({ success: false, stage: 'send', message: describeSmtpError(err) });
   }
 };

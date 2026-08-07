@@ -5,7 +5,8 @@ import { ThemeContext } from '../context/ThemeContext.jsx';
 import { useData } from '../context/DataContext.jsx';
 import { scoreBand, scoreBandHex } from '../utils/statusColors.js';
 import { trackEvent } from '../utils/tracking.js';
-import { PAGE_TYPES, DEFAULT_PAGE_SCOPES } from '../config/pageTypes';
+import { DEFAULT_PAGE_SCOPES } from '../config/pageTypes';
+import { COUNTRIES, DEFAULT_COUNTRY } from '../config/countries';
 import {
   Plus,
   Globe,
@@ -17,7 +18,6 @@ import {
   FileText,
   Download,
   ShieldCheck,
-  Check,
   LogOut,
   RefreshCw,
   Zap,
@@ -30,6 +30,8 @@ import {
   Lock,
   ChevronDown,
   Languages,
+  MapPin,
+  ListChecks,
   HelpCircle,
   ChevronRight,
   Sparkles,
@@ -324,7 +326,16 @@ const DashboardPage = () => {
           if (result?.success === false) {
             toast.error(result.error || 'Audit failed. Please try again.');
           } else if (result?.id) {
-            toast.success("Audit complete!");
+            // runAudit resolves when the run STARTS. Saying "complete" here
+            // announced a finished audit seconds after it was submitted — and the
+            // report page then announced the real completion minutes later. Only a
+            // cache/dedup hit comes back already finished, and `status` is how we
+            // know which of the two this was.
+            toast.success(
+              result.status === 'success'
+                ? "Report ready — opening it now."
+                : "Audit started! Opening report…"
+            );
             // Refresh dashboard data to update the card immediately!
             await refresh(true);
             // Navigate to the report
@@ -552,35 +563,33 @@ const DashboardPage = () => {
   const [directUrl, setDirectUrl] = useState("");
   const [directAuditing, setDirectAuditing] = useState(false);
 
-  // New parameters for device and audit type. Desktop matches the default on the
-  // home-page audit form, so the same URL run from either entry point behaves the
-  // same way. Users can still switch to Mobile from the dropdown.
-  const [directDevice, setDirectDevice] = useState("Desktop");
-  const [directReport, setDirectReport] = useState("All");
-  const [deviceOpen, setDeviceOpen] = useState(false);
-  const [reportOpen, setReportOpen] = useState(false);
-  // Which page types this audit crawls. Defaults to just the URL typed in — the
-  // same default the home-page form uses, so the two entry points agree.
-  const [directScopes, setDirectScopes] = useState(DEFAULT_PAGE_SCOPES);
+  // Two questions and a button — the same pair the home-page form asks, in the same
+  // words, so a URL run from either surface means the same thing.
+  //
+  // The device and section pickers that used to sit here are gone. They only ever
+  // offered ways to ask for LESS than the full check (one pillar, mobile-only), and
+  // they made the bar read as a settings panel rather than a search box. Their
+  // values are still sent, fixed at what the home page sends: Desktop, all eight
+  // sections. The multi-select page-type picker is gone for a second reason — the
+  // site type is not known until the backend detects it on submit, so any page-type
+  // list rendered here is a guess, and ticking a key the detected taxonomy cannot
+  // produce silently audited nothing.
+  const [directCountry, setDirectCountry] = useState(DEFAULT_COUNTRY);
+  const [directScope, setDirectScope] = useState('page');   // 'page' | 'site'
+  const [countryOpen, setCountryOpen] = useState(false);
   const [scopeOpen, setScopeOpen] = useState(false);
 
+  const fullSiteRun = directScope === 'site';
+
+  const scopeOptions = [
+    { value: 'page', label: 'This page only' },
+    { value: 'site', label: 'Full website audit' },
+  ];
+
   const closeAllDropdowns = () => {
-    setDeviceOpen(false);
-    setReportOpen(false);
+    setCountryOpen(false);
     setScopeOpen(false);
   };
-
-  const toggleDirectScope = (key) =>
-    setDirectScopes((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
-
-  // Mirrors the wording on the home-page form so the same selection reads the same
-  // way in both places.
-  const directScopeLabel = (() => {
-    if (directScopes.length === 0) return 'No pages';
-    if (directScopes.length === PAGE_TYPES.length) return 'All pages';
-    if (directScopes.length === 1 && directScopes[0] === 'home') return 'This page only';
-    return `${directScopes.length} pages`;
-  })();
 
   // Close any open dropdown when clicking outside it. Each dropdown wrapper carries a
   // data-dropdown="<id>" marker; a mousedown anywhere closes every dropdown except the
@@ -590,8 +599,8 @@ const DashboardPage = () => {
     const handleOutsideClick = (e) => {
       const clickedId = e.target.closest('[data-dropdown]')?.getAttribute('data-dropdown');
       const setters = {
-        device: setDeviceOpen,
-        report: setReportOpen,
+        country: setCountryOpen,
+        scope: setScopeOpen,
         time: setTimeDropdownOpen,
         sort: setSortDropdownOpen,
       };
@@ -602,18 +611,6 @@ const DashboardPage = () => {
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
-
-  const reportOptions = [
-    { value: "All", label: "Full Audit" },
-    { value: "Technical Performance", label: "Technical Performance" },
-    { value: "On Page SEO", label: "On Page SEO" },
-    { value: "Accessibility", label: "Accessibility" },
-    { value: "Security/Compliance", label: "Security & Compliance" },
-    { value: "UX & Content Structure", label: "UX & Content" },
-    { value: "Conversion & Lead Flow", label: "Conversion & Lead Flow" },
-    { value: "AIO (AI-Optimization) Readiness", label: "AIO Readiness" },
-    { value: "AEO (Answer Engine Optimization)", label: "AEO (Answer Engine)" }
-  ];
 
   const handleDirectAudit = async (e) => {
     if (e) e.preventDefault();
@@ -631,13 +628,25 @@ const DashboardPage = () => {
     }
 
     setDirectAuditing(true);
-    toast.loading(`Starting audit for ${targetUrl}...`, { id: 'direct-audit-toast' });
+    // A one-page run finishes while they watch; a crawl outlives their patience, so
+    // say so up front and name the address it will reach them at. Signed-in runs
+    // always carry one (notifyEmailForRun), so this is a promise we can keep.
+    toast.loading(
+      fullSiteRun
+        ? `Starting full website audit for ${targetUrl}. This takes a few minutes — we'll email ${notifyEmailForRun || 'you'} when it's ready.`
+        : `Starting audit for ${targetUrl}...`,
+      { id: 'direct-audit-toast' }
+    );
 
     try {
-      // Whatever the page-scope dropdown has selected. This used to pass null, which
-      // the API reads as "every page type", so the quick-audit bar silently ran a far
-      // heavier crawl than the home-page form.
-      const result = await runAudit(targetUrl, directDevice, directReport, false, directScopes, notifyEmailForRun);
+      // ["home"] restricts the run to the single URL that was typed. null sends NO
+      // restriction, which is what lets the worker discover key pages against
+      // whichever taxonomy it detects — sending a list of page-type keys instead
+      // would filter Stage 2 against a taxonomy the site may not use, and audit
+      // nothing. Same rule as the home-page form.
+      const scopesToSend = fullSiteRun ? null : DEFAULT_PAGE_SCOPES;
+
+      const result = await runAudit(targetUrl, 'Desktop', 'All', false, scopesToSend, notifyEmailForRun, directCountry);
       toast.dismiss('direct-audit-toast');
 
       if (result?.success === false) {
@@ -646,7 +655,18 @@ const DashboardPage = () => {
       }
 
       if (result?.id) {
-        toast.success("Audit complete! Opening report...");
+        // runAudit resolves when the run STARTS, not when it finishes — the report
+        // page polls from there. Saying "complete" was always a half-truth; with a
+        // full-site crawl behind the same button it would be a flat lie. The one
+        // case that IS already finished is a cache/dedup hit, which comes back
+        // "success" — say so rather than promising a run that never started.
+        toast.success(
+          result.status === 'success'
+            ? "Report ready — opening it now."
+            : fullSiteRun
+              ? "Audit started — you can close this tab, we'll email the report."
+              : "Audit started! Opening report…"
+        );
         navigate(`/report/${result.id}`);
       }
     } catch (err) {
@@ -947,60 +967,72 @@ const DashboardPage = () => {
             />
           </form>
 
-          {/* 3. Device Selector Dropdown */}
-          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="device">
+          {/* 2. Country — the market this run is scored against. Not cosmetic: it
+              is part of the audit's identity, so the US and AU reports for one URL
+              are separate runs graded against different reference packs. */}
+          <div className="relative shrink-0 flex-1 xl:flex-none xl:w-48" data-dropdown="country">
             <button
               onClick={() => {
-                const state = !deviceOpen;
+                const state = !countryOpen;
                 closeAllDropdowns();
-                setDeviceOpen(state);
+                setCountryOpen(state);
               }}
               className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-surface-2 hover:bg-cardsoft text-inksoft border border-line'
                 }`}
             >
-              <span className="truncate">{directDevice}</span>
-              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${deviceOpen ? 'rotate-180' : ''}`} />
+              <span className="flex items-center gap-2 min-w-0">
+                <MapPin size={14} className="opacity-70 shrink-0" />
+                <span className="truncate">
+                  {COUNTRIES.find(c => c.code === directCountry)?.name || directCountry}
+                </span>
+              </span>
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${countryOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {deviceOpen && (
-              <div className={`absolute top-full left-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-36 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                {["Desktop", "Mobile"].map(d => (
+            {countryOpen && (
+              <div className={`absolute top-full left-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-48 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
+                {COUNTRIES.map(c => (
                   <button
-                    key={d}
-                    onClick={() => { setDirectDevice(d); setDeviceOpen(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${directDevice === d ? (darkMode ? 'bg-slate-750 text-white' : 'bg-surface-2 text-ink') : ''}`}
+                    key={c.code}
+                    onClick={() => { setDirectCountry(c.code); setCountryOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${directCountry === c.code ? (darkMode ? 'bg-slate-750 text-white' : 'bg-surface-2 text-ink') : ''}`}
                   >
-                    {d}
+                    {c.name}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* 4. Audit Category Selector Dropdown */}
-          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="report">
+          {/* 3. Scope — one binary, the same one the home page asks: the page you
+              typed (finishes while you wait) or the whole site (a crawl we email
+              you about). */}
+          <div className="relative shrink-0 flex-1 xl:flex-none xl:w-52" data-dropdown="scope">
             <button
               onClick={() => {
-                const state = !reportOpen;
+                const state = !scopeOpen;
                 closeAllDropdowns();
-                setReportOpen(state);
+                setScopeOpen(state);
               }}
               className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-surface-2 hover:bg-cardsoft text-inksoft border border-line'
                 }`}
             >
-              <span className="truncate">
-                {reportOptions.find(opt => opt.value === directReport)?.label || directReport}
+              <span className="flex items-center gap-2 min-w-0">
+                <ListChecks size={14} className="opacity-70 shrink-0" />
+                <span className="truncate">
+                  {scopeOptions.find(o => o.value === directScope)?.label}
+                </span>
               </span>
-              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${reportOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
             </button>
 
-            {reportOpen && (
+            {scopeOpen && (
               <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-56 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                {reportOptions.map(opt => (
+                {scopeOptions.map(opt => (
                   <button
                     key={opt.value}
-                    onClick={() => { setDirectReport(opt.value); setReportOpen(false); }}
-                    className={`w-full text-left px-4 py-2 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${directReport === opt.value ? (darkMode ? 'bg-slate-750 text-white' : 'bg-surface-2 text-ink') : ''}`}
+                    onClick={() => { setDirectScope(opt.value); setScopeOpen(false); }}
+                    className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${directScope === opt.value ? (darkMode ? 'bg-slate-750 text-white' : 'bg-surface-2 text-ink') : ''}`}
                   >
                     {opt.label}
                   </button>
@@ -1009,59 +1041,9 @@ const DashboardPage = () => {
             )}
           </div>
 
-          {/* 5. Page-scope picker — which page types the crawl covers.
-              An earlier picker here offered a single option ("Homepage (Fast)") and
-              its value was never sent with the request; this one is multi-select and
-              its keys go to the API. Defaults to the entered page only. */}
-          <div className="relative shrink-0 flex-1 xl:flex-none" data-dropdown="scope">
-            <button
-              onClick={() => {
-                const state = !scopeOpen;
-                closeAllDropdowns();
-                setScopeOpen(state);
-              }}
-              className={`w-full h-11 px-4 flex items-center justify-between gap-2 text-xs font-semibold transition-all duration-300 rounded-xl select-none ${darkMode ? 'bg-slate-850 hover:bg-slate-800 text-slate-200 border-none' : 'bg-surface-2 hover:bg-cardsoft text-inksoft border border-line'}`}
-            >
-              <span className="truncate">{directScopeLabel}</span>
-              <ChevronDown size={14} className={`opacity-80 shrink-0 transition-transform ${scopeOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {scopeOpen && (
-              <div className={`absolute top-full right-0 mt-1.5 rounded-xl shadow-xl z-50 py-1 w-64 border animate-in fade-in slide-in-from-top-1 duration-150 transition-colors duration-300 ${darkMode ? 'bg-slate-800 border-slate-700' : 'bg-card border-line'}`}>
-                <button
-                  onClick={() =>
-                    setDirectScopes(
-                      directScopes.length === PAGE_TYPES.length ? [] : PAGE_TYPES.map((p) => p.key)
-                    )
-                  }
-                  className={`w-full flex items-center justify-between px-4 py-2 text-[10px] font-bold uppercase tracking-wider transition-colors duration-250 text-accent ${darkMode ? 'hover:bg-slate-700' : 'hover:bg-surface-2'}`}
-                >
-                  <span>{directScopes.length === PAGE_TYPES.length ? 'Clear all' : 'Select all'}</span>
-                  <span>{directScopes.length}/{PAGE_TYPES.length}</span>
-                </button>
-
-                <div className="max-h-64 overflow-y-auto">
-                  {PAGE_TYPES.map((pt) => {
-                    const on = directScopes.includes(pt.key);
-                    return (
-                      <button
-                        key={pt.key}
-                        onClick={() => toggleDirectScope(pt.key)}
-                        className={`w-full text-left px-4 py-2 text-xs font-semibold flex items-center gap-2.5 transition-colors duration-250 ${darkMode ? 'hover:bg-slate-700 text-slate-300' : 'hover:bg-surface-2 text-inksoft'} ${on ? (darkMode ? 'text-white' : 'text-ink') : ''}`}
-                      >
-                        <span className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${on ? 'bg-accent border-accent' : (darkMode ? 'border-slate-600' : 'border-line')}`}>
-                          {on && <Check size={11} className="text-white" strokeWidth={3} />}
-                        </span>
-                        <span className="truncate">{pt.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Audit Submit Button */}
+          {/* Audit Submit Button. The label follows the scope — a button that says
+              "Run audit" while the picker says "Full website audit" is a promise it
+              will not keep. */}
           <button
             onClick={handleDirectAudit}
             disabled={directAuditing}
@@ -1075,7 +1057,7 @@ const DashboardPage = () => {
             ) : (
               <>
                 <Search size={16} />
-                <span>Run audit</span>
+                <span>{fullSiteRun ? 'Run full audit' : 'Run audit'}</span>
               </>
             )}
           </button>

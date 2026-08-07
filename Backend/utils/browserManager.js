@@ -73,9 +73,10 @@ const MAX_CONCURRENT_BROWSERS = Math.max(
 // A permit held longer than this is presumed leaked (crashed holder, lost
 // release) and reclaimed by the watchdog. Set well above a normal hold: a full
 // render holds its browser for navigation/challenge (~35-60s) PLUS the longest
-// pillar — Technical Performance waits on Google PageSpeed (~50-75s, capped at
-// PILLAR_TECH_TIMEOUT_MS=120s). So a legitimate audit can hold ~150-180s; 300s
-// leaves margin above that and still trips only on genuine zombies.
+// pillar. Every pillar is now capped at 150s (see singleAuditWorker's timeout
+// block) but they run CONCURRENTLY, so the hold is still one pillar's worth, not
+// the sum — a legitimate audit holds ~185-210s. 300s leaves margin above that and
+// still trips only on genuine zombies.
 const SLOT_MAX_HOLD_MS = parseInt(process.env.BROWSER_SLOT_MAX_HOLD_MS || "300000", 10);
 // How often the watchdog reclaims leaked slots and emits a monitoring heartbeat.
 const WATCHDOG_INTERVAL_MS = parseInt(process.env.BROWSER_POOL_WATCHDOG_MS || "15000", 10);

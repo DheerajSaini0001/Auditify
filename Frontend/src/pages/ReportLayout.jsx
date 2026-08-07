@@ -307,7 +307,14 @@ const ReportLayout = () => {
       {/* Progress, ETA and — for a multi-page run — permission to walk away.
           Renders itself to null once the audit reaches a terminal state, so a
           finished report shows nothing extra. */}
-      {id && data?.status !== "completed" && data?.status !== "failed" && (
+      {/* `data.status` is the NORMALIZED status (pending | success | failed) — a
+          finished report reads "success", never the raw "completed". Excluding
+          "completed" therefore excluded nothing, so this panel mounted on top of
+          every FINISHED report too: it polled once, saw a terminal status and
+          fired "your audit has been completed successfully" at someone who was
+          just re-opening an old report — plus a pointless full refetch. Gate on
+          the only non-terminal value instead. */}
+      {id && data?.status === "pending" && (
         <div className="px-4 sm:px-6 lg:px-8 pt-6 max-w-[1600px] mx-auto w-full">
           <AuditProgressPanel
             reportId={id}

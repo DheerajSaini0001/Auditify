@@ -44,17 +44,32 @@ export const encrypt = (text) => {
 };
 
 /**
- * Decrypts text using AES-256-GCM.
- * @param {string} encryptedText 
+ * What encrypt() above actually emits: `iv:data:tag` in hex, with a 12-byte IV
+ * (24 hex chars) and a 16-byte GCM tag (32 hex chars).
+ *
+ * Matched BEFORE attempting anything, because callers now run plaintext through
+ * here too — ConfigService decrypts every stored value rather than only the ones
+ * flagged secret, so that a row written encrypted-but-unflagged still comes back
+ * readable. Merely containing a colon is not ciphertext: without this test,
+ * "http://localhost:5173" and every mongodb:// URI hit the cipher, threw, and
+ * printed a stack trace on every single boot.
+ */
+const CIPHERTEXT_RE = /^[0-9a-f]{24}:[0-9a-f]+:[0-9a-f]{32}$/i;
+
+/**
+ * Decrypts text using AES-256-GCM. Anything that isn't this scheme's ciphertext is
+ * returned untouched, so it is safe to call on a value of unknown provenance.
+ * @param {string} encryptedText
  * @returns {string}
  */
 export const decrypt = (encryptedText) => {
-  if (!encryptedText || !encryptedText.includes(':')) return encryptedText;
+  if (!encryptedText || typeof encryptedText !== 'string') return encryptedText;
+  if (!CIPHERTEXT_RE.test(encryptedText)) return encryptedText;
   if (!ENCRYPTION_KEY) return encryptedText;
 
   try {
     const [ivHex, encrypted, authTagHex] = encryptedText.split(':');
-    
+
     if (!ivHex || !encrypted || !authTagHex) return encryptedText;
 
     const iv = Buffer.from(ivHex, 'hex');
@@ -72,8 +87,12 @@ export const decrypt = (encryptedText) => {
 
     return decrypted;
   } catch (error) {
-    console.error('Decryption error:', error);
-    // If decryption fails, it might not be encrypted or key is wrong
+    // The shape check above already ruled out "this was never encrypted", so
+    // reaching here means real ciphertext this process cannot open — almost always
+    // an ENCRYPTION_KEY that differs from the one it was written with. Returning
+    // the ciphertext keeps the caller alive, and this line is the only warning that
+    // whatever asked for the value is now holding garbage.
+    console.error(`Decryption failed — ENCRYPTION_KEY likely does not match the key this value was encrypted with: ${error.message}`);
     return encryptedText;
   }
 };

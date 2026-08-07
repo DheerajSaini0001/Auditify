@@ -144,7 +144,15 @@ export default async function googleAPI(url, device) {
   // Below this there isn't enough left for a PSI call to plausibly finish, so stop
   // rather than start an attempt we know we'll abort.
   const MIN_ATTEMPT_MS = 20000;
-  const ladderStart = Date.now();
+  // Stamped here but RE-stamped once the concurrency slot is actually held (below).
+  // The budget is meant to bound the PageSpeed ladder, not the wait for a free slot:
+  // charging queue time to it meant a call that waited 60s behind other PSI calls
+  // entered attempt 1 with 85s of its 145s already gone, and a site that legitimately
+  // needs ~115s of ladder (attempt 1's 45s probe + a ~70s second attempt — measured on
+  // rvcountry.com, 2026-08-07) was reported to the user as "PageSpeed returned no data
+  // for this URL" purely because other audits were ahead of it in the queue. The
+  // pillar timeout in singleAuditWorker stays the outer wall-clock bound.
+  let ladderStart = Date.now();
   const budgetLeft = () => TOTAL_BUDGET_MS - (Date.now() - ladderStart);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -161,6 +169,11 @@ export default async function googleAPI(url, device) {
   // The slot covers the WHOLE attempt ladder (not each attempt) so a retrying
   // call can't be interleaved with fresh callers and re-create the burst.
   await acquirePsiSlot(tag, url);
+  const queuedMs = Date.now() - ladderStart;
+  ladderStart = Date.now();
+  if (queuedMs > 1000) {
+    logger.info(`${tag} waited ${Math.round(queuedMs / 1000)}s for a PageSpeed slot — the ${Math.round(TOTAL_BUDGET_MS / 1000)}s budget starts now — ${url}`);
+  }
   try {
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const remaining = budgetLeft();

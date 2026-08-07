@@ -48,6 +48,22 @@ export default function Sidebar({ darkMode }) {
     return (i >= 0 && i + 1 < pages.length) ? pages[i + 1] : null;
   }, [batch, data?._id]);
 
+  // "Back to Summary" is addressed by the run's ROOT report, not by this tab's
+  // memory of it. That memory is empty whenever the report wasn't opened by the
+  // person who ran it — an admin opening an audit from Journeys gets a fresh tab —
+  // and the summary page then had nothing to render and bounced to the audit form,
+  // which read as the report closing itself. A child (key-page) report carries
+  // `parentReportId` back to the run that fanned it out; older reports predate that
+  // field, so the session batch and finally the report's own id stand in.
+  const summaryRootId = React.useMemo(() => {
+    if (!data?._id) return null;
+    if (data.parentReportId) return String(data.parentReportId);
+    if (batch?.rootId && (batch.pages || []).some((p) => String(p.id) === String(data._id))) {
+      return String(batch.rootId);
+    }
+    return String(data._id);
+  }, [data?._id, data?.parentReportId, batch]);
+
   const handleGoHome = () => {
     clearData();
     navigate("/", { replace: true });
@@ -253,7 +269,7 @@ export default function Sidebar({ darkMode }) {
       <div className={`p-3 border-t space-y-3 ${darkMode ? "border-slate-800 bg-[#0B1120]" : "border-linesoft bg-surface"}`}>
         {/* Back to Audit Summary */}
         <Link
-          to="/audit-summary"
+          to={summaryRootId ? `/audit-summary/${summaryRootId}` : "/audit-summary"}
           title="Back to multi-page audit summary"
           className={`group flex items-center gap-2 w-full px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-emerald-50 hover:text-emerald-700"}`}
         >

@@ -10,38 +10,23 @@ import {
   Unlock,
   Trash2,
   Search,
-  Filter,
   ShieldAlert,
   ShieldCheck,
   Zap,
   LayoutDashboard,
   ExternalLink,
   Bot,
-  Download,
   Settings,
-  Bell,
-  ChevronRight,
   ChevronDown,
-  MoreVertical,
   Globe,
   Plus,
   History,
   FileText,
   Star,
-  RefreshCw,
-  Clock,
-  LogOut,
   UserPlus,
   BarChart3,
   Calendar,
-  ArrowUpRight,
-  ArrowDownRight,
-  CheckCircle2,
-  AlertTriangle,
-  Info,
-  X,
-  Sun,
-  Moon
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -49,20 +34,6 @@ import { usePageSidebar } from '../context/PageSidebarContext.jsx';
 import AnalyticsTab from '../components/admin/AnalyticsTab.jsx';
 import JourneysTab from '../components/admin/JourneysTab.jsx';
 import ActivityTab from '../components/admin/ActivityTab.jsx';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line,
-  Cell,
-  AreaChart,
-  Area
-} from 'recharts';
 
 // --- Helper Components ---
 
@@ -103,25 +74,6 @@ const CircularProgress = ({ score, label, color, darkMode }) => {
     </div>
   );
 };
-
-const MiniStat = ({ label, value, trend, trendValue, icon: Icon, color, darkMode }) => (
-  <div className={`border rounded-2xl p-5 flex flex-col justify-between transition-all ${darkMode
-    ? 'bg-[#111111] border-white/5 shadow-xl'
-    : 'bg-card border-line shadow-sm'
-    }`}>
-    <div className="flex justify-between items-start">
-      <p className={`text-[10px] font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-500' : 'text-faint'}`}>{label}</p>
-      {Icon && <Icon size={16} className={darkMode ? 'text-gray-600' : 'text-faint'} />}
-    </div>
-    <div className="mt-2">
-      <h3 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-ink'}`}>{value}</h3>
-      <div className={`flex items-center gap-1 mt-1 text-[10px] font-semibold ${trend === 'up' ? 'text-emerald-500' : 'text-rose-500'}`}>
-        {trend === 'up' ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-        <span>{trendValue}</span>
-      </div>
-    </div>
-  </div>
-);
 
 
 const AdminDashboard = () => {
@@ -269,20 +221,10 @@ const AdminDashboard = () => {
   );
 
   const [stats, setStats] = useState({ totalUsers: 0, totalAudits: 0, totalDownloads: 0, totalProjects: 0, activeToday: 0, avgScore: 0 });
-  const [overviewData, setOverviewData] = useState(null);
-  const [overviewLoading, setOverviewLoading] = useState(true);
   const [users, setUsers] = useState([]);
-  const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'users', 'logs', 'settings'
+  const [activeTab, setActiveTab] = useState('analytics'); // 'analytics', 'journeys', 'users', 'User_Logs', 'settings'
   const [search, setSearch] = useState('');
-  const [countryFilter, setCountryFilter] = useState('');
-  // Audit date range (yyyy-mm-dd, straight from <input type="date">). Empty = no
-  // bound on that side, so you can ask for "everything since 1 Aug" as easily as
-  // a closed range.
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
-  const [exporting, setExporting] = useState(false);
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -293,7 +235,6 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchStats();
-    fetchOverviewStats();
   }, []);
 
   // Prevent body scroll when modal is open
@@ -317,14 +258,9 @@ const AdminDashboard = () => {
         fetchUsers();
       }, 500);
       return () => clearTimeout(delayDebounceFn);
-    } else if (activeTab === 'logs') {
-      const delayDebounceFn = setTimeout(() => {
-        fetchLogs();
-      }, 500);
-      return () => clearTimeout(delayDebounceFn);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab, search, countryFilter, dateFrom, dateTo, page]);
+  }, [activeTab, search, page]);
 
   const fetchStats = async () => {
     try {
@@ -332,19 +268,6 @@ const AdminDashboard = () => {
       setStats(response.data);
     } catch (err) {
       console.error('Stats Error:', err);
-    }
-  };
-
-  const fetchOverviewStats = async () => {
-    setOverviewLoading(true);
-    try {
-      const response = await api.get('/api/admin/overview-stats');
-      setOverviewData(response.data);
-    } catch (err) {
-      console.error('Overview Stats Error:', err);
-      toast.error('Failed to load dashboard overview');
-    } finally {
-      setOverviewLoading(false);
     }
   };
 
@@ -360,81 +283,6 @@ const AdminDashboard = () => {
       toast.error('Failed to load users');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Built once and reused by both the table and the CSV export, so the file can
-  // never come back with a different slice of data than the screen it was
-  // downloaded from.
-  const auditFilterParams = () => {
-    const params = new URLSearchParams();
-    if (search) params.set('search', search);
-    if (countryFilter) params.set('country', countryFilter);
-    if (dateFrom) params.set('from', dateFrom);
-    if (dateTo) params.set('to', dateTo);
-    return params;
-  };
-
-  const fetchLogs = async () => {
-    setLoading(true);
-    try {
-      const params = auditFilterParams();
-      params.set('page', page);
-      const response = await api.get(`/api/admin/audit-logs?${params.toString()}`);
-      const data = response.data;
-      setLogs(data.logs || []);
-      setTotalItems(data.total || 0);
-    } catch (err) {
-      console.error('Logs Error:', err);
-      toast.error('Failed to load website logs');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /**
-   * Download the currently filtered audits as CSV.
-   *
-   * Deliberately a raw fetch rather than the shared `api` helper: that helper
-   * parses every response as JSON, which would turn the CSV body into a parse
-   * failure. The blob + object-URL dance is what lets a fetch (which carries the
-   * bearer token) produce a file download — a plain <a href> could not
-   * authenticate.
-   */
-  const handleExportLogs = async () => {
-    setExporting(true);
-    try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:2000';
-      const token = localStorage.getItem('dealerpulse_token');
-      const res = await fetch(`${API_URL}/api/admin/audit-logs/export?${auditFilterParams().toString()}`, {
-        credentials: 'include',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || `Export failed (${res.status})`);
-      }
-
-      // Prefer the server's filename — it already encodes the date range.
-      const disposition = res.headers.get('Content-Disposition') || '';
-      const named = disposition.match(/filename="?([^"]+)"?/);
-      const blob = await res.blob();
-
-      const href = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = href;
-      a.download = named ? named[1] : 'audit-logs.csv';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(href);
-
-      toast.success('Export downloaded');
-    } catch (err) {
-      toast.error(err.message || 'Failed to export audits');
-    } finally {
-      setExporting(false);
     }
   };
 
@@ -555,33 +403,6 @@ const AdminDashboard = () => {
     </motion.div>
   );
 
-  const volumeData = overviewData?.volumeData || [];
-  const distributionData = overviewData?.distribution || { good: 0, average: 0, poor: 0 };
-  const deviceSplitData = overviewData?.deviceSplit || [];
-  const recentAudits = overviewData?.recentAudits || [];
-  // recentActivity was read here only for the old "Critical Issues Detected"
-  // panel. The Activity tab now fetches the full, filterable log itself.
-  const activeUsersData = overviewData?.activeUsers || [];
-  const countrySplitData = overviewData?.countrySplit || [];
-
-  const scoreTrendData = overviewData?.scoreTrend || [];
-
-  const failingMetrics = [
-    { name: 'LCP > 4s', count: 847, color: 'text-rose-500' },
-    { name: 'Missing H1', count: 612, color: 'text-orange-350' },
-    { name: 'No Schema.org', count: 534, color: 'text-amber-500' },
-    { name: 'No CSP header', count: 489, color: 'text-yellow-500' },
-    { name: 'Alt tags missing', count: 411, color: 'text-blue-500' },
-  ];
-
-  const criticalIssues = [
-    { id: 1, title: 'Missing SSL certificate on 3 sites', category: 'Security', level: 'critical' },
-    { id: 2, title: 'LCP > 4s on 847 audited pages', category: 'Performance', level: 'critical' },
-    { id: 3, title: 'Duplicate meta descriptions on 212 URLs', category: 'On-page SEO', level: 'warning' },
-    { id: 4, title: 'No structured data / Schema.org on 534 sites', category: 'AIO Readiness', level: 'warning' },
-    { id: 5, title: 'WCAG contrast failures (axe-core) on 178 sites', category: 'Accessibility', level: 'info' },
-  ];
-
   return (
     <div className={`w-full min-h-[calc(100vh-4rem)] flex flex-col md:flex-row font-sans transition-colors duration-300 ${darkMode ? 'bg-slate-950 text-slate-50 dark' : 'bg-surface text-ink'}`}>
 
@@ -635,12 +456,15 @@ const AdminDashboard = () => {
             <div className="flex items-center gap-4">
               {/* Tab Switcher */}
               <div className={`p-1 rounded-xl flex items-center gap-1 ${darkMode ? 'bg-white/5' : 'bg-cardsoft'}`}>
+                {/* Overview and Audits used to lead this row. Both were dropped:
+                    Overview's cards restated what Analytics already charts, and the
+                    Audits table showed the same rows — url, requestor, score,
+                    country, timestamp, CSV export — that Journeys already lists
+                    with session context attached. */}
                 {[
-                  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
                   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
                   { id: 'journeys', label: 'Journeys', icon: Activity },
                   { id: 'users', label: 'Users', icon: Users },
-                  { id: 'logs', label: 'Audits', icon: Globe },
                   { id: 'User_Logs', label: 'Activity', icon: History },
                 ].map(tab => (
                   <button
@@ -659,243 +483,11 @@ const AdminDashboard = () => {
 
               {/* A header "Export Report" button used to sit here on every tab. It had
                   no onClick — it exported nothing, from any tab. Export now lives in
-                  the Audits toolbar, next to the filters whose result it downloads. */}
+                  the Journeys toolbar, next to the filters whose result it downloads. */}
             </div>
           </header>
 
           <AnimatePresence mode="wait">
-            {activeTab === 'overview' && (
-              <motion.div
-                key="overview"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="space-y-6"
-              >
-                {/* Stats Grid */}
-                <div className="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 ">
-                  <MiniStat
-                    label="Total Audits"
-                    value={overviewLoading ? "..." : (overviewData?.stats?.totalAudits || 0).toLocaleString()}
-                    trend="up"
-                    trendValue="Live Data"
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Total Downloads"
-                    value={overviewLoading ? "..." : (overviewData?.stats?.totalDownloads || 0).toLocaleString()}
-                    trend="up"
-                    trendValue="Reports saved"
-                    icon={Download}
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Active Users"
-                    value={overviewLoading ? "..." : (overviewData?.stats?.totalUsers || 0).toLocaleString()}
-                    trend="up"
-                    trendValue="Registered"
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Guest Sessions"
-                    value={overviewLoading ? "..." : (overviewData?.stats?.totalGuests || 0).toLocaleString()}
-                    trend="up"
-                    trendValue="Unregistered users"
-                    icon={Bot}
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Active Today"
-                    value={overviewLoading ? "..." : (overviewData?.stats?.activeToday || 0).toLocaleString()}
-                    trend="up"
-                    trendValue="Active users"
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Avg Audit Time"
-                    value={overviewLoading ? "..." : `${overviewData?.stats?.avgDuration || 0}s`}
-                    trend="down"
-                    trendValue="Processing speed"
-                    icon={Clock}
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Failed Audits"
-                    value={overviewLoading ? "..." : `${overviewData?.stats?.failedRate || 0}%`}
-                    trend="up"
-                    trendValue="Failure rate"
-                    icon={ShieldAlert}
-                    darkMode={darkMode}
-                  />
-                  <MiniStat
-                    label="Audits Today"
-                    value={overviewLoading ? "..." : (overviewData?.stats?.auditsToday || 0).toLocaleString()}
-                    trend="up"
-                    trendValue="Today's activity"
-                    icon={Activity}
-                    darkMode={darkMode}
-                  />
-
-
-                </div>
-
-
-
-                {/* Charts Row */}
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                  <div className={`xl:col-span-2 border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Audit Volume — Last 14 Days</h3>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={volumeData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#222" vertical={false} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#666' }} />
-                          <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#666' }} />
-                          <Tooltip
-                            contentStyle={{ backgroundColor: '#111', border: '1px solid #333', fontSize: '10px' }}
-                            itemStyle={{ fontSize: '10px' }}
-                          />
-                          <Bar dataKey="completed" fill="#308D5C" radius={[4, 4, 0, 0]} barSize={20} />
-                          <Bar dataKey="failed" fill="#DA3D51" radius={[4, 4, 0, 0]} barSize={20} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Score Distribution</h3>
-                    {/* Distribution Placeholder */}
-                    <div className="space-y-4">
-                      {[
-                        { label: 'Good (80+)', count: distributionData.good, color: 'bg-emerald-500' },
-                        { label: 'Needs Improvement', count: distributionData.average, color: 'bg-amber-500' },
-                        { label: 'Poor (< 50)', count: distributionData.poor, color: 'bg-rose-500' },
-                        { label: 'Failed Audits', count: distributionData.failed || 0, color: 'bg-red-600' },
-                      ].map((item, i) => (
-                        <div key={i} className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${item.color}`} />
-                            <span className="text-xs text-gray-400">{item.label}</span>
-                          </div>
-                          <span className="text-xs font-semibold">{item.count}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Metrics & Trends Row */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Device Split</h3>
-                    <div className="mt-8 space-y-6">
-                      <div className={`h-2 w-full rounded-full overflow-hidden flex ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
-                        {deviceSplitData.map((d, idx) => {
-                          const total = deviceSplitData.reduce((acc, curr) => acc + curr.count, 0);
-                          const percentage = total > 0 ? (d.count / total) * 100 : 0;
-                          const colors = ['bg-emerald-500', 'bg-orange-350', 'bg-blue-500', 'bg-purple-500'];
-                          return (
-                            <div key={idx} className={`h-full ${colors[idx % colors.length]}`} style={{ width: `${percentage}%` }} />
-                          );
-                        })}
-                      </div>
-                      <div className="flex flex-wrap gap-4 justify-between">
-                        {deviceSplitData.map((d, idx) => {
-                          const total = deviceSplitData.reduce((acc, curr) => acc + curr.count, 0);
-                          const percentage = total > 0 ? Math.round((d.count / total) * 100) : 0;
-                          const colors = ['bg-emerald-500', 'bg-orange-350', 'bg-blue-500', 'bg-purple-500'];
-                          return (
-                            <div key={idx} className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${colors[idx % colors.length]}`} />
-                              <span className={`text-[10px] font-semibold ${darkMode ? 'text-gray-400' : 'text-muted'}`}>{percentage}% {d.name}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Top Audited Locations</h3>
-                    <div className="space-y-4 max-h-[160px] overflow-y-auto pr-2 custom-scrollbar">
-                      {countrySplitData.length === 0 ? (
-                        <div className="text-center py-8 text-[10px] text-gray-500">No location data available.</div>
-                      ) : countrySplitData.map((c, i) => (
-                        <div key={i} className="space-y-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className={`text-[10px] font-semibold ${darkMode ? 'text-white' : 'text-inksoft'}`}>{c.name}</span>
-                            <span className={`text-[10px] font-semibold ${darkMode ? 'text-gray-400' : 'text-muted'}`}>{c.count}</span>
-                          </div>
-                          <div className={`h-1.5 w-full rounded-full ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
-                            <div
-                              className="h-full bg-accent rounded-full"
-                              style={{
-                                width: `${(c.count / Math.max(...countrySplitData.map(x => x.count))) * 100}%`
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Score Trend (AVG)</h3>
-                    <div className="h-40">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={scoreTrendData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? "#222" : "#f1f5f9"} vertical={false} />
-                          <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: darkMode ? '#666' : '#94a3b8' }} />
-                          <YAxis yAxisId="left" hide />
-                          <YAxis yAxisId="right" hide />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: darkMode ? '#111' : '#fff',
-                              border: `1px solid ${darkMode ? '#333' : '#e2e8f0'}`,
-                              fontSize: '10px',
-                              color: darkMode ? '#fff' : '#303945'
-                            }}
-                          />
-                          <Line yAxisId="left" type="monotone" dataKey="score" name="Avg Score" stroke="#3F6A99" strokeWidth={3} dot={{ r: 4, fill: '#3F6A99' }} />
-                          <Line yAxisId="right" type="monotone" dataKey="count" name="Audits Run" stroke="#308D5C" strokeWidth={3} dot={{ r: 4, fill: '#308D5C' }} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Lists Row */}
-                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                  <div className={`border rounded-2xl p-6 ${darkMode ? 'bg-[#111111] border-white/5' : 'bg-card border-line shadow-sm'}`}>
-                    <h3 className={`text-[10px] font-semibold uppercase tracking-widest mb-6 ${darkMode ? 'text-gray-500' : 'text-muted'}`}>Recent Audits</h3>
-                    <div className="space-y-4">
-                      {recentAudits.length === 0 ? (
-                        <div className="text-center py-8 text-xs text-gray-500">No audits recorded yet.</div>
-                      ) : recentAudits.map((audit) => (
-                        <div key={audit._id} className={`flex items-center justify-between p-3 rounded-xl transition-all ${darkMode ? 'hover:bg-white/5' : 'hover:bg-cardsoft'}`}>
-                          <div className="flex items-center gap-4">
-                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-semibold ${audit.score >= 80 ? 'bg-emerald-500/10 text-emerald-500' : audit.score >= 50 ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'
-                              }`}>
-                              {audit.score || 'N/A'}
-                            </div>
-                            <div className="flex flex-col">
-                              <span className={`text-xs font-semibold truncate max-w-[200px] ${darkMode ? 'text-white' : 'text-inksoft'}`}>{audit.url}</span>
-                              <span className="text-[9px] text-gray-500 uppercase">{audit.device} Audit</span>
-                            </div>
-                          </div>
-                          <span className="text-[10px] text-gray-500">{new Date(audit.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-
-                </div>
-
-
-              </motion.div>
-            )}
-
             {activeTab === 'analytics' && (
               <motion.div
                 key="analytics"
@@ -920,10 +512,6 @@ const AdminDashboard = () => {
               </motion.div>
             )}
 
-            {/* Was a panel headed "Critical Issues Detected" that rendered the ten
-                most recent activity rows out of the overview payload — no filters,
-                no search, no paging, no export, and a title describing something it
-                did not show. Replaced by the real activity log + session list. */}
             {activeTab === 'User_Logs' && (
               <motion.div
                 key="User_Logs"
@@ -936,7 +524,7 @@ const AdminDashboard = () => {
               </motion.div>
             )}
 
-            {(activeTab === 'users' || activeTab === 'logs') && (
+            {activeTab === 'users' && (
               <motion.div
                 key="data-table"
                 initial={{ opacity: 0, y: 20 }}
@@ -950,71 +538,13 @@ const AdminDashboard = () => {
                     <Search className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={18} />
                     <input
                       type="text"
-                      placeholder={activeTab === 'users' ? "Search users by name, email..." : "Search audits by website URL..."}
+                      placeholder="Search users by name, email..."
                       className={`w-full pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-accent focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-surface-2 text-ink placeholder:text-faint'
                         }`}
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                     />
                   </div>
-                  {activeTab === 'logs' && (
-                    <>
-                      <div className="relative">
-                        <Filter className={`absolute left-4 top-1/2 -translate-y-1/2 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={18} />
-                        <input
-                          type="text"
-                          placeholder="Country Filter..."
-                          className={`pl-12 pr-4 py-3 border border-transparent rounded-xl focus:border-accent focus:outline-none transition-all ${darkMode ? 'bg-white/5 text-white placeholder:text-gray-600' : 'bg-surface-2 text-ink placeholder:text-faint'
-                            }`}
-                          value={countryFilter}
-                          onChange={(e) => setCountryFilter(e.target.value)}
-                        />
-                      </div>
-
-                      {/* Date range. Either side can be left blank — "since 1 Aug"
-                          and "up to 5 Aug" are both useful questions. */}
-                      <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
-                        <Calendar className={`shrink-0 ${darkMode ? 'text-gray-500' : 'text-muted'}`} size={16} />
-                        <input
-                          type="date"
-                          aria-label="Audits from"
-                          value={dateFrom}
-                          max={dateTo || undefined}
-                          onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
-                          className={`bg-transparent text-xs font-semibold outline-none ${darkMode ? 'text-white' : 'text-ink'}`}
-                        />
-                        <span className={`text-xs ${darkMode ? 'text-gray-500' : 'text-faint'}`}>to</span>
-                        <input
-                          type="date"
-                          aria-label="Audits to"
-                          value={dateTo}
-                          min={dateFrom || undefined}
-                          onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
-                          className={`bg-transparent text-xs font-semibold outline-none ${darkMode ? 'text-white' : 'text-ink'}`}
-                        />
-                        {(dateFrom || dateTo) && (
-                          <button
-                            onClick={() => { setDateFrom(''); setDateTo(''); setPage(1); }}
-                            title="Clear date range"
-                            className={`p-1 rounded-lg transition-colors ${darkMode ? 'text-gray-500 hover:text-white hover:bg-white/10' : 'text-faint hover:text-ink hover:bg-card'}`}
-                          >
-                            <X size={13} />
-                          </button>
-                        )}
-                      </div>
-
-                      <button
-                        onClick={handleExportLogs}
-                        disabled={exporting || totalItems === 0}
-                        title={totalItems === 0 ? 'Nothing to export for these filters' : 'Download these audits as CSV'}
-                        className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-semibold bg-accent hover:bg-accenthover text-white shadow-md shadow-accent/20 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
-                      >
-                        {exporting
-                          ? <><RefreshCw size={14} className="animate-spin" /> Exporting…</>
-                          : <><Download size={14} /> Export CSV ({totalItems})</>}
-                      </button>
-                    </>
-                  )}
                 </div>
 
                 {/* Data Table */}
@@ -1023,152 +553,104 @@ const AdminDashboard = () => {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className={`border-b text-[10px] uppercase tracking-[0.2em] font-black ${darkMode ? 'border-white/5 text-gray-500' : 'border-line text-faint'}`}>
-                          {activeTab === 'users' ? (
-                            <>
-                              <th className="px-8 py-6">User Identity</th>
-                              <th className="px-8 py-6">Status</th>
-                              <th className="px-8 py-6">Origin IP</th>
-                              <th className="px-8 py-6">Registration</th>
-                              <th className="px-8 py-6 text-right">Actions</th>
-                            </>
-                          ) : (
-                            <>
-                              <th className="px-8 py-6">Target Property</th>
-                              <th className="px-8 py-6">Requestor</th>
-                              <th className="px-8 py-6 text-center">Score</th>
-                              <th className="px-8 py-6 text-center">Country</th>
-                              <th className="px-8 py-6 text-right">Timestamp</th>
-                            </>
-                          )}
+                          <th className="px-8 py-6">User Identity</th>
+                          <th className="px-8 py-6">Status</th>
+                          <th className="px-8 py-6">Origin IP</th>
+                          <th className="px-8 py-6">Registration</th>
+                          <th className="px-8 py-6 text-right">Actions</th>
                         </tr>
                       </thead>
                       <tbody className={`divide-y ${darkMode ? 'divide-white/5' : 'divide-line'}`}>
                         {loading ? (
                           <tr>
-                            <td colSpan="6" className="px-8 py-14 text-center">
+                            <td colSpan="5" className="px-8 py-14 text-center">
                               <div className="flex flex-col items-center gap-4">
                                 <div className="w-12 h-12 border-4 border-accent border-t-transparent rounded-full animate-spin" />
                                 <p className="text-sm font-black animate-pulse text-gray-500 uppercase tracking-widest">Accessing Secure Records...</p>
                               </div>
                             </td>
                           </tr>
-                        ) : (activeTab === 'users' ? users : logs).length === 0 ? (
+                        ) : users.length === 0 ? (
                           <tr>
-                            <td colSpan="6" className="px-8 py-14 text-center">
+                            <td colSpan="5" className="px-8 py-14 text-center">
                               <div className="flex flex-col items-center gap-4 opacity-20">
                                 <ShieldAlert size={64} />
                                 <p className="text-xl font-black uppercase tracking-widest">No Records Found</p>
                               </div>
                             </td>
                           </tr>
-                        ) : (activeTab === 'users' ? users : logs).map((item) => (
+                        ) : users.map((item) => (
                           <tr
                             key={item._id}
-                            onClick={activeTab === 'users' ? () => handleUserClick(item) : undefined}
+                            onClick={() => handleUserClick(item)}
                             className={`transition-colors group cursor-pointer ${darkMode ? 'hover:bg-white/[0.03]' : 'hover:bg-cardsoft'}`}
                           >
-                            {activeTab === 'users' ? (
-                              <>
-                                <td className="px-8 py-5">
-                                  <div className="flex items-center gap-4">
-                                    <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black ${darkMode ? 'bg-gradient-to-br from-blue-600 to-indigo-600' : 'bg-accent'} shadow-lg shadow-blue-500/20 text-white`}>
-                                      {item.avatar ? <img src={item.avatar} alt="" className="w-10 h-10 rounded-2xl" /> : item.name.charAt(0)}
-                                    </div>
-                                    <div className="min-w-0">
-                                      <p className={`font-black text-sm truncate ${darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</p>
-                                      <p className={`text-[10px] font-semibold ${darkMode ? 'text-gray-500' : 'text-muted'}`}>{item.email}</p>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-8 py-5">
-                                  <div className="flex items-center gap-2">
-                                    <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${item.isBlocked ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
-                                      {item.isBlocked ? 'Suspended' : 'Verified'}
-                                    </span>
-                                    {/* Role is only worth a badge when it is elevated — plain users stay unlabelled. */}
-                                    {item.role === 'super_admin' ? (
-                                      <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-500 border border-purple-500/20">
-                                        Super Admin
-                                      </span>
-                                    ) : item.role === 'admin' ? (
-                                      <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">
-                                        Admin
-                                      </span>
-                                    ) : null}
-                                  </div>
-                                </td>
-                                <td className="px-8 py-5">
-                                  <div className="flex flex-col">
-                                    <span className={`text-[10px] font-mono font-black ${darkMode ? 'text-gray-300' : 'text-inksoft'}`}>{item.lastLoginIp || '0.0.0.0'}</span>
-                                    <span className="text-[9px] text-accent font-black uppercase tracking-widest">{item.lastLoginCountry || 'Unknown'}</span>
-                                  </div>
-                                </td>
-                                <td className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-tighter">{formatTimestamp(item.createdAt)}</td>
-                                <td className="px-8 py-5 text-right">
-                                  {/* Always visible. These used to be opacity-0 until the
-                                      row was hovered, which hid "Make admin" entirely on
-                                      touch devices — there is no hover to reveal it — and
-                                      made it easy to miss on desktop too. An action you
-                                      cannot find is an action you do not have. */}
-                                  <div className="flex justify-end gap-2">
-                                    {/* Appoint / remove admin — super-admins only. Hidden for other
-                                        super-admins and for your own row, mirroring the API's guards
-                                        so the UI never offers an action the server will reject. */}
-                                    {/* `user` carries _id after login but userId when rehydrated
-                                        from /api/auth/me (the JWT payload), so check both. */}
-                                    {user?.role === 'super_admin' && item.role !== 'super_admin' && item._id !== (user?._id || user?.userId) && (
-                                      <button
-                                        onClick={(e) => handleRoleChange(item, e)}
-                                        title={item.role === 'admin' ? 'Remove admin rights' : 'Make admin'}
-                                        className={`p-2.5 rounded-xl transition-colors ${item.role === 'admin'
-                                          ? 'text-purple-500 bg-purple-500/10 hover:bg-purple-500/20'
-                                          : 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20'}`}
-                                      >
-                                        {item.role === 'admin' ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
-                                      </button>
-                                    )}
-                                    {item.isBlocked ? (
-                                      <button onClick={(e) => handleUnblock(item._id, e)} className="p-2.5 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl transition-colors"><Unlock size={14} /></button>
-                                    ) : (
-                                      <button onClick={(e) => handleBlock(item._id, e)} disabled={item.role === 'admin'} title={item.role === 'admin' ? 'Remove admin rights before blocking' : 'Block user'} className="p-2.5 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><Lock size={14} /></button>
-                                    )}
-                                    <button onClick={(e) => handleDelete(item._id, e)} disabled={item.role === 'admin'} title={item.role === 'admin' ? 'Remove admin rights before deleting' : 'Delete user'} className="p-2.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><Trash2 size={14} /></button>
-                                  </div>
-                                </td>
-                              </>
-                            ) : (
-                              <>
-                                <td className="px-8 py-5">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`p-2.5 rounded-xl ${darkMode ? 'bg-white/5' : 'bg-surface-2'}`}>
-                                      <Globe size={14} className="text-accent" />
-                                    </div>
-                                    <div className="flex flex-col min-w-0">
-                                      <span className="font-black text-sm truncate max-w-[280px]">{item.url}</span>
-                                      <span className="text-[9px] opacity-40 uppercase font-black tracking-widest">{item.device} Audit</span>
-                                    </div>
-                                  </div>
-                                </td>
-                                <td className="px-8 py-5">
-                                  <p className="font-black text-xs">{item.userId?.email || item.guestEmail || 'Guest Session'}</p>
-                                  <p className="text-[9px] text-gray-500 font-mono font-semibold">{item.ip || '0.0.0.0'}</p>
-                                </td>
-                                <td className="px-8 py-5 text-center">
-                                  <div className={`inline-flex px-3 py-1.5 rounded-xl items-center justify-center font-black text-xs border ${item.status === 'pending' ? 'border-amber-500/20 text-amber-500 animate-pulse bg-amber-500/5' :
-                                    item.score >= 80 ? 'border-emerald-500/20 text-emerald-500 bg-emerald-500/5' :
-                                      item.score >= 50 ? 'border-amber-500/20 text-amber-500 bg-amber-500/5' : 'border-red-500/20 text-red-500 bg-red-500/5'
-                                    }`}>
-                                    {item.status === 'pending' ? 'PENDING' : (item.score !== null ? `${item.score}%` : 'N/A')}
-                                  </div>
-                                </td>
-                                <td className="px-8 py-5 text-center">
-                                  <span className="text-[9px] text-rose-500 font-black uppercase tracking-[0.15em] bg-rose-500/10 px-2.5 py-1.5 rounded-lg">{item.country || 'GLOBAL'}</span>
-                                </td>
-                                <td className="px-8 py-5 text-right">
-                                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-tighter">{formatTimestamp(item.createdAt)}</p>
-                                </td>
-                              </>
-                            )}
+                            <td className="px-8 py-5">
+                              <div className="flex items-center gap-4">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black ${darkMode ? 'bg-gradient-to-br from-blue-600 to-indigo-600' : 'bg-accent'} shadow-lg shadow-blue-500/20 text-white`}>
+                                  {item.avatar ? <img src={item.avatar} alt="" className="w-10 h-10 rounded-2xl" /> : item.name.charAt(0)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className={`font-black text-sm truncate ${darkMode ? 'text-white' : 'text-ink'}`}>{item.name}</p>
+                                  <p className={`text-[10px] font-semibold ${darkMode ? 'text-gray-500' : 'text-muted'}`}>{item.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${item.isBlocked ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'}`}>
+                                  {item.isBlocked ? 'Suspended' : 'Verified'}
+                                </span>
+                                {/* Role is only worth a badge when it is elevated — plain users stay unlabelled. */}
+                                {item.role === 'super_admin' ? (
+                                  <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-purple-500/10 text-purple-500 border border-purple-500/20">
+                                    Super Admin
+                                  </span>
+                                ) : item.role === 'admin' ? (
+                                  <span className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider bg-blue-500/10 text-blue-500 border border-blue-500/20">
+                                    Admin
+                                  </span>
+                                ) : null}
+                              </div>
+                            </td>
+                            <td className="px-8 py-5">
+                              <div className="flex flex-col">
+                                <span className={`text-[10px] font-mono font-black ${darkMode ? 'text-gray-300' : 'text-inksoft'}`}>{item.lastLoginIp || '0.0.0.0'}</span>
+                                <span className="text-[9px] text-accent font-black uppercase tracking-widest">{item.lastLoginCountry || 'Unknown'}</span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-5 text-[10px] font-black text-gray-500 uppercase tracking-tighter">{formatTimestamp(item.createdAt)}</td>
+                            <td className="px-8 py-5 text-right">
+                              {/* Always visible. These used to be opacity-0 until the
+                                  row was hovered, which hid "Make admin" entirely on
+                                  touch devices — there is no hover to reveal it — and
+                                  made it easy to miss on desktop too. An action you
+                                  cannot find is an action you do not have. */}
+                              <div className="flex justify-end gap-2">
+                                {/* Appoint / remove admin — super-admins only. Hidden for other
+                                    super-admins and for your own row, mirroring the API's guards
+                                    so the UI never offers an action the server will reject. */}
+                                {/* `user` carries _id after login but userId when rehydrated
+                                    from /api/auth/me (the JWT payload), so check both. */}
+                                {user?.role === 'super_admin' && item.role !== 'super_admin' && item._id !== (user?._id || user?.userId) && (
+                                  <button
+                                    onClick={(e) => handleRoleChange(item, e)}
+                                    title={item.role === 'admin' ? 'Remove admin rights' : 'Make admin'}
+                                    className={`p-2.5 rounded-xl transition-colors ${item.role === 'admin'
+                                      ? 'text-purple-500 bg-purple-500/10 hover:bg-purple-500/20'
+                                      : 'text-blue-500 bg-blue-500/10 hover:bg-blue-500/20'}`}
+                                  >
+                                    {item.role === 'admin' ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
+                                  </button>
+                                )}
+                                {item.isBlocked ? (
+                                  <button onClick={(e) => handleUnblock(item._id, e)} className="p-2.5 text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 rounded-xl transition-colors"><Unlock size={14} /></button>
+                                ) : (
+                                  <button onClick={(e) => handleBlock(item._id, e)} disabled={item.role === 'admin'} title={item.role === 'admin' ? 'Remove admin rights before blocking' : 'Block user'} className="p-2.5 text-amber-500 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><Lock size={14} /></button>
+                                )}
+                                <button onClick={(e) => handleDelete(item._id, e)} disabled={item.role === 'admin'} title={item.role === 'admin' ? 'Remove admin rights before deleting' : 'Delete user'} className="p-2.5 text-red-500 bg-red-500/10 hover:bg-red-500/20 rounded-xl transition-colors disabled:opacity-30 disabled:cursor-not-allowed"><Trash2 size={14} /></button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>

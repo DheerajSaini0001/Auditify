@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import SingleAuditReport from "../models/singleAuditReport.js";
+import SingleAuditReport, { ACTIVE_REPORT_STATUSES } from "../models/singleAuditReport.js";
 import logger from "./logger.js";
 
 /**
@@ -72,7 +72,7 @@ const SCHEMA_FIELDS = [
   "conversionAndLeadFlow", "aioReadiness", "aeo", "stage1Completed", "stage2Completed",
   "stage2Progress", "crawledPagesCount", "crawledPagesSummary", "isBotProtected", "isDealership",
   "dealershipDetection", "error", "screenshot", "screenshotUrl", "userId",
-  "notifyEmail", "notifiedAt", "country", "plannedPages", "estimatedSeconds", "createdAt",
+  "notifyEmail", "notifiedAt", "notifyError", "country", "plannedPages", "estimatedSeconds", "createdAt",
   // Which market's norms the run was scored against, and the evidence behind
   // that choice. `country` above is what the visitor picked; these two are what
   // the engine actually resolved and used, which is not always the same thing —
@@ -93,7 +93,7 @@ const sameUser = (a, b) => idStr(a) === idStr(b);
 /** Create a fresh in-progress report held only in memory (no DB write). */
 function createInProgress({
   _id, url, device, report, userId, pageType, siteType, siteSubType,
-  notifyEmail, country, market, plannedPages, estimatedSeconds,
+  notifyEmail, country, market, plannedPages, estimatedSeconds, parentReportId,
 }) {
   const now = new Date();
   const doc = {
@@ -125,6 +125,9 @@ function createInProgress({
     stage2Progress: null,
     crawledPagesCount: 0,
     crawledPagesSummary: [],
+    // Only a key-page (child) report carries this — the run it belongs to. Set at
+    // creation so it is already on the doc every poll and the final flush see.
+    parentReportId: parentReportId || null,
     isBotProtected: false,
     isDealership: null,
     dealershipDetection: null,
@@ -136,7 +139,10 @@ function createInProgress({
     // walked away from, so it must survive into the live doc — the completion
     // handler reads it off this object, not off Mongo.
     notifyEmail: notifyEmail || null,
+    // Both written only once the send has actually settled — see
+    // recordNotifyOutcome in controllers/singleAuditController.js.
     notifiedAt: null,
+    notifyError: null,
     country: country || null,
     // Resolved at creation, not by the worker, because it is part of this
     // audit's IDENTITY: the same URL scored for the US and for Australia are two
@@ -229,23 +235,73 @@ function findActiveDuplicate({ url, device, report, userId, market = null }) {
   return null;
 }
 
-/** Find a completed full ("All") audit held in memory, for section reuse. */
-function findCompletedFullAudit({ url, device, userId }) {
+/**
+ * Find a completed full ("All") audit held in memory, for section reuse.
+ *
+ * Market-scoped for the same reason findActiveDuplicate is: the sections are
+ * cloned verbatim, so cloning them out of a run scored against another market's
+ * reference lists would hand back a score for a jurisdiction the visitor did not
+ * ask about — and the clone would then carry a market its numbers never came from.
+ */
+function findCompletedFullAudit({ url, device, userId, market = null }) {
   for (const doc of live.values()) {
     if (doc.report !== "All" || doc.status !== "completed") continue;
+    if ((doc.market || null) !== (market || null)) continue;
     if (doc.url === url && doc.device === device && sameUser(doc.userId, userId)) return doc;
   }
   return null;
 }
 
-/** Remove any live entries matching a force-rerun delete (mirror of deleteMany). */
+/**
+ * A live report for this identity whose audit is STILL RUNNING, or null.
+ *
+ * `live` is the only place an in-progress report exists (it is not written to Mongo
+ * until it finishes), so a non-terminal entry here means a worker is streaming into
+ * it right now. Callers that are about to delete a report use this to tell a stale
+ * leftover apart from a run in flight.
+ */
+function findInFlight({ url, device, report, userId, market = null }) {
+  for (const doc of live.values()) {
+    if (doc.url !== url || doc.device !== device || doc.report !== report) continue;
+    if (!sameUser(doc.userId, userId)) continue;
+    if ((doc.market || null) !== (market || null)) continue;
+    if (!TERMINAL.has(doc.status)) return doc;
+  }
+  return null;
+}
+
+/**
+ * Remove any live entries matching a force-rerun delete (mirror of deleteMany).
+ *
+ * NEVER removes a report whose audit is still running. Doing so orphaned the worker:
+ * it kept streaming into an id that no longer existed, so every applyPatch() and
+ * finally complete() hit the `no live audit` branch and were dropped on the floor.
+ * The report therefore never reached a terminal status, and because an in-progress
+ * report lives ONLY in memory, every subsequent GET /single-audit/:id/status 404'd —
+ * the client froze on a spinner forever with whatever sections had landed before the
+ * delete, and the ones still in flight stayed null. Reproduced 2026-08-07: a second
+ * request for the same {url, device, report} wiped a run 2s into its 8 pillars.
+ *
+ * Guest runs made it worse: their userId is null for EVERYONE, so sameUser(null,null)
+ * matched across visitors and one guest's re-run could freeze another's live report.
+ *
+ * Returns the ids that were skipped for being in flight, so the caller can reuse the
+ * running audit instead of silently doing nothing.
+ */
 function removeMatching({ url, device, report, userId, market = null }) {
+  const skipped = [];
   for (const [key, doc] of live.entries()) {
     if ((doc.market || null) !== (market || null)) continue;
     if (doc.url === url && doc.device === device && doc.report === report && sameUser(doc.userId, userId)) {
+      if (!TERMINAL.has(doc.status)) {
+        logger.warn(`[auditStore] refusing to remove ${key} — its audit is still running (status ${doc.status})`);
+        skipped.push(key);
+        continue;
+      }
       live.delete(key);
     }
   }
+  return skipped;
 }
 
 /**
@@ -327,30 +383,146 @@ function scheduleIdleFlush() {
   if (idleFlushTimer.unref) idleFlushTimer.unref();
 }
 
+// How many times a report Mongo refused is retried before it is left in memory.
+const MAX_FLUSH_ATTEMPTS = 3;
+
+/**
+ * Which documents in an insertMany batch the server rejected, by position.
+ *
+ * `ordered: false` means the rest DID land, so this is what separates "these two
+ * need attention" from "nothing was written". Returns null when the failure is
+ * not per-document (connection dropped, auth, timeout) — then nothing landed and
+ * the whole batch has to be retried.
+ */
+function rejectedPositions(err, batchLength) {
+  const writeErrors = err?.writeErrors || err?.result?.writeErrors || [];
+  if (Array.isArray(writeErrors) && writeErrors.length) {
+    const out = new Set();
+    for (const we of writeErrors) {
+      const i = typeof we?.index === "number" ? we.index : we?.err?.index;
+      if (typeof i === "number") out.add(i);
+    }
+    if (out.size) return out;
+  }
+  // A single-document insert fails with a bare duplicate-key error and carries
+  // no writeErrors array.
+  if (err?.code === 11000 && batchLength === 1) return new Set([0]);
+  return null;
+}
+
+/**
+ * One report Mongo refused: work out why, and either get it persisted or keep it
+ * in memory. The one thing this must never do is drop it.
+ *
+ * This used to read a duplicate-key error as "already persisted — safe to
+ * forget", which is only true for a clash on _id. The unique index is on
+ * {url, device, report, market, userId}, so it ALSO fires when a different
+ * report is sitting on this one's target — and forgetting the report then left
+ * it in neither Mongo nor memory. The page that was already open kept rendering
+ * it from client state while every server call for it 404'd, so the failure
+ * surfaced as "Report not found or access denied" on the download and email
+ * buttons, seconds after a successful audit.
+ */
+async function resolveRejected(doc) {
+  const id = idStr(doc._id);
+  try {
+    // Genuinely already there (a re-flush of the same doc) — safe to release.
+    if (await SingleAuditReport.exists({ _id: doc._id })) {
+      live.delete(id);
+      return;
+    }
+
+    // Something else holds this report's target. THIS report has to win: its id
+    // is what the open report page, the PDF export and the emailed link all
+    // point at, while the occupant is a superseded run of the same target that
+    // the dedupe would never serve again. Clearing it is the same thing a forced
+    // re-run and the key-page fan-out already do.
+    const occupants = await SingleAuditReport.find(
+      {
+        _id: { $ne: doc._id },
+        url: doc.url,
+        device: doc.device,
+        report: doc.report,
+        market: doc.market ?? null,
+        userId: doc.userId ?? null,
+        status: { $in: ACTIVE_REPORT_STATUSES },
+        // Never evict a run NEWER than this one — that one is the current report
+        // for this target and somebody may be reading it right now.
+        createdAt: { $lt: doc.createdAt },
+      },
+      { _id: 1 }
+    );
+
+    if (occupants.length) {
+      await SingleAuditReport.deleteMany({ _id: { $in: occupants.map((o) => o._id) } });
+      logger.warn(
+        `[auditStore] ${id}: cleared ${occupants.length} superseded report(s) holding the same target — ${occupants.map((o) => idStr(o._id)).join(", ")}`
+      );
+    }
+
+    await SingleAuditReport.create(toPersistable(doc));
+    logger.info(`💾 auditStore persisted ${id} on retry`);
+    live.delete(id);
+  } catch (err) {
+    doc.__flushAttempts = (doc.__flushAttempts || 0) + 1;
+    if (doc.__flushAttempts < MAX_FLUSH_ATTEMPTS) {
+      logger.warn(
+        `[auditStore] ${id}: still unpersisted (attempt ${doc.__flushAttempts}/${MAX_FLUSH_ATTEMPTS}) — ${err?.message}`
+      );
+      pendingWrites.push(doc); // still __queued: this is the same buffered object
+      scheduleIdleFlush();
+      return;
+    }
+    // Out of retries. KEEP IT IN MEMORY — a report that is readable until the
+    // process restarts beats one that vanishes while its owner is reading it.
+    // Clearing __queued lets the hourly sweeper make one more attempt.
+    doc.__queued = false;
+    logger.error(
+      `[auditStore] ${id}: could not be persisted after ${MAX_FLUSH_ATTEMPTS} attempts — kept in memory only`,
+      err
+    );
+  }
+}
+
 /**
  * Persist all buffered completed reports in a single insertMany, then drop the
  * flushed entries from memory (Mongo now serves them).
+ *
+ * A report is removed from `live` ONLY once Mongo is known to hold it — `live`
+ * is the only other copy, so anything else is silent data loss.
  */
 async function flush() {
   if (!pendingWrites.length) return;
-  if (mongoose.connection.readyState !== 1) return; // no DB yet — try again on next trigger
+  if (mongoose.connection.readyState !== 1) {
+    scheduleIdleFlush(); // no DB yet — come back rather than waiting on the next audit
+    return;
+  }
   const batch = pendingWrites.splice(0, pendingWrites.length);
   logger.debug(`[auditStore] flushing batch of ${batch.length} report(s) → insertMany`);
+
+  let rejected = new Set();
   try {
     await SingleAuditReport.insertMany(batch.map(toPersistable), { ordered: false });
     logger.info(`💾 auditStore flushed ${batch.length} report(s) to MongoDB`);
   } catch (err) {
-    // Duplicate-key (11000) means it's already persisted — safe to drop.
-    // Any other hard failure: re-queue so we retry on the next trigger.
-    const isDup = err?.code === 11000 || Array.isArray(err?.writeErrors);
-    if (!isDup) {
+    const positions = rejectedPositions(err, batch.length);
+    if (!positions) {
       logger.error("auditStore flush failed — re-queueing batch", err);
       pendingWrites.unshift(...batch);
+      scheduleIdleFlush();
       return;
     }
-    logger.warn("auditStore flush completed with duplicates ignored");
+    rejected = positions;
+    logger.warn(
+      `auditStore flush: ${batch.length - rejected.size}/${batch.length} report(s) written, ${rejected.size} rejected — resolving individually`
+    );
   }
-  for (const r of batch) live.delete(idStr(r._id));
+
+  // Everything not rejected did land (ordered: false), so only those are released.
+  for (let i = 0; i < batch.length; i++) {
+    if (!rejected.has(i)) live.delete(idStr(batch[i]._id));
+  }
+  for (const i of rejected) await resolveRejected(batch[i]);
 }
 
 /** Force-persist everything still buffered (used on graceful shutdown). */
@@ -395,6 +567,7 @@ export default {
   applyPatch,
   complete,
   findActiveDuplicate,
+  findInFlight,
   findCompletedFullAudit,
   removeMatching,
   removeByIds,

@@ -185,8 +185,13 @@ function AppContentInner() {
           <Route path="/report" element={<ReportLayout />} />
           <Route path="/report/:id" element={<ReportLayout />} />
 
-          {/* Intermediate multi-page audit summary + page-type heatmap (open to all) */}
+          {/* Intermediate multi-page audit summary + page-type heatmap (open to all).
+              The `:id` form is the run's ROOT report — the summary is then rebuilt from
+              the report itself, so it survives a new tab, a refresh, a shared link, and
+              an admin opening someone else's audit from Journeys. The bare form is the
+              live batch flow, which still hands its page list over in router state. */}
           <Route path="/audit-summary" element={<AuditSummaryPage />} />
+          <Route path="/audit-summary/:id" element={<AuditSummaryPage />} />
 
           {/* Individual Report Pages - open to everyone, guests included */}
           <Route path="/technical-performance/:id?" element={<GuestRouteWrapper><Technical_Performance /><SectionNavFooter currentKey="technicalPerformance" /></GuestRouteWrapper>} />

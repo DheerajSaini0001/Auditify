@@ -235,20 +235,29 @@ function withTimeout(promise, timeoutMs = 30000, pillarName = "Metric") {
   ]);
 }
 
-// Per-pillar timeouts (all env-tunable). Three pillars need their own, larger caps
-// or they get killed mid-run and the section comes back null (an empty column):
-//   • Technical Performance runs Google PageSpeed (~50-75s/page, more with a retry).
-//   • On-Page SEO's scan on a heavy home page can run past the fast budget.
-//   • Security/Compliance does ACTIVE probing (opens tabs to test XSS / weak creds /
-//     finance forms, reputation-API calls, admin-path checks) — ~37s solo, and more
-//     under the 8-pillar concurrent load, so 45s was clipping it on every page.
-// The browser is held until the SLOWEST pillar (Technical, 150s) finishes anyway,
-// so a bigger Security/SEO cap costs no extra browser-hold time. The remaining
-// pillars are quick on-page checks and share PILLAR_TIMEOUT_MS.
-const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || "150000", 10);
-const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || "75000", 10);
-const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || "90000", 10);
-const PILLAR_TIMEOUT_MS = parseInt(process.env.PILLAR_TIMEOUT_MS || "60000", 10);
+// Per-pillar timeouts (all env-tunable). Every pillar now gets the SAME 150s cap.
+//
+// They used to be tiered — 150s Technical / 90s Security / 75s SEO / 60s for the
+// rest — on the theory that only those three were slow. That theory kept clipping
+// the pillars left on the 60s default, and a clipped pillar is not a degraded
+// pillar: withTimeout resolves null, so the whole section comes back empty and the
+// audit summary renders "—" for it. Accessibility was the clearest victim — it runs
+// axe-core over the entire DOM across the wcag2a…wcag22aa + best-practice +
+// experimental + ACT rulesets, easily the heaviest in-page work in the audit, yet it
+// sat on the smallest budget. On the 2-vCPU App Service that hosts production, with
+// all 8 pillars competing, 60s is not enough headroom.
+//
+// Levelling up costs no extra audit wall-clock: the pillars run concurrently and the
+// browser is held until the SLOWEST one finishes, which is Technical's 150s either
+// way. The only change is that a genuinely stuck pillar now waits the full 150s
+// before returning null instead of 60s — and that path was already bounded by
+// Technical. Keep PILLAR_TECH_TIMEOUT_MS ≥ googleAPI's PAGESPEED_TOTAL_BUDGET_MS
+// (145s) so the PageSpeed ladder still fits inside its own pillar.
+const PILLAR_MAX_TIMEOUT_MS = "150000";
+const TECH_TIMEOUT_MS = parseInt(process.env.PILLAR_TECH_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
+const SEO_TIMEOUT_MS = parseInt(process.env.PILLAR_SEO_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
+const SEC_TIMEOUT_MS = parseInt(process.env.PILLAR_SEC_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
+const PILLAR_TIMEOUT_MS = parseInt(process.env.PILLAR_TIMEOUT_MS || PILLAR_MAX_TIMEOUT_MS, 10);
 
 // Page tilt comes from utils/sectionWeights.js — the single copy. This file used
 // to carry a byte-identical duplicate under a slightly different vocabulary

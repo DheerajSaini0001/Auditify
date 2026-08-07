@@ -233,6 +233,10 @@ export const SEO_CONFIGS = [
   {
     path: '/audit-summary',
     exact: true,
+    // `/audit-summary/:id` is the same page addressed by its root report (the form
+    // every "Back to Summary" now links to), so it must resolve to this entry
+    // instead of falling through to DEFAULT_SEO — same shape as /report.
+    prefix: true,
     priority: 0.6,
     changefreq: 'weekly',
     title: 'Audit Summary: Every Multi-Page Scan Score at One Glance',

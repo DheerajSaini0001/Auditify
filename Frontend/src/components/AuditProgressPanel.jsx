@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
 import { ThemeContext } from "../context/ThemeContext";
 import { CheckCircle2, Clock, Loader2, Mail, Users } from "lucide-react";
-import toast from "react-hot-toast";
+import { announceAuditFinished } from "../utils/auditNotice";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
 
@@ -62,7 +62,10 @@ const AuditProgressPanel = ({ reportId, notifyEmail: notifyEmailProp = null, onC
 
                 if (data.status === "completed" && !announced.current) {
                     announced.current = true;
-                    toast.success("Your audit has been completed successfully.", { duration: 6000 });
+                    // Shared guard, not a plain toast: DataContext's poller is
+                    // following the same run and announces it too. Whichever tick
+                    // lands first speaks; the other stays quiet.
+                    announceAuditFinished(reportId, data.status);
                     onComplete?.(data);
                     return; // terminal — stop polling
                 }

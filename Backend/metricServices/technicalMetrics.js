@@ -72,6 +72,35 @@ function notCalculated(reason, recommendation) {
   };
 }
 
+/**
+ * Read one Lighthouse audit's numericValue, distinguishing "measured 0" from "not measured".
+ *
+ * PageSpeed can return HTTP 200 with a full lighthouseResult whose INDIVIDUAL audits
+ * failed. Measured on rvcountry.com 2026-08-07: 47 audits returned, but LCP and TBT
+ * carried `errorMessage: "NO_LCP"` and no numericValue — which is exactly why Lighthouse
+ * itself scored the whole performance category `null`.
+ *
+ * `audits[id]?.numericValue || 0` cannot tell that apart from a genuine zero, and
+ * calculateScore(0) returns 100. So the two heaviest metrics in this section (LCP 22,
+ * INP·TBT 20) were reported as a perfect "pass" on a page where nothing was measured,
+ * and the headline came out ~87 where PageSpeed Insights itself shows n/a.
+ *
+ * null here means "Lighthouse could not measure it" (→ notCalculated, excluded from the
+ * weighted total); 0 still means a real, perfect zero, which CLS and TBT legitimately hit.
+ */
+const labValueOf = (audits, id) => {
+  const value = audits?.[id]?.numericValue;
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+};
+
+// Why a specific lab metric is missing, in the target page's terms rather than ours.
+// Lighthouse's own errorMessage ("NO_LCP", "NO_FCP", …) is the most precise thing we
+// have, so lead with it when present.
+const labUnmeasured = (audits, id, label) => notCalculated(
+  `Lighthouse loaded the page but could not measure ${label} (${audits?.[id]?.errorMessage || "no value returned for this audit"}). It is excluded from the score rather than counted as a perfect zero.`,
+  `Open the page in Google PageSpeed Insights to confirm — Google reports the same gap. This usually means the page never produced a qualifying measurement: an immediate redirect, a first paint gated behind JavaScript or a consent wall, or content that only appears after interaction.`
+);
+
 // Format a millisecond value as seconds for display (e.g. 1800 -> "1.8s", 234 -> "0.23s").
 // Used by the latency Core Web Vitals (FCP, INP, FID, TBT) whose value + threshold scale
 // are surfaced in seconds. Scoring still runs on the raw ms numbers above.
@@ -79,7 +108,9 @@ const msToSec = (ms) => `${parseFloat(((Number(ms) || 0) / 1000).toFixed(2))}s`;
 
 // LCP - Largest Contentful Paint
 const evaluateLCPLab = (audits) => {
-  const labValue = parseFloat((audits["largest-contentful-paint"]?.numericValue || 0).toFixed(0));
+  const raw = labValueOf(audits, "largest-contentful-paint");
+  if (raw === null) return labUnmeasured(audits, "largest-contentful-paint", "Largest Contentful Paint");
+  const labValue = parseFloat(raw.toFixed(0));
   const labScore = calculateScore(labValue, 2500, 4000);
   const labStatus = calculateStatus(labValue, 2500, 4000);
 
@@ -200,7 +231,9 @@ const evaluateLCPCrux = (audits, cruxMetrics) => {
 
 // CLS - Cumulative Layout Shift
 const evaluateCLSLab = (audits) => {
-  const labValue = parseFloat((audits["cumulative-layout-shift"]?.numericValue || 0).toFixed(3));
+  const raw = labValueOf(audits, "cumulative-layout-shift");
+  if (raw === null) return labUnmeasured(audits, "cumulative-layout-shift", "Cumulative Layout Shift");
+  const labValue = parseFloat(raw.toFixed(3));
   const labScore = calculateScore(labValue, 0.1, 0.25);
   const labStatus = calculateStatus(labValue, 0.1, 0.25);
 
@@ -301,7 +334,9 @@ const evaluateCLSCrux = (audits, cruxMetrics) => {
 
 // FCP - First Contentful Paint
 const evaluateFCPLab = (audits) => {
-  const labValue = parseFloat((audits['first-contentful-paint']?.numericValue || 0).toFixed(0));
+  const raw = labValueOf(audits, "first-contentful-paint");
+  if (raw === null) return labUnmeasured(audits, "first-contentful-paint", "First Contentful Paint");
+  const labValue = parseFloat(raw.toFixed(0));
   const labScore = calculateScore(labValue, 1800, 3000);
   const labStatus = calculateStatus(labValue, 1800, 3000);
 
@@ -401,7 +436,9 @@ const evaluateFCPCrux = (audits, cruxMetrics) => {
 
 // TTFB - Time to First Byte
 const evaluateTTFBLab = (audits) => {
-  const labValue = parseFloat((audits["server-response-time"]?.numericValue || 0).toFixed(0));
+  const raw = labValueOf(audits, "server-response-time");
+  if (raw === null) return labUnmeasured(audits, "server-response-time", "Time to First Byte");
+  const labValue = parseFloat(raw.toFixed(0));
   const labScore = calculateScore(labValue, 800, 1800);
   const labStatus = calculateStatus(labValue, 800, 1800);
 
@@ -482,7 +519,9 @@ const evaluateTTFBCrux = (cruxMetrics) => {
 // there's no CrUX field INP we present the responsiveness estimate FROM TBT — matching
 // exactly what the INP·TBT parameter weights, with honest "lab estimate" labeling.
 const evaluateINPLab = (audits) => {
-  const tbtMs = parseFloat((audits["total-blocking-time"]?.numericValue || 0).toFixed(0));
+  const rawTbt = labValueOf(audits, "total-blocking-time");
+  if (rawTbt === null) return labUnmeasured(audits, "total-blocking-time", "responsiveness (its lab proxy, Total Blocking Time)");
+  const tbtMs = parseFloat(rawTbt.toFixed(0));
   const labScore = calculateScore(tbtMs, 200, 600);
   const labStatus = calculateStatus(tbtMs, 200, 600);
 
@@ -708,7 +747,9 @@ const evaluateFIDCrux = (audits, cruxMetrics) => {
 
 // TBT - Total Blocking Time
 const evaluateTBT = (audits) => {
-  const labValue = parseFloat((audits["total-blocking-time"]?.numericValue || 0).toFixed(0));
+  const raw = labValueOf(audits, "total-blocking-time");
+  if (raw === null) return labUnmeasured(audits, "total-blocking-time", "Total Blocking Time");
+  const labValue = parseFloat(raw.toFixed(0));
   const labScore = calculateScore(labValue, 200, 600);
   const labStatus = calculateStatus(labValue, 200, 600);
 
@@ -761,7 +802,9 @@ const evaluateTBT = (audits) => {
 
 // SI - Speed Index
 const evaluateSI = (audits) => {
-  const labValue = parseFloat(((audits["speed-index"]?.numericValue || 0)).toFixed(0));
+  const raw = labValueOf(audits, "speed-index");
+  if (raw === null) return labUnmeasured(audits, "speed-index", "Speed Index");
+  const labValue = parseFloat(raw.toFixed(0));
   const labScore = calculateScore(labValue, 3400, 5800);
   const labStatus = calculateStatus(labValue, 3400, 5800);
 
@@ -2478,14 +2521,22 @@ export default async function technicalMetrics(url, device, page, response, brow
     let lhEarned = 0, lhWeight = 0;
     for (const m of LH_WEIGHTS) {
       const auditScore = audits?.[m.id]?.score; // Lighthouse's own 0–1 curve score
-      const s = typeof auditScore === "number" ? auditScore * 100 : getScore(m.fallback);
+      // `?? null` not `getScore()`: getScore is `metric?.score || 0`, which turns an
+      // unmeasurable metric's null score into a 0 and folds it into the mean. Both
+      // that 0 and the phantom 100 it replaced (see labValueOf) are inventions —
+      // drop the metric and renormalize over what was actually measured, which is
+      // the same rule OverAll applies to a whole "Not Run" section.
+      const fallbackScore = m.fallback?.score ?? null;
+      const s = typeof auditScore === "number" ? auditScore * 100 : fallbackScore;
       if (typeof s === "number" && !Number.isNaN(s)) {
         lhEarned += s * m.weight;
         lhWeight += m.weight;
       }
     }
-    headline = lhWeight > 0 ? Math.round(lhEarned / lhWeight) : 0;
-    headlineSource = "Lighthouse metric weights over per-audit scores (PSI category score unavailable)";
+    headline = lhWeight > 0 ? Math.round(lhEarned / lhWeight) : null;
+    headlineSource = lhWeight > 0
+      ? `Lighthouse metric weights over the ${lhWeight}% of the formula Lighthouse could measure (PSI category score unavailable)`
+      : "Lighthouse ran but measured none of the performance metrics — Technical performance not scored";
   }
 
   // ── Delivery Hygiene sub-score: the dealer-relevant infra checks Lighthouse

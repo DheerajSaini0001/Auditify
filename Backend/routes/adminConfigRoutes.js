@@ -8,7 +8,8 @@ import {
   getConfigHistory,
   rollbackConfig,
   refreshCache,
-  bulkImport
+  bulkImport,
+  testEmail
 } from '../controllers/adminConfigController.js';
 import { protect, isSuperAdmin } from '../middleware/authMiddleware.js';
 
@@ -22,6 +23,9 @@ router.use(isSuperAdmin);
 router.get('/logs', getConfigAuditLogs);
 router.post('/refresh', refreshCache);
 router.post('/bulk', bulkImport);
+// Sends one real email through the live SMTP settings — the only way to tell a
+// working relay from a silently broken one without waiting for a user to complain.
+router.post('/test-email', testEmail);
 
 // ── Core CRUD ───────────────────────────────────────────────────────
 router.get('/', getConfigs);

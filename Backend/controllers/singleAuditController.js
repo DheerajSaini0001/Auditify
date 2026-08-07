@@ -89,25 +89,88 @@ const mergeScores = (base, siblings) => {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Keep the "we'll email you when it's done" promise.
+ * Write the mail's outcome onto the report — in BOTH places the report can live.
  *
- * Only runs that actually asked for a mail have `notifyEmail` set, and `notifiedAt`
- * makes it once-only — a retried terminal path must not send a second copy. Never
- * awaited by the audit pipeline and never allowed to throw: the report is already
- * saved by the time this runs, so a broken SMTP config must not take the run down.
+ * A completed report is buffered in memory and flushed to Mongo in batches, so an
+ * SMTP round-trip (seconds, with retries) routinely straddles that flush: the doc
+ * can be in memory when the send starts and only in Mongo when it finishes. Writing
+ * to whichever one holds it is not knowable in advance, so both are written — the
+ * one that doesn't hold it simply matches nothing.
+ *
+ * `notifiedAt` means DELIVERED, nothing weaker. `notifyError` is the only surviving
+ * trace of a mail that didn't go, and is what makes "the audit finished but nothing
+ * arrived" answerable afterwards instead of a guess.
  */
-const notifyAuditFinished = (doc, { failed = false } = {}) => {
-  if (!doc?.notifyEmail || doc.notifiedAt) return;
-  doc.notifiedAt = new Date(); // set before sending, so a double-fire can't double-send
+const recordNotifyOutcome = (reportId, result) => {
+  const fields = result?.ok
+    ? { notifiedAt: new Date(), notifyError: null }
+    : { notifiedAt: null, notifyError: String(result?.error || 'Unknown mail error').slice(0, 500) };
 
-  const payload = { to: doc.notifyEmail, url: doc.url, reportId: doc._id };
-  const send = failed
-    ? sendAuditFailedEmail(payload)
-    : sendAuditCompleteEmail({ ...payload, score: doc.score });
+  // Guarded: applyPatch warns about a missing audit, and "already flushed" is the
+  // expected case here, not a problem worth a line in the log.
+  if (auditStore.get(reportId)) auditStore.applyPatch(reportId, fields);
 
-  send.catch((err) =>
-    logger.error(`[Audit] completion mail threw for ${doc._id}`, err)
+  SingleAuditReport.updateOne({ _id: reportId }, { $set: fields }).catch((err) =>
+    logger.error(`[Audit] could not record mail outcome for ${reportId}`, err)
   );
+};
+
+/**
+ * Build the "we'll email you when it's done" notifier for ONE run.
+ *
+ * Only runs that actually asked for a mail have an address, and each of these is
+ * once-only — several terminal paths can fire for the same run (a worker that
+ * errors after its own done, the exit backstop below) and none of them may send a
+ * second copy. Never awaited by the audit pipeline and never allowed to throw: the
+ * report is already saved by the time this runs, so a broken SMTP config must not
+ * take the run down.
+ *
+ * The address is captured HERE, at request time, rather than read off the report
+ * every time. The live doc is still preferred — a request that dedupes onto this
+ * run can attach its address to it mid-flight — but `auditStore.complete()`
+ * returns NULL for a report that is no longer in memory (flushed, or swept after
+ * the in-memory TTL), and the old version read the address straight off that null
+ * and returned silently. The promise we made to the visitor then just evaporated,
+ * with nothing in the log to say so.
+ */
+const makeAuditNotifier = ({ fallbackEmail, url, reportId }) => {
+  let sent = false;
+  return (doc, { failed = false } = {}) => {
+    if (sent) return;
+    if (doc?.notifiedAt) return; // already mailed on another path
+
+    const to = doc?.notifyEmail || fallbackEmail;
+    if (!to) return;
+
+    // Taken synchronously, before anything is awaited: this is what stops two
+    // terminal paths racing into two copies of the same mail. It is NOT a claim
+    // that the mail was delivered — that is `notifiedAt`, written only once the
+    // send comes back successful.
+    sent = true;
+
+    // A run with no live report has nothing for the visitor to open. `complete()`
+    // returns null exactly when the doc was wiped or evicted — a force re-run of
+    // the same target, or the in-memory TTL — and such a doc is never queued for
+    // persistence either, so it is in neither memory nor Mongo. Measured: mailing
+    // "your report is ready" here links them to a 404, which is worse than the
+    // silence this replaced. They get the "we couldn't finish it" mail instead.
+    const lost = !doc;
+    if (lost) {
+      logger.warn(`[Audit] ${reportId} reached a terminal state with no live report in the store — mailing it as failed`);
+    }
+
+    const payload = { to, url: doc?.url || url, reportId: doc?._id || reportId };
+    const send = (failed || lost)
+      ? sendAuditFailedEmail(payload)
+      : sendAuditCompleteEmail({ ...payload, score: doc.score });
+
+    send
+      .then((result) => recordNotifyOutcome(payload.reportId, result))
+      .catch((err) => {
+        logger.error(`[Audit] completion mail threw for ${payload.reportId}`, err);
+        recordNotifyOutcome(payload.reportId, { ok: false, error: err?.message || String(err) });
+      });
+  };
 };
 
 /* ===========================
@@ -135,9 +198,18 @@ export const startAudit = async (req, res) => {
     // Where to mail the finished report. A multi-page run takes minutes, so the
     // client collects an address up front and tells the visitor to walk away —
     // that promise is only kept if the address survives to the report doc.
-    const cleanNotifyEmail = typeof notifyEmail === 'string' && EMAIL_RE.test(notifyEmail.trim())
-      ? notifyEmail.trim().toLowerCase()
-      : null;
+    const sanitizeEmail = (value) =>
+      typeof value === 'string' && EMAIL_RE.test(value.trim()) ? value.trim().toLowerCase() : null;
+
+    // A SIGNED-IN run always has somewhere to send the report, whether or not the
+    // surface that started it remembered to ask for an address. Leaving this to
+    // the client meant "you get a mail" depended on which button was pressed: the
+    // dashboard attaches the account address on every path, but the landing-page
+    // form only attaches one for a full-site run, so a signed-in single-page run
+    // from there silently promised nothing. The address is read off the token
+    // (every login signs { userId, email, role }), so this costs no DB read.
+    // A body address still wins — that is the visitor naming a different inbox.
+    const cleanNotifyEmail = sanitizeEmail(notifyEmail) || sanitizeEmail(req.user?.email);
 
     // Market the visitor selected. ISO 3166-1 alpha-2 (or the literal "OTHER"),
     // so anything else is a client that has drifted from the catalog — drop it
@@ -205,24 +277,47 @@ export const startAudit = async (req, res) => {
       return res.status(400).json({ error: `Website not found — ${existence.reason}` });
     }
 
+    // Declared before the force block: a force re-run that collides with a RUNNING
+    // audit resolves to that audit instead of deleting it (see below).
+    let existing = null;
+
     if (force) {
-      logger.info(`🗑️ Force run: Deleting existing single audit report for: ${url}`);
-      await SingleAuditReport.deleteMany({
-        url,
-        device,
-        report,
-        userId: req.user?.userId || null,
-        // Scoped to this market so a force re-run of the AU report does not also
-        // delete the visitor's US report for the same URL.
-        market: resolvedMarket,
+      // A force re-run must never delete an audit that is still in flight. It used
+      // to: removeMatching() dropped the live report while its worker was mid-run,
+      // and since an in-progress report lives ONLY in memory, the worker's remaining
+      // patches — and its final complete() — were silently discarded. The report
+      // never went terminal, /single-audit/:id/status 404'd from then on, and the
+      // first visitor's page span forever on a half-filled report. For guests the
+      // blast radius crossed visitors, because every guest's userId is null.
+      //
+      // Reusing the running audit is also what the caller actually wants: a run that
+      // started seconds ago IS the fresh report a force re-run was asking for.
+      const inFlight = auditStore.findInFlight({
+        url, device, report, userId: req.user?.userId || null, market: resolvedMarket,
       });
-      // Also drop any in-memory copy that hasn't been flushed yet.
-      auditStore.removeMatching({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
+
+      if (inFlight) {
+        logger.info(`♻️ Force run for ${url} collided with an audit already running (${inFlight._id}) — reusing it instead of deleting it.`);
+        existing = inFlight;
+      } else {
+        logger.info(`🗑️ Force run: Deleting existing single audit report for: ${url}`);
+        await SingleAuditReport.deleteMany({
+          url,
+          device,
+          report,
+          userId: req.user?.userId || null,
+          // Scoped to this market so a force re-run of the AU report does not also
+          // delete the visitor's US report for the same URL.
+          market: resolvedMarket,
+        });
+        // Also drop any in-memory copy that hasn't been flushed yet. Terminal
+        // entries only — removeMatching now refuses to touch a running one.
+        auditStore.removeMatching({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
+      }
     }
 
     // Strict Deduplication: Check if a successful audit already exists or a very recent in-progress one.
     // Check the in-memory store FIRST (reports may not be flushed to Mongo yet), then Mongo.
-    let existing = null;
     if (!force) {
       existing = auditStore.findActiveDuplicate({ url, device, report, userId: req.user?.userId || null, market: resolvedMarket });
       if (!existing) {
@@ -322,14 +417,18 @@ export const startAudit = async (req, res) => {
     if (report !== "All") {
       const sections = String(report).split(",").map((s) => s.trim()).filter(Boolean);
 
-      // Prefer an in-memory completed full audit; fall back to Mongo.
-      let fullAudit = auditStore.findCompletedFullAudit({ url, device, userId: req.user?.userId || null });
+      // Prefer an in-memory completed full audit; fall back to Mongo. Scoped to
+      // this market like every other reuse lookup — the sections are cloned as-is,
+      // so a full audit scored against another market's reference lists is not a
+      // source this request can honestly copy from.
+      let fullAudit = auditStore.findCompletedFullAudit({ url, device, userId: req.user?.userId || null, market: resolvedMarket });
       if (!fullAudit) {
         fullAudit = await SingleAuditReport.findOne({
           url,
           device,
           report: "All",
           userId: req.user?.userId || null,
+          market: resolvedMarket,
           status: "completed"
         }).sort({ createdAt: -1 });
       }
@@ -351,7 +450,13 @@ export const startAudit = async (req, res) => {
             isBotProtected: fullAudit.isBotProtected,
             siteType: fullAudit.siteType || null,
             siteSubType: fullAudit.siteSubType || null,
-            userId: req.user?.userId || null
+            userId: req.user?.userId || null,
+            // Part of the unique index key AND of the dedupe filter above, so a
+            // derived report that omitted it could never be found again — the
+            // next identical request re-derived it and collided with itself.
+            country: cleanCountry,
+            market: resolvedMarket,
+            marketResolution: fullAudit.marketResolution ?? null,
           });
 
           const pctBySection = {};
@@ -506,6 +611,14 @@ export const startAudit = async (req, res) => {
       market: resolvedMarket,
       plannedPages,
       estimatedSeconds: estimateAuditSeconds(plannedPages),
+    });
+
+    // One notifier for this run — every terminal path below goes through it, so
+    // "once only" holds across all of them even when the report itself is gone.
+    const notifyAuditFinished = makeAuditNotifier({
+      fallbackEmail: cleanNotifyEmail,
+      url,
+      reportId: newReport._id,
     });
 
     // Create a pending AuditLog entry asynchronously
@@ -697,7 +810,35 @@ export const startAudit = async (req, res) => {
     // already delivered its report. 'exit' and 'error' stay wired as backstops
     // for a crash that never sends a terminal message — release() is idempotent,
     // so whichever fires first wins and the rest are no-ops.
-    worker.on("exit", () => releaseAuditSlot());
+    worker.on("exit", async (code) => {
+      releaseAuditSlot();
+
+      // Backstop for a worker that dies WITHOUT sending done/error and without
+      // raising 'error' — an OOM kill, an explicit terminate, a thread that just
+      // goes away. Releasing the queue slot (all this used to do) unblocks the
+      // queue but leaves the REPORT non-terminal, and a non-terminal report lives
+      // only in memory: the client then polls /status forever and gets 404s on a
+      // report that will never finish. The comment above claimed 'exit' was a
+      // backstop for exactly this — it backstopped the queue, not the report.
+      const liveDoc = auditStore.get(newReport._id);
+      if (!liveDoc || liveDoc.status === "completed" || liveDoc.status === "failed") return;
+
+      const reason = `Audit worker exited (code ${code}) before reporting a result`;
+      logger.error(`❌ ${reason} — marking ${newReport._id} failed`);
+      notifyAuditFinished(
+        auditStore.complete(newReport._id, { status: "failed", error: reason }),
+        { failed: true }
+      );
+      await markAuditLog({
+        $set: {
+          status: "failed",
+          failureReason: reason,
+          completedAt: new Date(),
+          auditDuration: Date.now() - startTime,
+        },
+        $push: { actions: "failed" },
+      });
+    });
 
     registerWorkerWithManager(worker);
 
@@ -749,7 +890,12 @@ export const startAudit = async (req, res) => {
         // the partial-unique index can't reject the child (and a forced re-audit
         // refreshes the page). Memory is sync; the old Mongo doc (if any, e.g. from
         // a prior forced run) is cleared best-effort, never touching the new child.
-        auditStore.removeMatching({ url: c.url, device: childDevice, report: "All", userId: newReport.userId || null });
+        // `market` rides down from the parent: a key page is scored against the
+        // same jurisdiction as the run it belongs to, and the unique index is
+        // keyed on it — a child left at null indexes under a market it was never
+        // scored for, and the two cleanups below stop matching it.
+        const childMarket = newReport.market || null;
+        auditStore.removeMatching({ url: c.url, device: childDevice, report: "All", userId: newReport.userId || null, market: childMarket });
         auditStore.createInProgress({
           _id: new mongoose.Types.ObjectId(c.childId),
           url: c.url,
@@ -759,16 +905,26 @@ export const startAudit = async (req, res) => {
           pageType: c.pageType || null,
           siteType: newReport.siteType || null,
           siteSubType: newReport.siteSubType || null,
+          market: childMarket,
+          // Back-pointer to the run this key page belongs to. The parent lists its
+          // children in crawledPagesSummary; this is the edge in the other direction,
+          // and it is how a child report opened on its own (an admin from Journeys, a
+          // shared link) can still reach the run's audit summary.
+          parentReportId: newReport._id,
         });
         upsertCrawledPage(newReport._id, {
           url: c.url, pageType: c.pageType || "generic", label: c.label || "Key Page",
           reportId: c.childId, isProcessing: true, success: false, status: 200, title: c.label || "Auditing…",
         });
+        // Mirrors the unique index key exactly ({url, device, report, market,
+        // userId}) — a cleanup narrower than the index leaves an occupant the
+        // child's insert will then collide with, and one wider deletes a report
+        // that was never in this child's way.
         SingleAuditReport.deleteMany({
           _id: { $ne: new mongoose.Types.ObjectId(c.childId) },
-          url: c.url, device: childDevice, report: "All",
+          url: c.url, device: childDevice, report: "All", market: childMarket,
           userId: newReport.userId || null, status: { $ne: "failed" },
-        }).catch(() => { /* best-effort; the batch flush also tolerates dup-key */ });
+        }).catch(() => { /* best-effort; the batch flush now resolves any leftover collision */ });
         return;
       }
 

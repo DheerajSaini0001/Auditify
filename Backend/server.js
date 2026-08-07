@@ -10,6 +10,7 @@ import logger from "./utils/logger.js";
 import { createApp } from "./app.js";
 import connectDB from "./database/connection.js";
 import configService from "./services/configService.js";
+import { verifyEmailTransport } from "./utils/sendEmail.js";
 import auditStore from "./utils/auditStore.js";
 import SingleAuditReport, { REPORT_TTL_SECONDS } from "./models/singleAuditReport.js";
 import { syncCmsIndexes } from "./models/cms/index.js";
@@ -60,6 +61,57 @@ const startServer = async () => {
   // Refuse to start with a missing/guessable session secret (was hardcoded "secret_2026").
   if (!SESSION_SECRET || SESSION_SECRET.length < 16) {
     throw new Error("SESSION_SECRET must be set to a strong value (>= 16 chars).");
+  }
+
+  // ── 2b. Can this environment actually send mail? ──
+  // Every send site swallows its own failure on purpose — a dead relay must not take
+  // an audit, a signup or a password reset down with it. The cost is that a
+  // misconfigured SMTP is completely invisible until a user reports a mail that never
+  // came. So it is proved here instead, once, out loud, at the only moment anyone is
+  // watching the logs. Deliberately not awaited and never fatal: the app is still
+  // worth serving without mail, and a transient relay blip must not become a boot loop.
+  //
+  // Worth knowing when this fires in a container: .env is excluded from the image
+  // (.dockerignore), so SMTP_* can only come from App Service application settings or
+  // the PlatformConfig collection — a local .env that works proves nothing about prod.
+  verifyEmailTransport()
+    .then((result) => {
+      if (result.ok) {
+        logger.info(`📧 SMTP ready — ${result.user} via ${result.host}:${result.port} (sending as: ${result.from})`);
+
+        // Authenticating as one domain and sending As: another is the failure that
+        // survives every check above — the relay accepts it, the log says "sent",
+        // and the mail is then dropped or spam-filed downstream because SPF/DKIM
+        // cannot align for a domain this account doesn't own. From the visitor's
+        // side that is indistinguishable from never sending it, which is exactly
+        // how it presented: signup OTPs, password resets and completion mail all
+        // "succeeded" for weeks while nothing arrived.
+        //
+        // sendEmail.js now repairs this rather than merely reporting it, so this is
+        // no longer a warning about broken mail — it is a notice that the CONFIGURED
+        // sender identity is being overridden, which is still worth one line at boot.
+        if (result.fromRewritten) {
+          logger.warn(
+            `📧 EMAIL_FROM is "${result.configuredFrom}", which @${(result.user.match(/@(.+)$/) || [])[1]} is not authorised to send as — ` +
+            `mail is going out as "${result.from}" so it survives SPF/DKIM at the recipient. ` +
+            `To send under your own domain, point SMTP_* at a mailbox on it (or verify the alias) and set EMAIL_FROM_VERIFIED=true.`
+          );
+        }
+      } else {
+        logger.error(
+          `📧 EMAIL IS NOT WORKING — ${result.error}. ` +
+          `Audit-completion mail, signup OTPs and password resets will all fail silently until this is fixed ` +
+          `(set the SMTP_* keys as App Service application settings, or in Admin → Config, then POST /api/admin/config/test-email to confirm).`
+        );
+      }
+    })
+    .catch((err) => logger.error("📧 SMTP verification threw", err));
+
+  // The emailed report link is built from FRONTEND_URL. Left at its localhost
+  // default, the mail still sends and still looks fine in the logs — and every
+  // "Open your report" button in it points at a machine the recipient doesn't have.
+  if (IS_PROD && /localhost|127\.0\.0\.1/i.test(FRONTEND_URL)) {
+    logger.error(`🔗 FRONTEND_URL is "${FRONTEND_URL}" in production — every emailed report link will point at localhost. Set FRONTEND_URL.`);
   }
 
   // ── 3. App ──

@@ -1,4 +1,4 @@
-import sendEmail from './sendEmail.js';
+import sendEmail, { describeSmtpError } from './sendEmail.js';
 import configService from './../services/configService.js';
 import logger from './logger.js';
 
@@ -11,7 +11,10 @@ import logger from './logger.js';
  * why every call site fires it defensively and logs failures loudly.
  *
  * Never throws: a broken SMTP config must not take down the audit pipeline, and
- * the report itself is already saved by the time this runs.
+ * the report itself is already saved by the time this runs. It does RETURN the
+ * reason instead — `{ ok: false, error }` — because a swallowed failure with
+ * nowhere to surface is what made "the audit finished but no mail came"
+ * undiagnosable after the fact. The caller records it on the report.
  */
 const appUrl = () =>
   (configService.getConfig('FRONTEND_URL', 'http://localhost:5173') || '').replace(/\/$/, '');
@@ -40,7 +43,7 @@ const button = (href, label) => `
 `;
 
 export const sendAuditCompleteEmail = async ({ to, url, reportId, score }) => {
-  if (!to) return false;
+  if (!to) return { ok: false, error: 'No recipient address on this run' };
   try {
     const link = `${appUrl()}/report/${reportId}`;
     await sendEmail({
@@ -59,10 +62,11 @@ export const sendAuditCompleteEmail = async ({ to, url, reportId, score }) => {
       `),
     });
     logger.info(`[auditNotifier] completion mail sent to ${to} for ${reportId}`);
-    return true;
+    return { ok: true };
   } catch (err) {
-    logger.error(`[auditNotifier] completion mail FAILED for ${reportId} → ${to}`, err);
-    return false;
+    const error = describeSmtpError(err);
+    logger.error(`[auditNotifier] completion mail FAILED for ${reportId} → ${to}: ${error}`, err);
+    return { ok: false, error };
   }
 };
 
@@ -111,7 +115,7 @@ export const sendReportPdfEmail = async ({ to, name, url, reportId, score, grade
 };
 
 export const sendAuditFailedEmail = async ({ to, url, reportId }) => {
-  if (!to) return false;
+  if (!to) return { ok: false, error: 'No recipient address on this run' };
   try {
     await sendEmail({
       to,
@@ -125,9 +129,10 @@ export const sendAuditFailedEmail = async ({ to, url, reportId }) => {
       `),
     });
     logger.info(`[auditNotifier] failure mail sent to ${to} for ${reportId}`);
-    return true;
+    return { ok: true };
   } catch (err) {
-    logger.error(`[auditNotifier] failure mail FAILED for ${reportId} → ${to}`, err);
-    return false;
+    const error = describeSmtpError(err);
+    logger.error(`[auditNotifier] failure mail FAILED for ${reportId} → ${to}: ${error}`, err);
+    return { ok: false, error };
   }
 };

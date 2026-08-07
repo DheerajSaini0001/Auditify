@@ -20,6 +20,7 @@ import fs from "fs";
 import path from "path";
 import { Worker } from "worker_threads";
 import { registerWorkerWithManager } from "../utils/browserManager.js";
+import dotenv from "dotenv";
 
 dotenv.config({ path: path.resolve(process.cwd(), ".env") });
 

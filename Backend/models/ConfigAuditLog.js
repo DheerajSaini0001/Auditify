@@ -12,7 +12,7 @@ const configAuditLogSchema = new mongoose.Schema({
   },
   action: {
     type: String,
-    enum: ['CREATE', 'UPDATE', 'DELETE', 'ROLLBACK', 'REVEAL', 'BULK_IMPORT', 'CACHE_REFRESH'],
+    enum: ['CREATE', 'UPDATE', 'DELETE', 'ROLLBACK', 'REVEAL', 'BULK_IMPORT', 'CACHE_REFRESH', 'TEST_EMAIL'],
     required: true
   },
   oldValue: { 

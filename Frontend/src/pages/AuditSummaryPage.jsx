@@ -1,12 +1,21 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert, Globe, ExternalLink } from "lucide-react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { Loader2, ChevronLeft, CheckCircle2, Circle, ShieldAlert, Globe, ExternalLink, FileSearch, Plus } from "lucide-react";
 import { ThemeContext } from "../context/ThemeContext";
 import CircularProgress from "../components/CircularProgress";
 import LivePreview from "../components/LivePreview";
 import CategoryScoreCards from "../components/CategoryScoreCards";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:2000";
+
+// Every report read on this page goes through the same credentials: the session
+// cookie plus the bearer token when there is one. An admin opening someone else's
+// run from Journeys is authorised by the token alone (the backend lets admins read
+// any report), so a call that forgets it 404s on a report that plainly exists.
+const authHeaders = () => {
+    const bearer = localStorage.getItem("dealerpulse_token");
+    return bearer ? { Authorization: `Bearer ${bearer}` } : {};
+};
 
 /* ─────────────────────────────────────────
    The 7 dealer-audit dimensions, mapped to the report fields and the standalone
@@ -171,7 +180,7 @@ const SummaryInProgress = ({ darkMode, leadReport, device, rows, siteUrl }) => {
                                         <span className={`shrink-0 text-xs font-bold px-2 py-0.5 rounded-md ${TIER_BG[tierOf(r.overall)]}`}>{r.overall}</span>
                                     ) : (
                                         <span className={`shrink-0 text-[11px] font-medium ${darkMode ? "text-slate-500" : "text-faint"}`}>
-                                            {r.loading ? "auditing…" : r.excluded ? (r.blocked ? "blocked" : "failed") : "—"}
+                                            {r.loading ? "auditing…" : r.unavailable ? "unavailable" : r.excluded ? (r.blocked ? "blocked" : "failed") : "—"}
                                         </span>
                                     )}
                                 </li>
@@ -193,15 +202,118 @@ const SummaryInProgress = ({ darkMode, leadReport, device, rows, siteUrl }) => {
     );
 };
 
+// Shown INSTEAD of bouncing the user to "/". This screen used to redirect the
+// moment it had no batch context, which is what "Back to Summary just closes the
+// page" was: an admin opening a report from Journeys gets a fresh tab (the link is
+// rel="noreferrer", so sessionStorage is not inherited), so the summary had no
+// saved payload and threw them back to the audit form with no explanation. A dead
+// end that says so is always better than a silent redirect.
+const SummaryUnavailable = ({ darkMode, title, message, onNewAudit, onBack }) => (
+    <div className={`w-full min-h-screen flex items-center justify-center px-6 ${darkMode ? "bg-[#0B1120] text-slate-200" : "bg-surface text-ink"}`}>
+        <div className={`max-w-md w-full rounded-3xl p-8 text-center ${darkMode ? "bg-slate-900 border border-slate-800" : "bg-card border border-line"}`}>
+            <div className={`w-14 h-14 mx-auto rounded-2xl flex items-center justify-center ${darkMode ? "bg-slate-800 text-slate-400" : "bg-cardsoft text-muted"}`}>
+                <FileSearch className="w-7 h-7" />
+            </div>
+            <h1 className={`mt-5 text-xl font-bold ${darkMode ? "text-white" : "text-ink"}`}>{title}</h1>
+            <p className={`mt-2 text-sm leading-relaxed ${darkMode ? "text-slate-400" : "text-muted"}`}>{message}</p>
+            <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                {onBack && (
+                    <button
+                        onClick={onBack}
+                        className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${darkMode ? "bg-slate-800 text-slate-200 hover:bg-slate-700" : "bg-cardsoft text-inksoft hover:bg-slate-200"}`}
+                    >
+                        <ChevronLeft className="w-4 h-4" /> Back to report
+                    </button>
+                )}
+                <button
+                    onClick={onNewAudit}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[#F26419] hover:bg-[#d9550f] transition-all"
+                >
+                    <Plus className="w-4 h-4" /> Start new audit
+                </button>
+            </div>
+        </div>
+    </div>
+);
+
 const AuditSummaryPage = () => {
     const { theme } = useContext(ThemeContext);
     const darkMode = theme === "dark";
     const navigate = useNavigate();
     const location = useLocation();
+    // `/audit-summary/:id` — the run's ROOT report. This is what makes the summary
+    // openable by anyone who can open the report (an admin reading another account's
+    // audit, a shared link, a refreshed tab): the page list comes from the report
+    // itself instead of from whatever this browser tab happens to remember.
+    const { id: routeRootId } = useParams();
+
+    // The root report behind `/audit-summary/:id`, once fetched.
+    // rootState: "loading" until the first answer, then "ready" | "missing" | "error".
+    const [rootDoc, setRootDoc] = useState(null);
+    const [rootState, setRootState] = useState(routeRootId ? "loading" : "none");
+
+    useEffect(() => {
+        if (!routeRootId) { setRootDoc(null); setRootState("none"); return; }
+        let cancelled = false;
+        setRootDoc(null);
+        setRootState("loading");
+        (async () => {
+            try {
+                const res = await fetch(`${API_URL}/single-audit/${routeRootId}`, {
+                    credentials: "include",
+                    headers: authHeaders(),
+                });
+                if (cancelled) return;
+                if (!res.ok) {
+                    // 404 is also what the backend answers for "access denied", and
+                    // reports expire (TTL) — either way there is nothing to summarize.
+                    setRootState(res.status === 404 || res.status === 403 ? "missing" : "error");
+                    return;
+                }
+                const doc = await res.json();
+                if (cancelled) return;
+                if (!doc?._id) { setRootState("missing"); return; }
+                setRootDoc(doc);
+                setRootState("ready");
+            } catch {
+                if (!cancelled) setRootState("error");
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [routeRootId]);
 
     // The batch hands us { siteUrl, device, report, pages:[{key,label,url,id,status}] }
     // via router state; sessionStorage backs it so a refresh keeps working.
     const payload = useMemo(() => {
+        // ── Report-addressed mode (`/audit-summary/:id`) ──
+        // The ROOT REPORT is the source of truth: its url, its device, its
+        // crawledPagesSummary. Deliberately ignores router state and sessionStorage —
+        // those belong to whatever run THIS tab last started, which is exactly how a
+        // finished run ended up rendering another run's half-audited page list.
+        if (routeRootId) {
+            if (!rootDoc?._id) return null;
+            const pages = [{
+                key: rootDoc.pageType || "home",
+                label: "Home Page",
+                url: rootDoc.url,
+                id: String(rootDoc._id),
+                status: "done",
+            }];
+            (rootDoc.crawledPagesSummary || []).forEach((cp) => {
+                if (!cp?.url || pages.some((p) => p.url === cp.url)) return;
+                pages.push({
+                    key: cp.pageType || "generic",
+                    label: cp.label || "Key Page",
+                    url: cp.url,
+                    // Each key page has its own child report; fall back to the parent
+                    // only while the child id hasn't landed yet.
+                    id: cp.reportId || String(rootDoc._id),
+                    status: cp.isProcessing ? "pending" : "done",
+                });
+            });
+            return { siteUrl: rootDoc.url, device: rootDoc.device || "Desktop", pages };
+        }
+
         if (location.state?.pages) return location.state;
         try {
             const stored = JSON.parse(sessionStorage.getItem("auditSummary") || "null");
@@ -224,16 +336,19 @@ const AuditSummaryPage = () => {
             }
         } catch { /* nothing usable */ }
         return null;
-    }, [location.state]);
+    }, [routeRootId, rootDoc, location.state]);
 
     const [reports, setReports] = useState({}); // { [reportId]: fullReportDoc }
     const [loading, setLoading] = useState(true);
     const [settled, setSettled] = useState(false); // polling finished (all pages terminal)
-
-    // No batch context (direct visit / lost state) → back to the audit form.
-    useEffect(() => {
-        if (!payload?.pages?.length) navigate("/", { replace: true });
-    }, [payload, navigate]);
+    // Page reports the server has no copy of (404/403 — expired, or replaced by a
+    // newer run of the same URL). Without this a missing child report kept its row
+    // "auditing…" forever, which is how a FINISHED run rendered as a progress screen.
+    // The ref is the synchronous source of truth (the poll reads it in the same tick
+    // it writes it); the state array only exists to re-render.
+    const unavailableRef = useRef(new Set());
+    const [unavailableIds, setUnavailableIds] = useState([]);
+    const unavailableSet = useMemo(() => new Set(unavailableIds), [unavailableIds]);
 
     // Poll each page's report until the whole run settles — so the summary fills in
     // LIVE (new pages + their scores) without the user having to refresh. Each round
@@ -253,10 +368,16 @@ const AuditSummaryPage = () => {
             const byId = new Map();
             const add = (pg) => { if (pg?.id && !byId.has(pg.id)) byId.set(pg.id, pg); };
             (payload.pages || []).forEach(add);
-            try {
-                const fresh = JSON.parse(sessionStorage.getItem("auditSummary") || "null");
-                (fresh?.pages || []).forEach(add);
-            } catch { /* ignore */ }
+            // sessionStorage is this TAB's memory of the run it started — useful only
+            // in session mode. In report-addressed mode the root report already lists
+            // every page, and folding the tab's memory in here is precisely what let a
+            // previous run's pages leak into a finished run's summary.
+            if (!routeRootId) {
+                try {
+                    const fresh = JSON.parse(sessionStorage.getItem("auditSummary") || "null");
+                    (fresh?.pages || []).forEach(add);
+                } catch { /* ignore */ }
+            }
             Object.values(known || {}).forEach((r) => {
                 (r?.crawledPagesSummary || []).forEach((cp) => {
                     if (cp.reportId) add({ key: cp.pageType || "generic", label: cp.label || "Key Page", url: cp.url, id: cp.reportId });
@@ -265,25 +386,43 @@ const AuditSummaryPage = () => {
             return [...byId.values()];
         };
 
+        // A 404/403 on a page report is the server's final answer (the id is gone, or
+        // was replaced when the same URL was re-audited) — but a report mid-flush can
+        // 404 for a beat, so it takes two consecutive misses to call one unavailable.
+        const misses = {};
+
         const poll = async (known) => {
             const pages = collectPages(known);
+            const goneNow = [];
             const entries = await Promise.all(
                 pages.map(async (p) => {
                     // Already finished? Reuse it — don't re-download a terminal report
                     // (screenshot + 8 sections) every 3s. Only in-progress pages refetch.
                     const prev = known?.[p.id];
                     if (prev && (prev.status === "completed" || prev.status === "failed")) return [p.id, prev];
+                    if (unavailableRef.current.has(p.id)) return [p.id, prev || null];
                     try {
                         const res = await fetch(`${API_URL}/single-audit/${p.id}`, {
                             credentials: "include",
                             headers: { ...(bearer && { Authorization: `Bearer ${bearer}` }) },
                         });
-                        if (!res.ok) return [p.id, prev || null];
+                        if (!res.ok) {
+                            if (res.status === 404 || res.status === 403) {
+                                misses[p.id] = (misses[p.id] || 0) + 1;
+                                if (misses[p.id] >= 2) goneNow.push(p.id);
+                            }
+                            return [p.id, prev || null];
+                        }
+                        misses[p.id] = 0;
                         return [p.id, await res.json()];
                     } catch { return [p.id, prev || null]; }
                 })
             );
             if (cancelled) return;
+            if (goneNow.length) {
+                goneNow.forEach((id) => unavailableRef.current.add(id));
+                setUnavailableIds([...unavailableRef.current]);
+            }
             const map = Object.fromEntries(entries);
             setReports(map);
             setLoading(false);
@@ -304,6 +443,10 @@ const AuditSummaryPage = () => {
             const allTerminal =
                 nextPages.length > 0 &&
                 nextPages.every((p) => {
+                    // A page whose report the server no longer has is settled too —
+                    // waiting on it is what kept polling (and the progress screen)
+                    // alive for the full 4 minutes on an already-finished run.
+                    if (unavailableRef.current.has(p.id)) return true;
                     const r = map[p.id];
                     return r && (r.status === "completed" || r.status === "failed");
                 });
@@ -318,10 +461,12 @@ const AuditSummaryPage = () => {
 
         setLoading(true);
         setSettled(false);
+        unavailableRef.current = new Set();
+        setUnavailableIds([]);
         poll({});
 
         return () => { cancelled = true; if (timer) clearTimeout(timer); };
-    }, [payload]);
+    }, [payload, routeRootId]);
 
     const rows = useMemo(() => {
         const pageList = [...(payload?.pages || [])];
@@ -406,17 +551,25 @@ const AuditSummaryPage = () => {
             // ~66 site into a ~44). These rows are marked `excluded`: no overall, and
             // the site rollup below skips them entirely.
             const terminalReps = reps.filter((r) => r.status === "completed" || r.status === "failed");
+            // Every report behind this row is gone from the server (expired, or
+            // superseded when the same URL was audited again). It is not a failure and
+            // not a zero — there is simply nothing left to show, so the row says so and
+            // stays out of the rollup, exactly like a blocked page.
+            const unavailable = members.every((m) => unavailableSet.has(m.id));
             const excluded =
-                terminalReps.length > 0 &&
-                terminalReps.every((r) => r.status === "failed" || r.isBotProtected === true);
+                unavailable ||
+                (terminalReps.length > 0 &&
+                    terminalReps.every((r) => r.status === "failed" || r.isBotProtected === true));
             const blocked = excluded && terminalReps.some((r) => r.isBotProtected === true);
 
             const sectionVals = SECTIONS.map((s) => scores[s.key]);
             const overall = excluded ? null : meanOf(sectionVals);
             // Still auditing? — a member report hasn't been fetched yet, or its status
             // is not terminal. Drives the per-cell loading spinner so an in-progress
-            // page reads as "loading" instead of a genuine "—" (N/A).
+            // page reads as "loading" instead of a genuine "—" (N/A). A page the server
+            // has no report for is NOT loading — that is the state this row will keep.
             const loading = members.some((m) => {
+                if (unavailableSet.has(m.id)) return false;
                 const r = reports[m.id];
                 return !r || (r.status !== "completed" && r.status !== "failed");
             });
@@ -455,9 +608,10 @@ const AuditSummaryPage = () => {
                 overallPending,
                 excluded,
                 blocked,
+                unavailable,
             };
         });
-    }, [rows, reports]);
+    }, [rows, reports, unavailableSet]);
 
     // Is the run still producing results? Either a page type is mid-audit, or the
     // fan-out parent hasn't finished discovering + auditing its key pages (so page
@@ -477,11 +631,15 @@ const AuditSummaryPage = () => {
     // landed (or a page whose sections are still scoring) produced a confident
     // "57 / D" that then moved once the rest arrived. The score only appears when
     // every page type in the run is terminal.
-    const { siteScore, siteGrade, scoredPages, excludedPages } = useMemo(() => {
+    const { siteScore, siteGrade, scoredPages, excludedPages, unavailablePages } = useMemo(() => {
         // Pages we couldn't measure at all (bot-protected / failed) never enter the
-        // rollup — they carry no `overall`, so the filter below drops them.
-        const excludedCount = displayRows.filter((r) => r.excluded).length;
-        if (auditPending) return { siteScore: null, siteGrade: "—", scoredPages: 0, excludedPages: excludedCount };
+        // rollup — they carry no `overall`, so the filter below drops them. Pages whose
+        // report is simply gone are counted apart: nothing went wrong with them, we
+        // just have nothing left to show.
+        const unavailableCount = displayRows.filter((r) => r.unavailable).length;
+        const excludedCount = displayRows.filter((r) => r.excluded).length - unavailableCount;
+        const base = { excludedPages: excludedCount, unavailablePages: unavailableCount };
+        if (auditPending) return { siteScore: null, siteGrade: "—", scoredPages: 0, ...base };
 
         let totalImportance = 0;
         let weightedScoreSum = 0;
@@ -497,11 +655,11 @@ const AuditSummaryPage = () => {
         });
 
         if (validPagesCount === 0 || totalImportance === 0) {
-            return { siteScore: null, siteGrade: "—", scoredPages: 0, excludedPages: excludedCount };
+            return { siteScore: null, siteGrade: "—", scoredPages: 0, ...base };
         }
 
         const avg = Math.round(weightedScoreSum / totalImportance);
-        return { siteScore: avg, siteGrade: gradeFor(avg), scoredPages: validPagesCount, excludedPages: excludedCount };
+        return { siteScore: avg, siteGrade: gradeFor(avg), scoredPages: validPagesCount, ...base };
     }, [displayRows, auditPending]);
 
     // Site-level score per category — the mean of that dimension across every page
@@ -547,9 +705,6 @@ const AuditSummaryPage = () => {
         () => displayRows.some((r) => typeof r.overall === "number" || SECTIONS.some((s) => typeof r.scores[s.key] === "number")),
         [displayRows]
     );
-    // Show the live in-progress view until the first real data lands (or polling gives up).
-    const showShimmer = !hasData && !settled;
-
     // The report the in-progress view narrates: the fan-out parent (it carries the
     // key-page list and the homepage screenshot), else the page we started from,
     // else whichever report already has a screenshot to show.
@@ -564,7 +719,55 @@ const AuditSummaryPage = () => {
         );
     }, [reports, payload]);
 
-    if (!payload?.pages?.length) return null;
+    // Has the RUN already finished? In report-addressed mode this is known before the
+    // first poll even starts, because the root report was fetched to build the page
+    // list. It is the difference between "this audit is running" and "this finished
+    // audit is still loading" — and showing the first for the second is exactly the
+    // bug: a completed report whose summary sat at "Auditing your site — 8%".
+    const runFinished = useMemo(() => {
+        const done = (r) => !!r && (isTerminalStatus(r.status) || r.stage2Completed === true);
+        return done(rootDoc) || done(leadReport);
+    }, [rootDoc, leadReport]);
+
+    // Show the live in-progress view only while the run itself is still producing.
+    const showShimmer = !hasData && !settled && !runFinished;
+    // A finished run with nothing on screen yet is just loading — a quiet spinner,
+    // never a progress bar counting up a run that ended.
+    const showLoadingSummary = !hasData && !settled && runFinished;
+
+    // ── Nothing to render ──────────────────────────────────────────────────────
+    // These used to be a redirect to "/". Bouncing the user out of a page they
+    // deliberately clicked into reads as the app closing itself, and it hid WHY.
+    if (routeRootId && (rootState === "missing" || rootState === "error")) {
+        return (
+            <SummaryUnavailable
+                darkMode={darkMode}
+                title={rootState === "missing" ? "This audit is no longer available" : "Couldn't load this audit"}
+                message={rootState === "missing"
+                    ? "The report behind this summary has expired or was replaced by a newer audit of the same site. Reports are kept for 24 hours."
+                    : "We couldn't reach the server for this report. Check your connection and try again."}
+                onNewAudit={() => navigate("/")}
+                onBack={() => navigate(`/report/${routeRootId}`)}
+            />
+        );
+    }
+    if (routeRootId && rootState !== "ready") {
+        return (
+            <div className={`w-full min-h-screen flex items-center justify-center ${darkMode ? "bg-[#0B1120]" : "bg-surface"}`}>
+                <Loader2 className="w-8 h-8 animate-spin text-[#F26419]" />
+            </div>
+        );
+    }
+    if (!payload?.pages?.length) {
+        return (
+            <SummaryUnavailable
+                darkMode={darkMode}
+                title="No audit summary to show"
+                message="Open a report and use “Back to Summary”, or start a new audit to build one."
+                onNewAudit={() => navigate("/")}
+            />
+        );
+    }
 
     return (
         <div className={`w-full min-h-screen ${darkMode ? "bg-[#0B1120] text-slate-200" : "bg-surface text-ink"}`}>
@@ -593,9 +796,9 @@ const AuditSummaryPage = () => {
                         target="_blank"
                         rel="noopener noreferrer"
                         title={payload.siteUrl}
-                        className={`group inline-flex items-center gap-2.5 w-fit text-3xl lg:text-4xl font-black tracking-tight transition-colors ${darkMode ? "text-white hover:text-slate-300" : "text-ink hover:text-accent"}`}
+                        className={`group inline-flex items-center gap-2.5 w-fit max-w-full text-3xl lg:text-4xl font-black tracking-tight transition-colors ${darkMode ? "text-white hover:text-slate-300" : "text-ink hover:text-accent"}`}
                     >
-                        {prettyHost(payload.siteUrl)}
+                        <span className="truncate min-w-0">{prettyHost(payload.siteUrl)}</span>
                         <ExternalLink className="w-5 h-5 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity" />
                     </a>
                 </div>
@@ -608,6 +811,11 @@ const AuditSummaryPage = () => {
                         rows={displayRows}
                         siteUrl={payload.siteUrl}
                     />
+                ) : showLoadingSummary ? (
+                    <div className={`rounded-3xl p-12 flex flex-col items-center justify-center gap-3 ${cardClass}`}>
+                        <Loader2 className="w-7 h-7 animate-spin text-[#F26419]" />
+                        <p className={`text-sm ${darkMode ? "text-slate-400" : "text-muted"}`}>Loading this audit's summary…</p>
+                    </div>
                 ) : (
                 <>
                 {/* ── Top cards: overall score + issue breakdown ── */}
@@ -648,6 +856,11 @@ const AuditSummaryPage = () => {
                                         {excludedPages > 0 && (
                                             <p className={`mt-1 text-xs ${darkMode ? "text-slate-500" : "text-faint"}`}>
                                                 {excludedPages} page type{excludedPages === 1 ? "" : "s"} couldn't be measured (blocked or failed) — not counted in this score.
+                                            </p>
+                                        )}
+                                        {unavailablePages > 0 && (
+                                            <p className={`mt-1 text-xs ${darkMode ? "text-slate-500" : "text-faint"}`}>
+                                                {unavailablePages} page type{unavailablePages === 1 ? "'s" : "s'"} report is no longer stored (reports are kept for 24 hours) — not counted in this score.
                                             </p>
                                         )}
                                     </>
@@ -766,12 +979,16 @@ const AuditSummaryPage = () => {
                                                     <span>{row.label}</span>
                                                     {row.excluded && (
                                                         <span
-                                                            title={row.blocked
-                                                                ? "Bot protection blocked this page — excluded from the site score"
-                                                                : "This page's audit failed — excluded from the site score"}
-                                                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${darkMode ? "bg-amber-500/15 text-amber-400 border border-amber-500/20" : "bg-amber-50 text-amber-700 border border-amber-200"}`}
+                                                            title={row.unavailable
+                                                                ? "This page's report is no longer stored (reports are kept for 24 hours, and a re-audit of the same URL replaces the previous one) — excluded from the site score"
+                                                                : row.blocked
+                                                                    ? "Bot protection blocked this page — excluded from the site score"
+                                                                    : "This page's audit failed — excluded from the site score"}
+                                                            className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${row.unavailable
+                                                                ? (darkMode ? "bg-slate-700/60 text-slate-400 border border-slate-600/40" : "bg-slate-100 text-slate-500 border border-slate-200")
+                                                                : (darkMode ? "bg-amber-500/15 text-amber-400 border border-amber-500/20" : "bg-amber-50 text-amber-700 border border-amber-200")}`}
                                                         >
-                                                            {row.blocked ? "Blocked" : "Failed"}
+                                                            {row.unavailable ? "Unavailable" : row.blocked ? "Blocked" : "Failed"}
                                                         </span>
                                                     )}
                                                 </div>
@@ -781,7 +998,7 @@ const AuditSummaryPage = () => {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         title={row.urls.length > 1 ? row.urls.join("\n") : row.url}
-                                                        className={`block ml-auto max-w-[240px] whitespace-normal break-all leading-snug text-[10px] font-normal underline-offset-2 hover:underline ${darkMode ? "text-slate-500 hover:text-blue-400" : "text-faint hover:text-accent"}`}
+                                                        className={`block ml-auto max-w-[240px] truncate leading-snug text-[10px] font-normal underline-offset-2 hover:underline ${darkMode ? "text-slate-500 hover:text-blue-400" : "text-faint hover:text-accent"}`}
                                                     >
                                                         {prettyPageUrl(row.url)}{row.urls.length > 1 ? ` +${row.urls.length - 1}` : ""}
                                                     </a>
@@ -797,9 +1014,11 @@ const AuditSummaryPage = () => {
                                                 dimensions was still spinning) because any unscored section holds it. */}
                                             {(() => {
                                                 const tier = row.overallPending || row.excluded ? "na" : tierOf(row.overall);
-                                                const excludedNote = row.blocked
-                                                    ? " — blocked by bot protection, not counted in the site score"
-                                                    : " — audit failed, not counted in the site score";
+                                                const excludedNote = row.unavailable
+                                                    ? " — report no longer stored, not counted in the site score"
+                                                    : row.blocked
+                                                        ? " — blocked by bot protection, not counted in the site score"
+                                                        : " — audit failed, not counted in the site score";
                                                 return (
                                                     <td className="p-0">
                                                         <button

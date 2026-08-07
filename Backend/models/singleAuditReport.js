@@ -52,6 +52,13 @@ const SiteReportSchema = new mongoose.Schema(
     stage2Progress: { type: String, default: null },
     crawledPagesCount: { type: Number, default: 0 },
     crawledPagesSummary: { type: Array, default: [] },
+    // Set on a KEY-PAGE (child) report: the run that fanned out to it. The parent
+    // already lists its children in crawledPagesSummary; this is the same edge read
+    // the other way, and it is what lets a child report answer "which run am I part
+    // of" on its own — the audit summary is addressed by the root report id, so
+    // without it a key page opened directly (an admin from Journeys, a shared link)
+    // has no route back to the run it belongs to. Null on a root/single-page report.
+    parentReportId: { type: mongoose.Schema.Types.ObjectId, default: null },
     mergedFrom: { type: Number, default: null },
     isBotProtected: { type: Boolean, default: false },
     isDealership: { type: Boolean, default: null },
@@ -64,7 +71,15 @@ const SiteReportSchema = new mongoose.Schema(
     // enough that the visitor is told to leave the page, so the result has to be
     // able to reach them. Null for single-page runs, which finish while they wait.
     notifyEmail: { type: String, default: null },
+    // Set ONLY on a delivery that actually succeeded. It used to be stamped
+    // optimistically, before the send, so a run whose mail bounced looked forever
+    // after exactly like one that arrived — and "the audit finished but nothing
+    // came" had no evidence left to answer it with.
     notifiedAt: { type: Date, default: null },
+    // Why the mail did not go out, when it didn't. The send sites swallow their
+    // failures on purpose (a dead relay must not take an audit down), so this is
+    // the one place that failure survives for anyone to find later.
+    notifyError: { type: String, default: null },
     // Market the visitor selected on the audit form (ISO alpha-2, or "OTHER").
     // This is the INPUT to market resolution, not the outcome — see `market`.
     country: { type: String, default: null },
@@ -112,6 +127,12 @@ export const ACTIVE_REPORT_STATUSES = [
 // Partial Unique Index to prevent multiple SUCCESSFUL or IN-PROGRESS audits for the same target
 // This allows re-auditing if current record is 'failed'
 //
+// ⚠️ THIS KEY MUST MATCH THE DEDUPE FILTER in singleAuditController.startAudit
+// exactly. Every field the dedupe scopes by has to be in here, or the two
+// disagree about what "the same target" means — and a run the dedupe waved
+// through then fails its insert with E11000 and is LOST (auditStore.flush can
+// only keep a report Mongo is willing to accept).
+//
 // `market` is part of the key because it is part of what makes a run distinct:
 // the same URL scored against US norms and against Australian norms compares
 // against different reference lists and produces a different score, so both must
@@ -119,10 +140,19 @@ export const ACTIVE_REPORT_STATUSES = [
 // duplicate-key error — and the dedupe in singleAuditController would have
 // served the first market's report anyway.
 //
-// Reports written before this field existed have no `market` and index as null,
-// which is a distinct key from "US"/"AU" — so they never collide with new runs.
+// `userId` is here for the same reason, learned the hard way: the dedupe is
+// per-user, so a GUEST run of a URL that some signed-in account already holds a
+// completed report for found no duplicate, ran the full audit, and then lost the
+// insert to that account's report. The visitor's report existed only in memory,
+// so the page they were reading kept rendering from React state while every
+// server call for it 404'd — "Report not found or access denied" on the download
+// and email buttons, seconds after a successful audit.
+//
+// Reports written before these fields existed have no `market` / `userId` and
+// index as null, which is a distinct key from "US"/"AU" or a real account id —
+// so they never collide with new runs.
 SiteReportSchema.index(
-  { url: 1, device: 1, report: 1, market: 1 },
+  { url: 1, device: 1, report: 1, market: 1, userId: 1 },
   {
     unique: true,
     partialFilterExpression: { status: { $in: ACTIVE_REPORT_STATUSES } }

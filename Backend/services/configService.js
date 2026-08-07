@@ -50,6 +50,7 @@ class ConfigService {
       { key: 'SMTP_USER', label: 'SMTP Mail User', group: 'email', isSecret: false },
       { key: 'SMTP_PASS', label: 'SMTP Mail Password', group: 'email', isSecret: true },
       { key: 'EMAIL_FROM', label: 'Email Sender Address', group: 'email', isSecret: false },
+      { key: 'EMAIL_FROM_VERIFIED', label: 'Sender Address Is Provider-Verified (true/false)', group: 'email', isSecret: false },
       
       // ── App Settings ──
       { key: 'PORT', label: 'Backend Server Port', group: 'app', isSecret: false },
@@ -146,7 +147,7 @@ class ConfigService {
     if (value === undefined) {
       const config = await PlatformConfig.findOne({ key: upperKey });
       if (config) {
-        value = config.isSecret ? decrypt(config.value) : config.value;
+        value = decrypt(config.value);
         cache.set(upperKey, value);
       } else {
         // Fallback to process.env if not in DB at all
@@ -174,9 +175,15 @@ class ConfigService {
       const configs = await PlatformConfig.find({});
       cache.flushAll();
 
+      // Decrypt unconditionally rather than only when `isSecret`. decrypt() is a
+      // safe no-op on anything that isn't ciphertext (it returns the input
+      // untouched when the shape or the auth tag doesn't check out), and gating on
+      // the flag meant a row that the admin UI had written encrypted while marked
+      // non-sensitive — which every save did until this was fixed — was loaded into
+      // the cache as raw "iv:data:tag" and handed to whatever asked for it. This
+      // heals those rows on the next boot instead of needing each one re-saved.
       configs.forEach(config => {
-        const value = config.isSecret ? decrypt(config.value) : config.value;
-        cache.set(config.key, value);
+        cache.set(config.key, decrypt(config.value));
       });
 
       logger.info(`[ConfigService] Cache refreshed. ${configs.length} items loaded.`);

@@ -1,6 +1,6 @@
 import { createContext, useState, useContext, useEffect, useCallback } from "react";
 import api from "../utils/api";
-import toast from "react-hot-toast";
+import { announceAuditFinished } from "../utils/auditNotice";
 
 const DataContext = createContext();
 export const useData = () => useContext(DataContext);
@@ -138,6 +138,11 @@ export const DataProvider = ({ children }) => {
       sessionStorage.setItem("auditSummary", JSON.stringify({
         siteUrl: reportData.url,
         device: reportData.device || 'Desktop',
+        // The run's ROOT report. The summary page is addressed by this id
+        // (/audit-summary/:id), so a child report opened from the matrix can find
+        // its way back to the whole run even on reports written before children
+        // carried `parentReportId`.
+        rootId: String(reportData._id),
         pages: summaryPages
       }));
     } catch (e) {
@@ -215,7 +220,11 @@ export const DataProvider = ({ children }) => {
         startLiveFetch(auditData._id);
       }
 
-      return { success: true, id: auditData._id };
+      // `status` rides along because this resolves when the run STARTS, not when
+      // it finishes — the one exception being a cache/dedup hit, which comes back
+      // already "success". Callers need to tell those apart or they end up
+      // announcing a completed audit the moment the user clicks Run.
+      return { success: true, id: auditData._id, status: auditData.status };
 
     } catch (err) {
       console.error(err);
@@ -265,11 +274,9 @@ export const DataProvider = ({ children }) => {
           // One full fetch, now that there is a finished report worth fetching.
           await fetchSingleReport(id);
 
-          if (newStatus === "success") {
-            toast.success("Audit complete!");
-          } else {
-            toast.error("Audit run failed.");
-          }
+          // Announced through the shared guard: the report page watches the same
+          // run and used to announce it a second time.
+          announceAuditFinished(id, newStatus);
         }
       } catch (err) {
         console.error("Error polling audit:", err);

@@ -582,6 +582,10 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                       const payload = {
                         siteUrl: data?.url,
                         device: data?.device || 'Desktop',
+                        // The report this page list was built from — the summary reads it
+                        // straight off the URL, so the matrix survives a refresh or a
+                        // shared link instead of depending on this tab's sessionStorage.
+                        rootId: data?._id ? String(data._id) : null,
                         pages: summaryPages
                       };
 
@@ -589,7 +593,7 @@ const Dashboard2_Inner = React.memo(function Dashboard2_Inner({ data, loading, c
                         sessionStorage.setItem("auditSummary", JSON.stringify(payload));
                       } catch {}
 
-                      navigate("/audit-summary", { state: payload });
+                      navigate(data?._id ? `/audit-summary/${data._id}` : "/audit-summary", { state: payload });
                     }}
                     className={`shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold border transition-all ${darkMode ? "bg-slate-800 border-slate-700 text-slate-200 hover:bg-slate-700" : "bg-emerald-600 text-white hover:bg-emerald-700"}`}
                   >
